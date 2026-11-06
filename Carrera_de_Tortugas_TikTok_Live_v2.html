@@ -14,6 +14,14 @@ html{font-size:min(3.8vw,2.1vh)}
 html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:var(--cream);font-family:'Nunito',system-ui,sans-serif;font-weight:800}
 .disp{font-family:'Bowlby One','Arial Black',sans-serif;font-weight:400}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:9}
+@media (orientation:portrait){
+  html{font-size:clamp(12px,min(3.2vw,1.8vh),32px);--padr:12%}
+  #app{top:4%;bottom:9%;left:3%;gap:.35rem}
+  .lab{width:clamp(6.5rem,28vw,9rem)}
+  #head{padding:.35rem .6rem .4rem}
+  #feed{min-height:3rem}
+  #mvp{padding:.3rem .6rem .35rem}
+}
 
 /* Todo fluye en una sola columna: nada se encima, en cualquier pantalla */
 #app{position:absolute;top:var(--top,6%);bottom:var(--bot,14%);left:3%;right:var(--padr);display:flex;flex-direction:column;gap:.5rem}

@@ -25,6 +25,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /<title>Carrera de tortugas<\/title>/);
     assert.match(overlayHtml, /function handleTikTokEntry\(entry\)/);
     assert.match(overlayHtml, /entry\.type==='gift'/);
+    assert.match(overlayHtml, /@media \(orientation:portrait\)/);
+    assert.match(overlayHtml, /--padr:12%/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
