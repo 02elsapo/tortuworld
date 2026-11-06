@@ -46,7 +46,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 .lane{flex:1 1 0;min-height:2.9rem;max-height:4rem;display:flex;align-items:stretch;border-radius:.9rem;overflow:hidden;box-shadow:0 .25rem 0 rgba(0,0,0,.28)}
 .lane:nth-child(odd){background:rgba(243,223,162,.95)}
 .lane:nth-child(even){background:rgba(232,206,140,.95)}
-.lab{width:9.6rem;flex:none;background:var(--ink);display:flex;align-items:center;gap:.3rem;padding:0 .4rem}
+.lab{position:relative;z-index:3;width:9.6rem;flex:none;background:var(--ink);display:flex;align-items:center;gap:.3rem;padding:0 .4rem}
 .rk{flex:none;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--ink2);color:var(--cream);font-size:.95rem;display:grid;place-items:center}
 .rk.r1{background:var(--sun);color:var(--ink)}.rk.r2{background:#D9E2E5;color:var(--ink)}.rk.r3{background:#E3A46B;color:var(--ink)}
 .lab .fl{font-size:1.7rem;line-height:1}
@@ -62,7 +62,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 .fin{position:absolute;right:0;top:0;bottom:0;width:.8rem;background:repeating-conic-gradient(var(--ink) 0 25%,#fff 0 50%) 0 0/.4rem .4rem}
 .tur{position:absolute;top:50%;width:3.6rem;height:2.4rem;margin-top:-1.2rem;left:calc((100% - 4rem)*var(--p,0)/100);z-index:2}
 .tur svg{width:100%;height:100%;overflow:visible}
-.sponsor{position:absolute;left:0;top:-.15rem;z-index:4;display:none;align-items:center;gap:.22rem;max-width:min(8rem,70vw);height:1.15rem;padding:.1rem .35rem .1rem .12rem;border:.08rem solid var(--sun);border-radius:999px;background:rgba(7,38,43,.96);color:var(--cream);font:800 .65rem/1 system-ui,sans-serif;white-space:nowrap;overflow:hidden;pointer-events:none}
+.sponsor{position:absolute;right:calc(100% + 1rem);top:50%;transform:translateY(-50%);z-index:4;display:none;align-items:center;gap:.22rem;max-width:min(8rem,70vw);height:1.15rem;padding:.1rem .35rem .1rem .12rem;border:.08rem solid var(--sun);border-radius:999px;background:rgba(7,38,43,.96);color:var(--cream);font:800 .65rem/1 system-ui,sans-serif;white-space:nowrap;overflow:hidden;pointer-events:none}
 .sponsor.on{display:flex}
 .sponsor img,.sponsor .sa{flex:none;width:.88rem;height:.88rem;border-radius:50%;object-fit:cover;background:var(--pink);color:#fff;text-align:center;line-height:.88rem}
 .sponsor-name{overflow:hidden;text-overflow:ellipsis}
