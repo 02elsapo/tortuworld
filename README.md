@@ -1,6 +1,6 @@
 # TikTok Mini App Starter
 
-Base mínima para crear mini apps de TikTok Live. Incluye la conexión al LIVE, un backend de configuración, una página de overlay transparente y eventos en tiempo real por Server-Sent Events (SSE).
+Carrera de tortugas para TikTok LIVE. Incluye la conexión al LIVE, un backend de configuración y un overlay transparente que transforma los eventos del conector en acciones del juego mediante Server-Sent Events (SSE).
 
 ## Requisitos e inicio
 
@@ -30,7 +30,7 @@ Monta almacenamiento persistente si necesitas conservar la configuración del ba
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /` o `GET /overlay` | Overlay transparente con los últimos eventos. | HTML |
+| `GET /` o `GET /overlay` | Juego de carrera de tortugas; demo con `?demo=1`. | HTML |
 | `GET /backend` | Configurar la cuenta y ver su estado. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -58,7 +58,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay usa `EventSource` y `textContent` para mostrar actividad sin interpretar HTML del chat. Para crear una mini app, agrega su comportamiento en un módulo separado y consume `/api/events`; no acoples reglas de negocio al conector.
+El juego en `Carrera_de_Tortugas_TikTok_Live_v2.html` usa `EventSource` y procesa eventos nuevos de chat, regalos, likes, seguidores y compartidos. El snapshot inicial no se vuelve a jugar. Se puede abrir `/backend` para configurar TikTok, o probar el juego sin conectar una cuenta con `/?demo=1`. Para un servidor WebSocket externo, el overlay conserva compatibilidad si se especifica `?ws=ws://localhost:8080`.
 
 ## Estructura
 
@@ -74,15 +74,15 @@ modules/
   realtime/sseHub.js              # Transporte SSE compartido
   overlay/
     index.js                      # Rutas del overlay y backend
-    index.html                    # Overlay genérico y transparente
     backend.html                  # Interfaz mínima de configuración
+Carrera_de_Tortugas_TikTok_Live_v2.html # Juego y overlay transparente
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
   tiktok/                         # Pruebas del conector y reconexión
 ```
 
-`server.js` compone los módulos. `modules/tiktok` es dueño de la conexión y de la forma de los eventos; `modules/realtime` solo transporta mensajes; `modules/overlay` presenta una vista mínima. El servicio del conector usa `tiktok-live-connector` y carga su export ESM de forma dinámica. La conexión no requiere que haya un overlay abierto.
+`server.js` compone los módulos. `modules/tiktok` es dueño de la conexión y de la forma de los eventos; `modules/realtime` solo transporta mensajes; el juego adapta los eventos normalizados al contrato de su lógica. El servicio del conector usa `tiktok-live-connector` y carga su export ESM de forma dinámica. La conexión no requiere que haya un overlay abierto.
 
 ## Operación y seguridad
 

@@ -22,8 +22,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.equal(overlay.status, 200);
     const overlayHtml = await overlay.text();
     assert.match(overlayHtml, /new EventSource\('\/api\/events'\)/);
-    assert.match(overlayHtml, /'Conectado'/);
-    assert.doesNotMatch(overlayHtml, /username \? ` @\$\{status\.username\}/);
+    assert.match(overlayHtml, /<title>Carrera de tortugas<\/title>/);
+    assert.match(overlayHtml, /function handleTikTokEntry\(entry\)/);
+    assert.match(overlayHtml, /entry\.type==='gift'/);
+
+    const overlayAlias = await fetch(`${baseUrl}/overlay`);
+    assert.equal(await overlayAlias.text(), overlayHtml);
 
     const backend = await fetch(`${baseUrl}/backend`);
     assert.equal(backend.status, 200);

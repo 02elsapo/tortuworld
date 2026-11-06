@@ -12,7 +12,7 @@ modules/tiktok/tiktokMonitorService.js
 modules/tiktok/index.js -----> modules/realtime/sseHub.js
                                       |             |
                                       v             v
-                                overlay page    future mini apps
+                           turtle game overlay    future mini apps
 
 server.js composes the modules and owns the HTTP server lifecycle.
 ```
@@ -30,8 +30,8 @@ The connector starts only when a username is configured. Connection retries, sta
 | `modules/tiktok/eventFeedService.js` | Maintains an ordered event feed for connector diagnostics. |
 | `modules/tiktok/routes.js` | Maps HTTP requests to connector operations; it contains no connection logic. |
 | `modules/realtime/sseHub.js` | Attaches SSE responses, sends initial messages, broadcasts named events and heartbeats, and removes closed clients. |
-| `modules/overlay/index.js` | Maps `/`, `/overlay`, and `/backend` to the standalone HTML pages. |
-| `modules/overlay/index.html` | Displays status and recent events; user/provider content is inserted as text, not markup. |
+| `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game and `/backend` to the configuration page. |
+| `Carrera_de_Tortugas_TikTok_Live_v2.html` | Runs the game, consumes normalized SSE updates, and maps chat, gifts, likes, follows, and shares to game actions. |
 | `modules/overlay/backend.html` | Reads status/configuration and submits an account change to the API. |
 
 Add a mini app as a new module with its own routes and event subscription. Keep the provider connection reusable and app-agnostic.
@@ -58,7 +58,7 @@ Add a mini app as a new module with its own routes and event subscription. Keep 
 
 An event entry has `id`, `type`, `eventLabel`, `username`, `avatar`, `content`, and `time`. `activityCount` and `diamondCount` are optional. `id` is the provider message ID when available and otherwise a generated UUID. `content` is a short human-readable summary; the full provider payload remains available to connector diagnostics.
 
-Unknown `/api/*` paths return JSON 404. The overlay and backend are served as static HTML from module-owned files.
+Unknown `/api/*` paths return JSON 404. The game and backend are served as static HTML files.
 
 ## Lifecycle and failure behavior
 
