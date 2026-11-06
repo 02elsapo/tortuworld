@@ -27,6 +27,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /entry\.type==='gift'/);
     assert.match(overlayHtml, /@media \(orientation:portrait\)/);
     assert.match(overlayHtml, /--padr:12%/);
+    assert.match(overlayHtml, /#dot\{position:fixed;right:\.7rem;bottom:\.7rem/);
+    assert.match(overlayHtml, /#dot\.on\{background:#36e276/);
+    assert.match(overlayHtml, /setTikTokConnectionStatus\(JSON\.parse\(e\.data\)\.connected\)/);
+    assert.match(overlayHtml, /class="sponsor" id="sp-\$\{c\.c\}"/);
+    assert.match(overlayHtml, /setSponsor\(code,user,g\.avatar\)/);
+    assert.match(overlayHtml, /avatar:entry\.avatar/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);

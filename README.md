@@ -26,6 +26,10 @@ El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra 
 
 Monta almacenamiento persistente si necesitas conservar la configuración del backend entre reinicios. El directorio `data/` está excluido de Git.
 
+### EasyPanel
+
+Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks. El `Dockerfile` incluido usa Node 22 y conserva la capa de dependencias mientras no cambien `package.json` o `package-lock.json`. Para guardar la cuenta entre despliegues, monta un volumen persistente en `/app/data`.
+
 ## HTTP y eventos
 
 | Método y ruta | Uso | Respuesta |

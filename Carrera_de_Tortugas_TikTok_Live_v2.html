@@ -62,6 +62,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 .fin{position:absolute;right:0;top:0;bottom:0;width:.8rem;background:repeating-conic-gradient(var(--ink) 0 25%,#fff 0 50%) 0 0/.4rem .4rem}
 .tur{position:absolute;top:50%;width:3.6rem;height:2.4rem;margin-top:-1.2rem;left:calc((100% - 4rem)*var(--p,0)/100);z-index:2}
 .tur svg{width:100%;height:100%;overflow:visible}
+.sponsor{position:absolute;left:0;top:-.15rem;z-index:4;display:none;align-items:center;gap:.22rem;max-width:min(8rem,70vw);height:1.15rem;padding:.1rem .35rem .1rem .12rem;border:.08rem solid var(--sun);border-radius:999px;background:rgba(7,38,43,.96);color:var(--cream);font:800 .65rem/1 system-ui,sans-serif;white-space:nowrap;overflow:hidden;pointer-events:none}
+.sponsor.on{display:flex}
+.sponsor img,.sponsor .sa{flex:none;width:.88rem;height:.88rem;border-radius:50%;object-fit:cover;background:var(--pink);color:#fff;text-align:center;line-height:.88rem}
+.sponsor-name{overflow:hidden;text-overflow:ellipsis}
 .crown{position:absolute;left:1.2rem;top:-.6rem;font-size:1.1rem;font-style:normal;display:none;z-index:3;animation:bob 1s ease-in-out infinite alternate}
 .lane.lead .crown{display:block}
 @keyframes bob{to{transform:translateY(-.15rem) rotate(6deg)}}
@@ -109,8 +113,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 
 #snd{position:fixed;left:1.8rem;bottom:.3rem;z-index:30;font-size:.8rem;background:rgba(0,0,0,.65);padding:.1rem .6rem;border-radius:999px;display:none}
 /* Panel de pruebas */
-#dot{position:fixed;left:.5rem;bottom:.5rem;width:.7rem;height:.7rem;border-radius:50%;background:#ff4d4d;opacity:.8;z-index:30}
-#dot.on{display:none}
+#dot{position:fixed;right:.7rem;bottom:.7rem;width:.85rem;height:.85rem;border-radius:50%;background:#ff4d4d;box-shadow:0 0 .45rem rgba(0,0,0,.65);z-index:30}
+#dot.on{background:#36e276;box-shadow:0 0 .55rem rgba(54,226,118,.8)}
 #bots{position:fixed;right:8px;top:8px;z-index:40;width:176px;background:rgba(0,0,0,.82);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px;font:12px/1.2 system-ui,sans-serif;display:none;gap:4px;flex-wrap:wrap}
 #bots.on{display:flex}
 #bots b{width:100%;font-size:11px;opacity:.8}
@@ -142,7 +146,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   <div id="pod"></div>
   <div class="nx"><i id="nxb"></i></div><div class="sm2" id="nxt"></div>
 </div></div>
-<div id="dot"></div>
+<div id="dot" role="status" aria-label="TikTok desconectado"></div>
 <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
 <div id="bots">
   <b>Bots de prueba (tecla P)</b>
@@ -371,7 +375,7 @@ const C=CFG.countries,byCode=Object.fromEntries(C.map(c=>[c.c,c]));
      gp/goal  progreso y objetivo de la meta de la comunidad
      cp       quién tomó cada lechuga (25/50/75)   pf  foto finish ya anunciado
      streak/lastWin  racha de victorias del mismo país    dirty  hay que redibujar el ranking */
-const S={round:1,over:false,go:false,winner:null,boost:0,pos:{},tot:{},wins:{},fans:{},pick:new Map(),donors:new Map(),combo:new Map(),
+const S={round:1,over:false,go:false,winner:null,boost:0,pos:{},tot:{},wins:{},fans:{},pick:new Map(),donors:new Map(),combo:new Map(),sponsors:{},
   gp:0,goal:CFG.goal,cp:{25:0,50:0,75:0},pf:false,streak:0,lastWin:null,dirty:false};
 C.forEach(c=>{S.pos[c.c]=0;S.tot[c.c]=0;S.wins[c.c]=0;S.fans[c.c]=0});
 if(Q.get('safe'))document.documentElement.style.setProperty('--padr','14%');
@@ -471,7 +475,7 @@ const lanes=$('lanes');
 C.forEach(c=>{
   const l=document.createElement('div');l.className='lane';l.id='ln-'+c.c;
   l.innerHTML=`<div class="lab"><div class="rk disp" id="rk-${c.c}">–</div><span class="fl">${c.f}</span><div class="nm"><b>${c.c.toUpperCase()}</b><small id="fn-${c.c}">👥 0</small></div><em><span id="tt-${c.c}"></span><small id="tw-${c.c}"></small></em></div>
-  <div class="trk" id="tk-${c.c}">${[25,50,75].map(m=>`<i class="mk" style="left:calc(3.6rem + (100% - 4rem)*${m/100})"></i>`).join('')}<i class="sl"></i><div class="fin"></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
+  <div class="trk" id="tk-${c.c}">${[25,50,75].map(m=>`<i class="mk" style="left:calc(3.6rem + (100% - 4rem)*${m/100})"></i>`).join('')}<i class="sl"></i><div class="fin"></div><div class="tur" id="tu-${c.c}" style="--p:0"><span class="sponsor" id="sp-${c.c}"></span><i class="crown">👑</i>${turtle(c)}</div></div>`;
   lanes.append(l);
 });
 
@@ -508,6 +512,23 @@ function renderMvp(){
     const n=document.createElement('b');n.className='disp';n.textContent=i===0?'👑':i+1;
     const s=document.createElement('span');s.textContent=byCode[d.code].f+' '+d.name+(d.best>=3?' 🔥x'+d.best:'');
     const p=document.createElement('em');p.textContent=Math.floor(d.pts);r.append(n,s,p);box.append(r)});
+}
+function setSponsor(code,user,avatar){
+  if(!user||!byCode[code])return;
+  const previous=S.sponsors[code],avatarUrl=typeof avatar==='string'&&/^https?:\/\//i.test(avatar)?avatar:'';
+  const nextAvatar=avatarUrl||(previous?.user===user?previous.avatar:'');
+  if(previous?.user===user&&previous.avatar===nextAvatar)return;
+  S.sponsors[code]={user,avatar:nextAvatar};
+  const badge=$('sp-'+code);badge.replaceChildren();
+  if(nextAvatar){
+    const image=document.createElement('img');image.src=nextAvatar;image.alt='';
+    image.addEventListener('error',()=>{const fallback=document.createElement('span');fallback.className='sa';fallback.textContent=user.trim().charAt(0).toUpperCase()||'?';image.replaceWith(fallback)},{once:true});
+    badge.append(image);
+  }else{
+    const fallback=document.createElement('span');fallback.className='sa';fallback.textContent=user.trim().charAt(0).toUpperCase()||'?';badge.append(fallback);
+  }
+  const name=document.createElement('span');name.className='sponsor-name';name.textContent=user;badge.append(name);
+  badge.title=user+' patrocina esta tortuga';badge.classList.add('on');
 }
 /* EVENTO "boost" {seconds}: empuje doble (x2 de energía por regalo) durante sec segundos, con cuenta atrás en el aviso. */
 function setBoost(sec){
@@ -549,6 +570,7 @@ function onGift(g){
   if(S.over)return;
   const user=g.user||'Alguien',total=Math.max(1,(+g.diamonds||1)*(+g.count||1));
   const code=assign(user),cb=combo(user),c=byCode[code],t=T[code];
+  setSponsor(code,user,g.avatar);
   const step=Math.min(80,Math.min(40,2+total*.5)*(S.boost>Date.now()?2:1)*cb.mult);
   t.pend+=step;S.tot[code]+=total;
   const d=donor(user,code);d.pts+=total;d.best=Math.max(d.best,cb.n);
@@ -564,10 +586,13 @@ function onGift(g){
    empujan un poco, pero solo si el usuario ya eligió país (esto incentiva escribir el país en el chat).
    Se ignoran cuando la ronda terminó (S.over). */
 function onLike(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.get(user);if(!code)return;
+  setSponsor(code,user,m.avatar);
   SFX.like();const n=Math.max(1,+m.count||1);T[code].pend+=Math.min(3,.2*n);donor(user,code).pts+=.1*n;S.dirty=true}
 function onFollow(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.get(user);feed(user+' te siguió 💚','soft');SFX.follow();
+  if(code)setSponsor(code,user,m.avatar);
   if(code&&!S.over){T[code].pend+=3;donor(user,code).pts+=1;S.dirty=true}}
 function onShare(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.get(user);feed(user+' compartió 🔁','soft');SFX.follow();
+  if(code)setSponsor(code,user,m.avatar);
   if(code&&!S.over){T[code].pend+=3;donor(user,code).pts+=1;S.dirty=true}}
 
 /* Fin de ronda: se llama desde frame() cuando una tortuga llega a CFG.win. Guarda la victoria,
@@ -696,16 +721,21 @@ function handleTikTokEntry(entry){
   if(!entry||typeof entry!=='object')return;
   const user=entry.username||'Alguien';
   if(entry.type==='chat')onChat(user,entry.content||'');
-  else if(entry.type==='gift')onGift({user,gift:entry.content||'',diamonds:entry.diamondCount,count:entry.activityCount});
-  else if(entry.type==='like')onLike({user,count:entry.activityCount});
-  else if(entry.type==='follow')onFollow({user});
-  else if(entry.type==='share')onShare({user});
+  else if(entry.type==='gift')onGift({user,gift:entry.content||'',diamonds:entry.diamondCount,count:entry.activityCount,avatar:entry.avatar});
+  else if(entry.type==='like')onLike({user,count:entry.activityCount,avatar:entry.avatar});
+  else if(entry.type==='follow')onFollow({user,avatar:entry.avatar});
+  else if(entry.type==='share')onShare({user,avatar:entry.avatar});
+}
+function setTikTokConnectionStatus(connected){
+  const dot=$('dot');
+  dot.classList.toggle('on',Boolean(connected));
+  dot.setAttribute('aria-label',connected?'TikTok conectado':'TikTok desconectado');
 }
 function connect(){
   if(Q.has('ws')){
     let ws;try{ws=new WebSocket(CFG.ws)}catch{return setTimeout(connect,3000)}
-    ws.onopen=()=>$('dot').className='on';
-    ws.onclose=()=>{$('dot').className='';setTimeout(connect,2000)};
+    ws.onopen=()=>setTikTokConnectionStatus(true);
+    ws.onclose=()=>{setTikTokConnectionStatus(false);setTimeout(connect,2000)};
     ws.onmessage=e=>{try{const m=JSON.parse(e.data);
       if(m.type==='gift')onGift(m);else if(m.type==='chat')onChat(m.user||'Alguien',m.text);
       else if(m.type==='like')onLike(m);else if(m.type==='follow')onFollow(m);else if(m.type==='share')onShare(m);
@@ -713,9 +743,9 @@ function connect(){
     return;
   }
   const source=new EventSource('/api/events');
-  source.addEventListener('status',e=>{try{$('dot').className=JSON.parse(e.data).connected?'on':''}catch{}});
+  source.addEventListener('status',e=>{try{setTikTokConnectionStatus(JSON.parse(e.data).connected)}catch{}});
   source.addEventListener('update',e=>{try{handleTikTokEntry(JSON.parse(e.data).entry)}catch{}});
-  source.onerror=()=>$('dot').className='';
+  source.onerror=()=>setTikTokConnectionStatus(false);
 }
 
 /* ===== Bots de prueba: simulan eventos de TikTok llamando a los MISMOS manejadores que el WebSocket =====
