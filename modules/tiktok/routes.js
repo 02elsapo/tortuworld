@@ -1,0 +1,39 @@
+function registerTikTokRoutes(app, {
+  getStatus,
+  getConfiguration,
+  saveConfiguration,
+  reconnect,
+  openEventStream,
+}) {
+  app.get('/api/status', (request, response) => {
+    response.json(getStatus());
+  });
+
+  app.get('/api/config', (request, response) => {
+    response.json(getConfiguration());
+  });
+
+  app.put('/api/config', (request, response) => {
+    const result = saveConfiguration(request.body);
+    if (!result.ok) {
+      response.status(400).json(result);
+      return;
+    }
+    response.json(result);
+  });
+
+  app.post('/api/reconnect', (request, response) => {
+    const result = reconnect();
+    if (!result.ok) {
+      response.status(result.status).json({ ok: false, message: result.message });
+      return;
+    }
+    response.json(result);
+  });
+
+  app.get('/api/events', (request, response) => {
+    openEventStream(response);
+  });
+}
+
+module.exports = { registerTikTokRoutes };

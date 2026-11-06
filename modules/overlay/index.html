@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overlay</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: white; background: transparent; }
+    main { width: min(420px, 100vw); padding: 16px; }
+    #connection { margin: 0 0 12px; color: #b7f7c1; }
+    #connection[data-connected="false"] { color: #ffd1d1; }
+    ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    li { padding: 10px 12px; overflow-wrap: anywhere; background: #111c; border-radius: 8px; }
+    small { display: block; margin-bottom: 4px; color: #ccc; }
+    details { margin-top: 6px; }
+    pre { max-height: 180px; overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <main>
+    <p id="connection" role="status">Conectando al servidor…</p>
+    <ol id="events" aria-live="polite"></ol>
+  </main>
+  <script>
+    const connection = document.querySelector('#connection');
+    const events = document.querySelector('#events');
+    const source = new EventSource('/api/events');
+
+    function showStatus(status) {
+      connection.textContent = status.connected ? 'Conectado' : (status.status || 'Desconectado');
+      connection.dataset.connected = String(Boolean(status.connected));
+    }
+
+    function showEvents(entries) {
+      events.replaceChildren();
+      for (const entry of entries.slice(0, 20)) {
+        const item = document.createElement('li');
+        const heading = document.createElement('small');
+        heading.textContent = `${entry.type || 'Evento'} · ${entry.username || 'Usuario'}`;
+        const content = document.createElement('div');
+        content.textContent = entry.content || 'Evento recibido';
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = 'Datos';
+        const data = document.createElement('pre');
+        data.textContent = JSON.stringify(entry, null, 2);
+        details.append(summary, data);
+        item.append(heading, content, details);
+        events.append(item);
+      }
+    }
+
+    source.addEventListener('status', (event) => showStatus(JSON.parse(event.data)));
+    source.addEventListener('snapshot', (event) => showEvents(JSON.parse(event.data)));
+    source.addEventListener('update', (event) => {
+      const update = JSON.parse(event.data);
+      showEvents(update.events || [update.entry]);
+    });
+    source.onerror = () => {
+      connection.textContent = 'Reconectando al servidor…';
+      connection.dataset.connected = 'false';
+    };
+  </script>
+</body>
+</html>

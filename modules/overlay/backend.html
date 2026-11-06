@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backend básico</title>
+  <style>
+    :root { color-scheme: light; font: 16px system-ui, sans-serif; }
+    body { max-width: 640px; margin: 40px auto; padding: 0 16px; color: #202124; }
+    form { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+    input, button { padding: 10px 12px; font: inherit; }
+    input { flex: 1; min-width: 220px; }
+    #message { min-height: 1.5em; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Backend básico</h1>
+    <p>Conector TikTok: <strong id="status">Cargando…</strong></p>
+    <form id="account-form">
+      <label for="username">Usuario de TikTok</label>
+      <input id="username" name="username" autocomplete="off" placeholder="@usuario" required>
+      <button type="submit">Conectar</button>
+    </form>
+    <p id="message" role="status"></p>
+    <p><a href="/">Abrir overlay</a></p>
+  </main>
+  <script>
+    const form = document.querySelector('#account-form');
+    const usernameInput = document.querySelector('#username');
+    const status = document.querySelector('#status');
+    const message = document.querySelector('#message');
+    function showStatus(state) {
+      status.textContent = `${state.status || 'desconectado'}${state.username ? ` (@${state.username})` : ''}`;
+    }
+
+    async function loadConfiguration() {
+      const [configurationResponse, statusResponse] = await Promise.all([
+        fetch('/api/config'),
+        fetch('/api/status'),
+      ]);
+      if (!configurationResponse.ok || !statusResponse.ok) {
+        throw new Error('No se pudo cargar el estado del conector.');
+      }
+      const configuration = await configurationResponse.json();
+      usernameInput.value = configuration.username || '';
+      showStatus(await statusResponse.json());
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      message.textContent = '';
+      try {
+        const response = await fetch('/api/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usernameInput.value }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'No se pudo guardar la cuenta.');
+        message.textContent = `Conectando con @${result.username}…`;
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    const source = new EventSource('/api/events');
+    source.addEventListener('status', (event) => showStatus(JSON.parse(event.data)));
+    loadConfiguration().catch((error) => { message.textContent = error.message; });
+  </script>
+</body>
+</html>

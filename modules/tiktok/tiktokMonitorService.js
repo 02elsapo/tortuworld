@@ -1,0 +1,589 @@
+const { randomUUID } = require('node:crypto');
+const {
+  eventNames,
+  eventLabels,
+  defaultEnabledEvents,
+  WebcastEvent,
+  ControlEvent,
+} = require('./eventConfig');
+const { createEventFeedStore } = require('./eventFeedService');
+
+function loadTikTokConnector() {
+  return import('tiktok-live-connector');
+}
+
+function createTikTokMonitorService({
+  eventFeedStore = createEventFeedStore(),
+  TikTokLiveConnectionClass,
+  webcastEvents = WebcastEvent,
+  controlEvents = ControlEvent,
+  connectorLoader = loadTikTokConnector,
+  retryFastIntervalMs = 15000,
+  retryFastWindowMs = 5 * 60 * 1000,
+  retrySlowIntervalMs = 60000,
+  retrySlowWindowMs = 30 * 60 * 1000,
+  connectTimeoutMs = 15000,
+  maxConnectionAttempts = 51,
+  now = Date.now,
+  scheduleTimeout = setTimeout,
+  cancelTimeout = clearTimeout,
+} = {}) {
+  if (!Number.isFinite(retryFastIntervalMs) || retryFastIntervalMs <= 0
+    || !Number.isFinite(retryFastWindowMs) || retryFastWindowMs <= 0
+    || !Number.isFinite(retrySlowIntervalMs) || retrySlowIntervalMs <= 0
+    || !Number.isFinite(retrySlowWindowMs) || retrySlowWindowMs <= 0
+    || !Number.isFinite(connectTimeoutMs) || connectTimeoutMs <= 0
+    || !Number.isInteger(maxConnectionAttempts) || maxConnectionAttempts < 1
+    || typeof now !== 'function') {
+    throw new Error('Los intervalos de reintento y conexión deben ser números positivos.');
+  }
+
+  const state = {
+    username: '',
+    status: 'idle',
+    isConnected: false,
+    error: '',
+    lastEvent: null,
+    logs: [],
+    eventFeed: [],
+    recentJoiners: [],
+    connection: null,
+    retryAttempt: 0,
+    connectionAttempts: 0,
+    nextRetryAt: null,
+    serverInstanceId: null,
+    enabledEvents: new Set(defaultEnabledEvents.filter((eventName) => eventNames.includes(eventName))),
+    connectionEventListeners: new Map(),
+  };
+  const activityListeners = new Set();
+  const statusListeners = new Set();
+  const recentEventIds = new Map();
+  const giftComboCounts = new Map();
+  let connectionGeneration = 0;
+  let connectedInGeneration = false;
+  let retryStartedAt = null;
+  let lastAttemptAt = null;
+  let retryTimer = null;
+  let connectTimer = null;
+
+  function broadcastStatus() {
+    for (const listener of statusListeners) listener({ ...state });
+  }
+
+  function addLog(message, metadata = {}) {
+    const entry = {
+      time: new Date().toISOString(),
+      message,
+      ...metadata,
+    };
+    state.logs.unshift(entry);
+    return entry;
+  }
+
+  function updateEventFeedState() {
+    state.eventFeed = eventFeedStore.getAll();
+    return state.eventFeed;
+  }
+
+  function safeUserName(user) {
+    if (!user) return 'usuario';
+    if (typeof user === 'string') return user;
+    return user.uniqueId || user.displayId || user.nickname || user.displayName || 'usuario';
+  }
+
+  function summarizeEvent(eventName, data) {
+    if (!data || typeof data !== 'object') return `${eventName} recibido`;
+    if (data.comment) return `${safeUserName(data.user)}: ${data.comment}`;
+    if (data.giftName || data.gift?.name) return `${safeUserName(data.user || data.sender)} envió ${data.giftName || data.gift?.name}`;
+    if (data.followCount || data.followerCount) return `${safeUserName(data.user)} siguió el live`;
+    if (data.likeCount) return `Likes: ${data.likeCount}`;
+    if (data.roomUserCount || data.viewerCount) return `Viewers: ${data.roomUserCount || data.viewerCount}`;
+    return `${eventName} recibido`;
+  }
+
+  function eventAuthor(data) {
+    const user = data && (data.user || data.sender);
+    return user ? safeUserName(user) : 'Sistema';
+  }
+
+  function eventAvatar(data) {
+    const user = data && (data.user || data.sender);
+    if (!user || typeof user !== 'object') return '';
+    const picture = user.profilePictureUrl
+      || user.profilePictureUrls
+      || user.avatarThumb?.urlList?.[0]
+      || user.avatarThumb?.url_list?.[0]
+      || '';
+    return Array.isArray(picture) ? picture[0] || '' : picture;
+  }
+
+  function eventActivityCount(eventName, data) {
+    if (!data || typeof data !== 'object') return undefined;
+    const rawCount = eventName === webcastEvents.GIFT
+      ? data.repeatCount || data.comboCount
+      : eventName === webcastEvents.LIKE
+        ? data.incrementalLikeCount || data.count || data.likeCount
+        : undefined;
+    return Number.isFinite(rawCount) && rawCount > 0 ? Math.min(100, Math.floor(rawCount)) : undefined;
+  }
+
+  function getGiftActivityCount(data) {
+    const rawCount = Number(data && (data.repeatCount ?? data.comboCount));
+    const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.floor(rawCount) : 1;
+    const groupId = data && (data.groupId ?? data.group_id ?? data.comboId ?? data.combo_id);
+    if (groupId === undefined || groupId === null || groupId === '') return count;
+
+    const giftName = data.giftName || data.gift?.name || data.giftDetails?.giftName || '';
+    const key = `${safeUserName(data.user || data.sender)}:${giftName}:${groupId}`;
+    const previousCount = giftComboCounts.get(key) || 0;
+    const delta = Math.max(0, count - previousCount);
+    const repeatEnded = Boolean(data.repeatEnd ?? data.repeat_end);
+    if (repeatEnded) giftComboCounts.delete(key);
+    else if (count > previousCount) giftComboCounts.set(key, count);
+    return delta;
+  }
+
+  function getSourceEventId(data) {
+    if (!data || typeof data !== 'object') return '';
+    const common = data.common && typeof data.common === 'object' ? data.common : {};
+    const candidates = [
+      data.eventId,
+      data.event_id,
+      data.msgId,
+      data.msg_id,
+      data.logId,
+      data.log_id,
+      common.msgId,
+      common.msg_id,
+    ];
+    const sourceId = candidates.find((candidate) =>
+      (typeof candidate === 'string' && candidate.length > 0)
+      || (typeof candidate === 'number' && Number.isFinite(candidate)));
+    return sourceId === undefined ? '' : String(sourceId);
+  }
+
+  function wasEventAlreadyReceived(eventName, payload) {
+    const sourceId = getSourceEventId(payload);
+    if (!sourceId) return false;
+    const key = `${eventName}:${sourceId}`;
+    if (recentEventIds.has(key)) return true;
+    recentEventIds.set(key, Date.now());
+    if (recentEventIds.size > 5000) recentEventIds.delete(recentEventIds.keys().next().value);
+    return false;
+  }
+
+  function eventDiamondCount(eventName, data) {
+    if (eventName !== webcastEvents.GIFT || !data || typeof data !== 'object') return undefined;
+    const rawCount = data.diamondCount
+      ?? data.diamonds
+      ?? data.giftDetails?.diamondCount
+      ?? data.giftDetails?.diamond_count
+      ?? data.gift?.diamondCount
+      ?? data.gift?.diamond_count;
+    return Number.isFinite(rawCount) && rawCount > 0 ? Math.floor(rawCount) : undefined;
+  }
+
+  function eventContent(eventName, data) {
+    if (!data || typeof data !== 'object') return `${eventName} recibido`;
+
+    if (eventName === webcastEvents.CHAT) {
+      return data.comment || data.content || data.text || data.displayText || 'Envió un mensaje';
+    }
+    if (eventName === webcastEvents.GIFT) {
+      const giftName = data.giftName || data.gift?.name || data.giftDetails?.giftName;
+      const repeatCount = data.repeatCount || data.comboCount;
+      return giftName ? `Envió ${giftName}${repeatCount > 1 ? ` x${repeatCount}` : ''}` : 'Envió un regalo';
+    }
+    if (eventName === webcastEvents.LIKE) {
+      const likeCount = data.likeCount || data.totalLikeCount || data.incrementalLikeCount;
+      return likeCount ? `Envió ${likeCount} likes` : 'Envió likes';
+    }
+    if (eventName === webcastEvents.FOLLOW) return 'Siguió el live';
+    if (eventName === webcastEvents.SHARE) return 'Compartió el live';
+    if (eventName === webcastEvents.MEMBER) return 'Entró al live';
+    if (eventName === webcastEvents.ROOM_USER) {
+      const viewerCount = data.totalUser || data.roomUserCount || data.viewerCount || data.total;
+      return viewerCount ? `Audiencia actual: ${viewerCount}` : 'Actualizó la audiencia';
+    }
+
+    const summary = summarizeEvent(eventName, data);
+    if (summary !== `${eventName} recibido`) return summary;
+    return 'Evento recibido';
+  }
+
+  function applyEventSubscriptions(connection) {
+    const listeners = state.connectionEventListeners.get(connection);
+    if (!listeners) return;
+
+    for (const [eventName, listener] of listeners) {
+      connection.off(eventName, listener);
+      if (state.enabledEvents.has(eventName)) {
+        connection.on(eventName, listener);
+      }
+    }
+  }
+
+  function subscribe(connection) {
+    const listeners = new Map();
+    for (const eventName of eventNames) {
+      listeners.set(eventName, (payload) => {
+        if (state.connection !== connection || !state.enabledEvents.has(eventName)) return;
+        if (wasEventAlreadyReceived(eventName, payload)) return;
+        const summary = summarizeEvent(eventName, payload);
+        const username = eventAuthor(payload);
+        const content = eventContent(eventName, payload);
+        const activityCount = eventName === webcastEvents.GIFT
+          ? getGiftActivityCount(payload)
+          : eventActivityCount(eventName, payload);
+        const diamondCount = eventDiamondCount(eventName, payload);
+        if (eventName === webcastEvents.GIFT && activityCount === 0) return;
+
+        if (eventName === webcastEvents.MEMBER && username !== 'Sistema') {
+          state.recentJoiners.unshift({ username, time: new Date().toISOString() });
+          state.recentJoiners = state.recentJoiners.slice(0, 10);
+        }
+
+        state.lastEvent = {
+          id: getSourceEventId(payload) || randomUUID(),
+          event: eventName,
+          summary,
+          username,
+          content,
+          time: new Date().toISOString(),
+          payload,
+        };
+
+        const entry = addLog(`${eventName}: ${summary}`, {
+          id: state.lastEvent.id,
+          type: eventName,
+          eventLabel: eventLabels[eventName] || eventName,
+          username,
+          avatar: eventAvatar(payload),
+          content,
+          ...(activityCount === undefined ? {} : { activityCount }),
+          ...(diamondCount === undefined ? {} : { diamondCount }),
+        });
+
+        for (const listener of activityListeners) listener(entry);
+        eventFeedStore.push(entry);
+        updateEventFeedState();
+      });
+    }
+
+    state.connectionEventListeners.set(connection, listeners);
+    applyEventSubscriptions(connection);
+  }
+
+  function cancelScheduledRetry() {
+    if (retryTimer !== null) {
+      cancelTimeout(retryTimer);
+      retryTimer = null;
+    }
+    state.nextRetryAt = null;
+  }
+
+  function cancelConnectionTimeout() {
+    if (connectTimer !== null) {
+      cancelTimeout(connectTimer);
+      connectTimer = null;
+    }
+  }
+
+  function getErrorMessage(error, fallback) {
+    if (typeof error === 'string' && error.trim()) return error;
+    if (error instanceof Error && typeof error.message === 'string' && error.message.trim()) {
+      return error.message;
+    }
+    if (error && typeof error === 'object') {
+      const detail = error.message;
+      if (typeof detail === 'string' && detail.trim()) return detail;
+      if (detail && typeof detail === 'object') {
+        try {
+          return JSON.stringify(detail);
+        } catch {
+          return fallback;
+        }
+      }
+      try {
+        return JSON.stringify(error);
+      } catch {
+        return fallback;
+      }
+    }
+    return fallback;
+  }
+
+  function disconnectConnection(connection) {
+    try {
+      Promise.resolve(connection.disconnect()).catch((error) => {
+        addLog(`No se pudo cerrar la conexión: ${getErrorMessage(error, 'Error desconocido')}`);
+      });
+    } catch (error) {
+      addLog(`No se pudo cerrar la conexión: ${getErrorMessage(error, 'Error desconocido')}`);
+    }
+  }
+
+  function scheduleReconnect(username, generation, message, failedConnection = state.connection) {
+    if (generation !== connectionGeneration || retryTimer !== null) return;
+
+    cancelConnectionTimeout();
+    if (failedConnection && state.connection === failedConnection) {
+      state.connectionEventListeners.delete(failedConnection);
+      state.connection = null;
+      disconnectConnection(failedConnection);
+    }
+
+    state.isConnected = false;
+    if (message) state.error = message;
+    const elapsed = now() - retryStartedAt;
+    if (state.connectionAttempts >= maxConnectionAttempts
+      || elapsed >= retryFastWindowMs + retrySlowWindowMs) {
+      state.status = 'failed';
+      state.nextRetryAt = null;
+      addLog(`Se agotó el tiempo de reconexión a @${username}.`);
+      broadcastStatus();
+      return;
+    }
+
+    const interval = elapsed < retryFastWindowMs ? retryFastIntervalMs : retrySlowIntervalMs;
+    const delay = Math.max(0, interval - (now() - lastAttemptAt));
+    state.retryAttempt += 1;
+    state.nextRetryAt = new Date(Date.now() + delay).toISOString();
+    state.status = 'reconnecting';
+    addLog(`Se reintentará conectar a @${username} en ${Math.ceil(delay / 1000)} s (intento ${state.connectionAttempts + 1} de ${maxConnectionAttempts}).`);
+    broadcastStatus();
+    retryTimer = scheduleTimeout(() => {
+      retryTimer = null;
+      state.nextRetryAt = null;
+      if (generation !== connectionGeneration) return;
+      connectAttempt(username, generation);
+    }, delay);
+  }
+
+  function connectAttempt(username, generation) {
+    if (generation !== connectionGeneration) return;
+    if (now() - retryStartedAt > retryFastWindowMs + retrySlowWindowMs) {
+      state.status = 'failed';
+      state.nextRetryAt = null;
+      addLog(`Se agotó el tiempo de reconexión a @${username}.`);
+      broadcastStatus();
+      return;
+    }
+
+    state.connectionAttempts += 1;
+    lastAttemptAt = now();
+    state.status = state.retryAttempt ? 'reconnecting' : 'connecting';
+    state.isConnected = false;
+    broadcastStatus();
+    const startConnection = (ConnectionClass) => {
+      if (generation !== connectionGeneration) return;
+      let connection;
+      try {
+        connection = new ConnectionClass(username, {
+          processInitialData: true,
+          fetchRoomInfoOnConnect: true,
+          enableExtendedGiftInfo: false,
+        });
+      } catch (error) {
+        const message = getErrorMessage(error, 'No se pudo crear la conexión.');
+        scheduleReconnect(username, generation, message);
+        return;
+      }
+      state.connection = connection;
+      subscribe(connection);
+
+      const markConnected = () => {
+        if (generation !== connectionGeneration || state.connection !== connection || state.isConnected) return;
+        cancelConnectionTimeout();
+        cancelScheduledRetry();
+        state.retryAttempt = 0;
+        state.status = 'connected';
+        state.isConnected = true;
+        state.error = '';
+        connectedInGeneration = true;
+        addLog(`Conectado a @${username}.`);
+        broadcastStatus();
+      };
+
+      connection.on(controlEvents.CONNECTED, markConnected);
+      connection.on(controlEvents.DISCONNECTED, () => {
+        if (generation !== connectionGeneration || state.connection !== connection) return;
+        if (connectedInGeneration) {
+          cancelConnectionTimeout();
+          cancelScheduledRetry();
+          state.connectionEventListeners.delete(connection);
+          state.connection = null;
+          state.status = 'finalized';
+          state.isConnected = false;
+          state.retryAttempt = 0;
+          state.nextRetryAt = null;
+          state.error = '';
+          addLog(`El directo de @${username} finalizó. No se volverá a intentar conectar.`);
+          broadcastStatus();
+          return;
+        }
+        scheduleReconnect(username, generation, state.error);
+      });
+      connection.on(controlEvents.ERROR, (error) => {
+        if (generation !== connectionGeneration || state.connection !== connection) return;
+        const message = getErrorMessage(error, 'Error desconocido');
+        scheduleReconnect(username, generation, message);
+      });
+
+      connectTimer = scheduleTimeout(() => {
+        connectTimer = null;
+        if (generation !== connectionGeneration || state.connection !== connection || state.isConnected) return;
+        scheduleReconnect(username, generation, `Tiempo de espera agotado al conectar con @${username}.`, connection);
+      }, connectTimeoutMs);
+
+      try {
+        Promise.resolve(connection.connect()).then(markConnected).catch((error) => {
+          if (generation !== connectionGeneration || state.connection !== connection) return;
+          const message = getErrorMessage(error, 'No se pudo conectar');
+          scheduleReconnect(username, generation, message);
+        });
+      } catch (error) {
+        if (generation !== connectionGeneration || state.connection !== connection) return;
+        const message = getErrorMessage(error, 'No se pudo conectar');
+        scheduleReconnect(username, generation, message);
+      }
+    };
+
+    if (TikTokLiveConnectionClass) {
+      startConnection(TikTokLiveConnectionClass);
+      return;
+    }
+
+    connectorLoader()
+      .then(({ TikTokLiveConnection: ConnectionClass }) => {
+        if (typeof ConnectionClass !== 'function') {
+          throw new Error('El conector de TikTok no exportó TikTokLiveConnection.');
+        }
+        startConnection(ConnectionClass);
+      })
+      .catch((error) => {
+        if (generation !== connectionGeneration) return;
+        scheduleReconnect(username, generation, getErrorMessage(error, 'No se pudo cargar el conector de TikTok.'));
+      });
+  }
+
+  function connectUser(username) {
+    const clean = String(username || '').trim().replace(/^@+/, '');
+    if (!clean) throw new Error('Debes indicar un usuario de TikTok Live.');
+
+    connectionGeneration += 1;
+    const generation = connectionGeneration;
+    connectedInGeneration = false;
+    retryStartedAt = now();
+    lastAttemptAt = null;
+    cancelScheduledRetry();
+    cancelConnectionTimeout();
+    state.retryAttempt = 0;
+    state.connectionAttempts = 0;
+    if (state.connection) {
+      const previousConnection = state.connection;
+      state.connection = null;
+      state.connectionEventListeners.delete(previousConnection);
+      disconnectConnection(previousConnection);
+    }
+
+    state.username = clean;
+    state.status = 'connecting';
+    state.isConnected = false;
+    state.error = '';
+    state.recentJoiners = [];
+    addLog(`Conectando a @${clean}...`);
+    broadcastStatus();
+    connectAttempt(clean, generation);
+  }
+
+  function disconnectUser() {
+    connectionGeneration += 1;
+    connectedInGeneration = false;
+    retryStartedAt = null;
+    lastAttemptAt = null;
+    cancelScheduledRetry();
+    cancelConnectionTimeout();
+    state.retryAttempt = 0;
+    if (!state.connection) {
+      state.status = 'disconnected';
+      state.isConnected = false;
+      state.username = '';
+      state.error = '';
+      addLog('Sin conexión activa.');
+      broadcastStatus();
+      return;
+    }
+
+    const connection = state.connection;
+    state.connection = null;
+    state.connectionEventListeners.delete(connection);
+    disconnectConnection(connection);
+    state.status = 'disconnected';
+    state.isConnected = false;
+    state.username = '';
+    state.error = '';
+    addLog('Conexión detenida.');
+    broadcastStatus();
+  }
+
+  function setEnabledEvents(enabled) {
+    const nextEnabled = Array.isArray(enabled) ? enabled : [];
+    state.enabledEvents = new Set(nextEnabled);
+    if (state.connection) applyEventSubscriptions(state.connection);
+    return [...state.enabledEvents];
+  }
+
+  function getStatusPayload(serverInstanceId) {
+    return {
+      serverInstanceId,
+      username: state.username,
+      status: state.status,
+      isConnected: state.isConnected,
+      error: state.error,
+      retryAttempt: state.retryAttempt,
+      connectionAttempts: state.connectionAttempts,
+      maxConnectionAttempts,
+      nextRetryAt: state.nextRetryAt,
+      lastEvent: state.lastEvent,
+      logs: state.logs,
+      events: updateEventFeedState(),
+      recentJoiners: state.recentJoiners,
+      count: state.logs.length,
+    };
+  }
+
+  function getAvailableEventsPayload() {
+    return {
+      events: eventNames,
+      labels: eventLabels,
+      enabled: [...state.enabledEvents],
+    };
+  }
+
+  function subscribeToEvents(listener) {
+    if (typeof listener !== 'function') throw new Error('El suscriptor de eventos debe ser una función.');
+    activityListeners.add(listener);
+    return () => activityListeners.delete(listener);
+  }
+
+  function subscribeToStatus(listener) {
+    if (typeof listener !== 'function') throw new Error('El suscriptor de estado debe ser una función.');
+    statusListeners.add(listener);
+    return () => statusListeners.delete(listener);
+  }
+
+  return {
+    state,
+    connectUser,
+    disconnectUser,
+    setEnabledEvents,
+    getStatusPayload,
+    getAvailableEventsPayload,
+    getEventFeed: () => updateEventFeedState(),
+    subscribeToEvents,
+    subscribeToStatus,
+  };
+}
+
+module.exports = { createTikTokMonitorService };
