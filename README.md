@@ -1,4 +1,4 @@
-# TikTok Mini App Starter
+# tortu — Carrera de tortugas
 
 Carrera de tortugas para TikTok LIVE. Incluye la conexión al LIVE, un backend de configuración y un overlay transparente que transforma los eventos del conector en acciones del juego mediante Server-Sent Events (SSE).
 
