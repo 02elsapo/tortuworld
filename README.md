@@ -13,13 +13,13 @@ $env:TIKTOK_USERNAME = "nombre_de_usuario"
 npm start
 ```
 
-El servidor escucha en `http://localhost:3000` por defecto. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. También puedes dejar `TIKTOK_USERNAME` vacío y guardar el usuario en el backend. La conexión comienza al arrancar si hay una cuenta configurada.
+El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. También puedes dejar `TIKTOK_USERNAME` vacío y guardar el usuario en el backend. La conexión comienza al arrancar si hay una cuenta configurada.
 
 El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra el entorno con tu herramienta de despliegue. `.env.example` enumera las variables:
 
 | Variable | Predeterminado | Descripción |
 |---|---|---|
-| `PORT` | `3000` | Puerto HTTP. |
+| `PORT` | `80` | Puerto HTTP. |
 | `HOST` | `0.0.0.0` | Interfaz de red de escucha. |
 | `TIKTOK_USERNAME` | vacío | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
 | `TIKTOK_CONFIG_PATH` | `data/tiktok/config.json` | Ruta del archivo JSON con el usuario configurado desde el backend. |
