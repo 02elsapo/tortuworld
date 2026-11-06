@@ -32,6 +32,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /setTikTokConnectionStatus\(JSON\.parse\(e\.data\)\.connected\)/);
     assert.match(overlayHtml, /class="sponsor" id="sp-\$\{c\.c\}"/);
     assert.match(overlayHtml, /right:calc\(100% \+ 1rem\);top:50%;transform:translateY\(-50%\)/);
+    assert.match(overlayHtml, /flex-direction:row-reverse/);
+    assert.match(overlayHtml, /\.sponsor img,\.sponsor \.sa\{flex:none;width:1\.76rem;height:1\.76rem/);
     assert.match(overlayHtml, /setSponsor\(code,user,g\.avatar\)/);
     assert.match(overlayHtml, /avatar:entry\.avatar/);
 
