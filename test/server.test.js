@@ -27,6 +27,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /entry\.type==='gift'/);
     assert.match(overlayHtml, /@media \(orientation:portrait\)/);
     assert.match(overlayHtml, /--padr:12%/);
+    assert.match(overlayHtml, /#bottom\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
+    assert.match(overlayHtml, /#feed::before\{content:"Últimos eventos"/);
+    assert.match(overlayHtml, /id="bottom">[\s\S]*id="feed"[\s\S]*id="mvp"/);
     assert.match(overlayHtml, /#dot\{position:fixed;right:\.7rem;bottom:\.7rem/);
     assert.match(overlayHtml, /#dot\.on\{background:#36e276/);
     assert.match(overlayHtml, /setTikTokConnectionStatus\(JSON\.parse\(e\.data\)\.connected\)/);
