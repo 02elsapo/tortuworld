@@ -1,0 +1,1197 @@
+<!doctype html>
+<!-- ============================================================================================
+     CARRERA DE TORTUGAS v6 · RESUMEN (lee esto primero)
+     v6: al llegar la primera tortuga la carrera termina, los otros carriles se atenúan y el avatar + @usuario del campeón
+     queda en VIDRIERA 3 s (SHOW_MS) con corona, rayos, victorias/racha, corazones y pedido "¡SÍGANLO TODOS!". Aviso de tensión al 88 %.
+     Qué es: overlay para TikTok LIVE. Cada TORTUGA ES UN ESPECTADOR (los 5 con más puntos de la ronda),
+     con su avatar en el caparazón y su @nombre en una etiqueta que la sigue. Ayuda a canales pequeños a crecer:
+     seguir/compartir da más puntos que comentar, y quien participa ve su avatar corriendo en el LIVE.
+     No hay equipos ni selección por país. El contrato de eventos del backend es chat, gift, like,
+     follow y share; roomUser/audiencia no forma parte del juego.
+     Puntos por evento: unirse al LIVE 0.5 (participante automático, ?join=0.5; 0 = off) · comentario 1 (máx. 1 cada 8 s por usuario) · like 0.1 c/u · compartir 3 · seguir 5 ·
+     regalo = diamantes x cantidad x combo (hasta x2). El empuje doble (barra de meta) duplica todos los puntos.
+     Posición de cada tortuga = puntos de la ronda / META (?target=40), de 0 a 100 %. La primera en llegar queda
+     como campeona y termina la carrera.
+     Parámetros URL: ?target=40 (puntos para ganar) · ?goal=60 (meta de la comunidad) · ?idle=15 (segundos para
+     activar los bots de espera; 0 = apagados) · ?demo=1 (bots de prueba) · ?panel=1 (panel de pruebas) ·
+     ?safe=1 (margen derecho) · ?top= / ?bottom= (márgenes en %) · ?sound=0 / ?music=0 · ?ws=ws://host:puerto
+     Mapa del script: CFG/estado -> sonido -> dibujo (turtle, carriles) -> pantalla (render, avatar, slots, raceAdd)
+     -> puntuación (scoreContestant) -> fin/nueva ronda -> movimiento (frame) -> conexión -> bots de espera y de prueba.
+     ============================================================================================ -->
+<!-- Overlay 'Carrera de tortugas' para TikTok LIVE. Un solo archivo, sin dependencias de build.
+     Para conectar eventos de TikTok desde Node, lee la GUÍA PARA EL PROGRAMADOR DE BACKEND al inicio del bloque de JavaScript. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores</title>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#07262B;--ink2:#0D3A41;--sun:#FFC93C;--pink:#FF3D7F;--cream:#FFF6E0;--mint:#5CF2C0;--sand:#F3DFA2;--sand2:#E8CE8C;--grass:#5FB35A;--grass2:#4A9A4C;--padr:3%}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:min(3.8vw,2.1vh)}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:var(--cream);font-family:'Nunito',system-ui,sans-serif;font-weight:800}
+.disp{font-family:'Bowlby One','Arial Black',sans-serif;font-weight:400}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9}
+#cd,#win{display:none!important}
+/* Todo fluye en una sola columna: nada se encima, en cualquier pantalla */
+#app{position:absolute;top:var(--top,6%);bottom:var(--bot,14%);left:3%;right:var(--padr);display:flex;flex-direction:column;gap:.5rem}
+#bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.45rem;flex:1;min-height:0}
+.panel{background:rgba(7,38,43,.9);border:.18rem solid var(--ink2);border-radius:1.1rem;box-shadow:0 .3rem 0 rgba(0,0,0,.3)}
+
+/* Cabecera */
+#head{position:relative;flex:none;border:.2rem solid var(--sun);padding:.45rem .8rem .55rem;text-align:center}
+#head h1{font-size:1rem;color:var(--sun);line-height:1.1;white-space:nowrap}
+.pill{position:absolute;top:-.8rem;right:.8rem;font-size:.85rem;background:var(--pink);color:#fff;border-radius:999px;padding:.1rem .7rem;line-height:1.4;box-shadow:0 .15rem 0 rgba(0,0,0,.3)}
+#slot{position:relative;height:1.6rem;margin-top:.3rem;display:flex;align-items:center;justify-content:center}
+#how{font-size:.85rem;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#how2{font-size:.85rem;margin-top:.2rem;color:var(--mint)}
+#auditStatus{margin-top:.2rem;font-size:.7rem;line-height:1.15;color:var(--mint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#goal{display:flex;align-items:center;gap:.5rem;margin-top:.35rem;font-size:.85rem}
+#goal .gb{flex:1;height:.85rem;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden}
+#gf{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),var(--sun));border-radius:999px;transition:width .5s}
+#gt{min-width:4rem;text-align:right}
+#banner{display:none;position:absolute;inset:0;margin:auto;width:max-content;max-width:100%;height:1.6rem;line-height:1.6rem;padding:0 1rem;border-radius:999px;background:var(--mint);color:var(--ink);font-size:.95rem;text-align:center}
+#banner.on{display:block;animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
+#specialEvent{display:none;flex:none;align-items:center;justify-content:center;min-height:1.6rem;padding:.2rem .55rem;border:.15rem solid var(--sun);border-radius:.7rem;background:linear-gradient(90deg,#FFC93C,#FF9F1C);color:var(--ink);font-size:.9rem;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 .2rem .5rem rgba(0,0,0,.4);z-index:5}
+#specialEvent.on{display:flex;animation:pop .35s cubic-bezier(.2,1.6,.4,1) both}
+
+/* Pista: 5 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
+   Los anchos de .tur / .mk / .sl / .pl usan el mismo desplazamiento (.8rem de margen + pista de 100% - 7rem) para que
+   la nariz de la tortuga coincida con las líneas de 25/50/75 % y con la meta. Si cambias el tamaño de .tur, ajusta los cuatro. */
+#lanes{flex:1.5 1 0;min-height:0;display:flex;flex-direction:column;gap:.3rem}
+.lane{flex:1 1 0;min-height:4.4rem;max-height:5.8rem;display:flex;align-items:stretch;border-radius:.9rem;overflow:hidden;box-shadow:0 .25rem 0 rgba(0,0,0,.28)}
+.lane:nth-child(odd){background:rgba(243,223,162,.95)}
+.lane:nth-child(even){background:rgba(232,206,140,.95)}
+.lab{position:relative;z-index:3;width:2.8rem;justify-content:center;flex:none;background:var(--ink);display:flex;align-items:center;gap:.3rem;padding:0 .4rem}
+.rk{flex:none;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--ink2);color:var(--cream);font-size:.95rem;display:grid;place-items:center}
+.rk.r1{background:var(--sun);color:var(--ink)}.rk.r2{background:#D9E2E5;color:var(--ink)}.rk.r3{background:#E3A46B;color:var(--ink)}
+.lab .fl{font-size:1.7rem;line-height:1}
+.nm{display:flex;flex-direction:column;line-height:1.05}
+.nm{min-width:0}.nm b{font-family:'Bowlby One',sans-serif;font-weight:400;color:var(--sun);font-size:.8rem;max-width:5.6rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm small{font-size:.75rem;opacity:.85}
+.lab em{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.05;font-style:normal;color:var(--mint)}
+.lab em span{font-size:1.05rem}.lab em small{font-size:.75rem;color:var(--sun)}
+.lane.lead .lab{box-shadow:inset .25rem 0 0 var(--sun)}
+.trk{position:relative;flex:1;border-top:.2rem solid var(--grass);border-bottom:.2rem solid var(--grass2);background-image:radial-gradient(rgba(120,85,30,.25) .07rem,transparent .1rem),radial-gradient(rgba(255,255,255,.28) .06rem,transparent .09rem);background-size:1.1rem 1rem,1.7rem 1.3rem;background-position:0 0,.5rem .4rem}
+.mk{position:absolute;top:0;bottom:0;width:0;border-left:.12rem dashed rgba(7,38,43,.18)}
+.sl{position:absolute;top:0;bottom:0;left:6.2rem;width:.18rem;background:rgba(255,255,255,.75)}
+.fin{position:absolute;right:0;top:0;bottom:0;width:.8rem;background:repeating-conic-gradient(var(--ink) 0 25%,#fff 0 50%) 0 0/.4rem .4rem}
+.tur{position:absolute;top:62%;width:5.4rem;height:3.5rem;margin-top:-1.75rem;left:calc(.8rem + (100% - 7rem)*var(--p,0)/100);z-index:2}
+.tur svg{width:100%;height:100%;overflow:visible}
+.sponsor{position:absolute;right:calc(100% + 1rem);top:50%;transform:translateY(-50%);z-index:4;display:none;flex-direction:row-reverse;align-items:center;gap:.3rem;max-width:min(8rem,70vw);height:2rem;padding:.08rem .1rem .08rem .4rem;border:.08rem solid var(--sun);border-radius:999px;background:rgba(7,38,43,.96);color:var(--cream);font:800 .65rem/1 system-ui,sans-serif;white-space:nowrap;overflow:hidden;pointer-events:none}
+.sponsor.on{display:flex}
+.sponsor img,.sponsor .sa{flex:none;width:1.76rem;height:1.76rem;border-radius:50%;object-fit:cover;background:var(--pink);color:#fff;text-align:center;line-height:1.76rem}
+.sponsor-name{overflow:hidden;text-overflow:ellipsis}
+.crown{position:absolute;right:-.5rem;top:-.2rem;font-size:1.1rem;font-style:normal;display:none;z-index:3;animation:bob 1s ease-in-out infinite alternate}
+.lane.lead .crown{display:block}
+@keyframes bob{to{transform:translateY(-.15rem) rotate(6deg)}}
+.tur.turbo{filter:drop-shadow(0 0 .5rem var(--pink)) drop-shadow(0 0 .9rem var(--sun))}
+.tur.turbo::before{content:"";position:absolute;right:100%;top:30%;width:2.5rem;height:40%;background:linear-gradient(90deg,transparent,var(--sun));border-radius:999px}
+.pl{position:absolute;top:-.1rem;color:var(--ink);background:var(--sun);border-radius:999px;padding:0 .5rem;font-size:.9rem;white-space:nowrap;z-index:3;animation:up 1.2s ease-out forwards;left:calc(.8rem + (100% - 7rem)*var(--p,0)/100 + 2rem)}
+@keyframes up{to{transform:translateY(-1.2rem);opacity:0}}
+.dust{position:absolute;top:calc(50% + .6rem);width:.6rem;height:.6rem;margin-left:-.2rem;border-radius:50%;background:rgba(255,246,224,.8);z-index:1;pointer-events:none;animation:dust .8s ease-out forwards}
+@keyframes dust{to{transform:translate(-1.8rem,-.6rem) scale(2.4);opacity:0}}
+
+/* Cuenta regresiva */
+#cd{position:absolute;left:0;right:0;top:34%;text-align:center;font-size:7rem;line-height:1;color:var(--sun);text-shadow:0 .3rem 0 var(--ink),0 0 1rem rgba(0,0,0,.5);display:none;z-index:7;pointer-events:none}
+#cd.on{display:block;animation:pop .4s cubic-bezier(.2,1.6,.4,1) both}
+
+/* Tablas en vivo */
+#standings,#activity{min-width:0;min-height:0;padding:.3rem .5rem;overflow:hidden}
+#standings h2,#activity h2{font-size:.85rem;color:var(--sun);margin-bottom:.1rem}
+#topPlayers{display:flex;flex-direction:column;justify-content:space-evenly;gap:.22rem;height:calc(100% - 1.2rem)}
+.player-row{display:grid;grid-template-columns:1.5rem 2.45rem minmax(0,1fr) auto;align-items:center;gap:.35rem;min-height:0;padding:.22rem .4rem;border-radius:.65rem;background:rgba(255,255,255,.08)}
+.player-row:first-child{border:1px solid var(--sun);background:linear-gradient(90deg,rgba(255,201,60,.2),rgba(255,201,60,.05))}
+.player-rank{color:var(--sun);font-size:.9rem;text-align:center}
+.player-runner{position:relative;display:block;width:2.35rem;height:1.8rem}
+.runner-shell{position:absolute;z-index:2;left:.18rem;top:.15rem;width:1.42rem;height:1.35rem;overflow:hidden;border:.1rem solid var(--ink);border-radius:50%;background:var(--grass);box-shadow:0 0 0 .06rem var(--cream)}
+.runner-shell::after{position:absolute;inset:0;border:1px solid rgba(7,38,43,.4);border-radius:50%;content:"";pointer-events:none}
+.runner-shell img{width:100%;height:100%;object-fit:cover}
+.runner-fallback{display:grid;width:100%;height:100%;place-items:center;background:var(--pink);color:#fff;font-size:.7rem}
+.runner-head{position:absolute;right:.02rem;top:.52rem;width:.55rem;height:.55rem;border:.06rem solid var(--ink);border-radius:50%;background:var(--mint)}
+.runner-head::after{position:absolute;top:.12rem;right:.1rem;width:.07rem;height:.07rem;border-radius:50%;background:var(--ink);content:""}
+.runner-leg{position:absolute;z-index:1;width:.42rem;height:.34rem;border-radius:50%;background:var(--grass2)}
+.runner-leg.front{right:.42rem;bottom:.03rem}
+.runner-leg.back{left:.35rem;bottom:.03rem}
+.runner-tail{position:absolute;left:0;top:.72rem;width:.34rem;height:.34rem;clip-path:polygon(100% 0,100% 100%,0 50%);background:var(--grass2)}
+.player-info{min-width:0}
+.player-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem}
+.player-bar{height:.22rem;margin-top:.18rem;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.14)}
+.player-bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--sun));transition:width .25s}
+.player-points{min-width:2.5rem;color:var(--sun);font-size:.85rem;text-align:right}
+#standings table,#activity table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.68rem;line-height:1.1}
+#standings th,#standings td,#activity th,#activity td{padding:.1rem .15rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#standings th,#activity th{color:var(--mint);font-size:.62rem}
+#positionRows td:first-child{width:1rem;color:var(--sun);font-weight:900}
+#positionRows td:nth-child(3),#positionRows td:nth-child(4){text-align:right}
+#eventRows td:first-child{width:2.4rem}
+#eventRows td:nth-child(2){width:3.2rem}
+#eventRows td:nth-child(3){width:25%}
+#feed{display:flex;flex-direction:column;align-items:stretch;gap:.1rem;min-height:0;margin-top:.15rem;pointer-events:none}
+#feed span{max-width:100%;padding:.12rem .35rem;border-radius:.4rem;background:linear-gradient(90deg,var(--pink),#FF7A4D);font-size:.62rem;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:pop .4s cubic-bezier(.2,1.6,.4,1) both;box-shadow:0 .2rem 0 rgba(0,0,0,.28)}
+#feed span.hot{background:linear-gradient(90deg,var(--sun),#FF9F1C);color:var(--ink)}
+#feed span.cp{background:linear-gradient(90deg,var(--mint),#2BC9A0);color:var(--ink)}
+#feed span.soft{background:rgba(7,38,43,.9);box-shadow:none}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+
+/* Los que más empujan */
+#mvp{margin-top:.15rem}
+#mvp h2{font-size:.62rem;color:var(--sun);margin-bottom:.05rem}
+.r{display:flex;align-items:center;gap:.25rem;font-size:.65rem;line-height:1.1}
+.r b{width:.9rem;color:var(--sun);font-size:.7rem}.r span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.r em{font-style:normal;color:var(--mint)}
+.empty{font-size:.62rem;opacity:.85}
+
+/* Ganador + podio */
+#win{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:8;background:rgba(7,38,43,.6)}
+#win.on{display:flex}
+#win .card{text-align:center;background:var(--sun);color:var(--ink);padding:1.1rem 1.2rem;border-radius:1.6rem;border:.25rem solid var(--ink);animation:pop .6s cubic-bezier(.2,1.6,.4,1) both;width:90%;max-width:32rem}
+.kick{font-size:.95rem;opacity:.7}
+#win .big{font-size:2.3rem;line-height:1.1;margin-top:.15rem}
+#win .sm{font-size:1.05rem;margin-top:.4rem}
+#pod{display:flex;justify-content:center;align-items:flex-end;gap:.5rem;margin-top:.8rem}
+.pc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.pc span{font-size:2.6rem;line-height:1.2}
+.pc b{width:4.8rem;display:flex;align-items:center;justify-content:center;border-radius:.5rem .5rem 0 0;color:var(--ink);font-size:1.3rem}
+.p1 b{height:4.2rem;background:#fff}.p2 b{height:3.1rem;background:#D9E2E5}.p3 b{height:2.3rem;background:#E3A46B}
+.nx{height:.5rem;background:rgba(7,38,43,.2);border-radius:999px;overflow:hidden;margin-top:.9rem}
+.nx i{display:block;height:100%;width:100%;background:var(--ink)}
+.sm2{font-size:.85rem;margin-top:.3rem;opacity:.8}
+
+#snd{position:fixed;left:1.8rem;bottom:.3rem;z-index:30;font-size:.8rem;background:rgba(0,0,0,.65);padding:.1rem .6rem;border-radius:999px;display:none}
+@media (orientation:portrait){
+  html{font-size:clamp(12px,min(3.2vw,1.8vh),32px);--padr:12%}
+  #app{top:3%;bottom:3%;left:3%;right:var(--padr);gap:.2rem}
+  .lab{width:2.6rem;gap:.2rem;padding:0 .25rem}
+  #head{padding:.18rem .3rem .2rem}
+  #head h1{font-size:1rem}
+  #slot{height:.75rem;margin-top:.05rem}
+  #how{font-size:.56rem}
+  #how2,#auditStatus{display:none}#goal{font-size:.6rem;margin-top:.1rem}#goal .gb{height:.5rem}
+  #bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,2fr) minmax(0,.8fr);gap:.25rem}
+  #standings,#activity{padding:.12rem .3rem;border-radius:.5rem}
+  #standings h2,#activity h2{font-size:.7rem;margin-bottom:.1rem}
+  #topPlayers{height:calc(100% - 1rem);gap:.12rem}
+  .player-row{grid-template-columns:1.1rem 2rem minmax(0,1fr) auto;gap:.25rem;padding:.1rem .25rem}
+  .player-rank{font-size:.62rem}
+  .player-runner{width:1.9rem;height:1.5rem}
+  .runner-shell{left:.14rem;top:.12rem;width:1.12rem;height:1.05rem}
+  .runner-head{top:.4rem;width:.42rem;height:.42rem}
+  .runner-leg{width:.32rem;height:.26rem}
+  .runner-leg.front{right:.32rem}
+  .runner-leg.back{left:.25rem}
+  .runner-tail{top:.55rem;width:.27rem;height:.27rem}
+  .player-name{font-size:.62rem}
+  .player-bar{height:.14rem;margin-top:.08rem}
+  .player-points{min-width:2rem;font-size:.62rem}
+  #standings table,#activity table{font-size:.58rem;line-height:1}
+  #standings th,#activity th{font-size:.52rem}
+  #activity th:first-child,#eventRows td:first-child,#activity th:last-child,#eventRows td:last-child{display:none}
+  #mvp{display:none}
+  #feed,#snd{display:none}
+  #specialEvent{min-height:1.2rem;padding:.1rem .3rem;font-size:.7rem}
+}
+/* Panel de pruebas */
+#dot{position:fixed;right:.7rem;bottom:.7rem;width:.85rem;height:.85rem;border-radius:50%;background:#ff4d4d;box-shadow:0 0 .45rem rgba(0,0,0,.65);z-index:30}
+#dot.on{background:#36e276;box-shadow:0 0 .55rem rgba(54,226,118,.8)}
+#bots{position:fixed;right:8px;top:8px;z-index:40;width:176px;background:rgba(0,0,0,.82);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px;font:12px/1.2 system-ui,sans-serif;display:none;gap:4px;flex-wrap:wrap}
+#bots.on{display:flex}
+#bots b{width:100%;font-size:11px;opacity:.8}
+#bots button{flex:1 1 45%;padding:7px 4px;border:0;border-radius:6px;background:#1d4f57;color:#fff;font:inherit;cursor:pointer}
+#bots button.act{background:var(--pink)}
+#bots label{width:100%;font-size:11px;margin-top:4px}#bots input{width:100%}
+@media (prefers-reduced-motion:reduce){.crown{animation:none}}
+ /* v3: avatar redondo (ya sin uso en la etiqueta del carril), carril vacío atenuado, ganador resaltado,
+   animación al cambiar de dueño (.swap) y etiqueta .tag con @usuario + puntos que viaja con la tortuga. */
+.av{flex:none;width:1.9rem;height:1.9rem;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:.12rem solid var(--sun);background:var(--ink2);color:#fff;font-size:.9rem}
+.av img{width:100%;height:100%;object-fit:cover}
+.lane.empty .tur{opacity:.45;filter:grayscale(.7)}
+.lane.win{outline:.2rem solid var(--sun);box-shadow:0 0 1rem var(--sun)}
+.tur.swap svg{animation:pop .6s cubic-bezier(.2,1.6,.4,1) both}
+/* FIJA: esquina superior izquierda de la pista (al inicio); ya no sigue a la tortuga */
+.tag{position:absolute;left:.6rem;top:.15rem;margin:0;max-width:calc(100% - 1.4rem);display:flex;align-items:baseline;gap:.45rem;padding:0;height:1.7rem;line-height:1.7rem;white-space:nowrap;z-index:5;pointer-events:none}
+.tag b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-family:'Bowlby One','Arial Black',sans-serif;font-weight:400;font-size:1.4rem;letter-spacing:.02em;color:#07262B;-webkit-text-stroke:.14rem #FFF6E0;paint-order:stroke fill;text-shadow:none;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.tag small{flex:none;font-size:.95rem;color:#0D3A41;font-weight:800;-webkit-text-stroke:.1rem #FFF6E0;paint-order:stroke fill}
+.lane.empty .tag{display:none}
+/* Pantalla horizontal: se reduce el rem para que quepan los 5 carriles grandes sin tapar el panel inferior */
+@media (orientation:landscape){html{font-size:min(3.8vw,1.45vh)}}
+/* v3.1 · DISEÑO EN DOS MITADES: arriba carrera + barra de mensajes; abajo solo la tabla de puntajes (ocupa su mitad) */
+#activity{display:none}                                   /* la tabla de EVENTOS ya no se muestra: el último evento sale en la barra de mensajes */
+/* La carrera tiene PRIORIDAD de altura: cada carril mide fijo 4.4rem y la tabla de abajo cede (flex) si falta espacio.
+   Así los carriles nunca se desbordan por debajo de la barra de mensajes ni la tapan. */
+#lanes{flex:0 0 auto}
+.lane{flex:0 0 4.4rem;min-height:4.4rem;max-height:none}
+#bottom{display:block;flex:1 1 0;height:auto;min-height:0;overflow:hidden}
+#standings{height:100%;padding:.4rem .6rem}
+#specialEvent{display:flex!important;flex:none;white-space:normal;line-height:1.15;min-height:2.2rem;font-size:.95rem} /* barra de mensajes SIEMPRE visible */
+#topPlayers{gap:.3rem}
+.player-row{flex:1 1 0;max-height:4.8rem;grid-template-columns:1.6rem 3.4rem minmax(0,1fr) auto}
+.player-runner{transform:scale(1.35);transform-origin:left center}
+.player-rank{font-size:1.2rem}
+.player-name{font-size:1.1rem;white-space:normal;overflow:visible;word-break:break-all}
+.player-points{font-size:1.3rem}
+#standings h2{font-size:1rem}
+
+/* ===== v4 · GAMIFICACIÓN: efectos ===== */
+.emo{position:absolute;top:30%;font-size:1.5rem;line-height:1;z-index:6;pointer-events:none;left:calc(.8rem + (100% - 7rem)*var(--p,0)/100 + 2.2rem);animation:emo 1.6s ease-out forwards}
+@keyframes emo{0%{transform:translate(0,.6rem) scale(.4);opacity:0}15%{opacity:1;transform:translate(0,0) scale(1.2)}100%{transform:translate(var(--dx,0),-2.6rem) scale(.9) rotate(var(--rt,0deg));opacity:0}}
+.ring{position:absolute;left:1.6rem;top:30%;width:2.6rem;height:2.6rem;margin:-1.3rem 0 0 -1.3rem;border-radius:50%;border:.28rem solid var(--sun);box-shadow:0 0 1rem var(--sun);pointer-events:none;animation:ring .9s ease-out forwards;z-index:4}
+.ring.mega{border-color:var(--pink);box-shadow:0 0 1.4rem var(--pink),0 0 2.4rem var(--sun)}
+@keyframes ring{to{transform:scale(4.2);opacity:0}}
+.lane.lead{box-shadow:0 0 .9rem rgba(255,201,60,.9),0 .25rem 0 rgba(0,0,0,.28)}
+.lane.lead::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:shine 3.2s ease-in-out infinite;pointer-events:none;z-index:4}
+@keyframes shine{60%,100%{transform:translateX(120%)}}
+.lane{position:relative}
+.lane.flash{animation:flash .9s ease-out}
+@keyframes flash{0%{outline:.25rem solid var(--pink);filter:brightness(1.5)}100%{outline:.25rem solid transparent;filter:none}}
+#big{position:fixed;left:50%;top:26%;z-index:20;transform:translateX(-50%);max-width:92vw;padding:.4rem 1.2rem .5rem;border-radius:1.2rem;background:var(--ink);border:.25rem solid var(--sun);color:#fff;text-align:center;font-family:'Bowlby One','Arial Black',sans-serif;font-size:1.5rem;line-height:1.15;pointer-events:none;opacity:0;box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 2rem rgba(255,201,60,.7)}
+#big small{display:block;font-size:.95rem;color:var(--mint);margin-top:.1rem}
+#big.t2{border-color:var(--pink);font-size:1.9rem;box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 2.4rem var(--pink)}
+#big.t3{border-color:var(--mint);font-size:2.3rem;background:linear-gradient(135deg,#0D3A41,#5a1240);box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 3rem var(--sun),0 0 5rem var(--pink)}
+#big.on{animation:bigpop 2.2s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes bigpop{0%{opacity:0;transform:translateX(-50%) scale(.3) rotate(-6deg)}12%{opacity:1;transform:translateX(-50%) scale(1.12) rotate(2deg)}22%{transform:translateX(-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-1.5rem)}}
+#app.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translate(-.35rem,.2rem)}40%{transform:translate(.35rem,-.2rem)}60%{transform:translate(-.25rem,-.15rem)}80%{transform:translate(.2rem,.15rem)}}
+#vig{position:fixed;inset:0;z-index:8;pointer-events:none;opacity:0;box-shadow:inset 0 0 6rem 1.5rem var(--sun)}
+#vig.on{animation:vig 1s ease-out}
+@keyframes vig{0%{opacity:.9}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.lane.lead::after{animation:none}}
+
+/* La carrera queda arriba; la mitad inferior aparece solo durante los festejos. */
+#app{top:0;bottom:50%;left:3%;right:var(--padr);gap:.2rem}
+#lanes{flex:1 1 0;min-height:0}
+.lane{flex:1 1 0;min-height:0;height:auto}
+.tur{top:50%;width:auto;height:100%;aspect-ratio:70 / 46;margin-top:0;transform:translateY(-50%)}
+#bottom{position:fixed;inset:50% 0 0;z-index:18;display:none;align-items:center;justify-content:center;overflow:hidden;background:#000}
+#bottom.on{display:flex}
+#bottom #standings,#bottom #activity{display:none}
+#big{position:absolute;left:50%;top:50%;z-index:1;max-width:92vw;transform:translate(-50%,-50%)}
+@keyframes bigpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-6deg)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(2deg)}22%{transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,calc(-50% - 1.5rem)) scale(1)}}
+
+/* ===== v6 · ANUNCIO EMERGENTE DEL GANADOR (3 s) sobre las rutas ===== */
+#fx{z-index:45}
+#spotBg{position:fixed;left:0;right:0;top:0;bottom:50%;z-index:39;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 50%,rgba(7,38,43,.15),rgba(0,0,0,.72))}
+#spotBg.on{animation:sbg var(--sm,3s) ease forwards}
+@keyframes sbg{0%{opacity:0}8%{opacity:1}88%{opacity:1}100%{opacity:0}}
+#spot{position:fixed;left:50%;top:25%;z-index:40;width:min(94vw,36rem);display:none;flex-direction:row;align-items:center;gap:1rem;padding:1.1rem 1.2rem 1.5rem;border-radius:1.4rem;background:linear-gradient(135deg,#0D3A41,#07262B);border:.28rem solid var(--sun);box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 3rem rgba(255,201,60,.85);pointer-events:none;transform:translate(-50%,-50%)}
+#spot.on{display:flex;animation:scard var(--sm,3s) cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes scard{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-8deg)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.07) rotate(1deg)}14%{transform:translate(-50%,-50%) scale(1)}88%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+#spot .stage{position:relative;flex:none;width:clamp(6.5rem,22vmin,10rem);aspect-ratio:1}
+#spot .rays{position:absolute;left:50%;top:50%;width:210%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:repeating-conic-gradient(rgba(255,201,60,.55) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 18%,transparent 66%);mask:radial-gradient(circle,#000 18%,transparent 66%);animation:rays 7s linear infinite}
+@keyframes rays{to{transform:translate(-50%,-50%) rotate(360deg)}}
+#spot .sa{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;border:.35rem solid var(--sun);display:grid;place-items:center;font:3.4rem 'Bowlby One','Arial Black',sans-serif;color:#fff;box-shadow:0 0 0 .25rem var(--ink),0 0 1.8rem .6rem rgba(255,201,60,.85);animation:avp .9s ease-in-out infinite alternate}
+@keyframes avp{to{transform:scale(1.05)}}
+#spot .sa img{width:100%;height:100%;object-fit:cover}
+#spot .crown{position:absolute;display:block;left:50%;top:-2.5rem;margin-left:-1.5rem;width:3rem;font-size:2.7rem;line-height:1;text-align:center;animation:crowndrop .8s .25s cubic-bezier(.3,1.7,.5,1) both;filter:drop-shadow(0 .2rem 0 rgba(0,0,0,.5))}
+@keyframes crowndrop{0%{transform:translateY(-4rem) rotate(-30deg);opacity:0}100%{transform:none;opacity:1}}
+#spot .sb{min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;text-align:left}
+#spot .ribbon{font:1rem/1.1 'Bowlby One','Arial Black',sans-serif;color:var(--ink);background:linear-gradient(90deg,#FFC93C,#FF9F1C);padding:.25rem .85rem;border-radius:999px;box-shadow:0 .15rem 0 rgba(0,0,0,.4);white-space:nowrap}
+#spot .name{max-width:100%;font:1.9rem/1.1 'Bowlby One','Arial Black',sans-serif;color:var(--sun);-webkit-text-stroke:.12rem var(--ink);paint-order:stroke fill;text-shadow:0 .2rem 0 rgba(0,0,0,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#spot .badges{display:flex;gap:.35rem;flex-wrap:wrap}
+#spot .badges span{font-size:.8rem;line-height:1;padding:.25rem .6rem;border-radius:999px;background:var(--ink);border:.1rem solid var(--sun);color:var(--cream)}
+#spot .cta{font:1.1rem/1.15 'Bowlby One','Arial Black',sans-serif;color:#fff;background:linear-gradient(90deg,var(--pink),#FF7A4D);padding:.4rem .9rem;border-radius:1rem;border:.16rem solid #fff;box-shadow:0 .25rem 0 rgba(0,0,0,.4),0 0 1.4rem var(--pink);animation:ctap .55s ease-in-out infinite alternate}
+@keyframes ctap{to{transform:scale(1.06)}}
+#spot .cta2{font-size:.95rem;color:var(--mint)}
+#spot .nx2{font-size:.8rem;color:var(--cream);opacity:.85}
+#spot .timer{position:absolute;left:1.2rem;right:1.2rem;bottom:.55rem;height:.4rem;border-radius:999px;background:rgba(255,255,255,.2);overflow:hidden}
+#spot .timer i{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--sun));animation:drain var(--sm,3s) linear forwards}
+@keyframes drain{to{width:0}}
+.sh{position:fixed;bottom:-3rem;left:var(--x);font-size:var(--s);z-index:44;pointer-events:none;animation:hup var(--d) ease-in forwards}
+@keyframes hup{0%{transform:translateY(0) rotate(0);opacity:0}12%{opacity:1}100%{transform:translateY(-112vh) rotate(var(--r));opacity:0}}
+#app.finished .lane:not(.win){opacity:.4;filter:saturate(.4);transition:opacity .4s,filter .4s}
+@media (prefers-reduced-motion:reduce){#spot .rays,#spot .sa,#spot .cta{animation:none}.sh{display:none}}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<div id="app">
+  <div id="head" class="panel">
+    <span class="pill disp" id="rnd">EN VIVO</span>
+    <h1 class="disp">SIGUE AL LÍDER Y AYUDA A GANAR SEGUIDORES</h1>
+    <div id="slot"><div id="how">Sigue +5 · Comparte +3 · Regala 💎 · Comenta +1 · Like +0.1</div><div id="banner" class="disp"></div></div>
+    <div id="goal"><span>🎯</span><span class="gb"><i id="gf"></i></span><span id="gt"></span></div>
+  </div>
+  <div id="lanes"></div>
+  <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
+</div>
+<div id="bottom">
+  <section id="standings" class="panel">
+    <h2 class="disp">TOP 5 · CUENTAS CON MÁS PUNTOS</h2>
+    <div id="topPlayers"><div class="empty">Participa para entrar al Top 5</div></div>
+  </section>
+  <section id="activity" class="panel">
+    <h2 class="disp">EVENTOS</h2>
+    <table><thead><tr><th>Hora</th><th>Evento</th><th>Usuario</th><th>Detalle</th></tr></thead><tbody id="eventRows"></tbody></table>
+    <div id="feed"></div>
+  </section>
+  <div id="big"></div>
+</div>
+<div id="spotBg"></div>
+<div id="spot"></div>
+<div id="cd" class="disp"></div><div id="vig"></div>
+<div id="win"><div class="card">
+  <div class="kick disp" id="wk"></div>
+  <div class="big disp" id="wt"></div><div class="sm" id="ws"></div>
+  <div id="pod"></div>
+  <div class="nx"><i id="nxb"></i></div><div class="sm2" id="nxt"></div>
+</div></div>
+<div id="dot" role="status" aria-label="TikTok desconectado"></div>
+<div id="snd">🔇 Toca la pantalla para activar el sonido</div>
+<div id="bots">
+  <b>Pruebas de interacción (P)</b>
+  <button data-a="rose">1 Rosa</button><button data-a="donut">2 Dona</button>
+  <button data-a="galaxy">3 Galaxia</button><button data-a="join">J Se une</button>
+  <button data-a="like">L Likes</button><button data-a="flood">F Avalancha</button>
+  <button data-a="follow">Seguidor</button><button data-a="auto">A Auto</button>
+  <button data-a="boost">B Doble</button><button data-a="sound">M Sonido</button>
+  <button data-a="music">N Música</button>
+  <button data-a="reset">R Reiniciar</button>
+  <label>Ritmo del auto <input id="rate" type="range" min="0.5" max="4" step="0.5" value="1"></label>
+</div>
+
+<script>
+/* =====================================================================================
+   GUÍA PARA EL PROGRAMADOR DE BACKEND  ·  Carrera de tortugas (overlay para TikTok LIVE)
+   =====================================================================================
+
+   v5: TOP 5 de espectadores por puntos. Cada tortuga representa a un participante del top 5;
+   no hay equipos ni selección por país. El backend solo conecta TikTok y entrega eventos. La primera tortuga
+   que llega queda campeona; termina la carrera y se prepara la siguiente ronda.
+
+   CONTRATO DEL JUEGO (type, username, content, avatar, activityCount, diamondCount)
+   - chat: +1 punto; se limita a un comentario cada 8 segundos por participante.
+   - gift: diamondCount * activityCount puntos; las rachas se convierten en incrementos
+     usando el groupId para no contar dos veces el mismo combo.
+   - like: activityCount * 0.1 puntos.
+   - follow: +5 puntos. share: +3 puntos.
+   - join: +0.5 puntos, una sola vez por usuario y ronda. Quien entra al LIVE ya es participante aunque no
+     interactúe (canal nuevo). Es el evento MEMBER de tiktok-live-connector (NO es roomUser). Ejemplo en server.js:
+       connection.on('member', d => emit({type:'join', username:d.uniqueId, avatar:d.profilePictureUrl}));
+     (en v2 del paquete: WebcastEvent.MEMBER y d.user.uniqueId / d.user.profilePictureUrl).
+   - La misma puntuación alimenta el Top 5 y la carrera. No envíes roomUser/audiencia:
+     los cambios de audiencia no son eventos de juego y se ignoran en el backend.
+
+   ARQUITECTURA
+   TikTok LIVE -> tiktok-live-connector -> server.js -> SSE /api/events -> este overlay.
+   El servidor integrado normaliza nombres, avatar y contadores. El overlay no necesita
+   lógica de equipos, eventos de audiencia ni cálculos del backend. EventSource reconecta
+   automáticamente. Para un WebSocket externo se puede usar ?ws=ws://localhost:8080.
+
+   EVENTOS EXTERNOS
+   Si se conecta por WebSocket, enviar JSON con type: chat, gift, like, follow o share.
+   Campos esperados: username (o user), content/text, avatar URL, activityCount (o count)
+   y diamondCount (o diamonds, para regalos). Ejemplos:
+     {"type":"chat","username":"Lucía","content":"¡Hola!"}
+     {"type":"gift","username":"Mateo","content":"Rose","diamondCount":1,"activityCount":5}
+     {"type":"like","username":"Lucía","activityCount":12}
+     {"type":"follow","username":"Mateo"}
+     {"type":"share","username":"Ana"}
+     {"type":"join","username":"Pedro","avatar":"https://..."}
+
+   El overlay ignora otros tipos de evento. No envíes ROOM_USER/roomUser; los eventos chat,
+   regalo, like, follow y share son los únicos que modifican la partida.
+
+   URL Y PRUEBAS
+   ?target=40 puntos para ganar · ?goal=60 objetivo comunitario · ?demo=1 bots automáticos
+   · ?panel=1 o tecla P panel de pruebas · ?ws=URL WebSocket · ?sound=0 / ?music=0
+   · ?safe=1 margen derecho · ?top=N / ?bottom=N márgenes porcentuales.
+   Para probar sin TikTok, usa ?demo=1 o los botones del panel. El backend de este proyecto
+   ofrece el overlay en / y /overlay, y la conexión SSE en /api/events.
+   ===================================================================================== */
+
+const Q=new URLSearchParams(location.search);
+/* Ajustes del juego (cambian por URL, ver sección 6 de la guía, o editando aquí):
+     ws         servidor WebSocket externo opcional (por defecto se usa /api/events por SSE)
+     win        distancia de la meta; la pista va de 0 a win
+     goal       diamantes para llenar la barra de meta de la comunidad
+     crawl      velocidad base de arrastre en unidades/seg (cuando nadie regala)
+     restartMs  ms del festejo antes de que empiece la siguiente ronda
+     countries  equipos: c = código que se escribe en el chat · n = nombre · f = bandera emoji
+                b = 3 colores (franjas del caparazón) */
+const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.get('goal')||60,target:+Q.get('target')||40,crawl:.15,restartMs:3600,join:Q.has('join')?+Q.get('join'):.5,
+  countries:[0,1,2,3,4].map(i=>({c:'s'+i,n:'',f:'',b:[]}))};
+const $=id=>document.getElementById(id);
+const rnd=a=>a[Math.random()*a.length|0];
+const C=CFG.countries,byCode=Object.fromEntries(C.map(c=>[c.c,c]));
+const liveEvents=[],liveEventLimit=3,contestants=new Map();
+let contestantSequence=0;
+/* ESTADO GLOBAL de la partida (todo en memoria; solo "wins" se guarda en localStorage)
+     round    número de ronda actual            over     true cuando alguien ya cruzó la meta
+     go       true entre el "¡YA!" y la meta    winner   código del país ganador (o null)
+     boost    timestamp (ms) hasta el que dura el empuje doble (0 = sin empuje doble)
+     pos      posición de cada país 0..win      tot      puntos (diamantes) de cada país en la ronda
+     wins     victorias acumuladas              fans     cuántos usuarios eligieron cada país
+     pick     Map usuario -> código de país     donors   Map usuario -> {name,code,pts,best} (ranking de la ronda)
+     combo    Map usuario -> {n,t} (racha de regalos)
+     gp/goal  progreso y objetivo de la meta de la comunidad
+     cp       quién tomó cada lechuga (25/50/75)   pf  foto finish ya anunciado
+     streak/lastWin  racha de victorias del mismo país    dirty  hay que redibujar el ranking */
+const S={slotOf:new Map(),slotUser:{},round:0,over:false,go:false,winner:null,boost:0,pos:{},tot:{},wins:{},fans:{},pick:new Map(),donors:new Map(),combo:new Map(),sponsors:{},
+  gp:0,goal:CFG.goal,cp:{25:0,50:0,75:0},pf:false,streak:0,lastWin:null,dirty:false};
+C.forEach(c=>{S.pos[c.c]=0;S.tot[c.c]=0;S.wins[c.c]=0;S.fans[c.c]=0});
+if(Q.get('safe'))document.documentElement.style.setProperty('--padr','14%');
+/* Victorias guardadas: no se pierden si recargas la página */
+const LS='tortugas.wins2',winsBy=new Map();
+try{for(const[k,v]of Object.entries(JSON.parse(localStorage.getItem(LS)||'{}')))if(+v>0)winsBy.set(k,+v)}catch{}
+const saveWins=()=>{try{localStorage.setItem(LS,JSON.stringify(Object.fromEntries(winsBy)))}catch{}};
+if(Q.get('top'))document.documentElement.style.setProperty('--top',+Q.get('top')+'%');
+if(Q.get('bottom'))document.documentElement.style.setProperty('--bot',+Q.get('bottom')+'%');
+
+/* ===== Sonido retro (chiptune 8-bit) =====
+   Todo se genera con WebAudio: no hay archivos de audio. Ondas cuadradas y de pulso, bajo triangular y percusión de ruido.
+   La música solo suena durante la carrera y se acelera cuando la punta se acerca a la meta. */
+let SND=Q.get('sound')!=='0',MUSIC=Q.get('music')!=='0',AC=null,MG=null,SG=null,GG=null,W25=null,NB=null;
+function ac(){
+  if(AC)return AC;
+  try{
+    AC=new(window.AudioContext||window.webkitAudioContext)();
+    MG=AC.createGain();MG.gain.value=Math.min(1,+Q.get('vol')||.6);MG.connect(AC.destination);
+    SG=AC.createGain();SG.connect(MG);                       /* efectos */
+    GG=AC.createGain();GG.gain.value=.12;GG.connect(MG);     /* música de fondo */
+    const n=24,re=new Float32Array(n+1),im=new Float32Array(n+1);   /* onda de pulso al 25 %, el sonido típico de NES */
+    for(let k=1;k<=n;k++){re[k]=Math.sin(2*Math.PI*k*.25)/(k*Math.PI);im[k]=(1-Math.cos(2*Math.PI*k*.25))/(k*Math.PI)}
+    W25=AC.createPeriodicWave(re,im);
+    NB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  }catch{AC=null}
+  return AC;
+}
+function tone(f,d=.1,type='square',v=.08,t0,bus,slide){
+  if(!SND||!ac())return;
+  const t=t0==null?AC.currentTime:t0,o=AC.createOscillator(),g=AC.createGain();
+  if(type==='p25')o.setPeriodicWave(W25);else o.type=type;
+  o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(bus||SG);o.start(t);o.stop(t+d+.02);
+}
+function noise(d,v,t0,hp,bus){
+  if(!SND||!ac())return;
+  const t=t0==null?AC.currentTime:t0,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=NB;s.loop=true;f.type='highpass';f.frequency.value=hp||1000;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f);f.connect(g);g.connect(bus||SG);s.start(t);s.stop(t+d+.02);
+}
+/* seq: toca notas una detrás de otra [frecuencia, duración] */
+function seq(notes,type,v,bus){if(!SND||!ac())return;let t=AC.currentTime;for(const[f,d]of notes){if(f)tone(f,d*1.05,type,v,t,bus);t+=d}}
+const th=(fn,ms)=>{let t=0;return(...a)=>{const n=performance.now();if(n-t>=ms){t=n;fn(...a)}}};
+const SFX={
+  tick:()=>tone(440,.12,'square',.09),                                                    /* 3, 2, 1 */
+  go:()=>{tone(880,.5,'square',.1);tone(1320,.5,'p25',.05)},                              /* ¡YA! */
+  coin:th((n=0)=>{ac();if(!AC)return;const k=Math.pow(2,Math.min(n,7)/12),t=AC.currentTime;  /* moneda: sube de tono con el combo */
+    tone(988*k,.06,'square',.09,t);tone(1319*k,.3,'square',.09,t+.06)},70),
+  like:th(()=>tone(1568,.035,'square',.04),120),
+  join:th(()=>seq([[523,.05],[784,.09]],'square',.06),150),
+  follow:()=>seq([[659,.07],[880,.07],[1175,.14]],'p25',.08),
+  sprint:()=>{seq([[523,.05],[659,.05],[784,.05],[1047,.05],[1319,.05],[1568,.05],[2093,.22]],'p25',.1);noise(.25,.05,null,4000)},  /* power-up */
+  step:th((speed=0)=>{if(!SND)return;const a=ac();if(!a)return;const t=a.currentTime;noise(.08,.16,t,700);tone(105+speed*20,.1,'triangle',.38,t,undefined,55+speed*10)},75),
+  cp:()=>seq([[784,.07],[988,.07],[1175,.07],[1568,.2]],'square',.08),                    /* bono de lechuga */
+  goal:()=>seq([[659,.09],[784,.09],[1319,.09],[1047,.09],[1175,.09],[1568,.28]],'square',.09),  /* vida extra */
+  photo:()=>seq([[880,.12],[660,.12],[880,.12],[660,.12]],'square',.08),                  /* alarma */
+  flag:()=>{noise(.5,.08,null,2500);seq([[1047,.1],[784,.1],[1047,.1],[1568,.4]],'p25',.09)},
+  win:()=>{ac();if(!AC)return;const m=[[392,.1],[523,.1],[659,.1],[784,.1],[1047,.14],[784,.08],[1047,.7]];
+    seq(m,'p25',.09);seq(m.map(([f,d])=>[f/2,d]),'triangle',.12);noise(.6,.06,AC.currentTime+.7,3000)}
+};
+/* Música: Am – F – C – G, bajo triangular, arpegio de pulso, bombo, caja y hi-hat */
+const MUS={timer:null,step:0,next:0,bpm:130};
+const mf=m=>440*Math.pow(2,(m-69)/12);
+const BASS=[45,41,48,43],CHORD=[[69,72,76],[65,69,72],[72,76,79],[67,71,74]],ARP=[0,1,2,1,0,1,2,1,0,1,2,1,2,1,0,1];
+function musStep(st,t,sd){
+  const bar=(st>>4)&3,s=st&15;
+  if(s%4===0){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);
+    g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.0001,t+.14);o.connect(g);g.connect(GG);o.start(t);o.stop(t+.16)}
+  if(s===4||s===12)noise(.1,.1,t,1500,GG);
+  if(s%2)noise(.03,.04,t,7000,GG);
+  if(s%2===0)tone(mf(BASS[bar]+(s===6||s===14?12:0)),sd*1.8,'triangle',.13,t,GG);
+  tone(mf(CHORD[bar][ARP[s]]),sd*.9,'p25',.045,t,GG);
+}
+function musSched(){if(!AC)return;const sd=60/MUS.bpm/4;while(MUS.next<AC.currentTime+.25){musStep(MUS.step,MUS.next,sd);MUS.next+=sd;MUS.step=(MUS.step+1)&63}}
+function musicStart(){if(!SND||!MUSIC||!ac()||MUS.timer)return;GG.gain.cancelScheduledValues(AC.currentTime);GG.gain.setTargetAtTime(.4,AC.currentTime,.02);
+  MUS.step=0;MUS.next=AC.currentTime+.05;MUS.timer=setInterval(musSched,60)}
+function musicStop(){if(!MUS.timer)return;clearInterval(MUS.timer);MUS.timer=null;if(AC){GG.gain.cancelScheduledValues(AC.currentTime);GG.gain.setTargetAtTime(0,AC.currentTime,.05)}}
+function musicSync(){(SND&&MUSIC&&S.go&&!S.over)?musicStart():musicStop()}
+function unlock(){if(!SND)return;ac();try{if(AC&&AC.state!=='running')AC.resume()}catch{}}
+['pointerdown','touchstart','keydown'].forEach(e=>addEventListener(e,unlock));
+function toggleSound(){SND=!SND;document.querySelector('[data-a=sound]').classList.toggle('act',SND);
+  if(SND){unlock();musicSync();SFX.join()}else musicStop()}
+function toggleMusic(){MUSIC=!MUSIC;document.querySelector('[data-a=music]').classList.toggle('act',MUSIC);musicSync()}
+
+/* ===== Dibujo ===== */
+function turtle(c){const i=c.c,K='stroke="#07262B" stroke-width="1.5" stroke-linejoin="round"',F=`fill="url(#sk${i})"`;
+return `<svg viewBox="0 0 70 46"><defs><radialGradient id="sk${i}" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#A6D26F"/><stop offset="1" stop-color="#5E8F3E"/></radialGradient><radialGradient id="sh${i}" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#9A7A38"/><stop offset=".6" stop-color="#5E4722"/><stop offset="1" stop-color="#34270F"/></radialGradient><clipPath id="cp${i}"><ellipse cx="32" cy="22" rx="24" ry="17"/></clipPath><clipPath id="ca${i}"><circle cx="32" cy="21" r="12.5"/></clipPath></defs>
+<ellipse cx="33" cy="44" rx="27" ry="2.6" fill="#000" opacity=".22"/>
+<ellipse class="lfB" cx="26" cy="38" rx="6" ry="4" fill="#4E7F36" ${K}/><ellipse class="lfF" cx="44" cy="38" rx="6" ry="4" fill="#4E7F36" ${K}/>
+<path class="tl" d="M9 25 L0 29 L10 31Z" ${F} ${K}/>
+<ellipse class="lnB" cx="18" cy="39" rx="7" ry="4.5" ${F} ${K}/><ellipse class="lnF" cx="47" cy="39" rx="7" ry="4.5" ${F} ${K}/>
+<g class="hd"><ellipse cx="53" cy="25" rx="8" ry="5" ${F} ${K}/><ellipse cx="60" cy="21" rx="8" ry="6.5" ${F} ${K}/><circle cx="63" cy="19" r="2.1" fill="#07262B"/><circle cx="63.6" cy="18.3" r=".7" fill="#fff"/><circle cx="67" cy="21" r=".6" fill="#07262B"/><path d="M62 25 Q65 26.5 67.5 24" stroke="#07262B" stroke-width="1.2" fill="none" stroke-linecap="round"/></g>
+<g class="bd"><ellipse cx="32" cy="36" rx="23" ry="4" fill="#D9C48A" ${K}/><g clip-path="url(#cp${i})"><ellipse cx="32" cy="22" rx="24" ry="17" fill="url(#sh${i})"/><path d="M32 5V39M10 19Q32 12 54 19M10 27Q32 34 54 27M20 8L22 20L20 36M44 8L42 20L44 36M22 20Q32 17 42 20M22 27Q32 30 42 27" fill="none" stroke="#1F1608" stroke-opacity=".5" stroke-width="1.3"/><ellipse cx="22" cy="10" rx="9" ry="3" fill="#fff" opacity=".16"/></g><ellipse cx="32" cy="22" rx="24" ry="17" fill="none" stroke="#07262B" stroke-width="2.4"/>
+<g class="av"><circle class="avbg" cx="32" cy="21" r="12.5" fill="#0D3A41"/><text class="avtx" x="32" y="26.5" text-anchor="middle" font-size="16" font-family="Bowlby One,Arial Black,sans-serif" fill="#fff"></text><image class="avim" x="19.5" y="8.5" width="25" height="25" preserveAspectRatio="xMidYMid slice" clip-path="url(#ca${i})"/><circle cx="32" cy="21" r="12.5" fill="none" stroke="#FFC93C" stroke-width="2"/></g></g></svg>`}
+const lanes=$('lanes');
+C.forEach(c=>{
+  const l=document.createElement('div');l.className='lane empty';l.id='ln-'+c.c;
+  l.innerHTML=`<div class="lab"><div class="rk disp" id="rk-${c.c}">–</div></div>
+  <div class="trk" id="tk-${c.c}">${[25,50,75].map(m=>`<i class="mk" style="left:calc(6.2rem + (100% - 7rem)*${m/100})"></i>`).join('')}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
+  lanes.append(l);
+});
+
+/* ===== Confeti ===== */
+const cv=$('fx'),cx=cv.getContext('2d');let ps=[],run=false;
+function size(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',size);size();
+function burst(n,gold){
+  const cols=gold?['#FFC93C','#FFE27A','#FFF6E0']:['#FF3D7F','#5CF2C0','#FFC93C','#FFF6E0'];
+  for(let i=0;i<Math.min(n,300);i++)ps.push({x:innerWidth*(.2+Math.random()*.6),y:innerHeight*.72,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,r:Math.random()*7+5,c:cols[i%cols.length],a:Math.random()*6,va:(Math.random()-.5)*.4,l:1});
+  if(!run){run=true;requestAnimationFrame(tick)}
+}
+function tick(){cx.clearRect(0,0,cv.width,cv.height);ps=ps.filter(p=>p.l>0&&p.y<innerHeight+30);
+  for(const p of ps){p.vy+=.4;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;p.l-=.004;cx.save();cx.globalAlpha=Math.min(1,p.l*2);cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r,-p.r/2,p.r*2,p.r);cx.restore()}
+  if(ps.length)requestAnimationFrame(tick);else{run=false;cx.clearRect(0,0,cv.width,cv.height)}}
+
+/* ===== Pantalla ===== */
+/* ===== Barra de mensajes rotativa =====
+   Cola de eventos recién llegados (máx. 4, se muestran primero) y, cuando no hay cola, consejos dinámicos que se
+   alternan cada 3.5 s (cómo sumar puntos, quién lidera, distancia al 1°, meta de la comunidad). ?canal=minombre
+   personaliza el mensaje de seguir. showSpecialEvent y feed ahora solo encolan: todo sale por esta barra. */
+const MQ=[],CH=(Q.get('canal')||'').replace(/^@/,'');let mqTip=0,mqAt=0;
+function enqueueMsg(t){MQ.push(t);if(MQ.length>4)MQ.shift();if(Date.now()-mqAt>1800)msgTick()}
+function nextTip(){
+  const top=getTopPlayers(),L=top[0],fp=formatPlayerPoints,g=[
+    ()=>'❤️ Sigue '+(CH?'a @'+CH:'el canal')+' (+5) y tu tortuga corre',
+    ()=>L?'👑 @'+L.username+' lidera con '+fp(L.points)+' pts':'🐢 ¡Sé el primero en correr!',
+    ()=>'🔁 Comparte el LIVE y suma +3',
+    ()=>top[1]?'🔥 @'+top[1].username+' está a '+fp(L.points-top[1].points)+' pts del 1°':'🎁 Un regalo te lleva al frente',
+    ()=>'💬 Comenta +1 · 👍 cada like suma',
+    ()=>'🎯 Meta '+Math.floor(S.gp)+'/'+S.goal+' · al llenarla ¡puntos x2!'];
+  return g[mqTip++%g.length]();
+}
+function msgTick(){
+  const el=$('specialEvent');mqAt=Date.now();el.textContent=MQ.length?MQ.shift():nextTip();
+  el.className='disp';void el.offsetWidth;el.className='disp on';
+}
+function showSpecialEvent(text){enqueueMsg(text)}
+function feed(text){enqueueMsg(text)}
+function banner(t,ms){const b=$('banner');b.textContent=t;b.className='disp on';clearTimeout(banner.t);banner.t=setTimeout(()=>b.className='disp',ms)}
+/* Redibuja marcadores: puesto 1-6 de cada carril, puntos, victorias, hinchas y corona del líder. Se llama ~4 veces/seg. */
+/* Jugador dueño de una tortuga (slot 's0'..'s4'), o null si el carril está libre */
+function slotPlayer(code){const k=S.slotUser[code];return k?contestants.get(k):null}
+/* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 5 carriles. Se llama ~4 veces/seg. */
+function render(){
+  const ord=[...C].sort((a,b)=>S.pos[b.c]-S.pos[a.c]);
+  ord.forEach((c,i)=>{const r=$('rk-'+c.c);r.textContent=i+1;r.className='rk disp r'+(i+1)});
+  C.forEach(c=>{const p=slotPlayer(c.c);
+    $('nm-'+c.c).textContent=p?'@'+p.username+(winsBy.get(p.key)?' 🏆'+winsBy.get(p.key):''):'';
+    const tg=T[c.c].tag||(T[c.c].tag=$('nm-'+c.c).parentNode);{const n=p?p.username.length:0;$('nm-'+c.c).style.fontSize=n>20?'.9rem':n>16?'1.05rem':n>12?'1.2rem':'';}
+    $('tt-'+c.c).textContent=p?formatPlayerPoints(Math.floor(p.points*10)/10):'';
+    T[c.c].tw=p?tg.offsetWidth:0; /* ancho de la etiqueta, para centrarla sin salirse de la pista */
+    const l=$('ln-'+c.c);l.classList.toggle('lead',!!p&&S.pos[ord[0].c]>1&&c.c===ord[0].c);l.classList.toggle('empty',!p);l.classList.toggle('win',c.c===S.winner);
+  });
+}
+const hue=s=>{let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))%360;return h};
+/* Pone (o quita) el avatar del dueño en el caparazón y en la etiqueta del carril. Sin foto: inicial con color propio. */
+function setSlotAvatar(code,p){
+  const t=T[code],a=t.av,key=p?p.key+'|'+p.avatar:'-';
+  if(t.avKey===key)return;t.avKey=key;
+  const ini=p?(p.username.trim().charAt(0).toUpperCase()||'?'):'',col=p?'hsl('+hue(p.key)+' 70% 45%)':'#0D3A41';
+  a.tx.textContent=ini;a.bg.setAttribute('fill',col);a.im.removeAttribute('href');
+  if(p&&p.avatar){
+    a.im.onerror=()=>a.im.removeAttribute('href');a.im.setAttribute('href',p.avatar);
+  }
+}
+/* Asigna turtle a un jugador: libre si hay; si no, quita al de menos puntos SOLO si el nuevo ya lo supera (cambia el avatar). */
+function claimSlot(p){
+  let code,lo=null;const free=C.find(c=>!S.slotUser[c.c]);
+  if(free)code=free.c;
+  else{for(const c of C){const o=slotPlayer(c.c);if(o&&c.c!==S.winner&&(!lo||o.points<lo.o.points))lo={c,o}}
+    if(!lo||p.points<=lo.o.points)return null;
+    code=lo.c.c;S.slotOf.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
+  if(lo){S.pos[code]=0;T[code].pend=0;T[code].ve=0;T[code].cr=0;T[code].vs=0}
+  S.slotUser[code]=p.key;S.slotOf.set(p.key,code);setSlotAvatar(code,p);
+  const el=T[code].tur;el.classList.remove('swap');void el.offsetWidth;el.classList.add('swap');SFX.join();return code;
+}
+/* Conecta cada evento con su tortuga: la posición objetivo es SIEMPRE puntos/meta; la tortuga camina hasta ahí. */
+/* (ver arriba) Además: suma a la meta de la comunidad, muestra el +N flotante, sonido, turbo si el aporte es >= 15
+   y los avisos de seguir/compartir. Si el jugador no tiene tortuga intenta reclamar una (claimSlot). */
+function raceAdd(p,entry,points){
+  if(S.over)return;
+  goalAdd(points);
+  const code=S.slotOf.get(p.key)||claimSlot(p);if(!code)return;
+  const t=T[code],ty=entry.type;setSlotAvatar(code,p);
+  t.pend=Math.max(0,Math.min(CFG.win,p.points/CFG.target*CFG.win)-S.pos[code]);
+  /* Mensaje del evento que acaba de entrar (no durante los bots de espera, para no simular actividad real) */
+  if(!(IDLE&&IDLE.on)){
+    if(ty==='gift')enqueueMsg('🎁 @'+p.username+' envió '+(entry.content||'un regalo')+(+entry.activityCount>1?' x'+entry.activityCount:'')+' · +'+Math.round(points)+' pts');
+    else if(ty==='like'&&Date.now()-(raceAdd.lk||0)>4000){raceAdd.lk=Date.now();enqueueMsg('👍 @'+p.username+' suma '+Math.max(1,Math.round(points*10))+' likes')}
+    else if(ty==='chat')enqueueMsg('💬 @'+p.username+' comentó · +1')
+    else if(ty==='join')enqueueMsg('👋 @'+p.username+' se unió y ya corre')}
+  if(points>=1){const pl=document.createElement('div');pl.className='pl disp';pl.style.setProperty('--p',Math.min(100,S.pos[code]));
+    pl.textContent='+'+(points<10?String(+points.toFixed(1)):Math.round(points));t.trk.append(pl);setTimeout(()=>pl.remove(),1200)}
+  if(points>=15){t.tur.classList.add('turbo');setTimeout(()=>t.tur.classList.remove('turbo'),1800);SFX.sprint()}
+  else if(ty==='gift')SFX.coin(0);else if(ty==='like')SFX.like();else if(ty==='chat')SFX.join();else if(ty==='join'){}else SFX.follow();
+  if(ty==='follow')feed('❤️ @'+p.username+' siguió · ¡su tortuga corre!','hot');
+  else if(ty==='share')feed('🔁 @'+p.username+' compartió','soft');
+}
+function renderMvp(){
+  return;const top=[],box=null;
+  if(!top.length){const e=document.createElement('div');e.className='empty';e.textContent='Regala o da like y apareces aquí.';box.append(e);return}
+  top.forEach((d,i)=>{const r=document.createElement('div');r.className='r';
+    const n=document.createElement('b');n.className='disp';n.textContent=i===0?'👑':i+1;
+    const s=document.createElement('span');s.textContent=byCode[d.code].f+' '+d.name+(d.best>=3?' 🔥x'+d.best:'');
+    const p=document.createElement('em');p.textContent=Math.floor(d.pts);r.append(n,s,p);box.append(r)});
+}
+function renderLiveEvents(){
+  const body=$('eventRows');body.textContent='';
+  if(!liveEvents.length){
+    const row=document.createElement('tr'),cell=document.createElement('td');
+    cell.colSpan=4;cell.textContent='Esperando eventos del LIVE...';row.append(cell);body.append(row);return;
+  }
+  liveEvents.forEach(entry=>{
+    const row=document.createElement('tr');
+    const date=new Date(entry.time);
+    const values=[
+      Number.isNaN(date.getTime())?'--:--':date.toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),
+      entry.eventLabel||entry.type,
+      entry.username||'Sistema',
+      entry.content||'',
+    ];
+    values.forEach(value=>{const cell=document.createElement('td');cell.textContent=value;row.append(cell)});
+    body.append(row);
+  });
+}
+function setLiveEventSnapshot(entries){
+  liveEvents.length=0;
+  if(Array.isArray(entries)){
+    entries.filter(entry=>entry&&typeof entry==='object'&&typeof entry.type==='string')
+      .slice(0,liveEventLimit).forEach(entry=>liveEvents.push(entry));
+  }
+  renderLiveEvents();
+}
+function addLiveEvent(entry){
+  if(!entry||typeof entry!=='object'||typeof entry.type!=='string')return;
+  liveEvents.unshift(entry);
+  liveEvents.length=Math.min(liveEvents.length,liveEventLimit);
+  renderLiveEvents();
+}
+function getTopPlayers(){
+  return [...contestants.values()].sort((first,second)=>
+    second.points-first.points||first.sequence-second.sequence).slice(0,5);
+}
+function renderTopPlayers(){
+  const box=$('topPlayers'),top=getTopPlayers();box.replaceChildren();
+  if(!top.length){
+    const empty=document.createElement('div');empty.className='empty';empty.textContent='Participa para entrar al Top 5';box.append(empty);return;
+  }
+  const leaderPoints=top[0].points||1;
+  top.forEach((player,index)=>{
+    const row=document.createElement('div');row.className='player-row';
+    const rank=document.createElement('b');rank.className='player-rank disp';rank.textContent=index+1;
+    const runner=document.createElement('span');runner.className='player-runner';
+    runner.setAttribute('aria-label','Tortuga de @'+player.username);
+    const tail=document.createElement('i');tail.className='runner-tail';
+    const backLeg=document.createElement('i');backLeg.className='runner-leg back';
+    const frontLeg=document.createElement('i');frontLeg.className='runner-leg front';
+    const shell=document.createElement('span');shell.className='runner-shell';
+    const fallback=document.createElement('span');fallback.className='runner-fallback';
+    fallback.textContent=player.username.trim().charAt(0).toUpperCase()||'?';
+    shell.append(fallback);
+    if(player.avatar){
+      const image=document.createElement('img');image.src=player.avatar;image.alt='';
+      image.addEventListener('error',()=>image.replaceWith(fallback),{once:true});
+      shell.replaceChildren(image);
+    }
+    const head=document.createElement('i');head.className='runner-head';
+    runner.append(tail,backLeg,frontLeg,shell,head);
+    const info=document.createElement('div');info.className='player-info';
+    const name=document.createElement('b');name.className='player-name';name.textContent='@'+player.username;
+    const bar=document.createElement('div');bar.className='player-bar';
+    const fill=document.createElement('i');fill.style.width=Math.min(100,player.points/leaderPoints*100)+'%';bar.append(fill);
+    info.append(name,bar);
+    const points=document.createElement('strong');points.className='player-points';points.textContent=formatPlayerPoints(player.points);
+    row.append(rank,runner,info,points);box.append(row);
+  });
+}
+function formatPlayerPoints(points){
+  return Number.isInteger(points)?String(points):points.toFixed(1);
+}
+/* PUNTUACIÓN: único punto de entrada de TODOS los eventos (reales, de espera y de prueba).
+   1) calcula puntos  2) aplica empuje doble y combo de regalos  3) limita comentarios a 1 cada 8 s por usuario
+   4) suma al jugador  5) raceAdd() mueve su tortuga  6) avisa si entra/desplaza del Top 5 o toma el primer lugar.
+   Se ignora todo mientras la ronda está terminada (S.over). */
+function scoreContestant(entry){
+  if(!entry||typeof entry!=='object'||typeof entry.type!=='string')return;
+  const username=String(entry.username||'Alguien').trim()||'Alguien';
+  const rawCount=entry.activityCount===undefined?1:Number(entry.activityCount);
+  if(entry.type==='gift'&&(!Number.isFinite(rawCount)||rawCount<=0))return;
+  const counts=Math.max(1,rawCount||1);
+  const diamonds=Math.max(1,Number(entry.diamondCount)||1);
+  let points=entry.type==='chat'?1
+    :entry.type==='gift'?diamonds*counts
+      :entry.type==='like'?counts*.1
+        :entry.type==='follow'?5:entry.type==='share'?3:entry.type==='join'?CFG.join:0;
+  if(!points||S.over)return;
+  if(entry.type!=='join')points*=(S.boost>Date.now()?2:1);if(entry.type==='gift')points*=combo(username).mult;
+
+  const previousTop=getTopPlayers(),previousNames=new Set(previousTop.map(player=>player.key));
+  const key=username.toLocaleLowerCase();
+  if(entry.type==='join'&&contestants.has(key))return; /* ya es participante: el segundo 'join' no suma */
+  let player=contestants.get(key);
+  if(!player){
+    player={key,username,avatar:'',points:0,sequence:contestantSequence++};
+    contestants.set(key,player);
+  }
+  if(entry.type==='chat'){const n=Date.now();if(n-(player.lastChat||0)<8000)return;player.lastChat=n}
+  player.points+=points;
+  if(typeof entry.avatar==='string'&&/^https?:\/\//i.test(entry.avatar))player.avatar=entry.avatar;
+
+  raceAdd(player,entry,points);
+  const top=getTopPlayers(),emerging=top.find(candidate=>!previousNames.has(candidate.key));
+  if(emerging){
+    const displaced=previousTop.length===5?previousTop[4]:null;
+    showSpecialEvent(displaced
+      ? '@'+emerging.username+' desplaza a @'+displaced.username+' del TOP 5'
+      : '@'+emerging.username+' entra al TOP 5');
+  }else if(previousTop.length&&top[0].key!==previousTop[0].key){
+    showSpecialEvent('@'+top[0].username+' toma el primer lugar');
+  }else if(entry.type==='gift'&&points>=20){
+    showSpecialEvent('Regalo destacado para @'+player.username+' · +'+formatPlayerPoints(points)+' puntos');
+  }
+  renderTopPlayers();
+}
+function resetContestants(){
+  winsBy.clear();saveWins();S.round=0;newRound();showSpecialEvent('Puntajes reiniciados');
+}
+function setSponsor(code,user,avatar){
+  if(!user||!byCode[code])return;
+  const previous=S.sponsors[code],avatarUrl=typeof avatar==='string'&&/^https?:\/\//i.test(avatar)?avatar:'';
+  const nextAvatar=avatarUrl||(previous?.user===user?previous.avatar:'');
+  if(previous?.user===user&&previous.avatar===nextAvatar)return;
+  S.sponsors[code]={user,avatar:nextAvatar};
+  const badge=$('sp-'+code);badge.replaceChildren();
+  if(nextAvatar){
+    const image=document.createElement('img');image.src=nextAvatar;image.alt='';
+    image.addEventListener('error',()=>{const fallback=document.createElement('span');fallback.className='sa';fallback.textContent=user.trim().charAt(0).toUpperCase()||'?';image.replaceWith(fallback)},{once:true});
+    badge.append(image);
+  }else{
+    const fallback=document.createElement('span');fallback.className='sa';fallback.textContent=user.trim().charAt(0).toUpperCase()||'?';badge.append(fallback);
+  }
+  const name=document.createElement('span');name.className='sponsor-name';name.textContent=user;badge.append(name);
+  badge.title=user+' patrocina esta tortuga';badge.classList.add('on');
+}
+/* EVENTO "boost" {seconds}: empuje doble (x2 de energía por regalo) durante sec segundos, con cuenta atrás en el aviso. */
+function setBoost(sec){
+  S.boost=Date.now()+sec*1000;clearInterval(setBoost.t);
+  const upd=()=>{const left=Math.ceil((S.boost-Date.now())/1000);
+    if(left<=0){clearInterval(setBoost.t);S.boost=0;$('banner').className='disp';return}
+    $('banner').textContent='⚡ Empuje doble: '+left+' s';$('banner').className='disp on'};
+  upd();setBoost.t=setInterval(upd,1000);
+}
+function goalRender(){$('gf').style.width=Math.min(100,S.gp/S.goal*100)+'%';$('gt').textContent=Math.floor(S.gp)+' / '+S.goal}
+/* Suma n diamantes a la meta de la comunidad; al completarla activa empuje doble 30 s y sube el objetivo x1.5. */
+function goalAdd(n){S.gp+=n;
+  if(S.gp>=S.goal){S.gp-=S.goal;S.goal=Math.round(S.goal*1.5);setBoost(30);feed('🎯 ¡Meta lograda! Empuje doble 30 s','cp');burst(120);SFX.goal()}
+  goalRender()}
+
+/* ===== Lógica de la carrera ===== */
+/* Devuelve el país mencionado en un texto de chat (o undefined). Reglas completas en la guía, sección 3.1. */
+function parseCountry(t){
+  t=(t||'').toLowerCase().trim();
+  return C.find(c=>t===c.c||t===c.n.toLowerCase()||t.includes(c.f)||t.split(/\s+/).includes(c.c)||t.includes(c.n.toLowerCase()));
+}
+/* EVENTO "chat": asigna o cambia el equipo del usuario. Ignora comentarios sin país. */
+function onChat(user,text){
+  if(queueAuditRequest(user,text))return;
+  const c=parseCountry(text);if(!c)return;
+  const old=S.pick.get(user);if(old===c.c)return;
+  if(old)S.fans[old]--;S.pick.set(user,c.c);S.fans[c.c]++;
+  feed(user+(old?' cambió a ':' eligió ')+c.f+' '+c.n,'soft');SFX.join();render();
+}
+/* Equipo del usuario; si aún no tiene (regaló sin elegir), le toca uno al azar. */
+function assign(user){let code=S.pick.get(user);if(!code){code=rnd(C).c;S.pick.set(user,code);S.fans[code]++}return code}
+/* Ficha del usuario en el ranking de la ronda (la crea si no existe). pts = puntos, best = mejor combo. */
+function donor(user,code){let d=S.donors.get(user);if(!d){d={name:user,code,pts:0,best:0};S.donors.set(user,d)}d.code=code;return d}
+/* Combo: regalos seguidos del mismo usuario (menos de 6 s) suben el multiplicador hasta x2 */
+function combo(user){const now=Date.now(),c=S.combo.get(user)||{n:0,t:0};c.n=(now-c.t<6000)?c.n+1:1;c.t=now;S.combo.set(user,c);return{n:c.n,mult:1+Math.min(c.n-1,4)*.25}}
+/* EVENTO "gift" {user, diamonds, count}: convierte el regalo en ENERGÍA para la tortuga de su país.
+   No mueve la tortuga directamente: suma a T[país].pend y el bucle frame() la gasta caminando.
+   Además suma puntos, combo, progreso de la meta de la comunidad, avisos y sonido. */
+function onGift(g){
+  if(S.over)return;
+  const user=g.user||'Alguien',total=Math.max(1,(+g.diamonds||1)*(+g.count||1));
+  const code=assign(user),cb=combo(user),c=byCode[code],t=T[code];
+  setSponsor(code,user,g.avatar);
+  const step=Math.min(80,Math.min(40,2+total*.5)*(S.boost>Date.now()?2:1)*cb.mult);
+  t.pend+=step;S.tot[code]+=total;
+  const d=donor(user,code);d.pts+=total;d.best=Math.max(d.best,cb.n);
+  const pl=document.createElement('div');pl.className='pl disp';pl.style.setProperty('--p',Math.min(100,S.pos[code]));
+  pl.textContent=(step>=15?'⚡ ':'')+'+'+Math.round(step)+(cb.n>=3?' 🔥':'');t.trk.append(pl);setTimeout(()=>pl.remove(),1200);
+  if(step>=15){t.tur.classList.add('turbo');setTimeout(()=>t.tur.classList.remove('turbo'),1800);burst(step>=30?120:50,step>=30);SFX.sprint()}else SFX.coin(cb.n-1);
+  if(step>=30)feed('⚡ SPRINT de '+user+' para '+c.f+' '+c.n,'hot');
+  else if(cb.n>=3)feed('🔥 '+user+' combo x'+cb.n+' · '+c.f,'hot');
+  else feed(user+' empujó a '+c.f+' '+c.n);
+  goalAdd(total);render();renderMvp();
+}
+/* EVENTOS GRATIS "like" {user,count} / "follow" {user} / "share" {user}:
+   empujan un poco, pero solo si el usuario ya eligió país (esto incentiva escribir el país en el chat).
+   Se ignoran cuando la ronda terminó (S.over). */
+function onLike(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.get(user);if(!code)return;
+  setSponsor(code,user,m.avatar);
+  SFX.like();const n=Math.max(1,+m.count||1);T[code].pend+=Math.min(3,.2*n);donor(user,code).pts+=.1*n;S.dirty=true}
+function onFollow(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.get(user);feed(user+' te siguió 💚','soft');SFX.follow();
+  if(code)setSponsor(code,user,m.avatar);
+  if(code&&!S.over){T[code].pend+=3;donor(user,code).pts+=1;S.dirty=true}}
+function onShare(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.get(user);feed(user+' compartió 🔁','soft');SFX.follow();
+  if(code)setSponsor(code,user,m.avatar);
+  if(code&&!S.over){T[code].pend+=3;donor(user,code).pts+=1;S.dirty=true}}
+
+/* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win. Guarda la victoria,
+   calcula la racha y MVP, detiene la música y programa el cartel (+1.6 s) y la siguiente ronda (+restartMs). */
+/* Fin de ronda: guarda la victoria del DUEÑO de la tortuga, calcula su racha, muestra el banner de campeón
+   (el cartel #win queda oculto por CSS para no tapar el video) y programa la siguiente ronda. */
+function finish(code){
+  S.over=true;S.winner=code;musicSync();SFX.flag();const t=T[code],p=slotPlayer(code);
+  S.pos[code]=CFG.win;t.pend=0;t.ve=0;
+  for(const c of C)if(c.c!==code){T[c.c].pend=0;T[c.c].ve=0}
+  const w=(winsBy.get(p.key)||0)+1;winsBy.set(p.key,w);saveWins();
+  if(S.lastWin===p.key)S.streak++;else{S.lastWin=p.key;S.streak=1}
+  banner('🏆 @'+p.username+' ¡CAMPEÓN!',CFG.restartMs-600);
+  showSpecialEvent('Ronda '+S.round+' · @'+p.username+' gana'+(S.streak>=2?' · racha x'+S.streak:'')+' · ¡síguelo!');
+  clearTimeout(S.rt);S.rt=setTimeout(newRound,CFG.restartMs);burst(80,true);render();
+}
+/* Muestra el cartel con el podio (top 3 por posición; el ganador siempre primero) y la cuenta atrás. */
+function showWin(code){
+  const ord=[...C].sort((a,b)=>(b.c===code)-(a.c===code)||S.pos[b.c]-S.pos[a.c]).slice(0,3),pod=$('pod');pod.textContent='';
+  [1,0,2].forEach(i=>{const c=ord[i],d=document.createElement('div');d.className='pc p'+(i+1);
+    const f=document.createElement('span');f.textContent=c.f;const b=document.createElement('b');b.className='disp';b.textContent=(i+1)+'°';d.append(f,b);pod.append(d)});
+  const ms=CFG.restartMs,t0=Date.now(),bar=$('nxb');
+  bar.style.transition='none';bar.style.width='100%';void bar.offsetWidth;bar.style.transition='width '+ms+'ms linear';bar.style.width='0%';
+  clearInterval(S.nxI);const upd=()=>{$('nxt').textContent='Siguiente ronda en '+Math.max(0,Math.ceil((ms-(Date.now()-t0))/1000))+' s'};upd();S.nxI=setInterval(upd,500);
+  $('win').classList.add('on');burst(300,true);setTimeout(()=>burst(200),700);SFX.win();
+}
+/* Empieza una ronda: reinicia posiciones, puntos, ranking, combos, lechugas y meta; luego cuenta regresiva.
+   Los equipos de los usuarios (S.pick) y las victorias se conservan. */
+/* Nueva ronda: vacía puntos, jugadores y tortugas (los 5 carriles quedan libres, con avatar y posición en cero),
+   conserva las victorias por usuario y lanza la cuenta regresiva. Se llama sola al cargar y al terminar cada ronda. */
+function newRound(){
+  clearTimeout(S.rt);S.round++;S.over=false;S.winner=null;S.combo.clear();S.cp={25:0,50:0,75:0};S.pf=false;S.gp=0;S.goal=CFG.goal;
+  contestants.clear();contestantSequence=0;S.slotUser={};S.slotOf.clear();
+  C.forEach(c=>{S.pos[c.c]=0;setSlotAvatar(c.c,null)});reseed();
+  $('rnd').textContent=Q.get('demo')?'DEMO':(IDLE&&IDLE.on?'ESPERA · ':'')+'Ronda '+S.round;
+  render();goalRender();renderTopPlayers();banner('Ronda '+S.round+' · ¡sigue, comparte o regala para correr!',3500);countdown();
+}
+/* EVENTO "reset": borra victorias y racha, y reinicia en la ronda 1. */
+function reset(){C.forEach(c=>S.wins[c.c]=0);saveWins();S.lastWin=null;S.streak=0;S.round=0;newRound()}
+
+/* Cuenta regresiva: las tortugas esperan en la línea de salida */
+let cdT=[];
+function countdown(){
+  S.go=false;musicSync();cdT.forEach(clearTimeout);cdT=[];const el=$('cd');
+  ['3','2','1','¡YA!'].forEach((x,i)=>cdT.push(setTimeout(()=>{
+    el.className='disp';void el.offsetWidth;el.textContent=x;el.className='disp on';
+    if(i===3){S.go=true;SFX.go();musicSync()}else SFX.tick()}, i*900)));
+  cdT.push(setTimeout(()=>el.className='disp',3*900+800));
+}
+
+/* ===== Movimiento realista =====
+   - Cada tortuga tiene su ritmo de arrastre, que cambia suavemente, y a veces se detiene a mirar.
+   - Un regalo no teletransporta: es energía que se gasta caminando, con aceleración y frenado.
+   - Las patas siguen un paso en diagonal; la velocidad cambia cadencia, balanceo y polvo. */
+/* Estado de FÍSICA y animación por tortuga (clave = código de país):
+     pend  energía de regalos pendiente de gastar     ve  velocidad extra por regalos (u/s)
+     cr    velocidad de avance base (u/s)              vs  velocidad total suavizada (anima patas y polvo)
+     base  factor personal de velocidad de arrastre    pause  segundos que le quedan de pausa
+     ph/am fase y amplitud del paso    hl  cuánto levanta la cabeza    w  semilla de ruido    du  temporizador de polvo */
+const T={};
+C.forEach(c=>{const e=$('tu-'+c.c);T[c.c]={tur:e,trk:$('tk-'+c.c),e:{lfB:e.querySelector('.lfB'),lfF:e.querySelector('.lfF'),lnB:e.querySelector('.lnB'),lnF:e.querySelector('.lnF'),tl:e.querySelector('.tl'),hd:e.querySelector('.hd'),bd:e.querySelector('.bd')},av:{im:e.querySelector('.avim'),tx:e.querySelector('.avtx'),bg:e.querySelector('.avbg')},
+  ph:Math.random()*6,step:0,w:Math.random()*10,vs:0,ve:0,cr:0,pend:0,pause:0,base:1,am:0,hl:0,du:0}});
+function reseed(){C.forEach(c=>{const t=T[c.c];t.base=.7+Math.random()*.7;t.ve=0;t.cr=0;t.vs=0;t.pend=0;t.pause=0;t.step=Math.floor((t.ph+Math.PI/2)/Math.PI);t.w=Math.random()*10})}
+const VMAX=2.4,ACC=2.5,DEC=1.2; /* v4: caminata lenta (antes 9/10/5) */
+function puff(k,R){const t=T[k],el=document.createElement('i');el.className='dust';
+  el.style.left=((t.trk.clientWidth-7*R)*Math.min(100,S.pos[k])/100+1.3*R)+'px';t.trk.append(el);setTimeout(()=>el.remove(),900)}
+function photo(){
+  if(S.over||!S.go||S.pf)return;
+  const o=C.map(c=>S.pos[c.c]).sort((a,b)=>b-a);
+  if(o[0]>=80&&o[0]-o[1]<4){S.pf=true;banner('📸 ¡Foto finish!',3000);SFX.photo()}
+}
+let last=performance.now(),tNow=0,acc=0;
+/* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). En cada cuadro, para cada tortuga:
+     1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
+     3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
+   Después: si alguien llegó, queda como campeón y finish() termina la carrera en ese momento.
+   Cada 0.25 s: render(), foto finish, tempo de la música.
+   Es el ÚNICO lugar donde cambian las posiciones. */
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.1,(now-last)/1000);last=now;if(dt<=0)return;tNow+=dt;
+  const R=parseFloat(getComputedStyle(document.documentElement).fontSize);
+  for(const c of C){
+    const k=c.c,t=T[k],isW=k===S.winner;
+    const wob=Math.max(.2,1+.6*Math.sin(tNow*.7+t.w)+.3*Math.sin(tNow*1.9+t.w*2.3));
+    /* v3: siempre camina (cadencia mínima). El arrastre solo anima las patas; la POSICIÓN depende únicamente del puntaje */
+    const tgtC=CFG.crawl*t.base*wob;
+    t.cr+=(tgtC-t.cr)*Math.min(1,dt*2);
+    let tgtE=0;
+    if(S.go&&!isW&&t.pend>.02)tgtE=Math.max(.25,Math.min(VMAX,Math.sqrt(2*DEC*t.pend)));
+    t.ve+=Math.max(-3*dt,Math.min(ACC*dt,tgtE-t.ve));
+    const d=Math.min(t.ve*dt,t.pend);t.pend=t.pend-d<.001?0:t.pend-d;
+    const crawl=S.go&&S.slotUser[k]&&!S.over?t.cr*dt:0;
+    S.pos[k]=Math.min(CFG.win,S.pos[k]+d+crawl); /* puntos aceleran; cada participante también avanza lentamente */
+    if(!S.winner&&S.slotUser[k]&&S.pos[k]>=CFG.win)S.winner=k;
+    if(isW)S.pos[k]=CFG.win;
+    else if(S.over&&S.pos[k]>CFG.win-1){S.pos[k]=CFG.win-1;t.pend=0;t.ve=0}
+    t.vs+=((t.cr+d/dt)-t.vs)*Math.min(1,dt*8);
+    /* 🥬 La primera tortuga en pasar el 25%, 50% y 75% se lleva un bono de energía */
+    if(S.go&&!S.over)for(const m of [25,50,75])if(!S.cp[m]&&S.pos[k]>=m){
+      S.cp[m]=k;t.tur.classList.add('turbo');setTimeout(()=>t.tur.classList.remove('turbo'),1500);
+      if(slotPlayer(k))feed('🥬 @'+slotPlayer(k).username+' pasa el '+m+'% primero','cp');SFX.cp()}
+    /* animación */
+    const sp=Math.min(t.vs,VMAX),speedRatio=Math.max(0,sp/VMAX);
+    t.ph+=dt*(.65+5.35*speedRatio);
+    const step=Math.floor((t.ph+Math.PI/2)/Math.PI);
+    if(S.go&&S.slotUser[k]&&step!==t.step){t.step=step;SFX.step(speedRatio)}
+    t.am+=(.18+1.62*speedRatio-t.am)*Math.min(1,dt*(3+speedRatio*5));
+    t.hl+=(0-t.hl)*Math.min(1,dt*4);
+    const s=Math.sin(t.ph),cs=Math.cos(t.ph),a=t.am,E=t.e;
+    const leg=(el,sn,cn)=>el.setAttribute('transform','translate('+(sn*a).toFixed(2)+' '+(-Math.max(0,cn)*a*.6).toFixed(2)+')');
+    leg(E.lnB,s,cs);leg(E.lfF,s,cs);leg(E.lnF,-s,-cs);leg(E.lfB,-s,-cs);
+    const gallop=Math.abs(Math.sin(t.ph*2))*(.2+1.8*speedRatio);
+    const by=-gallop+Math.sin(tNow*1.6+t.w)*.12;
+    E.bd.setAttribute('transform','translate(0 '+by.toFixed(2)+') rotate('+(s*speedRatio*4).toFixed(2)+' 32 23)');
+    E.hd.setAttribute('transform','translate('+(sp*.25+s*a*.15+Math.sin(tNow*.8+t.w)*1.2*t.hl).toFixed(2)+' '+(by*1.2-2.8*t.hl+sp*.12).toFixed(2)+')');
+    E.tl.setAttribute('transform','rotate('+(Math.sin(t.ph+1)*10*Math.min(1,a/2)).toFixed(2)+' 9 27)');
+    if(t.vs>1.3){t.du-=dt;if(t.du<=0){t.du=Math.max(.06,.2-sp*.015);puff(k,R)}}
+    t.tur.style.setProperty('--p',Math.min(100,S.pos[k]).toFixed(2));
+  }
+  if(!S.over&&S.winner)finish(S.winner);
+  acc+=dt;if(acc>.25){acc=0;render();photo();MUS.bpm=Math.min(185,124+Math.max(...C.map(c=>S.pos[c.c]))*.55+(S.boost>Date.now()?12:0));if(S.dirty){renderMvp();S.dirty=false}}
+}
+
+/* ===== Conexión al servidor Node =====
+   El servidor integrado entrega eventos normalizados por SSE. Si se especifica "ws", se conserva
+   compatibilidad con el contrato WebSocket documentado en la sección 3 de esta guía. */
+function handleTikTokEntry(entry){
+  if(entry&&['member','enter','joined'].includes(entry.type))entry={...entry,type:'join'};
+  rosterTouch(entry);scoreContestant(entry);
+}
+/* PRESENTES: quien se une o interactúa queda en la lista. Al empezar cada ronda los 5 más recientes (últimos 10 min)
+   vuelven a la pista automáticamente, porque TikTok no repite el evento 'join' de quien sigue mirando. */
+const ROSTER=new Map(),ROSTER_TTL=10*60*1000;
+function rosterTouch(e){
+  const name=e&&String(e.username||'').trim();if(!name||(IDLE&&IDLE.on))return;
+  const key=name.toLocaleLowerCase(),r=ROSTER.get(key)||{username:name,avatar:''};
+  r.t=Date.now();if(typeof e.avatar==='string'&&/^https?:\/\//i.test(e.avatar))r.avatar=e.avatar;
+  ROSTER.delete(key);ROSTER.set(key,r);if(ROSTER.size>200)ROSTER.delete(ROSTER.keys().next().value);
+}
+function seedRoster(){
+  if(!CFG.join||(IDLE&&IDLE.on))return;
+  const now=Date.now(),list=[...ROSTER.values()].filter(r=>now-r.t<ROSTER_TTL).slice(-C.length).reverse(),names=[];
+  for(const r of list){const key=r.username.toLocaleLowerCase();if(contestants.has(key))continue;
+    const p={key,username:r.username,avatar:r.avatar,points:CFG.join,sequence:contestantSequence++};
+    contestants.set(key,p);if(claimSlot(p))names.push('@'+r.username)}
+  if(names.length){render();renderTopPlayers();enqueueMsg('👋 Siguen en pista: '+names.slice(0,3).join(' · ')+(names.length>3?' +'+(names.length-3):''))}
+}
+function setTikTokConnectionStatus(connected){
+  const dot=$('dot');
+  dot.classList.toggle('on',Boolean(connected));
+  dot.setAttribute('aria-label',connected?'TikTok conectado':'TikTok desconectado');
+}
+function connect(){
+  if(Q.has('ws')){
+    let ws;try{ws=new WebSocket(CFG.ws)}catch{return setTimeout(connect,3000)}
+    ws.onopen=()=>setTikTokConnectionStatus(true);
+    ws.onclose=()=>{setTikTokConnectionStatus(false);setTimeout(connect,2000)};
+    ws.onmessage=e=>{try{const m=JSON.parse(e.data);
+      if(['chat','gift','like','follow','share','join','member','enter'].includes(m.type)){
+        const entry={...m,username:m.username||m.user||'Alguien',content:m.content||m.text||m.gift||'',
+          diamondCount:m.diamondCount||m.diamonds,activityCount:m.activityCount||m.count,
+          time:m.time||new Date().toISOString()};
+        realEvent();addLiveEvent(entry);handleTikTokEntry(entry);
+      }else if(m.type==='reset')resetContestants()}catch{}};
+    return;
+  }
+  const source=new EventSource('/api/events');
+  source.addEventListener('status',e=>{try{setTikTokConnectionStatus(JSON.parse(e.data).connected)}catch{}});
+  source.addEventListener('snapshot',e=>{try{setLiveEventSnapshot(JSON.parse(e.data))}catch{}});
+  source.addEventListener('update',e=>{try{const entry=JSON.parse(e.data).entry;realEvent();addLiveEvent(entry);handleTikTokEntry(entry)}catch{}});
+  source.onerror=()=>setTikTokConnectionStatus(false);
+}
+
+/* ===== Bots de prueba: simulan eventos de TikTok llamando a los MISMOS manejadores que el WebSocket =====
+   (onChat/onGift/onLike...), así que sirven para probar el juego sin servidor. Nunca envían nada a la red.
+   Antes: Bots integrados: panel con tecla P o ?panel=1, auto con ?demo=1 ===== */
+const NAMES=['Lucía','Mateo','Ana_PY','Carlos','Sofi','Diego','Valen','Rocío','Nico','Cami','Tomás','Fran'];
+const GIFTS={rose:['Rose',1],heart:['Finger Heart',5],donut:['Doughnut',30],galaxy:['Galaxy',1000]};
+const botEvent=(type,username,details={})=>{
+  const entry={type,username,content:details.content||'',avatar:'',time:new Date().toISOString(),...details};
+  addLiveEvent(entry);handleTikTokEntry(entry);
+};
+const botGift=(t='rose',u=rnd(NAMES))=>botEvent('gift',u,{content:GIFTS[t][0],diamondCount:GIFTS[t][1],activityCount:1});
+const botJoin=()=>botEvent('join',rnd(NAMES)+(Math.random()*90|0));
+const botLike=()=>botEvent('like',rnd(NAMES),{activityCount:1+(Math.random()*8|0)});
+async function botFlood(n=20){const u=rnd(NAMES);for(let i=0;i<n;i++){botGift(Math.random()<.7?'rose':'donut',Math.random()<.5?u:rnd(NAMES));await new Promise(r=>setTimeout(r,150))}}
+let autoT=null;
+function toggleAuto(){
+  const btn=document.querySelector('[data-a=auto]');
+  if(autoT){clearTimeout(autoT);autoT=null;btn.classList.remove('act');return}
+  btn.classList.add('act');
+  const loop=()=>{const r=Math.random();
+    if(r<.15)botJoin();else if(r<.22)botEvent('follow',rnd(NAMES));else if(r<.45)botLike();
+    else{const g=(r-.45)/.55;botGift(g<.6?'rose':g<.85?'heart':g<.97?'donut':'galaxy')}
+    autoT=setTimeout(loop,(700+Math.random()*1500)/(+$('rate').value||1))};
+  loop();
+}
+const ACT={rose:()=>botGift('rose'),donut:()=>botGift('donut'),galaxy:()=>botGift('galaxy'),join:botJoin,like:botLike,flood:botFlood,
+  follow:()=>botEvent('follow',rnd(NAMES)),auto:toggleAuto,boost:()=>setBoost(60),sound:toggleSound,music:toggleMusic,reset:resetContestants};
+document.querySelectorAll('#bots button').forEach(b=>b.onclick=()=>ACT[b.dataset.a]());
+const KEYS={1:'rose',2:'donut',3:'galaxy',j:'join',l:'like',f:'flood',a:'auto',b:'boost',m:'sound',n:'music',r:'reset'};
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='p')$('bots').classList.toggle('on');else if(KEYS[k])ACT[KEYS[k]]()});
+if(Q.get('panel'))$('bots').classList.add('on');
+if(Q.get('demo'))$('rnd').textContent='DEMO';
+if(SND)document.querySelector('[data-a=sound]').classList.add('act');
+if(SND&&MUSIC)document.querySelector('[data-a=music]').classList.add('act');
+if(Q.get('demo'))toggleAuto();
+
+/* ===== Bots de espera =====
+   Si no llega ningún evento real en IDLE.after ms (?idle=15 segundos; ?idle=0 los desactiva), 5 bots con nombres distintos
+   dan likes y comentarios para que la pista no se vea vacía. Solo likes/chat: nunca simulan seguidores, regalos ni compartidos.
+   Al llegar el PRIMER evento real (chat, regalo, like, follow o share) se apagan y la ronda se reinicia limpia. */
+var IDLE={on:false,t:null,last:Date.now(),after:(Q.has('idle')?+Q.get('idle'):15)*1000,names:['Tortuga_Ana','Caminante_Leo','Lola_Veloz','Sr_Caparazon','Mini_Rayo']};
+function idleStep(){
+  const u=rnd(IDLE.names),e={username:u,avatar:'',time:new Date().toISOString()};
+  if(Math.random()<.7)handleTikTokEntry({...e,type:'like',activityCount:20+(Math.random()*40|0)});
+  else handleTikTokEntry({...e,type:'chat',content:rnd(['¡Vamos!','¡Corre!','🐢🐢','¡Yo gano!'])});
+  IDLE.t=setTimeout(idleStep,1200+Math.random()*2200);
+}
+function startIdle(){if(IDLE.on||autoT)return;IDLE.on=true;newRound();idleStep()}
+/* Llamar SOLO desde eventos reales (WebSocket/SSE): apaga los bots de espera y reinicia la ronda sin ellos */
+function realEvent(){IDLE.last=Date.now();if(IDLE.on){IDLE.on=false;clearTimeout(IDLE.t);newRound()}}
+if(IDLE.after>0&&!Q.get('demo'))setInterval(()=>{if(!IDLE.on&&!autoT&&Date.now()-IDLE.last>IDLE.after)startIdle()},1000);
+
+/* ===== v4 · GAMIFICACIÓN: efectos (solo visuales; no tocan puntos ni posiciones) =====
+   emojis flotantes por evento · anillo en la tortuga · cartel grande por nivel de aporte (TURBO/MEGA/LEYENDA)
+   · temblor y destello de pantalla · niveles por jugador · adelantamientos · META y CAMPEÓN con confeti */
+const EMO={gift:['🎁','💎','✨'],like:['❤️','💖','💕'],follow:['⭐','💛','🌟'],share:['🔁','🚀','📣'],chat:['💬','🐢','👏'],join:['👋','🐢','✨']};
+function burstAt(x,y,n,gold){const cols=gold?['#FFC93C','#FFE27A','#FFF6E0']:['#FF3D7F','#5CF2C0','#FFC93C','#FFF6E0'];
+  for(let i=0;i<n;i++)ps.push({x,y,vx:(Math.random()-.5)*14,vy:-Math.random()*13-3,r:Math.random()*6+4,c:cols[i%cols.length],a:Math.random()*6,va:(Math.random()-.5)*.4,l:1});
+  if(!run){run=true;requestAnimationFrame(tick)}}
+function turPos(code){const r=T[code].tur.getBoundingClientRect();return[r.left+r.width*.5,r.top+r.height*.4]}
+function emojiFx(code,type,n){const t=T[code];for(let i=0;i<n;i++)setTimeout(()=>{const e=document.createElement('i');e.className='emo';e.textContent=rnd(EMO[type]||EMO.chat);
+  e.style.setProperty('--p',Math.min(100,S.pos[code]));e.style.setProperty('--dx',((Math.random()-.5)*3.2).toFixed(1)+'rem');e.style.setProperty('--rt',((Math.random()-.5)*40|0)+'deg');
+  t.trk.append(e);setTimeout(()=>e.remove(),1700)},i*110)}
+function ringFx(code,mega){const r=document.createElement('i');r.className='ring'+(mega?' mega':'');T[code].tur.append(r);setTimeout(()=>r.remove(),950)}
+let bigT=null,celebrationT=null,celebrationUntil=0;
+function showCelebration(duration=2300){
+  const stage=$('bottom');stage.classList.add('on');
+  celebrationUntil=Math.max(celebrationUntil,Date.now()+duration);
+  clearTimeout(celebrationT);
+  const hide=()=>{const remaining=celebrationUntil-Date.now();
+    if(remaining>0){celebrationT=setTimeout(hide,remaining);return}
+    stage.classList.remove('on')};
+  celebrationT=setTimeout(hide,duration);
+}
+function bigFx(text,sub,tier,celebrate=true){if(celebrate)showCelebration();const b=$('big');b.className='';b.innerHTML=text+(sub?'<small>'+sub+'</small>':'');void b.offsetWidth;b.className='t'+tier+' on';clearTimeout(bigT);bigT=setTimeout(()=>b.className='',2300)}
+function screenFx(shake){const v=$('vig');v.className='';void v.offsetWidth;v.className='on';if(shake){const a=$('app');a.classList.remove('shake');void a.offsetWidth;a.classList.add('shake')}}
+const LV=[10,25,50,100,200,400];
+const _raceAdd=raceAdd;
+raceAdd=function(p,entry,points){
+  const had=S.slotOf.get(p.key);_raceAdd(p,entry,points);
+  const code=S.slotOf.get(p.key);if(!code||S.over)return;
+  const ty=entry.type;emojiFx(code,ty,points>=50?7:points>=15?4:points>=3?2:1);
+  if(points>=5)ringFx(code,points>=50);
+  const[x,y]=turPos(code);
+  if(points>=15){burstAt(x,y,points>=200?90:points>=50?55:25,points>=50)}
+  const who='@'+p.username;
+  if(points>=200){bigFx('👑 ¡LEYENDA!',who+' · +'+Math.round(points)+' pts',3);screenFx(true);burst(100,true)}
+  else if(points>=50){bigFx('💥 ¡MEGA EMPUJE!',who+' · +'+Math.round(points)+' pts',2);screenFx(true)}
+  else if(points>=15){bigFx('⚡ ¡TURBO!',who+' · +'+Math.round(points)+' pts',1)}
+  else if(ty==='follow'){bigFx('❤️ ¡NUEVO SEGUIDOR!',who,1)}
+  else if(ty==='share'){bigFx('🚀 ¡COMPARTIÓ!',who,1)}
+  else if(ty==='gift'){bigFx('🎁 ¡REGALO!',who+' · +'+Math.round(points)+' pts',1)}
+  else if(!had&&!(IDLE&&IDLE.on)){if(ty==='join'&&Date.now()-(raceAdd.jf||0)<3000)feed('👋 @'+p.username+' entra a la carrera','soft');else{raceAdd.jf=Date.now();bigFx('🐢 ¡ENTRA A LA CARRERA!',who+(ty==='join'?' · ¡bienvenido!':' · seguila y apoyala'),1)}}
+  /* niveles por jugador */
+  p.lv=p.lv||0;let nl=0;while(nl<LV.length&&p.points>=LV[nl])nl++;
+  if(nl>p.lv&&!(IDLE&&IDLE.on)){p.lv=nl;setTimeout(()=>{bigFx('⭐ NIVEL '+(nl+1),who,2);burstAt(...turPos(code),40,true);SFX.goal&&SFX.goal()},points>=15?1200:0)}
+  else p.lv=Math.max(p.lv,nl);
+};
+/* adelantamientos: un carril sube de puesto mientras corren */
+let lastRank={};
+const _render=render;
+render=function(){_render();
+  if(!S.go||S.over)return;
+  const ord=[...C].sort((a,b)=>S.pos[b.c]-S.pos[a.c]);
+  ord.forEach((c,i)=>{const prev=lastRank[c.c];lastRank[c.c]=i;
+    const pl=slotPlayer(c.c);
+    if(prev!==undefined&&i<prev&&pl&&S.pos[c.c]>3&&Math.abs(S.pos[c.c]-S.pos[ord[i+1]?ord[i+1].c:c.c])>.3){
+      const l=$('ln-'+c.c);l.classList.remove('flash');void l.offsetWidth;l.classList.add('flash');
+      emojiFx(c.c,'follow',3);
+      if(i===0){bigFx('🥇 ¡NUEVO LÍDER!','@'+pl.username,2);burstAt(...turPos(c.c),45,true);SFX.cp&&SFX.cp()}
+      else feed('⚡ @'+pl.username+' adelanta y sube al puesto '+(i+1),'cp')}});
+};
+/* META de la comunidad y CAMPEÓN */
+const _goalAdd=goalAdd;
+goalAdd=function(n){const g=S.goal;_goalAdd(n);if(S.goal!==g){bigFx('🎯 ¡META LOGRADA!','Empuje doble 30 s',3);screenFx(true);burstAt(innerWidth*.5,innerHeight*.75,120,false)}};
+const _finish=finish;
+finish=function(code){_finish(code);const p=slotPlayer(code);
+  $('app').classList.add('finished');
+  emojiFx(code,'follow',10);ringFx(code,true);
+  if(p&&!(IDLE&&IDLE.on)){spotlight(p)}   /* v6: vidriera del ganador (3 s) con pedido de seguirlo */
+  else{bigFx('🏆 ¡CAMPEÓN!',p?'@'+p.username:'',3,false);screenFx(true);burst(100,true)}};
+/* al reiniciar la ronda se limpian los puestos recordados */
+const _newRound=newRound;
+newRound=function(){lastRank={};S.nearEnd=false;$('app').classList.remove('finished');hideSpot();_newRound.apply(this,arguments)};
+
+/* ===== v5 · ESTRATEGIA: ayudar a cuentas pequeñas a crecer =====
+   Cada ronda termina con la CUENTA DESTACADA (avatar + @ del campeón, 14 s: "sigan su perfil").
+   Los campeones se guardan en un MURO (últimos 8, persiste en el navegador/OBS) y la línea de ayuda del encabezado
+   rota: reglas · apoyo a los pequeños · destacada · muro de campeones. Quien entra a la pista sale con su nombre en grande. */
+const HALL=(()=>{try{return JSON.parse(localStorage.getItem('tortugasHall')||'[]')}catch{return[]}})();
+let SPOT=null,spT=null;
+const SHOW_MS=3000;
+function hideSpot(){clearTimeout(spT);clearInterval(spotI);$('spot').className='';$('spotBg').className=''}
+let spotI=null;
+function spotlight(p){
+  SPOT=p.username;const i=HALL.indexOf(p.username);if(i>=0)HALL.splice(i,1);HALL.unshift(p.username);HALL.length=Math.min(HALL.length,8);
+  try{localStorage.setItem('tortugasHall',JSON.stringify(HALL))}catch{}
+  const c=$('spot'),bg=$('spotBg'),wins=winsBy.get(p.key)||1,st=S.streak||1;
+  c.className='';bg.className='';c.style.setProperty('--sm',SHOW_MS+'ms');bg.style.setProperty('--sm',SHOW_MS+'ms');
+  c.innerHTML='<div class="stage"><i class="rays"></i><div class="sa"></div><i class="crown">👑</i></div>'
+    +'<div class="sb"><div class="ribbon"></div><div class="name"></div><div class="badges"></div>'
+    +'<div class="cta">❤️ ¡SÍGANLO TODOS! ❤️</div><div class="cta2">Toca su perfil y dale <b>Seguir</b></div><div class="nx2"></div></div>'
+    +'<div class="timer"><i></i></div>';
+  c.querySelector('.ribbon').textContent=st>=2?'🔥 ¡RACHA x'+st+'!':'🏆 ¡NUEVO CAMPEÓN!';
+  c.querySelector('.name').textContent='@'+p.username;
+  const bd=c.querySelector('.badges');
+  [['🏅 '+wins+(wins===1?' victoria':' victorias')],['🐢 Ronda '+S.round]].forEach(([t])=>{const e=document.createElement('span');e.textContent=t;bd.append(e)});
+  const a=c.querySelector('.sa');
+  function ini(){a.textContent=p.username.trim().charAt(0).toUpperCase()||'?';a.style.background='hsl('+hue(p.key)+' 70% 45%)'}
+  if(p.avatar){const im=new Image();im.onerror=()=>{im.remove();ini()};im.src=p.avatar;a.append(im)}else ini();
+  void c.offsetWidth;c.className='on';bg.className='on';
+  /* cuenta de salida 3-2-1 */
+  const t0=Date.now(),nx=c.querySelector('.nx2'),upd=()=>{nx.textContent='Nueva carrera en '+Math.max(1,Math.ceil((SHOW_MS-(Date.now()-t0))/1000))+'…'};
+  upd();clearInterval(spotI);spotI=setInterval(upd,250);
+  /* festejo: confeti, corazones que suben y sonido (el pedido de seguir se repite con el jingle de follow) */
+  for(let k=0;k<6;k++)setTimeout(()=>burstAt(innerWidth*(.15+Math.random()*.7),innerHeight*(.55+Math.random()*.3),70,k%2===0),k*420);
+  for(let k=0;k<16;k++)setTimeout(()=>{const h=document.createElement('i');h.className='sh';h.textContent=k%3?'❤️':'💚';
+    h.style.setProperty('--x',(5+Math.random()*88)+'%');h.style.setProperty('--s',(1.4+Math.random()*1.8).toFixed(1)+'rem');
+    h.style.setProperty('--d',(1.6+Math.random()*1.2).toFixed(1)+'s');h.style.setProperty('--r',((Math.random()-.5)*60|0)+'deg');
+    document.body.append(h);setTimeout(()=>h.remove(),3000)},k*150);
+  setTimeout(()=>SFX.win&&SFX.win(),350);[900,1700,2500].forEach(ms=>setTimeout(()=>SFX.follow&&SFX.follow(),ms));
+  clearTimeout(spT);spT=setTimeout(()=>{c.className='';bg.className='';clearInterval(spotI)},SHOW_MS+60)}
+const HOW0=$('how').textContent;let howI=0;
+setInterval(()=>{const L=[HOW0,'💚 Apoyá a los pequeños: seguí a quien va ganando'];
+  if(SPOT)L.push('🌟 Cuenta destacada: @'+SPOT+' · ¡seguila!');
+  if(HALL.length)L.push('🏅 Campeones: '+HALL.slice(0,3).map(n=>'@'+n).join(' · '));
+  howI=(howI+1)%L.length;$('how').textContent=L[howI]},5000);
+
+
+/* v6 · tensión final: cuando el líder pasa el 88 % se avisa una vez por ronda para que el chat empuje */
+const _render3=render;
+render=function(){_render3();
+  if(!S.go||S.over||S.nearEnd)return;
+  let m=-1,lc=null;for(const c of C)if(S.slotUser[c.c]&&S.pos[c.c]>m){m=S.pos[c.c];lc=c.c}
+  if(lc&&m>=88){S.nearEnd=true;const pl=slotPlayer(lc);
+    if(pl){banner('🏁 ¡@'+pl.username+' casi gana! ¡Empújenlo!',2600);feed('🏁 @'+pl.username+' está a punto de ganar','hot');SFX.cp&&SFX.cp();screenFx(false)}}
+};
+
+const _newRound2=newRound;
+newRound=function(){_newRound2.apply(this,arguments);seedRoster()};
+renderLiveEvents();newRound();requestAnimationFrame(frame);setInterval(msgTick,3500);msgTick();connect();
+</script>
+</body>
+</html>

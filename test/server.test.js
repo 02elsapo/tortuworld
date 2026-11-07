@@ -35,15 +35,20 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /#bottom\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1\.35fr\)/);
     assert.match(overlayHtml, /grid-template-rows:minmax\(0,2fr\) minmax\(0,\.8fr\)/);
     assert.match(overlayHtml, /#app\{top:0;bottom:50%/);
+    assert.match(overlayHtml, /\.tur\{top:50%;width:auto;height:100%;aspect-ratio:70 \/ 46/);
     assert.match(overlayHtml, /#bottom\.on\{display:flex\}/);
     assert.match(overlayHtml, /function showCelebration\(duration=2300\)/);
     assert.match(overlayHtml, /else if\(ty==='gift'\)\{bigFx\('🎁 ¡REGALO!'/);
     assert.match(overlayHtml, /if\(!S\.over&&S\.winner\)finish\(S\.winner\)/);
-    assert.match(overlayHtml, /#spot\.on\{display:flex;animation:spin 3s ease forwards\}/);
-    assert.match(overlayHtml, /crawl:\.15,restartMs:3000/);
+    assert.match(overlayHtml, /#spot\.on\{display:flex;animation:scard var\(--sm,3s\)/);
+    assert.match(overlayHtml, /crawl:\.15,restartMs:3600/);
     assert.match(overlayHtml, /const crawl=S\.go&&S\.slotUser\[k\]&&!S\.over\?t\.cr\*dt:0/);
     assert.match(overlayHtml, /t\.ph\+=dt\*\(\.65\+5\.35\*speedRatio\)/);
-    assert.match(overlayHtml, /<div id="bottom">[\s\S]*<div id="big"><\/div><div id="spot"><\/div>/);
+    assert.match(overlayHtml, /step:th\(\(speed=0\)=>\{if\(!SND\)return/);
+    assert.match(overlayHtml, /noise\(\.08,\.16,t,700\);tone\(105\+speed\*20,\.1,'triangle',\.38,t/);
+    assert.match(overlayHtml, /if\(S\.go&&S\.slotUser\[k\]&&step!==t\.step\)\{t\.step=step;SFX\.step\(speedRatio\)\}/);
+    assert.match(overlayHtml, /<div id="bottom">[\s\S]*<div id="big"><\/div>/);
+    assert.match(overlayHtml, /<div id="spotBg"><\/div>\s*<div id="spot"><\/div>/);
     assert.match(overlayHtml, /id="standings"[\s\S]*TOP 5[\s\S]*id="topPlayers"/);
     assert.match(overlayHtml, /id="activity"[\s\S]*EVENTOS[\s\S]*id="eventRows"/);
     assert.match(overlayHtml, /id="specialEvent"/);
@@ -61,7 +66,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
-    assert.match(overlayHtml, /v5: TOP 5 de espectadores por puntos/);
+    assert.match(overlayHtml, /CARRERA DE TORTUGAS v6/);
 
     const backend = await fetch(`${baseUrl}/backend`);
     assert.equal(backend.status, 200);

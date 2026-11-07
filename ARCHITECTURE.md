@@ -31,7 +31,7 @@ The connector starts only when a username is configured. Connection retries, sta
 | `modules/tiktok/routes.js` | Maps HTTP requests to connector operations; it contains no connection logic. |
 | `modules/realtime/sseHub.js` | Attaches SSE responses, sends initial messages, broadcasts named events and heartbeats, and removes closed clients. |
 | `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game and `/backend` to the configuration page. |
-| `Carrera_de_Tortugas_TikTok_Live_v5.html` | Runs the Top 5 game, consumes normalized SSE updates, and maps chat, gifts, likes, follows, and shares to game actions. |
+| `Carrera_de_Tortugas_TikTok_Live_v6.html` | Runs the Top 5 game, consumes normalized SSE updates, and maps chat, gifts, likes, follows, and shares to game actions. |
 | `modules/overlay/backend.html` | Reads status/configuration and submits an account change to the API. |
 
 Add a mini app as a new module with its own routes and event subscription. Keep the provider connection reusable and app-agnostic.

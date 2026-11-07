@@ -254,25 +254,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #vig.on{animation:vig 1s ease-out}
 @keyframes vig{0%{opacity:.9}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.lane.lead::after{animation:none}}
-#spot{position:fixed;left:50%;top:20%;z-index:21;transform:translateX(-50%);width:min(88vw,27rem);display:none;align-items:center;gap:.9rem;padding:.8rem 1rem;border-radius:1.4rem;background:linear-gradient(135deg,#0D3A41,#07262B);border:.28rem solid var(--sun);box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 3rem rgba(255,201,60,.8);pointer-events:none}
+#spot{position:fixed;left:50%;top:35%;z-index:40;transform:translate(-50%,-50%);width:min(94vw,36rem);display:none;align-items:center;gap:1.2rem;padding:1.2rem 1.5rem;border-radius:1.4rem;background:linear-gradient(135deg,#0D3A41,#07262B);border:.28rem solid var(--sun);box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 3rem rgba(255,201,60,.8);pointer-events:none}
 #spot.on{display:flex;animation:spin 3s ease forwards}
 @keyframes spin{0%{opacity:0;transform:translateX(-50%) scale(.3)}4%{opacity:1;transform:translateX(-50%) scale(1.08)}7%{transform:translateX(-50%) scale(1)}92%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(.95)}}
-#spot .sa{flex:none;width:5rem;height:5rem;border-radius:50%;overflow:hidden;border:.25rem solid var(--sun);display:grid;place-items:center;font:2.4rem 'Bowlby One','Arial Black',sans-serif;color:#fff;box-shadow:0 0 1.2rem var(--sun)}
+#spot .sa{flex:none;width:clamp(5.5rem,18vw,9rem);height:clamp(5.5rem,18vw,9rem);border-radius:50%;overflow:hidden;border:.3rem solid var(--sun);display:grid;place-items:center;font:3.6rem 'Bowlby One','Arial Black',sans-serif;color:#fff;box-shadow:0 0 1.5rem var(--sun)}
 #spot .sa img{width:100%;height:100%;object-fit:cover}
 #spot .sb{min-width:0;display:flex;flex-direction:column;gap:.15rem}
-#spot small{font:1rem 'Bowlby One','Arial Black',sans-serif;color:var(--sun)}
-#spot b{font:1.7rem/1.1 'Bowlby One','Arial Black',sans-serif;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#spot em{font-style:normal;font-size:1rem;color:var(--mint)}
+#spot small{font:1.15rem 'Bowlby One','Arial Black',sans-serif;color:var(--sun)}
+#spot b{font:2rem/1.1 'Bowlby One','Arial Black',sans-serif;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#spot em{font-style:normal;font-size:1.15rem;line-height:1.2;color:var(--mint)}
 
 /* La carrera queda arriba; la mitad inferior aparece solo durante los festejos. */
 #app{top:0;bottom:50%;left:3%;right:var(--padr);gap:.2rem}
 #lanes{flex:1 1 0;min-height:0}
 .lane{flex:1 1 0;min-height:0;height:auto}
+.tur{top:50%;width:auto;height:100%;aspect-ratio:70 / 46;margin-top:0;transform:translateY(-50%)}
 #bottom{position:fixed;inset:50% 0 0;z-index:18;display:none;align-items:center;justify-content:center;overflow:hidden;background:#000}
 #bottom.on{display:flex}
 #bottom #standings,#bottom #activity{display:none}
 #big{position:absolute;left:50%;top:50%;z-index:1;max-width:92vw;transform:translate(-50%,-50%)}
-#spot{position:absolute;left:50%;top:50%;z-index:2;transform:translate(-50%,-50%)}
+#spot{position:fixed;left:50%;top:35%;z-index:40;transform:translate(-50%,-50%)}
 @keyframes bigpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-6deg)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(2deg)}22%{transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,calc(-50% - 1.5rem)) scale(1)}}
 @keyframes spin{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}4%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}7%{transform:translate(-50%,-50%) scale(1)}92%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.95)}}
 </style>
@@ -300,8 +301,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
     <table><thead><tr><th>Hora</th><th>Evento</th><th>Usuario</th><th>Detalle</th></tr></thead><tbody id="eventRows"></tbody></table>
     <div id="feed"></div>
   </section>
-  <div id="big"></div><div id="spot"></div>
+  <div id="big"></div>
 </div>
+<div id="spot"></div>
 <div id="cd" class="disp"></div><div id="vig"></div>
 <div id="win"><div class="card">
   <div class="kick disp" id="wk"></div>
@@ -416,7 +418,7 @@ function ac(){
     AC=new(window.AudioContext||window.webkitAudioContext)();
     MG=AC.createGain();MG.gain.value=Math.min(1,+Q.get('vol')||.6);MG.connect(AC.destination);
     SG=AC.createGain();SG.connect(MG);                       /* efectos */
-    GG=AC.createGain();GG.gain.value=.4;GG.connect(MG);      /* música */
+    GG=AC.createGain();GG.gain.value=.12;GG.connect(MG);     /* música de fondo */
     const n=24,re=new Float32Array(n+1),im=new Float32Array(n+1);   /* onda de pulso al 25 %, el sonido típico de NES */
     for(let k=1;k<=n;k++){re[k]=Math.sin(2*Math.PI*k*.25)/(k*Math.PI);im[k]=(1-Math.cos(2*Math.PI*k*.25))/(k*Math.PI)}
     W25=AC.createPeriodicWave(re,im);
@@ -451,6 +453,7 @@ const SFX={
   join:th(()=>seq([[523,.05],[784,.09]],'square',.06),150),
   follow:()=>seq([[659,.07],[880,.07],[1175,.14]],'p25',.08),
   sprint:()=>{seq([[523,.05],[659,.05],[784,.05],[1047,.05],[1319,.05],[1568,.05],[2093,.22]],'p25',.1);noise(.25,.05,null,4000)},  /* power-up */
+  step:th((speed=0)=>{if(!SND)return;const a=ac();if(!a)return;const t=a.currentTime;noise(.08,.16,t,700);tone(105+speed*20,.1,'triangle',.38,t,undefined,55+speed*10)},75),
   cp:()=>seq([[784,.07],[988,.07],[1175,.07],[1568,.2]],'square',.08),                    /* bono de lechuga */
   goal:()=>seq([[659,.09],[784,.09],[1319,.09],[1047,.09],[1175,.09],[1568,.28]],'square',.09),  /* vida extra */
   photo:()=>seq([[880,.12],[660,.12],[880,.12],[660,.12]],'square',.08),                  /* alarma */
@@ -864,8 +867,8 @@ function countdown(){
      ph/am fase y amplitud del paso    hl  cuánto levanta la cabeza    w  semilla de ruido    du  temporizador de polvo */
 const T={};
 C.forEach(c=>{const e=$('tu-'+c.c);T[c.c]={tur:e,trk:$('tk-'+c.c),e:{lfB:e.querySelector('.lfB'),lfF:e.querySelector('.lfF'),lnB:e.querySelector('.lnB'),lnF:e.querySelector('.lnF'),tl:e.querySelector('.tl'),hd:e.querySelector('.hd'),bd:e.querySelector('.bd')},av:{im:e.querySelector('.avim'),tx:e.querySelector('.avtx'),bg:e.querySelector('.avbg')},
-  ph:Math.random()*6,w:Math.random()*10,vs:0,ve:0,cr:0,pend:0,pause:0,base:1,am:0,hl:0,du:0}});
-function reseed(){C.forEach(c=>{const t=T[c.c];t.base=.7+Math.random()*.7;t.ve=0;t.cr=0;t.vs=0;t.pend=0;t.pause=0;t.w=Math.random()*10})}
+  ph:Math.random()*6,step:0,w:Math.random()*10,vs:0,ve:0,cr:0,pend:0,pause:0,base:1,am:0,hl:0,du:0}});
+function reseed(){C.forEach(c=>{const t=T[c.c];t.base=.7+Math.random()*.7;t.ve=0;t.cr=0;t.vs=0;t.pend=0;t.pause=0;t.step=Math.floor((t.ph+Math.PI/2)/Math.PI);t.w=Math.random()*10})}
 const VMAX=2.4,ACC=2.5,DEC=1.2; /* v4: caminata lenta (antes 9/10/5) */
 function puff(k,R){const t=T[k],el=document.createElement('i');el.className='dust';
   el.style.left=((t.trk.clientWidth-7*R)*Math.min(100,S.pos[k])/100+1.3*R)+'px';t.trk.append(el);setTimeout(()=>el.remove(),900)}
@@ -908,6 +911,8 @@ function frame(now){
     /* animación */
     const sp=Math.min(t.vs,VMAX),speedRatio=Math.max(0,sp/VMAX);
     t.ph+=dt*(.65+5.35*speedRatio);
+    const step=Math.floor((t.ph+Math.PI/2)/Math.PI);
+    if(S.go&&S.slotUser[k]&&step!==t.step){t.step=step;SFX.step(speedRatio)}
     t.am+=(.18+1.62*speedRatio-t.am)*Math.min(1,dt*(3+speedRatio*5));
     t.hl+=(0-t.hl)*Math.min(1,dt*4);
     const s=Math.sin(t.ph),cs=Math.cos(t.ph),a=t.am,E=t.e;
@@ -1030,7 +1035,7 @@ function showCelebration(duration=2300){
     stage.classList.remove('on')};
   celebrationT=setTimeout(hide,duration);
 }
-function bigFx(text,sub,tier){showCelebration();const b=$('big');b.className='';b.innerHTML=text+(sub?'<small>'+sub+'</small>':'');void b.offsetWidth;b.className='t'+tier+' on';clearTimeout(bigT);bigT=setTimeout(()=>b.className='',2300)}
+function bigFx(text,sub,tier,celebrate=true){if(celebrate)showCelebration();const b=$('big');b.className='';b.innerHTML=text+(sub?'<small>'+sub+'</small>':'');void b.offsetWidth;b.className='t'+tier+' on';clearTimeout(bigT);bigT=setTimeout(()=>b.className='',2300)}
 function screenFx(shake){const v=$('vig');v.className='';void v.offsetWidth;v.className='on';if(shake){const a=$('app');a.classList.remove('shake');void a.offsetWidth;a.classList.add('shake')}}
 const LV=[10,25,50,100,200,400];
 const _raceAdd=raceAdd;
@@ -1073,7 +1078,7 @@ const _goalAdd=goalAdd;
 goalAdd=function(n){const g=S.goal;_goalAdd(n);if(S.goal!==g){bigFx('🎯 ¡META LOGRADA!','Empuje doble 30 s',3);screenFx(true);burstAt(innerWidth*.5,innerHeight*.75,120,false)}};
 const _finish=finish;
 finish=function(code){_finish(code);const p=slotPlayer(code);
-  bigFx('🏆 ¡CAMPEÓN!',p?'@'+p.username:'',3);screenFx(true);
+  bigFx('🏆 ¡CAMPEÓN!',p?'@'+p.username:'',3,false);screenFx(true);
   for(let i=0;i<6;i++)setTimeout(()=>burstAt(innerWidth*(.15+Math.random()*.7),innerHeight*(.6+Math.random()*.3),70,i%2===0),i*350);
   emojiFx(code,'follow',10);ringFx(code,true);if(p&&!(IDLE&&IDLE.on))spotlight(p)};
 /* al reiniciar la ronda se limpian los puestos recordados */
@@ -1087,10 +1092,9 @@ newRound=function(){lastRank={};_newRound.apply(this,arguments)};
 const HALL=(()=>{try{return JSON.parse(localStorage.getItem('tortugasHall')||'[]')}catch{return[]}})();
 let SPOT=null,spT=null;
 function spotlight(p){
-  showCelebration(3000);
   SPOT=p.username;const i=HALL.indexOf(p.username);if(i>=0)HALL.splice(i,1);HALL.unshift(p.username);HALL.length=Math.min(HALL.length,8);
   try{localStorage.setItem('tortugasHall',JSON.stringify(HALL))}catch{}
-  const c=$('spot');c.className='';c.innerHTML='<div class="sa"></div><div class="sb"><small>🌟 CUENTA DESTACADA</small><b></b><em>¡Entra a su perfil y apóyala!</em></div>';
+  const c=$('spot');c.className='';c.innerHTML='<div class="sa"></div><div class="sb"><small>🏆 GANADOR DE LA CARRERA</small><b></b><em>¡Síguelo para que crezca su cuenta!</em></div>';
   c.querySelector('b').textContent='@'+p.username;
   const a=c.querySelector('.sa');
   if(p.avatar){const im=new Image();im.onerror=()=>{im.remove();ini()};im.src=p.avatar;a.append(im)}else ini();
