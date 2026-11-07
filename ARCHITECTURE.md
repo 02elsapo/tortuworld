@@ -30,7 +30,8 @@ The connector starts only when a username is configured. Connection retries, sta
 | `modules/tiktok/eventFeedService.js` | Maintains an ordered event feed for connector diagnostics. |
 | `modules/tiktok/routes.js` | Maps HTTP requests to connector operations; it contains no connection logic. |
 | `modules/realtime/sseHub.js` | Attaches SSE responses, sends initial messages, broadcasts named events and heartbeats, and removes closed clients. |
-| `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game and `/backend` to the configuration page. |
+| `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game, `/backend` to configuration, and serves the `tortu` PWA assets. |
+| `modules/overlay/public/` | Provides the `tortu` install manifest, full-screen service worker, and app icons. |
 | `Carrera_de_Tortugas_TikTok_Live_v6.html` | Runs the Top 5 game, consumes normalized SSE updates, and maps chat, gifts, likes, follows, and shares to game actions. |
 | `modules/overlay/backend.html` | Reads status/configuration and submits an account change to the API. |
 

@@ -24,8 +24,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07262B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/tortu-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<script>
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(error=>console.error('No se pudo registrar tortu como aplicación:',error)));
+</script>
 <style>
 :root{--ink:#07262B;--ink2:#0D3A41;--sun:#FFC93C;--pink:#FF3D7F;--cream:#FFF6E0;--mint:#5CF2C0;--sand:#F3DFA2;--sand2:#E8CE8C;--grass:#5FB35A;--grass2:#4A9A4C;--padr:3%}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -209,9 +218,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 .lane.win{outline:.2rem solid var(--sun);box-shadow:0 0 1rem var(--sun)}
 .tur.swap svg{animation:pop .6s cubic-bezier(.2,1.6,.4,1) both}
 /* FIJA: esquina superior izquierda de la pista (al inicio); ya no sigue a la tortuga */
-.tag{position:absolute;left:.6rem;top:.15rem;margin:0;max-width:calc(100% - 1.4rem);display:flex;align-items:baseline;gap:.45rem;padding:0;height:1.7rem;line-height:1.7rem;white-space:nowrap;z-index:5;pointer-events:none}
-.tag b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-family:'Bowlby One','Arial Black',sans-serif;font-weight:400;font-size:1.4rem;letter-spacing:.02em;color:#07262B;-webkit-text-stroke:.14rem #FFF6E0;paint-order:stroke fill;text-shadow:none;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
-.tag small{flex:none;font-size:.95rem;color:#0D3A41;font-weight:800;-webkit-text-stroke:.1rem #FFF6E0;paint-order:stroke fill}
+.tag{position:absolute;left:.6rem;top:.15rem;margin:0;max-width:min(calc(100% - 1.4rem),36vw);display:flex;align-items:baseline;gap:clamp(3px,.4vw,6px);padding:0;height:clamp(18px,3.8vw,26px);line-height:1.2;white-space:nowrap;overflow:hidden;z-index:5;pointer-events:none}
+.tag b{flex:0 1 auto;min-width:0;max-width:min(30vw,10rem);overflow:hidden;text-overflow:ellipsis;font-family:'Bowlby One','Arial Black',sans-serif;font-weight:400;font-size:clamp(10px,1.4vw,16px);letter-spacing:.02em;color:#07262B;-webkit-text-stroke:.08em #FFF6E0;paint-order:stroke fill;text-shadow:none;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.tag small{flex:none;font-size:clamp(8px,1vw,12px);color:#0D3A41;font-weight:800;-webkit-text-stroke:.08em #FFF6E0;paint-order:stroke fill}
 .lane.empty .tag{display:none}
 /* Pantalla horizontal: se reduce el rem para que quepan los 5 carriles grandes sin tapar el panel inferior */
 @media (orientation:landscape){html{font-size:min(3.8vw,1.45vh)}}
@@ -578,7 +587,7 @@ function render(){
   ord.forEach((c,i)=>{const r=$('rk-'+c.c);r.textContent=i+1;r.className='rk disp r'+(i+1)});
   C.forEach(c=>{const p=slotPlayer(c.c);
     $('nm-'+c.c).textContent=p?'@'+p.username+(winsBy.get(p.key)?' 🏆'+winsBy.get(p.key):''):'';
-    const tg=T[c.c].tag||(T[c.c].tag=$('nm-'+c.c).parentNode);{const n=p?p.username.length:0;$('nm-'+c.c).style.fontSize=n>20?'.9rem':n>16?'1.05rem':n>12?'1.2rem':'';}
+    const tg=T[c.c].tag||(T[c.c].tag=$('nm-'+c.c).parentNode);
     $('tt-'+c.c).textContent=p?formatPlayerPoints(Math.floor(p.points*10)/10):'';
     T[c.c].tw=p?tg.offsetWidth:0; /* ancho de la etiqueta, para centrarla sin salirse de la pista */
     const l=$('ln-'+c.c);l.classList.toggle('lead',!!p&&S.pos[ord[0].c]>1&&c.c===ord[0].c);l.classList.toggle('empty',!p);l.classList.toggle('win',c.c===S.winner);

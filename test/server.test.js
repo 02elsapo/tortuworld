@@ -21,6 +21,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     const overlay = await fetch(baseUrl);
     assert.equal(overlay.status, 200);
     const overlayHtml = await overlay.text();
+    assert.match(overlayHtml, /<link rel="manifest" href="\/manifest\.webmanifest">/);
+    assert.match(overlayHtml, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
+    assert.match(overlayHtml, /\.tag b\{[^}]*font-size:clamp\(10px,1\.4vw,16px\)/);
+    assert.match(overlayHtml, /max-width:min\(calc\(100% - 1\.4rem\),36vw\)/);
     assert.match(overlayHtml, /new EventSource\('\/api\/events'\)/);
     assert.match(overlayHtml, /<title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores<\/title>/);
     assert.match(overlayHtml, /<h1 class="disp">SIGUE AL LÍDER Y AYUDA A GANAR SEGUIDORES<\/h1>/);
@@ -71,6 +75,21 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
     assert.match(overlayHtml, /CARRERA DE TORTUGAS v6/);
+
+    const manifestResponse = await fetch(`${baseUrl}/manifest.webmanifest`);
+    assert.equal(manifestResponse.status, 200);
+    assert.match(manifestResponse.headers.get('content-type'), /application\/manifest\+json/);
+    const manifest = await manifestResponse.json();
+    assert.equal(manifest.name, 'tortu');
+    assert.equal(manifest.display, 'fullscreen');
+    assert.deepEqual(manifest.icons.map((icon) => icon.sizes), ['192x192', '512x512']);
+    for (const icon of manifest.icons) {
+      assert.equal((await fetch(new URL(icon.src, baseUrl))).status, 200);
+    }
+
+    const serviceWorker = await fetch(`${baseUrl}/sw.js`);
+    assert.equal(serviceWorker.status, 200);
+    assert.match(await serviceWorker.text(), /url\.pathname\.startsWith\('\/api\/'\)/);
 
     const backend = await fetch(`${baseUrl}/backend`);
     assert.equal(backend.status, 200);

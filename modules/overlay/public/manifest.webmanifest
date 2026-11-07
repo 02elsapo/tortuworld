@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "tortu",
+  "short_name": "tortu",
+  "description": "Carrera de tortugas para TikTok LIVE",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#07262B",
+  "theme_color": "#07262B",
+  "icons": [
+    {
+      "src": "/icons/tortu-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/tortu-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

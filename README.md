@@ -15,6 +15,8 @@ npm start
 
 El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. También puedes dejar `TIKTOK_USERNAME` vacío y guardar el usuario en el backend. La conexión comienza al arrancar si hay una cuenta configurada.
 
+La aplicación también es instalable en Chrome como **tortu** y abre en pantalla completa. Entra al sitio por HTTPS (o por `http://localhost` durante desarrollo) y elige **Instalar tortu** en el menú de Chrome o en el icono de instalación de la barra de direcciones. El modo de pantalla completa se aplica al abrir la aplicación instalada; el overlay sigue disponible en `/` para TikTok LIVE Studio.
+
 El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra el entorno con tu herramienta de despliegue. `.env.example` enumera las variables:
 
 | Variable | Predeterminado | Descripción |
@@ -79,6 +81,7 @@ modules/
   overlay/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
+    public/                       # Manifest, service worker e iconos de la PWA tortu
 Carrera_de_Tortugas_TikTok_Live_v6.html # Juego y overlay transparente
 test/
   server.test.js                  # HTTP, configuración y publicación
