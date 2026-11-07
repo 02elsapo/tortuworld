@@ -12,8 +12,8 @@
      regalo = diamantes x cantidad x combo (hasta x2). El empuje doble (barra de meta) duplica todos los puntos.
      Posición de cada tortuga = puntos de la ronda / META (?target=40), de 0 a 100 %. La primera en llegar queda
      como campeona y termina la carrera.
-     Parámetros URL: ?target=40 (puntos para ganar) · ?goal=60 (meta de la comunidad) · ?idle=15 (segundos para
-     activar los bots de espera; 0 = apagados) · ?demo=1 (bots de prueba) · ?panel=1 (panel de pruebas) ·
+     Parámetros URL: ?target=40 (puntos para ganar) · ?goal=60 (meta de la comunidad) · ?idle=0 (desactiva los bots de relleno) ·
+     ?demo=1 (bots de prueba) · ?panel=1 (panel de pruebas) ·
      ?safe=1 (margen derecho) · ?top= / ?bottom= (márgenes en %) · ?sound=0 / ?music=0 · ?ws=ws://host:puerto
      Mapa del script: CFG/estado -> sonido -> dibujo (turtle, carriles) -> pantalla (render, avatar, slots, raceAdd)
      -> puntuación (scoreContestant) -> fin/nueva ronda -> movimiento (frame) -> conexión -> bots de espera y de prueba.
@@ -203,6 +203,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 /* Panel de pruebas */
 #dot{position:fixed;right:.7rem;bottom:.7rem;width:.85rem;height:.85rem;border-radius:50%;background:#ff4d4d;box-shadow:0 0 .45rem rgba(0,0,0,.65);z-index:30}
 #dot.on{background:#36e276;box-shadow:0 0 .55rem rgba(54,226,118,.8)}
+#overlayVersion{position:fixed;left:.7rem;bottom:.55rem;z-index:30;padding:.2rem .4rem;border-radius:.35rem;background:rgba(7,38,43,.55);color:rgba(255,255,255,.8);font:700 .65rem/1 system-ui,sans-serif;letter-spacing:.06em;pointer-events:none}
 #bots{position:fixed;right:8px;top:8px;z-index:40;width:176px;background:rgba(0,0,0,.82);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px;font:12px/1.2 system-ui,sans-serif;display:none;gap:4px;flex-wrap:wrap}
 #bots.on{display:flex}
 #bots b{width:100%;font-size:11px;opacity:.8}
@@ -345,6 +346,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   <div class="nx"><i id="nxb"></i></div><div class="sm2" id="nxt"></div>
 </div></div>
 <div id="dot" role="status" aria-label="TikTok desconectado"></div>
+<div id="overlayVersion">OVERLAY v6</div>
 <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
 <div id="bots">
   <b>Pruebas de interacción (P)</b>
@@ -614,7 +616,7 @@ function claimSlot(p){
     else{for(const c of C){const o=slotPlayer(c.c);if(o&&c.c!==S.winner&&(!lo||o.points<lo.o.points))lo={c,o}}
       if(!lo||p.points<=lo.o.points)return null;
       code=lo.c.c}
-    S.slotOf.delete(lo.o.key);if(lo.o.isBot)contestants.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
+    S.slotOf.delete(lo.o.key);if(lo.o.isBot){contestants.delete(lo.o.key);deactivateIdleBot(lo.o.key)}feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
   if(lo){S.pos[code]=0;T[code].pend=0;T[code].ve=0;T[code].cr=0;T[code].vs=0}
   S.slotUser[code]=p.key;S.slotOf.set(p.key,code);setSlotAvatar(code,p);
   const el=T[code].tur;el.classList.remove('swap');void el.offsetWidth;el.classList.add('swap');SFX.join();return code;
@@ -743,8 +745,8 @@ function scoreContestant(entry,isBot=false){
 
   const previousTop=getTopPlayers(),previousNames=new Set(previousTop.map(player=>player.key));
   const key=username.toLocaleLowerCase();
-  if(entry.type==='join'&&contestants.has(key))return; /* ya es participante: el segundo 'join' no suma */
   let player=contestants.get(key);
+  if(entry.type==='join'&&player&&!player.isBot)return; /* ya es participante: el segundo 'join' no suma */
   if(isBot&&!S.slotOf.has(key)&&!C.some(c=>!S.slotUser[c.c]))return;
   if(!player){
     player={key,username,avatar:'',points:0,sequence:contestantSequence++,isBot};
@@ -1015,14 +1017,14 @@ function connect(){
         const entry={...m,username:m.username||m.user||'Alguien',content:m.content||m.text||m.gift||'',
           diamondCount:m.diamondCount||m.diamonds,activityCount:m.activityCount||m.count,
           time:m.time||new Date().toISOString()};
-        realEvent();addLiveEvent(entry);handleTikTokEntry(entry);
+        realEvent(entry);addLiveEvent(entry);handleTikTokEntry(entry);
       }else if(m.type==='reset')resetContestants()}catch{}};
     return;
   }
   const source=new EventSource('/api/events');
   source.addEventListener('status',e=>{try{setTikTokConnectionStatus(JSON.parse(e.data).connected)}catch{}});
   source.addEventListener('snapshot',e=>{try{setLiveEventSnapshot(JSON.parse(e.data))}catch{}});
-  source.addEventListener('update',e=>{try{const entry=JSON.parse(e.data).entry;realEvent();addLiveEvent(entry);handleTikTokEntry(entry)}catch{}});
+  source.addEventListener('update',e=>{try{const entry=JSON.parse(e.data).entry;realEvent(entry);addLiveEvent(entry);handleTikTokEntry(entry)}catch{}});
   source.onerror=()=>setTikTokConnectionStatus(false);
 }
 
@@ -1060,21 +1062,44 @@ if(SND)document.querySelector('[data-a=sound]').classList.add('act');
 if(SND&&MUSIC)document.querySelector('[data-a=music]').classList.add('act');
 if(Q.get('demo'))toggleAuto();
 
-/* ===== Bots de espera =====
-   Si no llega ningún evento real en IDLE.after ms (?idle=15 segundos; ?idle=0 los desactiva), 5 bots con nombres distintos
-   dan likes y comentarios para que la pista no se vea vacía. Solo likes/chat: nunca simulan seguidores, regalos ni compartidos.
-   Al llegar el PRIMER evento real (chat, regalo, like, follow o share) se apagan y la ronda se reinicia limpia. */
-var IDLE={on:false,t:null,last:Date.now(),after:(Q.has('idle')?+Q.get('idle'):15)*1000,names:['Ana','Leo','Lola','Rayo','Tito']};
+/* ===== Bots de relleno =====
+   Ocupan los cinco carriles desde el inicio; cada participante real reemplaza un bot y lo apaga.
+   Solo dan likes y comentarios. ?idle=0 los desactiva. */
+var IDLE={on:false,t:null,enabled:Q.get('idle')!=='0',names:['Ana','Leo','Lola','Rayo','Tito'],active:new Set()};
+function deactivateIdleBot(key){
+  if(!IDLE.active.delete(key))return;
+  if(!IDLE.active.size){IDLE.on=false;clearTimeout(IDLE.t)}
+}
+function seedIdleBots(){
+  if(!IDLE.on)return;
+  for(const username of IDLE.names){
+    const key=username.toLocaleLowerCase();
+    if(!IDLE.active.has(key)||contestants.has(key))continue;
+    const recentReal=ROSTER.get(key);
+    if(recentReal&&Date.now()-recentReal.t<ROSTER_TTL){deactivateIdleBot(key);continue}
+    const player={key,username,avatar:'',points:0,sequence:contestantSequence++,isBot:true};
+    contestants.set(key,player);
+    if(!claimSlot(player))contestants.delete(key);
+  }
+  render();renderTopPlayers();
+}
 function idleStep(){
-  const u=rnd(IDLE.names),e={username:u,avatar:'',time:new Date().toISOString()};
+  const names=IDLE.names.filter(name=>IDLE.active.has(name.toLocaleLowerCase()));
+  if(!IDLE.on||!names.length){IDLE.on=false;return}
+  const u=rnd(names),e={username:u,avatar:'',time:new Date().toISOString()};
   if(Math.random()<.7)handleTikTokEntry({...e,type:'like',activityCount:20+(Math.random()*40|0)},true);
   else handleTikTokEntry({...e,type:'chat',content:rnd(['¡Vamos!','¡Corre!','🐢🐢','¡Yo gano!'])},true);
   IDLE.t=setTimeout(idleStep,1200+Math.random()*2200);
 }
-function startIdle(){if(IDLE.on||autoT)return;IDLE.on=true;newRound();idleStep()}
-/* Llamar SOLO desde eventos reales (WebSocket/SSE): apaga los bots de espera y reinicia la ronda sin ellos */
-function realEvent(){IDLE.last=Date.now();if(IDLE.on){IDLE.on=false;clearTimeout(IDLE.t);newRound()}}
-if(IDLE.after>0&&!Q.get('demo'))setInterval(()=>{if(!IDLE.on&&!autoT&&Date.now()-IDLE.last>IDLE.after)startIdle()},1000);
+function startIdle(){
+  if(IDLE.on||autoT)return;
+  IDLE.on=true;IDLE.active=new Set(IDLE.names.map(name=>name.toLocaleLowerCase()));
+  seedIdleBots();idleStep();
+}
+function realEvent(entry){
+  const player=entry&&contestants.get(String(entry.username||'').trim().toLocaleLowerCase());
+  if(player&&player.isBot)deactivateIdleBot(player.key);
+}
 
 /* ===== v4 · GAMIFICACIÓN: efectos (solo visuales; no tocan puntos ni posiciones) =====
    emojis flotantes por evento · anillo en la tortuga · cartel grande por nivel de aporte (TURBO/MEGA/LEYENDA)
@@ -1203,8 +1228,8 @@ render=function(){_render3();
 };
 
 const _newRound2=newRound;
-newRound=function(){_newRound2.apply(this,arguments);seedRoster()};
-renderLiveEvents();newRound();requestAnimationFrame(frame);setInterval(msgTick,3500);msgTick();connect();
+newRound=function(){_newRound2.apply(this,arguments);if(IDLE.on)seedIdleBots();seedRoster()};
+renderLiveEvents();newRound();if(IDLE.enabled&&!Q.get('demo'))startIdle();requestAnimationFrame(frame);setInterval(msgTick,3500);msgTick();connect();
 </script>
 </body>
 </html>
