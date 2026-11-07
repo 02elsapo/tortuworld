@@ -346,7 +346,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   <div class="nx"><i id="nxb"></i></div><div class="sm2" id="nxt"></div>
 </div></div>
 <div id="dot" role="status" aria-label="TikTok desconectado"></div>
-<div id="overlayVersion">OVERLAY v6</div>
+<div id="overlayVersion">v1.0.1</div>
 <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
 <div id="bots">
   <b>Pruebas de interacción (P)</b>
@@ -1002,10 +1002,15 @@ function seedRoster(){
     contestants.set(key,p);if(claimSlot(p))names.push('@'+r.username)}
   if(names.length){render();renderTopPlayers();enqueueMsg('👋 Siguen en pista: '+names.slice(0,3).join(' · ')+(names.length>3?' +'+(names.length-3):''))}
 }
-function setTikTokConnectionStatus(connected){
+function setTikTokConnectionStatus(status){
   const dot=$('dot');
+  const connected=typeof status==='object'?status.connected:status;
   dot.classList.toggle('on',Boolean(connected));
   dot.setAttribute('aria-label',connected?'TikTok conectado':'TikTok desconectado');
+  if(status&&typeof status==='object'){
+    const username=typeof status.username==='string'?status.username.trim().replace(/^@+/, ''):'';
+    $('overlayVersion').textContent='v1.0.1'+(username?' · @'+username:'');
+  }
 }
 function connect(){
   if(Q.has('ws')){
@@ -1022,7 +1027,7 @@ function connect(){
     return;
   }
   const source=new EventSource('/api/events');
-  source.addEventListener('status',e=>{try{setTikTokConnectionStatus(JSON.parse(e.data).connected)}catch{}});
+  source.addEventListener('status',e=>{try{setTikTokConnectionStatus(JSON.parse(e.data))}catch{}});
   source.addEventListener('snapshot',e=>{try{setLiveEventSnapshot(JSON.parse(e.data))}catch{}});
   source.addEventListener('update',e=>{try{const entry=JSON.parse(e.data).entry;realEvent(entry);addLiveEvent(entry);handleTikTokEntry(entry)}catch{}});
   source.onerror=()=>setTikTokConnectionStatus(false);

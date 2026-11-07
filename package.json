@@ -1,6 +1,6 @@
 {
   "name": "tiktok-mini-app-starter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Base modular para mini apps de TikTok Live con conector y overlay",
   "main": "server.js",
