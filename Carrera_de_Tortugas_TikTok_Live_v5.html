@@ -8,7 +8,8 @@
      follow y share; roomUser/audiencia no forma parte del juego.
      Puntos por evento: comentario 1 (máx. 1 cada 8 s por usuario) · like 0.1 c/u · compartir 3 · seguir 5 ·
      regalo = diamantes x cantidad x combo (hasta x2). El empuje doble (barra de meta) duplica todos los puntos.
-     Posición de cada tortuga = puntos de la ronda / META (?target=40), de 0 a 100 %. Gana la primera en llegar a 100.
+     Posición de cada tortuga = puntos de la ronda / META (?target=40), de 0 a 100 %. La primera en llegar queda
+     como campeona; la siguiente ronda comienza cuando todos los participantes que tienen tortuga llegan a 100 %.
      Parámetros URL: ?target=40 (puntos para ganar) · ?goal=60 (meta de la comunidad) · ?idle=15 (segundos para
      activar los bots de espera; 0 = apagados) · ?demo=1 (bots de prueba) · ?panel=1 (panel de pruebas) ·
      ?safe=1 (margen derecho) · ?top= / ?bottom= (márgenes en %) · ?sound=0 / ?music=0 · ?ws=ws://host:puerto
@@ -315,7 +316,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
    =====================================================================================
 
    v5: TOP 5 de espectadores por puntos. Cada tortuga representa a un participante del top 5;
-   no hay equipos ni selección por país. El backend solo conecta TikTok y entrega eventos.
+   no hay equipos ni selección por país. El backend solo conecta TikTok y entrega eventos. La primera tortuga
+   que llega queda campeona; la carrera se reinicia al llegar todos los participantes activos a la meta.
 
    CONTRATO DEL JUEGO (type, username, content, avatar, activityCount, diamondCount)
    - chat: +1 punto; se limita a un comentario cada 8 segundos por participante.
@@ -551,9 +553,10 @@ function setSlotAvatar(code,p){
 function claimSlot(p){
   let code,lo=null;const free=C.find(c=>!S.slotUser[c.c]);
   if(free)code=free.c;
-  else{for(const c of C){const o=slotPlayer(c.c);if(!lo||o.points<lo.o.points)lo={c,o}}
-    if(p.points<=lo.o.points)return null;
+  else{for(const c of C){const o=slotPlayer(c.c);if(o&&c.c!==S.winner&&(!lo||o.points<lo.o.points))lo={c,o}}
+    if(!lo||p.points<=lo.o.points)return null;
     code=lo.c.c;S.slotOf.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
+  if(lo){S.pos[code]=0;T[code].pend=0;T[code].ve=0;T[code].cr=0;T[code].vs=0}
   S.slotUser[code]=p.key;S.slotOf.set(p.key,code);setSlotAvatar(code,p);
   const el=T[code].tur;el.classList.remove('swap');void el.offsetWidth;el.classList.add('swap');SFX.join();return code;
 }
@@ -789,7 +792,7 @@ function onShare(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.ge
   if(code)setSponsor(code,user,m.avatar);
   if(code&&!S.over){T[code].pend+=3;donor(user,code).pts+=1;S.dirty=true}}
 
-/* Fin de ronda: se llama desde frame() cuando una tortuga llega a CFG.win. Guarda la victoria,
+/* Fin de ronda: se llama desde frame() cuando todas las tortugas ocupadas llegan a CFG.win. Guarda la victoria,
    calcula la racha y MVP, detiene la música y programa el cartel (+1.6 s) y la siguiente ronda (+restartMs). */
 /* Fin de ronda: guarda la victoria del DUEÑO de la tortuga, calcula su racha, muestra el banner de campeón
    (el cartel #win queda oculto por CSS para no tapar el video) y programa la siguiente ronda. */
@@ -861,7 +864,8 @@ let last=performance.now(),tNow=0,acc=0;
 /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
-   Después: ¿alguien llegó a la meta? -> finish(). Cada 0.25 s: render(), foto finish, tempo de la música.
+   Después: si alguien llegó, queda como campeón; finish() espera a que lleguen todos los carriles ocupados.
+   Cada 0.25 s: render(), foto finish, tempo de la música.
    Es el ÚNICO lugar donde cambian las posiciones. */
 function frame(now){
   requestAnimationFrame(frame);
@@ -877,7 +881,8 @@ function frame(now){
     if(S.go&&!isW&&t.pend>.02)tgtE=Math.max(.25,Math.min(VMAX,Math.sqrt(2*DEC*t.pend)));
     t.ve+=Math.max(-3*dt,Math.min(ACC*dt,tgtE-t.ve));
     const d=Math.min(t.ve*dt,t.pend);t.pend=t.pend-d<.001?0:t.pend-d;
-    S.pos[k]+=d; /* solo la energía de puntos mueve la tortuga (sin deriva aleatoria) */
+    S.pos[k]=Math.min(CFG.win,S.pos[k]+d); /* solo la energía de puntos mueve la tortuga */
+    if(!S.winner&&S.slotUser[k]&&S.pos[k]>=CFG.win)S.winner=k;
     if(isW)S.pos[k]=CFG.win;
     else if(S.over&&S.pos[k]>CFG.win-1){S.pos[k]=CFG.win-1;t.pend=0;t.ve=0}
     t.vs+=((t.cr+d/dt)-t.vs)*Math.min(1,dt*8);
@@ -900,7 +905,10 @@ function frame(now){
     if(t.vs>1.3){t.du-=dt;if(t.du<=0){t.du=Math.max(.06,.2-sp*.015);puff(k,R)}}
     t.tur.style.setProperty('--p',Math.min(100,S.pos[k]).toFixed(2));
   }
-  if(!S.over&&S.go){let best=null;for(const c of C)if(S.pos[c.c]>=CFG.win&&(!best||S.pos[c.c]>S.pos[best]))best=c.c;if(best)finish(best)}
+  if(!S.over&&S.go&&S.winner){
+    const racers=C.filter(c=>S.slotUser[c.c]);
+    if(racers.length&&racers.every(c=>S.pos[c.c]>=CFG.win))finish(S.winner);
+  }
   acc+=dt;if(acc>.25){acc=0;render();photo();MUS.bpm=Math.min(185,124+Math.max(...C.map(c=>S.pos[c.c]))*.55+(S.boost>Date.now()?12:0));if(S.dirty){renderMvp();S.dirty=false}}
 }
 
