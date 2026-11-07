@@ -24,8 +24,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /new EventSource\('\/api\/events'\)/);
     assert.match(overlayHtml, /<title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores<\/title>/);
     assert.match(overlayHtml, /<h1 class="disp">SIGUE AL LÍDER Y AYUDA A GANAR SEGUIDORES<\/h1>/);
-    assert.match(overlayHtml, /function handleTikTokEntry\(entry\)/);
-    assert.match(overlayHtml, /function scoreContestant\(entry\)/);
+    assert.match(overlayHtml, /function handleTikTokEntry\(entry,isBot=false\)/);
+    assert.match(overlayHtml, /function scoreContestant\(entry,isBot=false\)/);
+    assert.match(overlayHtml, /if\(p\.isBot\)return null/);
+    assert.match(overlayHtml, /if\(isBot&&!S\.slotOf\.has\(key\)&&!C\.some\(c=>!S\.slotUser\[c\.c\]\)\)return/);
+    assert.match(overlayHtml, /addLiveEvent\(entry\);handleTikTokEntry\(entry,true\)/);
+    assert.match(overlayHtml, /names:\['Ana','Leo','Lola','Rayo','Tito'\]/);
     assert.match(overlayHtml, /const liveEvents=\[\],liveEventLimit=3,contestants=new Map\(\)/);
     assert.match(overlayHtml, /entry\.type==='chat'\?1/);
     assert.match(overlayHtml, /entry\.type==='gift'\?diamonds\*counts/);
@@ -55,7 +59,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /function showSpecialEvent\(text\)/);
     assert.match(overlayHtml, /#app\{top:3%;bottom:3%;left:3%;right:var\(--padr\)/);
     assert.match(overlayHtml, /function renderTopPlayers\(\)/);
-    assert.match(overlayHtml, /function scoreContestant\(entry\)/);
+    assert.match(overlayHtml, /function scoreContestant\(entry,isBot=false\)/);
     assert.match(overlayHtml, /\.runner-shell img\{width:100%;height:100%;object-fit:cover\}/);
     assert.match(overlayHtml, /Tortuga de @/);
     assert.match(overlayHtml, /source\.addEventListener\('snapshot'/);

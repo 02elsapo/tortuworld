@@ -599,9 +599,14 @@ function setSlotAvatar(code,p){
 function claimSlot(p){
   let code,lo=null;const free=C.find(c=>!S.slotUser[c.c]);
   if(free)code=free.c;
-  else{for(const c of C){const o=slotPlayer(c.c);if(o&&c.c!==S.winner&&(!lo||o.points<lo.o.points))lo={c,o}}
-    if(!lo||p.points<=lo.o.points)return null;
-    code=lo.c.c;S.slotOf.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
+  else{
+    if(p.isBot)return null;
+    const bot=C.find(c=>{const occupant=slotPlayer(c.c);return occupant&&occupant.isBot});
+    if(bot){lo={c:bot,o:slotPlayer(bot.c)};code=bot.c}
+    else{for(const c of C){const o=slotPlayer(c.c);if(o&&c.c!==S.winner&&(!lo||o.points<lo.o.points))lo={c,o}}
+      if(!lo||p.points<=lo.o.points)return null;
+      code=lo.c.c}
+    S.slotOf.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
   if(lo){S.pos[code]=0;T[code].pend=0;T[code].ve=0;T[code].cr=0;T[code].vs=0}
   S.slotUser[code]=p.key;S.slotOf.set(p.key,code);setSlotAvatar(code,p);
   const el=T[code].tur;el.classList.remove('swap');void el.offsetWidth;el.classList.add('swap');SFX.join();return code;
@@ -714,7 +719,7 @@ function formatPlayerPoints(points){
    1) calcula puntos  2) aplica empuje doble y combo de regalos  3) limita comentarios a 1 cada 8 s por usuario
    4) suma al jugador  5) raceAdd() mueve su tortuga  6) avisa si entra/desplaza del Top 5 o toma el primer lugar.
    Se ignora todo mientras la ronda está terminada (S.over). */
-function scoreContestant(entry){
+function scoreContestant(entry,isBot=false){
   if(!entry||typeof entry!=='object'||typeof entry.type!=='string')return;
   const username=String(entry.username||'Alguien').trim()||'Alguien';
   const rawCount=entry.activityCount===undefined?1:Number(entry.activityCount);
@@ -732,10 +737,11 @@ function scoreContestant(entry){
   const key=username.toLocaleLowerCase();
   if(entry.type==='join'&&contestants.has(key))return; /* ya es participante: el segundo 'join' no suma */
   let player=contestants.get(key);
+  if(isBot&&!S.slotOf.has(key)&&!C.some(c=>!S.slotUser[c.c]))return;
   if(!player){
-    player={key,username,avatar:'',points:0,sequence:contestantSequence++};
+    player={key,username,avatar:'',points:0,sequence:contestantSequence++,isBot};
     contestants.set(key,player);
-  }
+  }else player.isBot=isBot;
   if(entry.type==='chat'){const n=Date.now();if(n-(player.lastChat||0)<8000)return;player.lastChat=n}
   player.points+=points;
   if(typeof entry.avatar==='string'&&/^https?:\/\//i.test(entry.avatar))player.avatar=entry.avatar;
@@ -965,9 +971,10 @@ function frame(now){
 /* ===== Conexión al servidor Node =====
    El servidor integrado entrega eventos normalizados por SSE. Si se especifica "ws", se conserva
    compatibilidad con el contrato WebSocket documentado en la sección 3 de esta guía. */
-function handleTikTokEntry(entry){
+function handleTikTokEntry(entry,isBot=false){
   if(entry&&['member','enter','joined'].includes(entry.type))entry={...entry,type:'join'};
-  rosterTouch(entry);scoreContestant(entry);
+  if(!isBot)rosterTouch(entry);
+  scoreContestant(entry,isBot);
 }
 /* PRESENTES: quien se une o interactúa queda en la lista. Al empezar cada ronda los 5 más recientes (últimos 10 min)
    vuelven a la pista automáticamente, porque TikTok no repite el evento 'join' de quien sigue mirando. */
@@ -1019,7 +1026,7 @@ const NAMES=['Lucía','Mateo','Ana_PY','Carlos','Sofi','Diego','Valen','Rocío',
 const GIFTS={rose:['Rose',1],heart:['Finger Heart',5],donut:['Doughnut',30],galaxy:['Galaxy',1000]};
 const botEvent=(type,username,details={})=>{
   const entry={type,username,content:details.content||'',avatar:'',time:new Date().toISOString(),...details};
-  addLiveEvent(entry);handleTikTokEntry(entry);
+  addLiveEvent(entry);handleTikTokEntry(entry,true);
 };
 const botGift=(t='rose',u=rnd(NAMES))=>botEvent('gift',u,{content:GIFTS[t][0],diamondCount:GIFTS[t][1],activityCount:1});
 const botJoin=()=>botEvent('join',rnd(NAMES)+(Math.random()*90|0));
@@ -1051,11 +1058,11 @@ if(Q.get('demo'))toggleAuto();
    Si no llega ningún evento real en IDLE.after ms (?idle=15 segundos; ?idle=0 los desactiva), 5 bots con nombres distintos
    dan likes y comentarios para que la pista no se vea vacía. Solo likes/chat: nunca simulan seguidores, regalos ni compartidos.
    Al llegar el PRIMER evento real (chat, regalo, like, follow o share) se apagan y la ronda se reinicia limpia. */
-var IDLE={on:false,t:null,last:Date.now(),after:(Q.has('idle')?+Q.get('idle'):15)*1000,names:['Tortuga_Ana','Caminante_Leo','Lola_Veloz','Sr_Caparazon','Mini_Rayo']};
+var IDLE={on:false,t:null,last:Date.now(),after:(Q.has('idle')?+Q.get('idle'):15)*1000,names:['Ana','Leo','Lola','Rayo','Tito']};
 function idleStep(){
   const u=rnd(IDLE.names),e={username:u,avatar:'',time:new Date().toISOString()};
-  if(Math.random()<.7)handleTikTokEntry({...e,type:'like',activityCount:20+(Math.random()*40|0)});
-  else handleTikTokEntry({...e,type:'chat',content:rnd(['¡Vamos!','¡Corre!','🐢🐢','¡Yo gano!'])});
+  if(Math.random()<.7)handleTikTokEntry({...e,type:'like',activityCount:20+(Math.random()*40|0)},true);
+  else handleTikTokEntry({...e,type:'chat',content:rnd(['¡Vamos!','¡Corre!','🐢🐢','¡Yo gano!'])},true);
   IDLE.t=setTimeout(idleStep,1200+Math.random()*2200);
 }
 function startIdle(){if(IDLE.on||autoT)return;IDLE.on=true;newRound();idleStep()}
