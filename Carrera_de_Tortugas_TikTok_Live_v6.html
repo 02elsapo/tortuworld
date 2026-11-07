@@ -346,7 +346,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   <div class="nx"><i id="nxb"></i></div><div class="sm2" id="nxt"></div>
 </div></div>
 <div id="dot" role="status" aria-label="TikTok desconectado"></div>
-<div id="overlayVersion">v1.0.1</div>
+<div id="overlayVersion">v1.0.2</div>
 <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
 <div id="bots">
   <b>Pruebas de interacción (P)</b>
@@ -985,22 +985,36 @@ function handleTikTokEntry(entry,isBot=false){
   if(!isBot)rosterTouch(entry);
   scoreContestant(entry,isBot);
 }
-/* PRESENTES: quien se une o interactúa queda en la lista. Al empezar cada ronda los 5 más recientes (últimos 10 min)
-   vuelven a la pista automáticamente, porque TikTok no repite el evento 'join' de quien sigue mirando. */
-const ROSTER=new Map(),ROSTER_TTL=10*60*1000;
+/* PRESENTES: guarda en el navegador los últimos cinco usuarios reales para reutilizarlos entre rondas y sesiones. */
+const ROSTER_KEY='tortugasRecentUsers',ROSTER_LIMIT=5;
+const ROSTER=(()=>{
+  try{
+    const saved=JSON.parse(localStorage.getItem(ROSTER_KEY)||'[]'),roster=new Map();
+    if(Array.isArray(saved))for(const item of saved){
+      if(!item||typeof item.username!=='string')continue;
+      const username=item.username.trim(),key=username.toLocaleLowerCase();
+      if(!username||key==='alguien')continue;
+      roster.delete(key);roster.set(key,{username,avatar:typeof item.avatar==='string'?item.avatar:'',t:Number(item.t)||0});
+    }
+    while(roster.size>ROSTER_LIMIT)roster.delete(roster.keys().next().value);
+    return roster;
+  }catch{return new Map()}
+})();
 function rosterTouch(e){
-  const name=e&&String(e.username||'').trim();if(!name||(IDLE&&IDLE.on))return;
+  const name=e&&String(e.username||'').trim();if(!name||name.toLocaleLowerCase()==='alguien')return;
   const key=name.toLocaleLowerCase(),r=ROSTER.get(key)||{username:name,avatar:''};
   r.t=Date.now();if(typeof e.avatar==='string'&&/^https?:\/\//i.test(e.avatar))r.avatar=e.avatar;
-  ROSTER.delete(key);ROSTER.set(key,r);if(ROSTER.size>200)ROSTER.delete(ROSTER.keys().next().value);
+  ROSTER.delete(key);ROSTER.set(key,r);while(ROSTER.size>ROSTER_LIMIT)ROSTER.delete(ROSTER.keys().next().value);
+  try{localStorage.setItem(ROSTER_KEY,JSON.stringify([...ROSTER.values()]))}catch{}
 }
 function seedRoster(){
-  if(!CFG.join||(IDLE&&IDLE.on))return;
-  const now=Date.now(),list=[...ROSTER.values()].filter(r=>now-r.t<ROSTER_TTL).slice(-C.length).reverse(),names=[];
+  const list=[...ROSTER.values()].slice(-C.length).reverse(),names=[];
+  if(list.length&&IDLE&&IDLE.on){IDLE.on=false;clearTimeout(IDLE.t);IDLE.active.clear()}
   for(const r of list){const key=r.username.toLocaleLowerCase();if(contestants.has(key))continue;
-    const p={key,username:r.username,avatar:r.avatar,points:CFG.join,sequence:contestantSequence++};
-    contestants.set(key,p);if(claimSlot(p))names.push('@'+r.username)}
+    const p={key,username:r.username,avatar:r.avatar,points:0,sequence:contestantSequence++};
+    contestants.set(key,p);if(claimSlot(p))names.push('@'+r.username);else contestants.delete(key)}
   if(names.length){render();renderTopPlayers();enqueueMsg('👋 Siguen en pista: '+names.slice(0,3).join(' · ')+(names.length>3?' +'+(names.length-3):''))}
+  return list.length>0;
 }
 function setTikTokConnectionStatus(status){
   const dot=$('dot');
@@ -1009,7 +1023,7 @@ function setTikTokConnectionStatus(status){
   dot.setAttribute('aria-label',connected?'TikTok conectado':'TikTok desconectado');
   if(status&&typeof status==='object'){
     const username=typeof status.username==='string'?status.username.trim().replace(/^@+/, ''):'';
-    $('overlayVersion').textContent='v1.0.1'+(username?' · @'+username:'');
+    $('overlayVersion').textContent='v1.0.2'+(username?' · @'+username:'');
   }
 }
 function connect(){
@@ -1068,8 +1082,7 @@ if(SND&&MUSIC)document.querySelector('[data-a=music]').classList.add('act');
 if(Q.get('demo'))toggleAuto();
 
 /* ===== Bots de relleno =====
-   Ocupan los cinco carriles desde el inicio; cada participante real reemplaza un bot y lo apaga.
-   Solo dan likes y comentarios. ?idle=0 los desactiva. */
+   Solo ocupan carriles cuando no hay usuarios reales guardados. ?idle=0 los desactiva. */
 var IDLE={on:false,t:null,enabled:Q.get('idle')!=='0',names:['Ana','Leo','Lola','Rayo','Tito'],active:new Set()};
 function deactivateIdleBot(key){
   if(!IDLE.active.delete(key))return;
@@ -1080,8 +1093,7 @@ function seedIdleBots(){
   for(const username of IDLE.names){
     const key=username.toLocaleLowerCase();
     if(!IDLE.active.has(key)||contestants.has(key))continue;
-    const recentReal=ROSTER.get(key);
-    if(recentReal&&Date.now()-recentReal.t<ROSTER_TTL){deactivateIdleBot(key);continue}
+    if(ROSTER.has(key)){deactivateIdleBot(key);continue}
     const player={key,username,avatar:'',points:0,sequence:contestantSequence++,isBot:true};
     contestants.set(key,player);
     if(!claimSlot(player))contestants.delete(key);
@@ -1097,7 +1109,7 @@ function idleStep(){
   IDLE.t=setTimeout(idleStep,1200+Math.random()*2200);
 }
 function startIdle(){
-  if(IDLE.on||autoT)return;
+  if(IDLE.on||autoT||ROSTER.size)return;
   IDLE.on=true;IDLE.active=new Set(IDLE.names.map(name=>name.toLocaleLowerCase()));
   seedIdleBots();idleStep();
 }
@@ -1233,7 +1245,7 @@ render=function(){_render3();
 };
 
 const _newRound2=newRound;
-newRound=function(){_newRound2.apply(this,arguments);if(IDLE.on)seedIdleBots();seedRoster()};
+newRound=function(){_newRound2.apply(this,arguments);if(!seedRoster()&&IDLE.on)seedIdleBots()};
 renderLiveEvents();newRound();if(IDLE.enabled&&!Q.get('demo'))startIdle();requestAnimationFrame(frame);setInterval(msgTick,3500);msgTick();connect();
 </script>
 </body>

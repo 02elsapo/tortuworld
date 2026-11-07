@@ -37,10 +37,14 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /if\(isBot&&!S\.slotOf\.has\(key\)&&!C\.some\(c=>!S\.slotUser\[c\.c\]\)\)return/);
     assert.match(overlayHtml, /if\(lo\.o\.isBot\)\{contestants\.delete\(lo\.o\.key\);deactivateIdleBot\(lo\.o\.key\)\}/);
     assert.match(overlayHtml, /else if\(!isBot\)player\.isBot=false/);
-    assert.match(overlayHtml, /id="overlayVersion">v1\.0\.1<\/div>/);
+    assert.match(overlayHtml, /id="overlayVersion">v1\.0\.2<\/div>/);
     assert.match(overlayHtml, /function startIdle\(\)[\s\S]*seedIdleBots\(\);idleStep\(\)/);
     assert.match(overlayHtml, /function realEvent\(entry\)\{[\s\S]*deactivateIdleBot\(player\.key\)/);
     assert.match(overlayHtml, /if\(IDLE\.enabled&&!Q\.get\('demo'\)\)startIdle\(\)/);
+    assert.match(overlayHtml, /const ROSTER_KEY='tortugasRecentUsers',ROSTER_LIMIT=5/);
+    assert.match(overlayHtml, /localStorage\.setItem\(ROSTER_KEY,JSON\.stringify\(\[\.\.\.ROSTER\.values\(\)\]\)\)/);
+    assert.match(overlayHtml, /function seedRoster\(\)[\s\S]*slice\(-C\.length\)\.reverse\(\)/);
+    assert.match(overlayHtml, /newRound=function\(\)\{\_newRound2\.apply\(this,arguments\);if\(!seedRoster\(\)&&IDLE\.on\)seedIdleBots\(\)\}/);
     assert.match(overlayHtml, /addLiveEvent\(entry\);handleTikTokEntry\(entry,true\)/);
     assert.match(overlayHtml, /names:\['Ana','Leo','Lola','Rayo','Tito'\]/);
     assert.match(overlayHtml, /const liveEvents=\[\],liveEventLimit=3,contestants=new Map\(\)/);
@@ -80,7 +84,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /#dot\{position:fixed;right:\.7rem;bottom:\.7rem/);
     assert.match(overlayHtml, /#dot\.on\{background:#36e276/);
     assert.match(overlayHtml, /setTikTokConnectionStatus\(JSON\.parse\(e\.data\)\)/);
-    assert.match(overlayHtml, /'v1\.0\.1'\+\(username\?' · @'\+username:''\)/);
+    assert.match(overlayHtml, /'v1\.0\.2'\+\(username\?' · @'\+username:''\)/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
