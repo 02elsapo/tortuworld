@@ -21,9 +21,8 @@ function createTikTokMonitorService({
   retryFastIntervalMs = 15000,
   retryFastWindowMs = 5 * 60 * 1000,
   retrySlowIntervalMs = 60000,
-  retrySlowWindowMs = 30 * 60 * 1000,
   connectTimeoutMs = 15000,
-  maxConnectionAttempts = 51,
+  maxConnectionAttempts = null,
   now = Date.now,
   scheduleTimeout = setTimeout,
   cancelTimeout = clearTimeout,
@@ -31,9 +30,9 @@ function createTikTokMonitorService({
   if (!Number.isFinite(retryFastIntervalMs) || retryFastIntervalMs <= 0
     || !Number.isFinite(retryFastWindowMs) || retryFastWindowMs <= 0
     || !Number.isFinite(retrySlowIntervalMs) || retrySlowIntervalMs <= 0
-    || !Number.isFinite(retrySlowWindowMs) || retrySlowWindowMs <= 0
     || !Number.isFinite(connectTimeoutMs) || connectTimeoutMs <= 0
-    || !Number.isInteger(maxConnectionAttempts) || maxConnectionAttempts < 1
+    || (maxConnectionAttempts !== null
+      && (!Number.isInteger(maxConnectionAttempts) || maxConnectionAttempts < 1))
     || typeof now !== 'function') {
     throw new Error('Los intervalos de reintento y conexión deben ser números positivos.');
   }
@@ -60,7 +59,6 @@ function createTikTokMonitorService({
   const recentEventIds = new Map();
   const giftComboCounts = new Map();
   let connectionGeneration = 0;
-  let connectedInGeneration = false;
   let retryStartedAt = null;
   let lastAttemptAt = null;
   let retryTimer = null;
@@ -336,11 +334,10 @@ function createTikTokMonitorService({
     state.isConnected = false;
     if (message) state.error = message;
     const elapsed = now() - retryStartedAt;
-    if (state.connectionAttempts >= maxConnectionAttempts
-      || elapsed >= retryFastWindowMs + retrySlowWindowMs) {
+    if (maxConnectionAttempts !== null && state.connectionAttempts >= maxConnectionAttempts) {
       state.status = 'failed';
       state.nextRetryAt = null;
-      addLog(`Se agotó el tiempo de reconexión a @${username}.`);
+      addLog(`Se alcanzó el límite de intentos de reconexión a @${username}.`);
       broadcastStatus();
       return;
     }
@@ -350,7 +347,8 @@ function createTikTokMonitorService({
     state.retryAttempt += 1;
     state.nextRetryAt = new Date(Date.now() + delay).toISOString();
     state.status = 'reconnecting';
-    addLog(`Se reintentará conectar a @${username} en ${Math.ceil(delay / 1000)} s (intento ${state.connectionAttempts + 1} de ${maxConnectionAttempts}).`);
+    const attemptLimit = maxConnectionAttempts === null ? '' : ` de ${maxConnectionAttempts}`;
+    addLog(`Se reintentará conectar a @${username} en ${Math.ceil(delay / 1000)} s (intento ${state.connectionAttempts + 1}${attemptLimit}).`);
     broadcastStatus();
     retryTimer = scheduleTimeout(() => {
       retryTimer = null;
@@ -362,13 +360,6 @@ function createTikTokMonitorService({
 
   function connectAttempt(username, generation) {
     if (generation !== connectionGeneration) return;
-    if (now() - retryStartedAt > retryFastWindowMs + retrySlowWindowMs) {
-      state.status = 'failed';
-      state.nextRetryAt = null;
-      addLog(`Se agotó el tiempo de reconexión a @${username}.`);
-      broadcastStatus();
-      return;
-    }
 
     state.connectionAttempts += 1;
     lastAttemptAt = now();
@@ -400,7 +391,6 @@ function createTikTokMonitorService({
         state.status = 'connected';
         state.isConnected = true;
         state.error = '';
-        connectedInGeneration = true;
         addLog(`Conectado a @${username}.`);
         broadcastStatus();
       };
@@ -408,21 +398,7 @@ function createTikTokMonitorService({
       connection.on(controlEvents.CONNECTED, markConnected);
       connection.on(controlEvents.DISCONNECTED, () => {
         if (generation !== connectionGeneration || state.connection !== connection) return;
-        if (connectedInGeneration) {
-          cancelConnectionTimeout();
-          cancelScheduledRetry();
-          state.connectionEventListeners.delete(connection);
-          state.connection = null;
-          state.status = 'finalized';
-          state.isConnected = false;
-          state.retryAttempt = 0;
-          state.nextRetryAt = null;
-          state.error = '';
-          addLog(`El directo de @${username} finalizó. No se volverá a intentar conectar.`);
-          broadcastStatus();
-          return;
-        }
-        scheduleReconnect(username, generation, state.error);
+        scheduleReconnect(username, generation, 'La conexión con TikTok se interrumpió.');
       });
       connection.on(controlEvents.ERROR, (error) => {
         if (generation !== connectionGeneration || state.connection !== connection) return;
@@ -473,7 +449,6 @@ function createTikTokMonitorService({
 
     connectionGeneration += 1;
     const generation = connectionGeneration;
-    connectedInGeneration = false;
     retryStartedAt = now();
     lastAttemptAt = null;
     cancelScheduledRetry();
@@ -499,7 +474,6 @@ function createTikTokMonitorService({
 
   function disconnectUser() {
     connectionGeneration += 1;
-    connectedInGeneration = false;
     retryStartedAt = null;
     lastAttemptAt = null;
     cancelScheduledRetry();

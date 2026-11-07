@@ -16,7 +16,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #fx{position:fixed;inset:0;pointer-events:none;z-index:9}
 /* Todo fluye en una sola columna: nada se encima, en cualquier pantalla */
 #app{position:absolute;top:var(--top,6%);bottom:var(--bot,14%);left:3%;right:var(--padr);display:flex;flex-direction:column;gap:.5rem}
-#bottom{display:contents}
+#bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.45rem;flex:0 0 23%;min-height:8rem}
 .panel{background:rgba(7,38,43,.9);border:.18rem solid var(--ink2);border-radius:1.1rem;box-shadow:0 .3rem 0 rgba(0,0,0,.3)}
 
 /* Cabecera */
@@ -26,6 +26,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #slot{position:relative;height:1.6rem;margin-top:.3rem;display:flex;align-items:center;justify-content:center}
 #how{font-size:1rem}
 #how2{font-size:.85rem;margin-top:.2rem;color:var(--mint)}
+#auditStatus{margin-top:.2rem;font-size:.7rem;line-height:1.15;color:var(--mint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #goal{display:flex;align-items:center;gap:.5rem;margin-top:.35rem;font-size:.85rem}
 #goal .gb{flex:1;height:.85rem;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden}
 #gf{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),var(--sun));border-radius:999px;transition:width .5s}
@@ -72,20 +73,30 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #cd{position:absolute;left:0;right:0;top:34%;text-align:center;font-size:7rem;line-height:1;color:var(--sun);text-shadow:0 .3rem 0 var(--ink),0 0 1rem rgba(0,0,0,.5);display:none;z-index:7;pointer-events:none}
 #cd.on{display:block;animation:pop .4s cubic-bezier(.2,1.6,.4,1) both}
 
-/* Feed de eventos (últimos 2) */
-#feed{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:.2rem;min-height:3.7rem;pointer-events:none}
-#feed span{max-width:100%;padding:.2rem .9rem;border-radius:999px;background:linear-gradient(90deg,var(--pink),#FF7A4D);font-size:1rem;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:pop .4s cubic-bezier(.2,1.6,.4,1) both;box-shadow:0 .2rem 0 rgba(0,0,0,.28)}
+/* Tablas en vivo */
+#standings,#activity{min-width:0;min-height:0;padding:.3rem .5rem;overflow:hidden}
+#standings h2,#activity h2{font-size:.85rem;color:var(--sun);margin-bottom:.1rem}
+#standings table,#activity table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.68rem;line-height:1.1}
+#standings th,#standings td,#activity th,#activity td{padding:.1rem .15rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#standings th,#activity th{color:var(--mint);font-size:.62rem}
+#positionRows td:first-child{width:1rem;color:var(--sun);font-weight:900}
+#positionRows td:nth-child(3),#positionRows td:nth-child(4){text-align:right}
+#eventRows td:first-child{width:2.4rem}
+#eventRows td:nth-child(2){width:3.2rem}
+#eventRows td:nth-child(3){width:25%}
+#feed{display:flex;flex-direction:column;align-items:stretch;gap:.1rem;min-height:0;margin-top:.15rem;pointer-events:none}
+#feed span{max-width:100%;padding:.12rem .35rem;border-radius:.4rem;background:linear-gradient(90deg,var(--pink),#FF7A4D);font-size:.62rem;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:pop .4s cubic-bezier(.2,1.6,.4,1) both;box-shadow:0 .2rem 0 rgba(0,0,0,.28)}
 #feed span.hot{background:linear-gradient(90deg,var(--sun),#FF9F1C);color:var(--ink)}
 #feed span.cp{background:linear-gradient(90deg,var(--mint),#2BC9A0);color:var(--ink)}
 #feed span.soft{background:rgba(7,38,43,.9);box-shadow:none}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
 
 /* Los que más empujan */
-#mvp{flex:none;padding:.4rem .8rem .45rem}
-#mvp h2{font-size:1rem;color:var(--sun);margin-bottom:.15rem}
-.r{display:flex;align-items:center;gap:.5rem;font-size:1rem;padding:.05rem 0}
-.r b{width:1.5rem;color:var(--sun);font-size:1.05rem}.r span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.r em{font-style:normal;color:var(--mint)}
-.empty{font-size:.95rem;opacity:.85}
+#mvp{margin-top:.15rem}
+#mvp h2{font-size:.62rem;color:var(--sun);margin-bottom:.05rem}
+.r{display:flex;align-items:center;gap:.25rem;font-size:.65rem;line-height:1.1}
+.r b{width:.9rem;color:var(--sun);font-size:.7rem}.r span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.r em{font-style:normal;color:var(--mint)}
+.empty{font-size:.62rem;opacity:.85}
 
 /* Ganador + podio */
 #win{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:8;background:rgba(7,38,43,.6)}
@@ -109,13 +120,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   #app{top:4%;bottom:9%;left:3%;gap:.35rem}
   .lab{width:clamp(6.5rem,28vw,9rem)}
   #head{padding:.35rem .6rem .4rem}
-  #bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.35rem;flex:0 0 20%;min-height:7rem}
-  #mvp{grid-column:1;min-width:0;padding:.3rem .6rem .35rem}
-  #feed{grid-column:2;min-width:0;min-height:0;align-items:stretch;justify-content:flex-end;padding:.35rem;background:rgba(7,38,43,.9);border:.18rem solid var(--ink2);border-radius:1rem}
-  #feed::before{content:"Últimos eventos";display:block;color:var(--sun);font-family:'Bowlby One',sans-serif;font-size:.9rem;line-height:1.2}
-  #feed span{width:100%;padding:.25rem .4rem;font-size:.8rem;line-height:1.2;text-align:left;white-space:normal;overflow-wrap:anywhere}
-  #mvp h2{font-size:.9rem}
-  .r{gap:.25rem;font-size:.8rem}
+  #auditStatus{font-size:.6rem}
+  #bottom{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.3rem;flex-basis:23%;min-height:8rem}
+  #standings,#activity{padding:.25rem .35rem;border-radius:.8rem}
+  #standings h2,#activity h2{font-size:.72rem}
+  #standings table,#activity table{font-size:.58rem}
+  #standings th,#activity th{font-size:.54rem}
+  #eventRows td:first-child{width:2rem}
+  #eventRows td:nth-child(2){width:2.6rem}
+  #feed span{font-size:.55rem}
+  #mvp h2{font-size:.54rem}
+  .r{font-size:.56rem}
 }
 /* Panel de pruebas */
 #dot{position:fixed;right:.7rem;bottom:.7rem;width:.85rem;height:.85rem;border-radius:50%;background:#ff4d4d;box-shadow:0 0 .45rem rgba(0,0,0,.65);z-index:30}
@@ -136,14 +151,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   <div id="head" class="panel">
     <span class="pill disp" id="rnd">Ronda 1</span>
     <h1 class="disp">Carrera de tortugas</h1>
-    <div id="slot"><div id="how">Escribe tu país en el chat</div><div id="banner" class="disp"></div></div>
-    <div id="how2">❤️ pasito · 🌹 empuje · 🎁 ⚡ SPRINT</div>
+    <div id="slot"><div id="how">Elige país · AUDITORÍA @cuenta | nicho | objetivo</div><div id="banner" class="disp"></div></div>
+    <div id="how2">❤️ like · 🎁 regalo · seguir y compartir impulsan</div>
     <div id="goal"><span>🎯 Meta ⚡x2</span><div class="gb"><i id="gf"></i></div><span id="gt"></span></div>
+    <div id="auditStatus" aria-live="polite">Auditorías por orden · cada 5–7 min · K al terminar</div>
   </div>
   <div id="lanes"></div>
   <div id="bottom">
-    <div id="feed"></div>
-    <div id="mvp" class="panel"><h2 class="disp">TOP</h2><div id="rows"></div></div>
+    <section id="standings" class="panel">
+      <h2 class="disp">Tabla de posiciones</h2>
+      <table><thead><tr><th>#</th><th>País</th><th>Avance</th><th>Puntos</th></tr></thead><tbody id="positionRows"></tbody></table>
+      <div id="mvp"><h2 class="disp">Mayor aporte</h2><div id="rows"></div></div>
+    </section>
+    <section id="activity" class="panel">
+      <h2 class="disp">Tabla de eventos</h2>
+      <table><thead><tr><th>Hora</th><th>Evento</th><th>Usuario</th><th>Detalle</th></tr></thead><tbody id="eventRows"></tbody></table>
+      <div id="feed"></div>
+    </section>
   </div>
 </div>
 <div id="cd" class="disp"></div>
@@ -156,7 +180,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 <div id="dot" role="status" aria-label="TikTok desconectado"></div>
 <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
 <div id="bots">
-  <b>Bots de prueba (tecla P)</b>
+  <b>Control del directo (P) · K: cerrar auditoría</b>
+  <button data-a="audit-next">Siguiente auditoría</button>
   <button data-a="rose">1 Rosa</button><button data-a="donut">2 Dona</button>
   <button data-a="galaxy">3 Galaxia</button><button data-a="join">J Elige país</button>
   <button data-a="like">L Likes</button><button data-a="flood">F Avalancha</button>
@@ -371,6 +396,7 @@ const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.random()*a.length|0];
 const C=CFG.countries,byCode=Object.fromEntries(C.map(c=>[c.c,c]));
+const liveEvents=[],liveEventLimit=5,auditQueue=[],auditRequesters=new Set(),auditQueueLimit=20;
 /* ESTADO GLOBAL de la partida (todo en memoria; solo "wins" se guarda en localStorage)
      round    número de ronda actual            over     true cuando alguien ya cruzó la meta
      go       true entre el "¡YA!" y la meta    winner   código del país ganador (o null)
@@ -506,6 +532,14 @@ function banner(t,ms){const b=$('banner');b.textContent=t;b.className='disp on';
 function render(){
   const ord=[...C].sort((a,b)=>S.pos[b.c]-S.pos[a.c]);
   ord.forEach((c,i)=>{const r=$('rk-'+c.c);r.textContent=i+1;r.className='rk disp r'+(i+1)});
+  const rows=$('positionRows');rows.textContent='';
+  ord.forEach((c,i)=>{
+    const row=document.createElement('tr');
+    [i+1,c.f+' '+c.n,Math.floor(S.pos[c.c])+'%',Math.floor(S.tot[c.c])].forEach(value=>{
+      const cell=document.createElement('td');cell.textContent=value;row.append(cell);
+    });
+    rows.append(row);
+  });
   C.forEach(c=>{
     $('tt-'+c.c).textContent=Math.floor(S.tot[c.c]);$('tw-'+c.c).textContent=S.wins[c.c]?'🏆'+S.wins[c.c]:'';
     $('fn-'+c.c).textContent='👥 '+S.fans[c.c];
@@ -513,12 +547,71 @@ function render(){
   });
 }
 function renderMvp(){
-  const top=[...S.donors.values()].sort((a,b)=>b.pts-a.pts).slice(0,3),box=$('rows');box.textContent='';
+  const top=[...S.donors.values()].sort((a,b)=>b.pts-a.pts).slice(0,1),box=$('rows');box.textContent='';
   if(!top.length){const e=document.createElement('div');e.className='empty';e.textContent='Regala o da like y apareces aquí.';box.append(e);return}
   top.forEach((d,i)=>{const r=document.createElement('div');r.className='r';
     const n=document.createElement('b');n.className='disp';n.textContent=i===0?'👑':i+1;
     const s=document.createElement('span');s.textContent=byCode[d.code].f+' '+d.name+(d.best>=3?' 🔥x'+d.best:'');
     const p=document.createElement('em');p.textContent=Math.floor(d.pts);r.append(n,s,p);box.append(r)});
+}
+function renderLiveEvents(){
+  const body=$('eventRows');body.textContent='';
+  if(!liveEvents.length){
+    const row=document.createElement('tr'),cell=document.createElement('td');
+    cell.colSpan=4;cell.textContent='Esperando eventos del LIVE...';row.append(cell);body.append(row);return;
+  }
+  liveEvents.forEach(entry=>{
+    const row=document.createElement('tr');
+    const date=new Date(entry.time);
+    const values=[
+      Number.isNaN(date.getTime())?'--:--':date.toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),
+      entry.eventLabel||entry.type,
+      entry.username||'Sistema',
+      entry.content||'',
+    ];
+    values.forEach(value=>{const cell=document.createElement('td');cell.textContent=value;row.append(cell)});
+    body.append(row);
+  });
+}
+function renderAuditQueue(){
+  const next=auditQueue[0],following=auditQueue[1],status=$('auditStatus');
+  status.textContent=next
+    ? 'Fila '+auditQueue.length+' · #1 @'+next.handle+(following?' · #2 @'+following.handle:'')+(next.niche?' · '+next.niche:'')+(next.goal?' → '+next.goal:'')+' · K al terminar'
+    : 'Auditorías por orden · cada 5–7 min · AUDITORÍA @cuenta | nicho | objetivo';
+  status.title=next?'@'+next.handle+' · '+next.niche+' · '+next.goal:'';
+}
+function queueAuditRequest(user,text){
+  const comment=String(text||'').trim();
+  if(!/^auditor[ií]a\b/i.test(comment))return false;
+  const match=comment.match(/^auditor[ií]a\s+@?([a-z0-9._]{2,24})(?:\s*\|\s*(.*))?$/i);
+  if(!match){feed('Formato: AUDITORÍA @cuenta | nicho | objetivo','soft');return true}
+  const handle=match[1],key=handle.toLowerCase();
+  if(auditRequesters.has(key)){feed('@'+handle+' ya está en la fila o ya fue auditada','soft');return true}
+  if(auditQueue.length>=auditQueueLimit){feed('Fila de auditorías completa; intenta más tarde','soft');return true}
+  const [niche='',goal='']=String(match[2]||'').split('|').map(part=>part.trim());
+  auditQueue.push({handle,niche,goal});
+  auditRequesters.add(key);
+  renderAuditQueue();feed(user+' añadió @'+handle+' a la fila de auditorías','soft');
+  return true;
+}
+function completeNextAudit(){
+  const completed=auditQueue.shift();
+  if(!completed)return;
+  renderAuditQueue();feed('Auditoría completada: @'+completed.handle,'cp');
+}
+function setLiveEventSnapshot(entries){
+  liveEvents.length=0;
+  if(Array.isArray(entries)){
+    entries.filter(entry=>entry&&typeof entry==='object'&&typeof entry.type==='string')
+      .slice(0,liveEventLimit).forEach(entry=>liveEvents.push(entry));
+  }
+  renderLiveEvents();
+}
+function addLiveEvent(entry){
+  if(!entry||typeof entry!=='object'||typeof entry.type!=='string')return;
+  liveEvents.unshift(entry);
+  liveEvents.length=Math.min(liveEvents.length,liveEventLimit);
+  renderLiveEvents();
 }
 function setSponsor(code,user,avatar){
   if(!user||!byCode[code])return;
@@ -559,6 +652,7 @@ function parseCountry(t){
 }
 /* EVENTO "chat": asigna o cambia el equipo del usuario. Ignora comentarios sin país. */
 function onChat(user,text){
+  if(queueAuditRequest(user,text))return;
   const c=parseCountry(text);if(!c)return;
   const old=S.pick.get(user);if(old===c.c)return;
   if(old)S.fans[old]--;S.pick.set(user,c.c);S.fans[c.c]++;
@@ -751,7 +845,8 @@ function connect(){
   }
   const source=new EventSource('/api/events');
   source.addEventListener('status',e=>{try{setTikTokConnectionStatus(JSON.parse(e.data).connected)}catch{}});
-  source.addEventListener('update',e=>{try{handleTikTokEntry(JSON.parse(e.data).entry)}catch{}});
+  source.addEventListener('snapshot',e=>{try{setLiveEventSnapshot(JSON.parse(e.data))}catch{}});
+  source.addEventListener('update',e=>{try{const entry=JSON.parse(e.data).entry;addLiveEvent(entry);handleTikTokEntry(entry)}catch{}});
   source.onerror=()=>setTikTokConnectionStatus(false);
 }
 
@@ -776,17 +871,17 @@ function toggleAuto(){
   loop();
 }
 const ACT={rose:()=>botGift('rose'),donut:()=>botGift('donut'),galaxy:()=>botGift('galaxy'),join:botJoin,like:botLike,flood:botFlood,
-  follow:()=>onFollow({user:rnd(NAMES)}),auto:toggleAuto,boost:()=>setBoost(60),sound:toggleSound,music:toggleMusic,reset};
+  follow:()=>onFollow({user:rnd(NAMES)}),auto:toggleAuto,boost:()=>setBoost(60),sound:toggleSound,music:toggleMusic,reset,'audit-next':completeNextAudit};
 document.querySelectorAll('#bots button').forEach(b=>b.onclick=()=>ACT[b.dataset.a]());
 const KEYS={1:'rose',2:'donut',3:'galaxy',j:'join',l:'like',f:'flood',a:'auto',b:'boost',m:'sound',n:'music',r:'reset'};
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='p')$('bots').classList.toggle('on');else if(KEYS[k])ACT[KEYS[k]]()});
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='p')$('bots').classList.toggle('on');else if(k==='k')completeNextAudit();else if(KEYS[k])ACT[KEYS[k]]()});
 if(Q.get('panel')||Q.get('demo'))$('bots').classList.add('on');
 if(SND)document.querySelector('[data-a=sound]').classList.add('act');
 if(SND&&MUSIC)document.querySelector('[data-a=music]').classList.add('act');
 ac();setInterval(()=>{$('snd').style.display=(SND&&AC&&AC.state!=='running')?'block':'none'},1000);
 if(Q.get('demo'))toggleAuto();
 
-reseed();render();renderMvp();goalRender();connect();countdown();requestAnimationFrame(frame);
+reseed();render();renderMvp();renderLiveEvents();renderAuditQueue();goalRender();connect();countdown();requestAnimationFrame(frame);
 </script>
 </body>
 </html>

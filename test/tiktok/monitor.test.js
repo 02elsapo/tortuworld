@@ -90,7 +90,6 @@ test('monitor loads the TikTok connector through its ESM export', async () => {
 test('monitor validates timing and subscription contracts', () => {
   for (const options of [
     { retryFastIntervalMs: 0 },
-    { retrySlowWindowMs: Infinity },
     { connectTimeoutMs: -1 },
     { maxConnectionAttempts: 1.5 },
   ]) {
@@ -98,7 +97,7 @@ test('monitor validates timing and subscription contracts', () => {
   }
 
   const { monitor } = createMonitor();
-  assert.equal(monitor.getStatusPayload().maxConnectionAttempts, 51);
+  assert.equal(monitor.getStatusPayload().maxConnectionAttempts, null);
   assert.throws(() => monitor.subscribeToEvents(null), /suscriptor de eventos/);
   assert.throws(() => monitor.subscribeToStatus(null), /suscriptor de estado/);
   assert.throws(() => monitor.connectUser('  '), /indicar un usuario/);
@@ -262,7 +261,7 @@ test('monitor retries rejected, thrown, and timed-out connections until the limi
   monitor.disconnectUser();
 });
 
-test('monitor retries every 15 seconds for five minutes, then every minute for thirty minutes', async () => {
+test('monitor keeps retrying every minute after five minutes until the connection recovers', async () => {
   const clock = { value: 0 };
   const { monitor, timers } = createMonitor({ now: () => clock.value });
   const fireAfterDelay = async () => {
@@ -288,13 +287,17 @@ test('monitor retries every 15 seconds for five minutes, then every minute for t
   }
 
   assert.equal(clock.value, 35 * 60 * 1000);
-  assert.equal(monitor.state.status, 'failed');
+  assert.equal(monitor.state.status, 'reconnecting');
   assert.equal(monitor.state.connectionAttempts, 51);
-  assert.equal(timers.pending.size, 0);
+  assert.equal(timers.pending.values().next().value.delay, 60000);
+  await fireAfterDelay();
+  assert.equal(monitor.state.status, 'reconnecting');
+  assert.equal(monitor.state.connectionAttempts, 52);
+  assert.equal(timers.pending.size, 1);
   monitor.disconnectUser();
 });
 
-test('monitor cancels retries, ignores stale connections, and finalizes an ended live', async () => {
+test('monitor cancels retries and reconnects after a disconnected live', async () => {
   const { monitor, timers } = createMonitor();
   monitor.connectUser('first');
   const first = FakeConnection.instances[0];
@@ -307,9 +310,13 @@ test('monitor cancels retries, ignores stale connections, and finalizes an ended
   first.emit(ControlEvent.ERROR, new Error('stale'));
   assert.equal(monitor.state.status, 'connected');
   second.emit(ControlEvent.DISCONNECTED);
-  assert.equal(monitor.state.status, 'finalized');
-  assert.equal(monitor.state.error, '');
-  assert.equal(timers.pending.size, 0);
+  assert.equal(monitor.state.status, 'reconnecting');
+  assert.equal(monitor.state.error, 'La conexión con TikTok se interrumpió.');
+  assert.equal(timers.pending.size, 1);
+  timers.fire();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(FakeConnection.instances.length, 3);
+  assert.equal(monitor.state.status, 'connected');
   monitor.disconnectUser();
   assert.equal(monitor.state.status, 'disconnected');
 });
