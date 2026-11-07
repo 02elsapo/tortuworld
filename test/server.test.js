@@ -28,11 +28,14 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /@media \(orientation:portrait\)/);
     assert.match(overlayHtml, /--padr:12%/);
     assert.match(overlayHtml, /#bottom\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1\.35fr\)/);
+    assert.match(overlayHtml, /grid-template-rows:minmax\(0,1\.05fr\) minmax\(0,1fr\)/);
     assert.match(overlayHtml, /id="standings"[\s\S]*Tabla de posiciones[\s\S]*id="positionRows"/);
     assert.match(overlayHtml, /id="activity"[\s\S]*Tabla de eventos[\s\S]*id="eventRows"/);
+    assert.match(overlayHtml, /id="specialEvent"[\s\S]*EVENTO ESPECIAL/);
+    assert.match(overlayHtml, /function showSpecialEvent\(text\)/);
     assert.match(overlayHtml, /source\.addEventListener\('snapshot'/);
     assert.match(overlayHtml, /function addLiveEvent\(entry\)/);
-    assert.match(overlayHtml, /AUDITORÍA @cuenta \| nicho \| objetivo/);
+    assert.match(overlayHtml, /AUDITORÍA @cuenta/);
     assert.match(overlayHtml, /function queueAuditRequest\(user,text\)/);
     assert.match(overlayHtml, /else if\(k==='k'\)completeNextAudit\(\)/);
     assert.match(overlayHtml, /data-a="audit-next"/);

@@ -33,6 +33,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #gt{min-width:4rem;text-align:right}
 #banner{display:none;position:absolute;inset:0;margin:auto;width:max-content;max-width:100%;height:1.6rem;line-height:1.6rem;padding:0 1rem;border-radius:999px;background:var(--mint);color:var(--ink);font-size:.95rem;text-align:center}
 #banner.on{display:block;animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
+#specialEvent{display:none;flex:none;align-items:center;justify-content:center;min-height:1.6rem;padding:.2rem .55rem;border:.15rem solid var(--sun);border-radius:.7rem;background:linear-gradient(90deg,#FFC93C,#FF9F1C);color:var(--ink);font-size:.9rem;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 .2rem .5rem rgba(0,0,0,.4);z-index:5}
+#specialEvent.on{display:flex;animation:pop .35s cubic-bezier(.2,1.6,.4,1) both}
 
 /* Pista */
 #lanes{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:.3rem}
@@ -117,20 +119,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #snd{position:fixed;left:1.8rem;bottom:.3rem;z-index:30;font-size:.8rem;background:rgba(0,0,0,.65);padding:.1rem .6rem;border-radius:999px;display:none}
 @media (orientation:portrait){
   html{font-size:clamp(12px,min(3.2vw,1.8vh),32px);--padr:12%}
-  #app{top:4%;bottom:9%;left:3%;gap:.35rem}
-  .lab{width:clamp(6.5rem,28vw,9rem)}
-  #head{padding:.35rem .6rem .4rem}
-  #auditStatus{font-size:.6rem}
-  #bottom{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.3rem;flex-basis:23%;min-height:8rem}
-  #standings,#activity{padding:.25rem .35rem;border-radius:.8rem}
-  #standings h2,#activity h2{font-size:.72rem}
-  #standings table,#activity table{font-size:.58rem}
-  #standings th,#activity th{font-size:.54rem}
-  #eventRows td:first-child{width:2rem}
-  #eventRows td:nth-child(2){width:2.6rem}
-  #feed span{font-size:.55rem}
-  #mvp h2{font-size:.54rem}
-  .r{font-size:.56rem}
+  #app{top:3%;bottom:4%;left:3%;right:3%;gap:.3rem}
+  .lab{width:clamp(6rem,26vw,8rem)}
+  #head{padding:.25rem .45rem .3rem}
+  #head h1{font-size:1.2rem}
+  #slot{height:1.15rem;margin-top:.15rem}
+  #how{font-size:.7rem}
+  #how2{font-size:.6rem;margin-top:.1rem}
+  #goal{gap:.3rem;margin-top:.2rem;font-size:.62rem}
+  #goal .gb{height:.55rem}
+  #gt{min-width:3rem}
+  #auditStatus{font-size:.58rem}
+  #bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.05fr) minmax(0,1fr);gap:.25rem;flex-basis:26%;min-height:0}
+  #standings,#activity{padding:.18rem .35rem;border-radius:.65rem}
+  #standings h2,#activity h2{font-size:.65rem;margin-bottom:0}
+  #standings table,#activity table{font-size:.58rem;line-height:1}
+  #standings th,#activity th{font-size:.52rem}
+  #standings th:nth-child(3),#positionRows td:nth-child(3){display:none}
+  #positionRows tr:nth-child(n+4),#eventRows tr:nth-child(n+4){display:none}
+  #activity th:first-child,#eventRows td:first-child,#activity th:last-child,#eventRows td:last-child{display:none}
+  #mvp{display:none}
+  #feed{margin-top:.05rem}
+  #feed span{font-size:.5rem;padding:.08rem .25rem}
+  #specialEvent{min-height:1.25rem;padding:.1rem .3rem;font-size:.65rem}
 }
 /* Panel de pruebas */
 #dot{position:fixed;right:.7rem;bottom:.7rem;width:.85rem;height:.85rem;border-radius:50%;background:#ff4d4d;box-shadow:0 0 .45rem rgba(0,0,0,.65);z-index:30}
@@ -151,12 +162,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   <div id="head" class="panel">
     <span class="pill disp" id="rnd">Ronda 1</span>
     <h1 class="disp">Carrera de tortugas</h1>
-    <div id="slot"><div id="how">Elige país · AUDITORÍA @cuenta | nicho | objetivo</div><div id="banner" class="disp"></div></div>
-    <div id="how2">❤️ like · 🎁 regalo · seguir y compartir impulsan</div>
+    <div id="slot"><div id="how">Elige país · Auditoría @cuenta</div><div id="banner" class="disp"></div></div>
+    <div id="how2">❤️ Like · 🎁 Regalo · Seguir · Compartir</div>
     <div id="goal"><span>🎯 Meta ⚡x2</span><div class="gb"><i id="gf"></i></div><span id="gt"></span></div>
-    <div id="auditStatus" aria-live="polite">Auditorías por orden · cada 5–7 min · K al terminar</div>
+    <div id="auditStatus" aria-live="polite" hidden></div>
   </div>
   <div id="lanes"></div>
+  <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
   <div id="bottom">
     <section id="standings" class="panel">
       <h2 class="disp">Tabla de posiciones</h2>
@@ -396,7 +408,7 @@ const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.random()*a.length|0];
 const C=CFG.countries,byCode=Object.fromEntries(C.map(c=>[c.c,c]));
-const liveEvents=[],liveEventLimit=5,auditQueue=[],auditRequesters=new Set(),auditQueueLimit=20;
+const liveEvents=[],liveEventLimit=3,auditQueue=[],auditRequesters=new Set(),auditQueueLimit=20;
 /* ESTADO GLOBAL de la partida (todo en memoria; solo "wins" se guarda en localStorage)
      round    número de ronda actual            over     true cuando alguien ya cruzó la meta
      go       true entre el "¡YA!" y la meta    winner   código del país ganador (o null)
@@ -525,7 +537,13 @@ function tick(){cx.clearRect(0,0,cv.width,cv.height);ps=ps.filter(p=>p.l>0&&p.y<
   if(ps.length)requestAnimationFrame(tick);else{run=false;cx.clearRect(0,0,cv.width,cv.height)}}
 
 /* ===== Pantalla ===== */
-function feed(text,cls){const f=$('feed'),s=document.createElement('span');s.textContent=text;if(cls)s.className=cls;f.append(s);
+function showSpecialEvent(text){
+  const event=$('specialEvent');event.textContent='✨ EVENTO ESPECIAL · '+text;event.className='disp on';
+  clearTimeout(showSpecialEvent.timer);showSpecialEvent.timer=setTimeout(()=>{event.className='disp'},5000);
+}
+function feed(text,cls){
+  if(cls==='hot'||cls==='cp'){showSpecialEvent(text);return}
+  const f=$('feed'),s=document.createElement('span');s.textContent=text;if(cls)s.className=cls;f.append(s);
   while(f.children.length>2)f.firstChild.remove();setTimeout(()=>s.remove(),3200)}
 function banner(t,ms){const b=$('banner');b.textContent=t;b.className='disp on';clearTimeout(banner.t);banner.t=setTimeout(()=>b.className='disp',ms)}
 /* Redibuja marcadores: puesto 1-6 de cada carril, puntos, victorias, hinchas y corona del líder. Se llama ~4 veces/seg. */
@@ -575,16 +593,17 @@ function renderLiveEvents(){
 }
 function renderAuditQueue(){
   const next=auditQueue[0],following=auditQueue[1],status=$('auditStatus');
+  status.hidden=!next;
   status.textContent=next
-    ? 'Fila '+auditQueue.length+' · #1 @'+next.handle+(following?' · #2 @'+following.handle:'')+(next.niche?' · '+next.niche:'')+(next.goal?' → '+next.goal:'')+' · K al terminar'
-    : 'Auditorías por orden · cada 5–7 min · AUDITORÍA @cuenta | nicho | objetivo';
+    ? 'Fila '+auditQueue.length+' · @'+next.handle+(following?' · después @'+following.handle:'')+' · K al terminar'
+    : '';
   status.title=next?'@'+next.handle+' · '+next.niche+' · '+next.goal:'';
 }
 function queueAuditRequest(user,text){
   const comment=String(text||'').trim();
   if(!/^auditor[ií]a\b/i.test(comment))return false;
   const match=comment.match(/^auditor[ií]a\s+@?([a-z0-9._]{2,24})(?:\s*\|\s*(.*))?$/i);
-  if(!match){feed('Formato: AUDITORÍA @cuenta | nicho | objetivo','soft');return true}
+  if(!match){feed('Formato: AUDITORÍA @cuenta','soft');return true}
   const handle=match[1],key=handle.toLowerCase();
   if(auditRequesters.has(key)){feed('@'+handle+' ya está en la fila o ya fue auditada','soft');return true}
   if(auditQueue.length>=auditQueueLimit){feed('Fila de auditorías completa; intenta más tarde','soft');return true}
