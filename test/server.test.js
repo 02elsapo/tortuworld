@@ -38,8 +38,11 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /#bottom\.on\{display:flex\}/);
     assert.match(overlayHtml, /function showCelebration\(duration=2300\)/);
     assert.match(overlayHtml, /else if\(ty==='gift'\)\{bigFx\('🎁 ¡REGALO!'/);
-    assert.match(overlayHtml, /if\(!S\.over&&S\.go&&S\.winner\)finish\(S\.winner\)/);
-    assert.match(overlayHtml, /crawl:\.15,restartMs:2500/);
+    assert.match(overlayHtml, /if\(!S\.over&&S\.winner\)finish\(S\.winner\)/);
+    assert.match(overlayHtml, /#spot\.on\{display:flex;animation:spin 3s ease forwards\}/);
+    assert.match(overlayHtml, /crawl:\.15,restartMs:3000/);
+    assert.match(overlayHtml, /const crawl=S\.go&&S\.slotUser\[k\]&&!S\.over\?t\.cr\*dt:0/);
+    assert.match(overlayHtml, /t\.ph\+=dt\*\(\.65\+5\.35\*speedRatio\)/);
     assert.match(overlayHtml, /<div id="bottom">[\s\S]*<div id="big"><\/div><div id="spot"><\/div>/);
     assert.match(overlayHtml, /id="standings"[\s\S]*TOP 5[\s\S]*id="topPlayers"/);
     assert.match(overlayHtml, /id="activity"[\s\S]*EVENTOS[\s\S]*id="eventRows"/);

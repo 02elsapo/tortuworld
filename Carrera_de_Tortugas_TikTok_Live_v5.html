@@ -255,7 +255,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 @keyframes vig{0%{opacity:.9}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.lane.lead::after{animation:none}}
 #spot{position:fixed;left:50%;top:20%;z-index:21;transform:translateX(-50%);width:min(88vw,27rem);display:none;align-items:center;gap:.9rem;padding:.8rem 1rem;border-radius:1.4rem;background:linear-gradient(135deg,#0D3A41,#07262B);border:.28rem solid var(--sun);box-shadow:0 .4rem 0 rgba(0,0,0,.4),0 0 3rem rgba(255,201,60,.8);pointer-events:none}
-#spot.on{display:flex;animation:spin 14s ease forwards}
+#spot.on{display:flex;animation:spin 3s ease forwards}
 @keyframes spin{0%{opacity:0;transform:translateX(-50%) scale(.3)}4%{opacity:1;transform:translateX(-50%) scale(1.08)}7%{transform:translateX(-50%) scale(1)}92%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(.95)}}
 #spot .sa{flex:none;width:5rem;height:5rem;border-radius:50%;overflow:hidden;border:.25rem solid var(--sun);display:grid;place-items:center;font:2.4rem 'Bowlby One','Arial Black',sans-serif;color:#fff;box-shadow:0 0 1.2rem var(--sun)}
 #spot .sa img{width:100%;height:100%;object-fit:cover}
@@ -377,7 +377,7 @@ const Q=new URLSearchParams(location.search);
      restartMs  ms del festejo antes de que empiece la siguiente ronda
      countries  equipos: c = código que se escribe en el chat · n = nombre · f = bandera emoji
                 b = 3 colores (franjas del caparazón) */
-const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.get('goal')||60,target:+Q.get('target')||40,crawl:.15,restartMs:2500,
+const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.get('goal')||60,target:+Q.get('target')||40,crawl:.15,restartMs:3000,
   countries:[0,1,2,3,4].map(i=>({c:'s'+i,n:'',f:'',b:[]}))};
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.random()*a.length|0];
@@ -859,7 +859,7 @@ function countdown(){
    - Las patas siguen un paso en diagonal; la velocidad cambia cadencia, balanceo y polvo. */
 /* Estado de FÍSICA y animación por tortuga (clave = código de país):
      pend  energía de regalos pendiente de gastar     ve  velocidad extra por regalos (u/s)
-     cr    velocidad de arrastre natural (u/s)         vs  velocidad visual total (anima patas y polvo)
+     cr    velocidad de avance base (u/s)              vs  velocidad total suavizada (anima patas y polvo)
      base  factor personal de velocidad de arrastre    pause  segundos que le quedan de pausa
      ph/am fase y amplitud del paso    hl  cuánto levanta la cabeza    w  semilla de ruido    du  temporizador de polvo */
 const T={};
@@ -895,7 +895,8 @@ function frame(now){
     if(S.go&&!isW&&t.pend>.02)tgtE=Math.max(.25,Math.min(VMAX,Math.sqrt(2*DEC*t.pend)));
     t.ve+=Math.max(-3*dt,Math.min(ACC*dt,tgtE-t.ve));
     const d=Math.min(t.ve*dt,t.pend);t.pend=t.pend-d<.001?0:t.pend-d;
-    S.pos[k]=Math.min(CFG.win,S.pos[k]+d); /* solo la energía de puntos mueve la tortuga */
+    const crawl=S.go&&S.slotUser[k]&&!S.over?t.cr*dt:0;
+    S.pos[k]=Math.min(CFG.win,S.pos[k]+d+crawl); /* puntos aceleran; cada participante también avanza lentamente */
     if(!S.winner&&S.slotUser[k]&&S.pos[k]>=CFG.win)S.winner=k;
     if(isW)S.pos[k]=CFG.win;
     else if(S.over&&S.pos[k]>CFG.win-1){S.pos[k]=CFG.win-1;t.pend=0;t.ve=0}
@@ -905,21 +906,22 @@ function frame(now){
       S.cp[m]=k;t.tur.classList.add('turbo');setTimeout(()=>t.tur.classList.remove('turbo'),1500);
       if(slotPlayer(k))feed('🥬 @'+slotPlayer(k).username+' pasa el '+m+'% primero','cp');SFX.cp()}
     /* animación */
-    const mov=true,sp=Math.min(t.vs,VMAX);
-    t.ph+=dt*(mov?1.6+t.vs*1.0:0);
-    t.am+=((mov?1.8+sp*.45:0)-t.am)*Math.min(1,dt*6);
+    const sp=Math.min(t.vs,VMAX),speedRatio=Math.max(0,sp/VMAX);
+    t.ph+=dt*(.65+5.35*speedRatio);
+    t.am+=(.18+1.62*speedRatio-t.am)*Math.min(1,dt*(3+speedRatio*5));
     t.hl+=(0-t.hl)*Math.min(1,dt*4);
     const s=Math.sin(t.ph),cs=Math.cos(t.ph),a=t.am,E=t.e;
     const leg=(el,sn,cn)=>el.setAttribute('transform','translate('+(sn*a).toFixed(2)+' '+(-Math.max(0,cn)*a*.6).toFixed(2)+')');
     leg(E.lnB,s,cs);leg(E.lfF,s,cs);leg(E.lnF,-s,-cs);leg(E.lfB,-s,-cs);
-    const by=-Math.abs(cs)*a*.18+Math.sin(tNow*1.6+t.w)*.25;
-    E.bd.setAttribute('transform','translate(0 '+by.toFixed(2)+') rotate('+(s*a*.35).toFixed(2)+' 32 23)');
+    const gallop=Math.abs(Math.sin(t.ph*2))*(.2+1.8*speedRatio);
+    const by=-gallop+Math.sin(tNow*1.6+t.w)*.12;
+    E.bd.setAttribute('transform','translate(0 '+by.toFixed(2)+') rotate('+(s*speedRatio*4).toFixed(2)+' 32 23)');
     E.hd.setAttribute('transform','translate('+(sp*.25+s*a*.15+Math.sin(tNow*.8+t.w)*1.2*t.hl).toFixed(2)+' '+(by*1.2-2.8*t.hl+sp*.12).toFixed(2)+')');
     E.tl.setAttribute('transform','rotate('+(Math.sin(t.ph+1)*10*Math.min(1,a/2)).toFixed(2)+' 9 27)');
     if(t.vs>1.3){t.du-=dt;if(t.du<=0){t.du=Math.max(.06,.2-sp*.015);puff(k,R)}}
     t.tur.style.setProperty('--p',Math.min(100,S.pos[k]).toFixed(2));
   }
-  if(!S.over&&S.go&&S.winner)finish(S.winner);
+  if(!S.over&&S.winner)finish(S.winner);
   acc+=dt;if(acc>.25){acc=0;render();photo();MUS.bpm=Math.min(185,124+Math.max(...C.map(c=>S.pos[c.c]))*.55+(S.boost>Date.now()?12:0));if(S.dirty){renderMvp();S.dirty=false}}
 }
 
@@ -1085,7 +1087,7 @@ newRound=function(){lastRank={};_newRound.apply(this,arguments)};
 const HALL=(()=>{try{return JSON.parse(localStorage.getItem('tortugasHall')||'[]')}catch{return[]}})();
 let SPOT=null,spT=null;
 function spotlight(p){
-  showCelebration(14200);
+  showCelebration(3000);
   SPOT=p.username;const i=HALL.indexOf(p.username);if(i>=0)HALL.splice(i,1);HALL.unshift(p.username);HALL.length=Math.min(HALL.length,8);
   try{localStorage.setItem('tortugasHall',JSON.stringify(HALL))}catch{}
   const c=$('spot');c.className='';c.innerHTML='<div class="sa"></div><div class="sb"><small>🌟 CUENTA DESTACADA</small><b></b><em>¡Entra a su perfil y apóyala!</em></div>';
@@ -1093,7 +1095,7 @@ function spotlight(p){
   const a=c.querySelector('.sa');
   if(p.avatar){const im=new Image();im.onerror=()=>{im.remove();ini()};im.src=p.avatar;a.append(im)}else ini();
   function ini(){a.textContent=p.username.trim().charAt(0).toUpperCase()||'?';a.style.background='hsl('+hue(p.key)+' 70% 45%)'}
-  void c.offsetWidth;c.className='on';clearTimeout(spT);spT=setTimeout(()=>c.className='',14200)}
+  void c.offsetWidth;c.className='on';clearTimeout(spT);spT=setTimeout(()=>c.className='',3000)}
 const HOW0=$('how').textContent;let howI=0;
 setInterval(()=>{const L=[HOW0,'💚 Apoyá a los pequeños: seguí a quien va ganando'];
   if(SPOT)L.push('🌟 Cuenta destacada: @'+SPOT+' · ¡seguila!');
