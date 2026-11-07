@@ -35,6 +35,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /function scoreContestant\(entry,isBot=false\)/);
     assert.match(overlayHtml, /if\(p\.isBot\)return null/);
     assert.match(overlayHtml, /if\(isBot&&!S\.slotOf\.has\(key\)&&!C\.some\(c=>!S\.slotUser\[c\.c\]\)\)return/);
+    assert.match(overlayHtml, /if\(lo\.o\.isBot\)contestants\.delete\(lo\.o\.key\)/);
+    assert.match(overlayHtml, /else if\(!isBot\)player\.isBot=false/);
     assert.match(overlayHtml, /addLiveEvent\(entry\);handleTikTokEntry\(entry,true\)/);
     assert.match(overlayHtml, /names:\['Ana','Leo','Lola','Rayo','Tito'\]/);
     assert.match(overlayHtml, /const liveEvents=\[\],liveEventLimit=3,contestants=new Map\(\)/);

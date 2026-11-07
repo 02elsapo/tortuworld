@@ -603,7 +603,7 @@ function setSlotAvatar(code,p){
     a.im.onerror=()=>a.im.removeAttribute('href');a.im.setAttribute('href',p.avatar);
   }
 }
-/* Asigna turtle a un jugador: libre si hay; si no, quita al de menos puntos SOLO si el nuevo ya lo supera (cambia el avatar). */
+/* Los bots solo rellenan carriles libres; un usuario real puede reemplazar un bot, nunca al revés. */
 function claimSlot(p){
   let code,lo=null;const free=C.find(c=>!S.slotUser[c.c]);
   if(free)code=free.c;
@@ -614,7 +614,7 @@ function claimSlot(p){
     else{for(const c of C){const o=slotPlayer(c.c);if(o&&c.c!==S.winner&&(!lo||o.points<lo.o.points))lo={c,o}}
       if(!lo||p.points<=lo.o.points)return null;
       code=lo.c.c}
-    S.slotOf.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
+    S.slotOf.delete(lo.o.key);if(lo.o.isBot)contestants.delete(lo.o.key);feed('🔄 @'+p.username+' toma la tortuga de @'+lo.o.username,'soft')}
   if(lo){S.pos[code]=0;T[code].pend=0;T[code].ve=0;T[code].cr=0;T[code].vs=0}
   S.slotUser[code]=p.key;S.slotOf.set(p.key,code);setSlotAvatar(code,p);
   const el=T[code].tur;el.classList.remove('swap');void el.offsetWidth;el.classList.add('swap');SFX.join();return code;
@@ -749,7 +749,7 @@ function scoreContestant(entry,isBot=false){
   if(!player){
     player={key,username,avatar:'',points:0,sequence:contestantSequence++,isBot};
     contestants.set(key,player);
-  }else player.isBot=isBot;
+  }else if(!isBot)player.isBot=false;
   if(entry.type==='chat'){const n=Date.now();if(n-(player.lastChat||0)<8000)return;player.lastChat=n}
   player.points+=points;
   if(typeof entry.avatar==='string'&&/^https?:\/\//i.test(entry.avatar))player.avatar=entry.avatar;
