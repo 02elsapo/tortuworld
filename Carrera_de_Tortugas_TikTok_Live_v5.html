@@ -9,7 +9,7 @@
      Puntos por evento: comentario 1 (máx. 1 cada 8 s por usuario) · like 0.1 c/u · compartir 3 · seguir 5 ·
      regalo = diamantes x cantidad x combo (hasta x2). El empuje doble (barra de meta) duplica todos los puntos.
      Posición de cada tortuga = puntos de la ronda / META (?target=40), de 0 a 100 %. La primera en llegar queda
-     como campeona; la siguiente ronda comienza cuando todos los participantes que tienen tortuga llegan a 100 %.
+     como campeona y termina la carrera.
      Parámetros URL: ?target=40 (puntos para ganar) · ?goal=60 (meta de la comunidad) · ?idle=15 (segundos para
      activar los bots de espera; 0 = apagados) · ?demo=1 (bots de prueba) · ?panel=1 (panel de pruebas) ·
      ?safe=1 (margen derecho) · ?top= / ?bottom= (márgenes en %) · ?sound=0 / ?music=0 · ?ws=ws://host:puerto
@@ -330,7 +330,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 
    v5: TOP 5 de espectadores por puntos. Cada tortuga representa a un participante del top 5;
    no hay equipos ni selección por país. El backend solo conecta TikTok y entrega eventos. La primera tortuga
-   que llega queda campeona; la carrera se reinicia al llegar todos los participantes activos a la meta.
+   que llega queda campeona; termina la carrera y se prepara la siguiente ronda.
 
    CONTRATO DEL JUEGO (type, username, content, avatar, activityCount, diamondCount)
    - chat: +1 punto; se limita a un comentario cada 8 segundos por participante.
@@ -374,10 +374,10 @@ const Q=new URLSearchParams(location.search);
      win        distancia de la meta; la pista va de 0 a win
      goal       diamantes para llenar la barra de meta de la comunidad
      crawl      velocidad base de arrastre en unidades/seg (cuando nadie regala)
-     restartMs  ms que se muestra el podio antes de la siguiente ronda
+     restartMs  ms del festejo antes de que empiece la siguiente ronda
      countries  equipos: c = código que se escribe en el chat · n = nombre · f = bandera emoji
                 b = 3 colores (franjas del caparazón) */
-const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.get('goal')||60,target:+Q.get('target')||40,crawl:.15,restartMs:15000,
+const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.get('goal')||60,target:+Q.get('target')||40,crawl:.15,restartMs:2500,
   countries:[0,1,2,3,4].map(i=>({c:'s'+i,n:'',f:'',b:[]}))};
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.random()*a.length|0];
@@ -805,13 +805,14 @@ function onShare(m){if(S.over)return;const user=m.user||'Alguien',code=S.pick.ge
   if(code)setSponsor(code,user,m.avatar);
   if(code&&!S.over){T[code].pend+=3;donor(user,code).pts+=1;S.dirty=true}}
 
-/* Fin de ronda: se llama desde frame() cuando todas las tortugas ocupadas llegan a CFG.win. Guarda la victoria,
+/* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win. Guarda la victoria,
    calcula la racha y MVP, detiene la música y programa el cartel (+1.6 s) y la siguiente ronda (+restartMs). */
 /* Fin de ronda: guarda la victoria del DUEÑO de la tortuga, calcula su racha, muestra el banner de campeón
    (el cartel #win queda oculto por CSS para no tapar el video) y programa la siguiente ronda. */
 function finish(code){
   S.over=true;S.winner=code;musicSync();SFX.flag();const t=T[code],p=slotPlayer(code);
   S.pos[code]=CFG.win;t.pend=0;t.ve=0;
+  for(const c of C)if(c.c!==code){T[c.c].pend=0;T[c.c].ve=0}
   const w=(winsBy.get(p.key)||0)+1;winsBy.set(p.key,w);saveWins();
   if(S.lastWin===p.key)S.streak++;else{S.lastWin=p.key;S.streak=1}
   banner('🏆 @'+p.username+' ¡CAMPEÓN!',CFG.restartMs-600);
@@ -877,7 +878,7 @@ let last=performance.now(),tNow=0,acc=0;
 /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
-   Después: si alguien llegó, queda como campeón; finish() espera a que lleguen todos los carriles ocupados.
+   Después: si alguien llegó, queda como campeón y finish() termina la carrera en ese momento.
    Cada 0.25 s: render(), foto finish, tempo de la música.
    Es el ÚNICO lugar donde cambian las posiciones. */
 function frame(now){
@@ -918,10 +919,7 @@ function frame(now){
     if(t.vs>1.3){t.du-=dt;if(t.du<=0){t.du=Math.max(.06,.2-sp*.015);puff(k,R)}}
     t.tur.style.setProperty('--p',Math.min(100,S.pos[k]).toFixed(2));
   }
-  if(!S.over&&S.go&&S.winner){
-    const racers=C.filter(c=>S.slotUser[c.c]);
-    if(racers.length&&racers.every(c=>S.pos[c.c]>=CFG.win))finish(S.winner);
-  }
+  if(!S.over&&S.go&&S.winner)finish(S.winner);
   acc+=dt;if(acc>.25){acc=0;render();photo();MUS.bpm=Math.min(185,124+Math.max(...C.map(c=>S.pos[c.c]))*.55+(S.boost>Date.now()?12:0));if(S.dirty){renderMvp();S.dirty=false}}
 }
 

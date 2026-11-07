@@ -38,6 +38,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /#bottom\.on\{display:flex\}/);
     assert.match(overlayHtml, /function showCelebration\(duration=2300\)/);
     assert.match(overlayHtml, /else if\(ty==='gift'\)\{bigFx\('🎁 ¡REGALO!'/);
+    assert.match(overlayHtml, /if\(!S\.over&&S\.go&&S\.winner\)finish\(S\.winner\)/);
+    assert.match(overlayHtml, /crawl:\.15,restartMs:2500/);
     assert.match(overlayHtml, /<div id="bottom">[\s\S]*<div id="big"><\/div><div id="spot"><\/div>/);
     assert.match(overlayHtml, /id="standings"[\s\S]*TOP 5[\s\S]*id="topPlayers"/);
     assert.match(overlayHtml, /id="activity"[\s\S]*EVENTOS[\s\S]*id="eventRows"/);
