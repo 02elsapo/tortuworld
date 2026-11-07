@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Carrera de tortugas</title>
+<title>Top 5 en vivo</title>
 <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#07262B;--ink2:#0D3A41;--sun:#FFC93C;--pink:#FF3D7F;--cream:#FFF6E0;--mint:#5CF2C0;--sand:#F3DFA2;--sand2:#E8CE8C;--grass:#5FB35A;--grass2:#4A9A4C;--padr:3%}
@@ -14,9 +14,10 @@ html{font-size:min(3.8vw,2.1vh)}
 html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:var(--cream);font-family:'Nunito',system-ui,sans-serif;font-weight:800}
 .disp{font-family:'Bowlby One','Arial Black',sans-serif;font-weight:400}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:9}
+#lanes,#cd,#win,#fx{display:none!important}
 /* Todo fluye en una sola columna: nada se encima, en cualquier pantalla */
 #app{position:absolute;top:var(--top,6%);bottom:var(--bot,14%);left:3%;right:var(--padr);display:flex;flex-direction:column;gap:.5rem}
-#bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.45rem;flex:0 0 23%;min-height:8rem}
+#bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:.45rem;flex:1;min-height:0}
 .panel{background:rgba(7,38,43,.9);border:.18rem solid var(--ink2);border-radius:1.1rem;box-shadow:0 .3rem 0 rgba(0,0,0,.3)}
 
 /* Cabecera */
@@ -78,6 +79,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 /* Tablas en vivo */
 #standings,#activity{min-width:0;min-height:0;padding:.3rem .5rem;overflow:hidden}
 #standings h2,#activity h2{font-size:.85rem;color:var(--sun);margin-bottom:.1rem}
+#topPlayers{display:flex;flex-direction:column;justify-content:space-evenly;gap:.22rem;height:calc(100% - 1.2rem)}
+.player-row{display:grid;grid-template-columns:1.5rem 2.45rem minmax(0,1fr) auto;align-items:center;gap:.35rem;min-height:0;padding:.22rem .4rem;border-radius:.65rem;background:rgba(255,255,255,.08)}
+.player-row:first-child{border:1px solid var(--sun);background:linear-gradient(90deg,rgba(255,201,60,.2),rgba(255,201,60,.05))}
+.player-rank{color:var(--sun);font-size:.9rem;text-align:center}
+.player-runner{position:relative;display:block;width:2.35rem;height:1.8rem}
+.runner-shell{position:absolute;z-index:2;left:.18rem;top:.15rem;width:1.42rem;height:1.35rem;overflow:hidden;border:.1rem solid var(--ink);border-radius:50%;background:var(--grass);box-shadow:0 0 0 .06rem var(--cream)}
+.runner-shell::after{position:absolute;inset:0;border:1px solid rgba(7,38,43,.4);border-radius:50%;content:"";pointer-events:none}
+.runner-shell img{width:100%;height:100%;object-fit:cover}
+.runner-fallback{display:grid;width:100%;height:100%;place-items:center;background:var(--pink);color:#fff;font-size:.7rem}
+.runner-head{position:absolute;right:.02rem;top:.52rem;width:.55rem;height:.55rem;border:.06rem solid var(--ink);border-radius:50%;background:var(--mint)}
+.runner-head::after{position:absolute;top:.12rem;right:.1rem;width:.07rem;height:.07rem;border-radius:50%;background:var(--ink);content:""}
+.runner-leg{position:absolute;z-index:1;width:.42rem;height:.34rem;border-radius:50%;background:var(--grass2)}
+.runner-leg.front{right:.42rem;bottom:.03rem}
+.runner-leg.back{left:.35rem;bottom:.03rem}
+.runner-tail{position:absolute;left:0;top:.72rem;width:.34rem;height:.34rem;clip-path:polygon(100% 0,100% 100%,0 50%);background:var(--grass2)}
+.player-info{min-width:0}
+.player-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem}
+.player-bar{height:.22rem;margin-top:.18rem;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.14)}
+.player-bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--sun));transition:width .25s}
+.player-points{min-width:2.5rem;color:var(--sun);font-size:.85rem;text-align:right}
 #standings table,#activity table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.68rem;line-height:1.1}
 #standings th,#standings td,#activity th,#activity td{padding:.1rem .15rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #standings th,#activity th{color:var(--mint);font-size:.62rem}
@@ -119,29 +140,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #snd{position:fixed;left:1.8rem;bottom:.3rem;z-index:30;font-size:.8rem;background:rgba(0,0,0,.65);padding:.1rem .6rem;border-radius:999px;display:none}
 @media (orientation:portrait){
   html{font-size:clamp(12px,min(3.2vw,1.8vh),32px);--padr:12%}
-  #app{top:3%;bottom:4%;left:3%;right:3%;gap:.3rem}
-  .lab{width:clamp(6rem,26vw,8rem)}
-  #head{padding:.25rem .45rem .3rem}
-  #head h1{font-size:1.2rem}
-  #slot{height:1.15rem;margin-top:.15rem}
-  #how{font-size:.7rem}
-  #how2{font-size:.6rem;margin-top:.1rem}
-  #goal{gap:.3rem;margin-top:.2rem;font-size:.62rem}
-  #goal .gb{height:.55rem}
-  #gt{min-width:3rem}
-  #auditStatus{font-size:.58rem}
-  #bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.05fr) minmax(0,1fr);gap:.25rem;flex-basis:26%;min-height:0}
-  #standings,#activity{padding:.18rem .35rem;border-radius:.65rem}
-  #standings h2,#activity h2{font-size:.65rem;margin-bottom:0}
+  #app{top:3%;bottom:3%;left:3%;right:var(--padr);gap:.2rem}
+  .lab{width:clamp(5rem,23vw,7rem);gap:.2rem;padding:0 .25rem}
+  #head{padding:.18rem .3rem .2rem}
+  #head h1{font-size:1rem}
+  #slot{height:.75rem;margin-top:.05rem}
+  #how{font-size:.56rem}
+  #how2,#goal,#auditStatus{display:none}
+  #bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,2fr) minmax(0,.8fr);gap:.25rem}
+  #standings,#activity{padding:.12rem .3rem;border-radius:.5rem}
+  #standings h2,#activity h2{font-size:.7rem;margin-bottom:.1rem}
+  #topPlayers{height:calc(100% - 1rem);gap:.12rem}
+  .player-row{grid-template-columns:1.1rem 2rem minmax(0,1fr) auto;gap:.25rem;padding:.1rem .25rem}
+  .player-rank{font-size:.62rem}
+  .player-runner{width:1.9rem;height:1.5rem}
+  .runner-shell{left:.14rem;top:.12rem;width:1.12rem;height:1.05rem}
+  .runner-head{top:.4rem;width:.42rem;height:.42rem}
+  .runner-leg{width:.32rem;height:.26rem}
+  .runner-leg.front{right:.32rem}
+  .runner-leg.back{left:.25rem}
+  .runner-tail{top:.55rem;width:.27rem;height:.27rem}
+  .player-name{font-size:.62rem}
+  .player-bar{height:.14rem;margin-top:.08rem}
+  .player-points{min-width:2rem;font-size:.62rem}
   #standings table,#activity table{font-size:.58rem;line-height:1}
   #standings th,#activity th{font-size:.52rem}
-  #standings th:nth-child(3),#positionRows td:nth-child(3){display:none}
-  #positionRows tr:nth-child(n+4),#eventRows tr:nth-child(n+4){display:none}
   #activity th:first-child,#eventRows td:first-child,#activity th:last-child,#eventRows td:last-child{display:none}
   #mvp{display:none}
-  #feed{margin-top:.05rem}
-  #feed span{font-size:.5rem;padding:.08rem .25rem}
-  #specialEvent{min-height:1.25rem;padding:.1rem .3rem;font-size:.65rem}
+  #feed,#snd{display:none}
+  #specialEvent{min-height:1.2rem;padding:.1rem .3rem;font-size:.7rem}
 }
 /* Panel de pruebas */
 #dot{position:fixed;right:.7rem;bottom:.7rem;width:.85rem;height:.85rem;border-radius:50%;background:#ff4d4d;box-shadow:0 0 .45rem rgba(0,0,0,.65);z-index:30}
@@ -160,23 +187,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 
 <div id="app">
   <div id="head" class="panel">
-    <span class="pill disp" id="rnd">Ronda 1</span>
-    <h1 class="disp">Carrera de tortugas</h1>
-    <div id="slot"><div id="how">Elige país · Auditoría @cuenta</div><div id="banner" class="disp"></div></div>
-    <div id="how2">❤️ Like · 🎁 Regalo · Seguir · Compartir</div>
-    <div id="goal"><span>🎯 Meta ⚡x2</span><div class="gb"><i id="gf"></i></div><span id="gt"></span></div>
-    <div id="auditStatus" aria-live="polite" hidden></div>
+    <span class="pill disp" id="rnd">EN VIVO</span>
+    <h1 class="disp">TOP 5 EN VIVO</h1>
+    <div id="slot"><div id="how">Comenta · Like · Seguir · Compartir · Regalo</div><div id="banner" class="disp"></div></div>
   </div>
   <div id="lanes"></div>
   <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
   <div id="bottom">
     <section id="standings" class="panel">
-      <h2 class="disp">Tabla de posiciones</h2>
-      <table><thead><tr><th>#</th><th>País</th><th>Avance</th><th>Puntos</th></tr></thead><tbody id="positionRows"></tbody></table>
-      <div id="mvp"><h2 class="disp">Mayor aporte</h2><div id="rows"></div></div>
+      <h2 class="disp">TOP 5 · CUENTAS CON MÁS PUNTOS</h2>
+      <div id="topPlayers"><div class="empty">Participa para entrar al Top 5</div></div>
     </section>
     <section id="activity" class="panel">
-      <h2 class="disp">Tabla de eventos</h2>
+      <h2 class="disp">EVENTOS</h2>
       <table><thead><tr><th>Hora</th><th>Evento</th><th>Usuario</th><th>Detalle</th></tr></thead><tbody id="eventRows"></tbody></table>
       <div id="feed"></div>
     </section>
@@ -192,10 +215,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 <div id="dot" role="status" aria-label="TikTok desconectado"></div>
 <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
 <div id="bots">
-  <b>Control del directo (P) · K: cerrar auditoría</b>
-  <button data-a="audit-next">Siguiente auditoría</button>
+  <b>Pruebas de interacción (P)</b>
   <button data-a="rose">1 Rosa</button><button data-a="donut">2 Dona</button>
-  <button data-a="galaxy">3 Galaxia</button><button data-a="join">J Elige país</button>
+  <button data-a="galaxy">3 Galaxia</button><button data-a="join">J Comenta</button>
   <button data-a="like">L Likes</button><button data-a="flood">F Avalancha</button>
   <button data-a="follow">Seguidor</button><button data-a="auto">A Auto</button>
   <button data-a="boost">B Doble</button><button data-a="sound">M Sonido</button>
@@ -408,7 +430,8 @@ const CFG={ws:Q.get('ws')||'ws://localhost:8080',win:+Q.get('win')||100,goal:+Q.
 const $=id=>document.getElementById(id);
 const rnd=a=>a[Math.random()*a.length|0];
 const C=CFG.countries,byCode=Object.fromEntries(C.map(c=>[c.c,c]));
-const liveEvents=[],liveEventLimit=3,auditQueue=[],auditRequesters=new Set(),auditQueueLimit=20;
+const liveEvents=[],liveEventLimit=3,contestants=new Map();
+let contestantSequence=0;
 /* ESTADO GLOBAL de la partida (todo en memoria; solo "wins" se guarda en localStorage)
      round    número de ronda actual            over     true cuando alguien ya cruzó la meta
      go       true entre el "¡YA!" y la meta    winner   código del país ganador (o null)
@@ -591,33 +614,6 @@ function renderLiveEvents(){
     body.append(row);
   });
 }
-function renderAuditQueue(){
-  const next=auditQueue[0],following=auditQueue[1],status=$('auditStatus');
-  status.hidden=!next;
-  status.textContent=next
-    ? 'Fila '+auditQueue.length+' · @'+next.handle+(following?' · después @'+following.handle:'')+' · K al terminar'
-    : '';
-  status.title=next?'@'+next.handle+' · '+next.niche+' · '+next.goal:'';
-}
-function queueAuditRequest(user,text){
-  const comment=String(text||'').trim();
-  if(!/^auditor[ií]a\b/i.test(comment))return false;
-  const match=comment.match(/^auditor[ií]a\s+@?([a-z0-9._]{2,24})(?:\s*\|\s*(.*))?$/i);
-  if(!match){feed('Formato: AUDITORÍA @cuenta','soft');return true}
-  const handle=match[1],key=handle.toLowerCase();
-  if(auditRequesters.has(key)){feed('@'+handle+' ya está en la fila o ya fue auditada','soft');return true}
-  if(auditQueue.length>=auditQueueLimit){feed('Fila de auditorías completa; intenta más tarde','soft');return true}
-  const [niche='',goal='']=String(match[2]||'').split('|').map(part=>part.trim());
-  auditQueue.push({handle,niche,goal});
-  auditRequesters.add(key);
-  renderAuditQueue();feed(user+' añadió @'+handle+' a la fila de auditorías','soft');
-  return true;
-}
-function completeNextAudit(){
-  const completed=auditQueue.shift();
-  if(!completed)return;
-  renderAuditQueue();feed('Auditoría completada: @'+completed.handle,'cp');
-}
 function setLiveEventSnapshot(entries){
   liveEvents.length=0;
   if(Array.isArray(entries)){
@@ -631,6 +627,86 @@ function addLiveEvent(entry){
   liveEvents.unshift(entry);
   liveEvents.length=Math.min(liveEvents.length,liveEventLimit);
   renderLiveEvents();
+}
+function getTopPlayers(){
+  return [...contestants.values()].sort((first,second)=>
+    second.points-first.points||first.sequence-second.sequence).slice(0,5);
+}
+function renderTopPlayers(){
+  const box=$('topPlayers'),top=getTopPlayers();box.replaceChildren();
+  if(!top.length){
+    const empty=document.createElement('div');empty.className='empty';empty.textContent='Participa para entrar al Top 5';box.append(empty);return;
+  }
+  const leaderPoints=top[0].points||1;
+  top.forEach((player,index)=>{
+    const row=document.createElement('div');row.className='player-row';
+    const rank=document.createElement('b');rank.className='player-rank disp';rank.textContent=index+1;
+    const runner=document.createElement('span');runner.className='player-runner';
+    runner.setAttribute('aria-label','Tortuga de @'+player.username);
+    const tail=document.createElement('i');tail.className='runner-tail';
+    const backLeg=document.createElement('i');backLeg.className='runner-leg back';
+    const frontLeg=document.createElement('i');frontLeg.className='runner-leg front';
+    const shell=document.createElement('span');shell.className='runner-shell';
+    const fallback=document.createElement('span');fallback.className='runner-fallback';
+    fallback.textContent=player.username.trim().charAt(0).toUpperCase()||'?';
+    shell.append(fallback);
+    if(player.avatar){
+      const image=document.createElement('img');image.src=player.avatar;image.alt='';
+      image.addEventListener('error',()=>image.replaceWith(fallback),{once:true});
+      shell.replaceChildren(image);
+    }
+    const head=document.createElement('i');head.className='runner-head';
+    runner.append(tail,backLeg,frontLeg,shell,head);
+    const info=document.createElement('div');info.className='player-info';
+    const name=document.createElement('b');name.className='player-name';name.textContent='@'+player.username;
+    const bar=document.createElement('div');bar.className='player-bar';
+    const fill=document.createElement('i');fill.style.width=Math.min(100,player.points/leaderPoints*100)+'%';bar.append(fill);
+    info.append(name,bar);
+    const points=document.createElement('strong');points.className='player-points';points.textContent=formatPlayerPoints(player.points);
+    row.append(rank,runner,info,points);box.append(row);
+  });
+}
+function formatPlayerPoints(points){
+  return Number.isInteger(points)?String(points):points.toFixed(1);
+}
+function scoreContestant(entry){
+  if(!entry||typeof entry!=='object'||typeof entry.type!=='string')return;
+  const username=String(entry.username||'Alguien').trim()||'Alguien';
+  const rawCount=entry.activityCount===undefined?1:Number(entry.activityCount);
+  if(entry.type==='gift'&&(!Number.isFinite(rawCount)||rawCount<=0))return;
+  const counts=Math.max(1,rawCount||1);
+  const diamonds=Math.max(1,Number(entry.diamondCount)||1);
+  const points=entry.type==='chat'?1
+    :entry.type==='gift'?diamonds*counts
+      :entry.type==='like'?counts*.1
+        :['follow','share'].includes(entry.type)?1:0;
+  if(!points)return;
+
+  const previousTop=getTopPlayers(),previousNames=new Set(previousTop.map(player=>player.key));
+  const key=username.toLocaleLowerCase();
+  let player=contestants.get(key);
+  if(!player){
+    player={key,username,avatar:'',points:0,sequence:contestantSequence++};
+    contestants.set(key,player);
+  }
+  player.points+=points;
+  if(typeof entry.avatar==='string'&&/^https?:\/\//i.test(entry.avatar))player.avatar=entry.avatar;
+
+  const top=getTopPlayers(),emerging=top.find(candidate=>!previousNames.has(candidate.key));
+  if(emerging){
+    const displaced=previousTop.length===5?previousTop[4]:null;
+    showSpecialEvent(displaced
+      ? '@'+emerging.username+' desplaza a @'+displaced.username+' del TOP 5'
+      : '@'+emerging.username+' entra al TOP 5');
+  }else if(previousTop.length&&top[0].key!==previousTop[0].key){
+    showSpecialEvent('@'+top[0].username+' toma el primer lugar');
+  }else if(entry.type==='gift'&&points>=20){
+    showSpecialEvent('Regalo destacado para @'+player.username+' · +'+formatPlayerPoints(points)+' puntos');
+  }
+  renderTopPlayers();
+}
+function resetContestants(){
+  contestants.clear();contestantSequence=0;renderTopPlayers();showSpecialEvent('Puntajes reiniciados');
 }
 function setSponsor(code,user,avatar){
   if(!user||!byCode[code])return;
@@ -838,13 +914,7 @@ function frame(now){
    El servidor integrado entrega eventos normalizados por SSE. Si se especifica "ws", se conserva
    compatibilidad con el contrato WebSocket documentado en la sección 3 de esta guía. */
 function handleTikTokEntry(entry){
-  if(!entry||typeof entry!=='object')return;
-  const user=entry.username||'Alguien';
-  if(entry.type==='chat')onChat(user,entry.content||'');
-  else if(entry.type==='gift')onGift({user,gift:entry.content||'',diamonds:entry.diamondCount,count:entry.activityCount,avatar:entry.avatar});
-  else if(entry.type==='like')onLike({user,count:entry.activityCount,avatar:entry.avatar});
-  else if(entry.type==='follow')onFollow({user,avatar:entry.avatar});
-  else if(entry.type==='share')onShare({user,avatar:entry.avatar});
+  scoreContestant(entry);
 }
 function setTikTokConnectionStatus(connected){
   const dot=$('dot');
@@ -857,9 +927,12 @@ function connect(){
     ws.onopen=()=>setTikTokConnectionStatus(true);
     ws.onclose=()=>{setTikTokConnectionStatus(false);setTimeout(connect,2000)};
     ws.onmessage=e=>{try{const m=JSON.parse(e.data);
-      if(m.type==='gift')onGift(m);else if(m.type==='chat')onChat(m.user||'Alguien',m.text);
-      else if(m.type==='like')onLike(m);else if(m.type==='follow')onFollow(m);else if(m.type==='share')onShare(m);
-      else if(m.type==='boost')setBoost(m.seconds||60);else if(m.type==='reset')reset()}catch{}};
+      if(['chat','gift','like','follow','share'].includes(m.type)){
+        const entry={...m,username:m.username||m.user||'Alguien',content:m.content||m.text||m.gift||'',
+          diamondCount:m.diamondCount||m.diamonds,activityCount:m.activityCount||m.count,
+          time:m.time||new Date().toISOString()};
+        addLiveEvent(entry);handleTikTokEntry(entry);
+      }else if(m.type==='reset')resetContestants()}catch{}};
     return;
   }
   const source=new EventSource('/api/events');
@@ -874,9 +947,13 @@ function connect(){
    Antes: Bots integrados: panel con tecla P o ?panel=1, auto con ?demo=1 ===== */
 const NAMES=['Lucía','Mateo','Ana_PY','Carlos','Sofi','Diego','Valen','Rocío','Nico','Cami','Tomás','Fran'];
 const GIFTS={rose:['Rose',1],heart:['Finger Heart',5],donut:['Doughnut',30],galaxy:['Galaxy',1000]};
-const botGift=(t='rose',u=rnd(NAMES))=>onGift({user:u,gift:GIFTS[t][0],diamonds:GIFTS[t][1],count:1});
-const botJoin=()=>onChat(rnd(NAMES),rnd(C).c.toUpperCase());
-const botLike=()=>onLike({user:rnd(NAMES),count:1+(Math.random()*8|0)});
+const botEvent=(type,username,details={})=>{
+  const entry={type,username,content:details.content||'',avatar:'',time:new Date().toISOString(),...details};
+  addLiveEvent(entry);handleTikTokEntry(entry);
+};
+const botGift=(t='rose',u=rnd(NAMES))=>botEvent('gift',u,{content:GIFTS[t][0],diamondCount:GIFTS[t][1],activityCount:1});
+const botJoin=()=>botEvent('chat',rnd(NAMES),{content:'¡Hola!'});
+const botLike=()=>botEvent('like',rnd(NAMES),{activityCount:1+(Math.random()*8|0)});
 async function botFlood(n=20){const u=rnd(NAMES);for(let i=0;i<n;i++){botGift(Math.random()<.7?'rose':'donut',Math.random()<.5?u:rnd(NAMES));await new Promise(r=>setTimeout(r,150))}}
 let autoT=null;
 function toggleAuto(){
@@ -884,23 +961,22 @@ function toggleAuto(){
   if(autoT){clearTimeout(autoT);autoT=null;btn.classList.remove('act');return}
   btn.classList.add('act');
   const loop=()=>{const r=Math.random();
-    if(r<.15)botJoin();else if(r<.22)onFollow({user:rnd(NAMES)});else if(r<.45)botLike();
+    if(r<.15)botJoin();else if(r<.22)botEvent('follow',rnd(NAMES));else if(r<.45)botLike();
     else{const g=(r-.45)/.55;botGift(g<.6?'rose':g<.85?'heart':g<.97?'donut':'galaxy')}
     autoT=setTimeout(loop,(700+Math.random()*1500)/(+$('rate').value||1))};
   loop();
 }
 const ACT={rose:()=>botGift('rose'),donut:()=>botGift('donut'),galaxy:()=>botGift('galaxy'),join:botJoin,like:botLike,flood:botFlood,
-  follow:()=>onFollow({user:rnd(NAMES)}),auto:toggleAuto,boost:()=>setBoost(60),sound:toggleSound,music:toggleMusic,reset,'audit-next':completeNextAudit};
+  follow:()=>botEvent('follow',rnd(NAMES)),auto:toggleAuto,boost:()=>setBoost(60),sound:toggleSound,music:toggleMusic,reset:resetContestants};
 document.querySelectorAll('#bots button').forEach(b=>b.onclick=()=>ACT[b.dataset.a]());
 const KEYS={1:'rose',2:'donut',3:'galaxy',j:'join',l:'like',f:'flood',a:'auto',b:'boost',m:'sound',n:'music',r:'reset'};
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='p')$('bots').classList.toggle('on');else if(k==='k')completeNextAudit();else if(KEYS[k])ACT[KEYS[k]]()});
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='p')$('bots').classList.toggle('on');else if(KEYS[k])ACT[KEYS[k]]()});
 if(Q.get('panel')||Q.get('demo'))$('bots').classList.add('on');
 if(SND)document.querySelector('[data-a=sound]').classList.add('act');
 if(SND&&MUSIC)document.querySelector('[data-a=music]').classList.add('act');
-ac();setInterval(()=>{$('snd').style.display=(SND&&AC&&AC.state!=='running')?'block':'none'},1000);
 if(Q.get('demo'))toggleAuto();
 
-reseed();render();renderMvp();renderLiveEvents();renderAuditQueue();goalRender();connect();countdown();requestAnimationFrame(frame);
+renderLiveEvents();renderTopPlayers();connect();
 </script>
 </body>
 </html>
