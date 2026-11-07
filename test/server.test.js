@@ -22,7 +22,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.equal(overlay.status, 200);
     const overlayHtml = await overlay.text();
     assert.match(overlayHtml, /new EventSource\('\/api\/events'\)/);
-    assert.match(overlayHtml, /<title>Top 5 en vivo<\/title>/);
+    assert.match(overlayHtml, /<title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores<\/title>/);
+    assert.match(overlayHtml, /<h1 class="disp">SIGUE AL LÍDER Y AYUDA A GANAR SEGUIDORES<\/h1>/);
     assert.match(overlayHtml, /function handleTikTokEntry\(entry\)/);
     assert.match(overlayHtml, /function scoreContestant\(entry\)/);
     assert.match(overlayHtml, /const liveEvents=\[\],liveEventLimit=3,contestants=new Map\(\)/);
@@ -33,6 +34,11 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /--padr:12%/);
     assert.match(overlayHtml, /#bottom\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1\.35fr\)/);
     assert.match(overlayHtml, /grid-template-rows:minmax\(0,2fr\) minmax\(0,\.8fr\)/);
+    assert.match(overlayHtml, /#app\{top:0;bottom:50%/);
+    assert.match(overlayHtml, /#bottom\.on\{display:flex\}/);
+    assert.match(overlayHtml, /function showCelebration\(duration=2300\)/);
+    assert.match(overlayHtml, /else if\(ty==='gift'\)\{bigFx\('🎁 ¡REGALO!'/);
+    assert.match(overlayHtml, /<div id="bottom">[\s\S]*<div id="big"><\/div><div id="spot"><\/div>/);
     assert.match(overlayHtml, /id="standings"[\s\S]*TOP 5[\s\S]*id="topPlayers"/);
     assert.match(overlayHtml, /id="activity"[\s\S]*EVENTOS[\s\S]*id="eventRows"/);
     assert.match(overlayHtml, /id="specialEvent"/);
