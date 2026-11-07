@@ -25,6 +25,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
     assert.match(overlayHtml, /\.tag b\{[^}]*font-size:clamp\(10px,1\.4vw,16px\)/);
     assert.match(overlayHtml, /max-width:min\(calc\(100% - 1\.4rem\),36vw\)/);
+    assert.doesNotMatch(overlayHtml, /id="rnd"/);
+    assert.match(overlayHtml, /#banner\{[^}]*height:100%[^}]*overflow:hidden/);
+    assert.match(overlayHtml, /#slot\{height:1\.1rem;margin-top:\.05rem\}/);
     assert.match(overlayHtml, /new EventSource\('\/api\/events'\)/);
     assert.match(overlayHtml, /<title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores<\/title>/);
     assert.match(overlayHtml, /<h1 class="disp">SIGUE AL LÍDER Y AYUDA A GANAR SEGUIDORES<\/h1>/);

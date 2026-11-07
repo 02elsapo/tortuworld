@@ -51,7 +51,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 /* Cabecera */
 #head{position:relative;flex:none;border:.2rem solid var(--sun);padding:.45rem .8rem .55rem;text-align:center}
 #head h1{font-size:1rem;color:var(--sun);line-height:1.1;white-space:nowrap}
-.pill{position:absolute;top:-.8rem;right:.8rem;font-size:.85rem;background:var(--pink);color:#fff;border-radius:999px;padding:.1rem .7rem;line-height:1.4;box-shadow:0 .15rem 0 rgba(0,0,0,.3)}
 #slot{position:relative;height:1.6rem;margin-top:.3rem;display:flex;align-items:center;justify-content:center}
 #how{font-size:.85rem;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 #how2{font-size:.85rem;margin-top:.2rem;color:var(--mint)}
@@ -60,7 +59,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 #goal .gb{flex:1;height:.85rem;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden}
 #gf{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),var(--sun));border-radius:999px;transition:width .5s}
 #gt{min-width:4rem;text-align:right}
-#banner{display:none;position:absolute;inset:0;margin:auto;width:max-content;max-width:100%;height:1.6rem;line-height:1.6rem;padding:0 1rem;border-radius:999px;background:var(--mint);color:var(--ink);font-size:.95rem;text-align:center}
+#banner{display:none;position:absolute;inset:0;margin:auto;width:max-content;max-width:100%;height:100%;line-height:1.2;padding:0 .6rem;border-radius:999px;background:var(--mint);color:var(--ink);font-size:.95rem;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #banner.on{display:block;animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
 #specialEvent{display:none;flex:none;align-items:center;justify-content:center;min-height:1.6rem;padding:.2rem .55rem;border:.15rem solid var(--sun);border-radius:.7rem;background:linear-gradient(90deg,#FFC93C,#FF9F1C);color:var(--ink);font-size:.9rem;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 .2rem .5rem rgba(0,0,0,.4);z-index:5}
 #specialEvent.on{display:flex;animation:pop .35s cubic-bezier(.2,1.6,.4,1) both}
@@ -174,8 +173,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
   .lab{width:2.6rem;gap:.2rem;padding:0 .25rem}
   #head{padding:.18rem .3rem .2rem}
   #head h1{font-size:1rem}
-  #slot{height:.75rem;margin-top:.05rem}
+  #slot{height:1.1rem;margin-top:.05rem}
   #how{font-size:.56rem}
+  #banner{font-size:.58rem;padding:0 .4rem}
   #how2,#auditStatus{display:none}#goal{font-size:.6rem;margin-top:.1rem}#goal .gb{height:.5rem}
   #bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,2fr) minmax(0,.8fr);gap:.25rem}
   #standings,#activity{padding:.12rem .3rem;border-radius:.5rem}
@@ -316,9 +316,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;color:va
 
 <div id="app">
   <div id="head" class="panel">
-    <span class="pill disp" id="rnd">EN VIVO</span>
     <h1 class="disp">SIGUE AL LÍDER Y AYUDA A GANAR SEGUIDORES</h1>
-    <div id="slot"><div id="how">Sigue +5 · Comparte +3 · Regala 💎 · Comenta +1 · Like +0.1</div><div id="banner" class="disp"></div></div>
+    <div id="slot"><div id="how">Sigue +5 · Comparte +3 · Regala 💎 · Comenta +1 · Like +0.1</div><div id="banner" class="disp" role="status" aria-live="polite"></div></div>
     <div id="goal"><span>🎯</span><span class="gb"><i id="gf"></i></span><span id="gt"></span></div>
   </div>
   <div id="lanes"></div>
@@ -887,7 +886,6 @@ function newRound(){
   clearTimeout(S.rt);S.round++;S.over=false;S.winner=null;S.combo.clear();S.cp={25:0,50:0,75:0};S.pf=false;S.gp=0;S.goal=CFG.goal;
   contestants.clear();contestantSequence=0;S.slotUser={};S.slotOf.clear();
   C.forEach(c=>{S.pos[c.c]=0;setSlotAvatar(c.c,null)});reseed();
-  $('rnd').textContent=Q.get('demo')?'DEMO':(IDLE&&IDLE.on?'ESPERA · ':'')+'Ronda '+S.round;
   render();goalRender();renderTopPlayers();banner('Ronda '+S.round+' · ¡sigue, comparte o regala para correr!',3500);countdown();
 }
 /* EVENTO "reset": borra victorias y racha, y reinicia en la ronda 1. */
@@ -1058,7 +1056,6 @@ document.querySelectorAll('#bots button').forEach(b=>b.onclick=()=>ACT[b.dataset
 const KEYS={1:'rose',2:'donut',3:'galaxy',j:'join',l:'like',f:'flood',a:'auto',b:'boost',m:'sound',n:'music',r:'reset'};
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='p')$('bots').classList.toggle('on');else if(KEYS[k])ACT[KEYS[k]]()});
 if(Q.get('panel'))$('bots').classList.add('on');
-if(Q.get('demo'))$('rnd').textContent='DEMO';
 if(SND)document.querySelector('[data-a=sound]').classList.add('act');
 if(SND&&MUSIC)document.querySelector('[data-a=music]').classList.add('act');
 if(Q.get('demo'))toggleAuto();
