@@ -79,14 +79,14 @@ const ControlEvent = Object.freeze({
   ENTER_ROOM: 'enterRoom',
 });
 
-const eventNames = [...new Set(Object.values(WebcastEvent))];
-const defaultEnabledEvents = ['chat', 'gift', 'like', 'follow', 'share', 'member', 'roomUser', 'subNotify'];
+const eventNames = [...new Set(Object.values(WebcastEvent))]
+  .filter((eventName) => eventName !== WebcastEvent.ROOM_USER);
+const defaultEnabledEvents = ['chat', 'gift', 'like', 'follow', 'share', 'member', 'subNotify'];
 const eventPriorities = { gift: 0, chat: 1, like: 2, share: 3, member: 4 };
 const eventLabels = {
   chat: 'Comentario',
   member: 'Ingreso',
   gift: 'Regalo',
-  roomUser: 'Audiencia',
   social: 'Interacción social',
   like: 'Me gusta',
   questionNew: 'Pregunta',

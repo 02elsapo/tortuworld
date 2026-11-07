@@ -24,6 +24,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /new EventSource\('\/api\/events'\)/);
     assert.match(overlayHtml, /<title>Top 5 en vivo<\/title>/);
     assert.match(overlayHtml, /function handleTikTokEntry\(entry\)/);
+    assert.match(overlayHtml, /function scoreContestant\(entry\)/);
+    assert.match(overlayHtml, /const liveEvents=\[\],liveEventLimit=3,contestants=new Map\(\)/);
     assert.match(overlayHtml, /entry\.type==='chat'\?1/);
     assert.match(overlayHtml, /entry\.type==='gift'\?diamonds\*counts/);
     assert.match(overlayHtml, /entry\.type==='like'\?counts\*\.1/);
@@ -31,9 +33,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlayHtml, /--padr:12%/);
     assert.match(overlayHtml, /#bottom\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1\.35fr\)/);
     assert.match(overlayHtml, /grid-template-rows:minmax\(0,2fr\) minmax\(0,\.8fr\)/);
-    assert.match(overlayHtml, /id="standings"[\s\S]*TOP 5 · CUENTAS CON MÁS PUNTOS[\s\S]*id="topPlayers"/);
+    assert.match(overlayHtml, /id="standings"[\s\S]*TOP 5[\s\S]*id="topPlayers"/);
     assert.match(overlayHtml, /id="activity"[\s\S]*EVENTOS[\s\S]*id="eventRows"/);
-    assert.match(overlayHtml, /id="specialEvent"[\s\S]*EVENTO ESPECIAL/);
+    assert.match(overlayHtml, /id="specialEvent"/);
     assert.match(overlayHtml, /function showSpecialEvent\(text\)/);
     assert.match(overlayHtml, /#app\{top:3%;bottom:3%;left:3%;right:var\(--padr\)/);
     assert.match(overlayHtml, /function renderTopPlayers\(\)/);
@@ -48,6 +50,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
+    assert.match(overlayHtml, /v5: TOP 5 de espectadores por puntos/);
 
     const backend = await fetch(`${baseUrl}/backend`);
     assert.equal(backend.status, 200);

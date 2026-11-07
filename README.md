@@ -62,7 +62,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `Carrera_de_Tortugas_TikTok_Live_v2.html` se rediseñó como un Top 5 minimalista de espectadores que compiten con tortugas; cada avatar aparece dentro del caparazón, junto al nombre de usuario. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920` para la composición vertical. Cada comentario suma 1 punto, cada like 0.1 por like, cada seguimiento o compartido 1 punto, y los regalos suman sus diamantes por cantidad. Cuando alguien supera el puntaje del quinto lugar, entra al Top 5 y se anuncia el cambio. La tabla de eventos muestra los tres eventos recientes y destaca los ingresos al Top 5. Los puntajes se reinician al recargar el overlay o con la tecla `R`; el panel de prueba se abre con `P`. El snapshot inicial llena la tabla de eventos sin volver a sumar puntos. Por defecto, el conector reintenta cada 15 segundos durante los primeros cinco minutos y luego cada minuto sin límite hasta recuperar la conexión. Se puede abrir `/backend` para configurar TikTok, o probar el ranking sin conectar una cuenta con `/?demo=1`. Para un servidor WebSocket externo, el overlay conserva compatibilidad si se especifica `?ws=ws://localhost:8080`.
+El overlay `Carrera_de_Tortugas_TikTok_Live_v5.html` presenta el Top 5 de espectadores que compiten con tortugas; cada avatar aparece dentro del caparazón, junto al nombre de usuario. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920` para la composición vertical. Cada comentario suma 1 punto (máximo uno cada 8 segundos por persona), cada like 0.1 por like, cada seguimiento 5 puntos, cada compartido 3 puntos y los regalos sus diamantes por cantidad. Los eventos de audiencia (`roomUser`) no se publican como actividad. Cuando alguien supera el puntaje del quinto lugar, entra al Top 5 y se anuncia el cambio. El snapshot inicial llena la tabla de eventos sin volver a sumar puntos. Por defecto, el conector reintenta cada 15 segundos durante los primeros cinco minutos y luego cada minuto sin límite hasta recuperar la conexión. Se puede abrir `/backend` para configurar TikTok, o probar el ranking sin conectar una cuenta con `/?demo=1`; también se puede abrir el panel de prueba con `P` o `?panel=1`. Para un servidor WebSocket externo, el overlay conserva compatibilidad si se especifica `?ws=ws://localhost:8080`.
 
 ## Estructura
 
@@ -79,7 +79,7 @@ modules/
   overlay/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
-Carrera_de_Tortugas_TikTok_Live_v2.html # Juego y overlay transparente
+Carrera_de_Tortugas_TikTok_Live_v5.html # Juego y overlay transparente
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE

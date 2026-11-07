@@ -97,6 +97,8 @@ test('monitor validates timing and subscription contracts', () => {
   }
 
   const { monitor } = createMonitor();
+  assert.equal(eventNames.includes(WebcastEvent.ROOM_USER), false);
+  assert.equal(monitor.getAvailableEventsPayload().events.includes('roomUser'), false);
   assert.equal(monitor.getStatusPayload().maxConnectionAttempts, null);
   assert.throws(() => monitor.subscribeToEvents(null), /suscriptor de eventos/);
   assert.throws(() => monitor.subscribeToStatus(null), /suscriptor de estado/);
@@ -183,11 +185,6 @@ test('monitor normalizes every webcast event and event payload shape', async () 
     [WebcastEvent.SHARE, { user: { uniqueId: 'sharer' } }],
     [WebcastEvent.MEMBER, { user: { uniqueId: 'joiner', avatarThumb: { urlList: ['member.png'] } } }],
     [WebcastEvent.MEMBER, {}],
-    [WebcastEvent.ROOM_USER, { totalUser: 10, roomUserCount: 8, viewerCount: 7, total: 5 }],
-    [WebcastEvent.ROOM_USER, { roomUserCount: 8 }],
-    [WebcastEvent.ROOM_USER, { viewerCount: 7 }],
-    [WebcastEvent.ROOM_USER, { total: 5 }],
-    [WebcastEvent.ROOM_USER, {}],
     [eventNames.at(-1), { comment: 'summary comment', user: 'commenter' }],
     [eventNames.at(-1), { gift: { name: 'gift-summary' }, sender: 'sender' }],
     [eventNames.at(-1), { followerCount: 1, user: 'follow-summary' }],
@@ -197,6 +194,7 @@ test('monitor normalizes every webcast event and event payload shape', async () 
   ];
 
   for (const [eventName, payload] of cases) connection.emit(eventName, payload);
+  connection.emit(WebcastEvent.ROOM_USER, { totalUser: 10 });
   assert.equal(received.length, cases.length);
   assert.equal(received[0].username, 'ana');
   assert.equal(received[0].avatar, 'avatar');

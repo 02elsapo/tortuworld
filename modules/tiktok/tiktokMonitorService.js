@@ -95,7 +95,6 @@ function createTikTokMonitorService({
     if (data.giftName || data.gift?.name) return `${safeUserName(data.user || data.sender)} envió ${data.giftName || data.gift?.name}`;
     if (data.followCount || data.followerCount) return `${safeUserName(data.user)} siguió el live`;
     if (data.likeCount) return `Likes: ${data.likeCount}`;
-    if (data.roomUserCount || data.viewerCount) return `Viewers: ${data.roomUserCount || data.viewerCount}`;
     return `${eventName} recibido`;
   }
 
@@ -199,11 +198,6 @@ function createTikTokMonitorService({
     if (eventName === webcastEvents.FOLLOW) return 'Siguió el live';
     if (eventName === webcastEvents.SHARE) return 'Compartió el live';
     if (eventName === webcastEvents.MEMBER) return 'Entró al live';
-    if (eventName === webcastEvents.ROOM_USER) {
-      const viewerCount = data.totalUser || data.roomUserCount || data.viewerCount || data.total;
-      return viewerCount ? `Audiencia actual: ${viewerCount}` : 'Actualizó la audiencia';
-    }
-
     const summary = summarizeEvent(eventName, data);
     if (summary !== `${eventName} recibido`) return summary;
     return 'Evento recibido';
@@ -503,7 +497,7 @@ function createTikTokMonitorService({
 
   function setEnabledEvents(enabled) {
     const nextEnabled = Array.isArray(enabled) ? enabled : [];
-    state.enabledEvents = new Set(nextEnabled);
+    state.enabledEvents = new Set(nextEnabled.filter((eventName) => eventNames.includes(eventName)));
     if (state.connection) applyEventSubscriptions(state.connection);
     return [...state.enabledEvents];
   }
