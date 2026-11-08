@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Carrera de tortugas v16: diez países avanzan lentamente incluso sin espectadores.
+  Carrera de tortugas v16: una tortuga llega a la meta en un máximo de 60 segundos, incluso sin espectadores.
   Los primeros cuatro son fijos; seis campeones del mundo o selecciones populares se sortean
   al iniciar cada ronda. Los eventos de TikTok aceleran al país que apoya cada espectador.
   Backend integrado: SSE en /api/events. Parámetros: ?target=40, ?goal=60,
@@ -135,6 +135,37 @@
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      #raceClock {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.15rem 0.7rem;
+        border: 0.15rem solid var(--mint);
+        border-radius: 0.7rem;
+        background: rgba(7, 38, 43, 0.9);
+        color: var(--sun);
+        line-height: 1;
+        text-shadow: 0 0.12rem 0 var(--ink);
+      }
+      #raceTime {
+        font-size: 1.7em;
+        letter-spacing: 0.06em;
+      }
+      #raceClock small {
+        color: #fff;
+        font-size: 0.5em;
+      }
+      #raceClock.urgent {
+        border-color: #ff5b5b;
+        color: #ff7777;
+        animation: racePulse 0.65s ease-in-out infinite alternate;
+      }
+      @keyframes racePulse {
+        to {
+          transform: scale(1.06);
+        }
       }
       #how {
         font-size: 0.85rem;
@@ -2191,10 +2222,10 @@
         position: absolute;
         z-index: 8;
         left: 50%;
-        top: -2.5rem;
+        top: 50%;
         display: grid;
-        width: 3.2rem;
-        height: 3.2rem;
+        width: 1.9rem;
+        height: 1.9rem;
         place-items: center;
         overflow: hidden;
         border: 0.14rem solid var(--sun);
@@ -2202,8 +2233,8 @@
         background: var(--ink2);
         color: #fff;
         box-shadow: 0 0 0.6rem rgba(0, 0, 0, 0.65);
-        font-size: 1.4rem;
-        transform: translateX(-50%);
+        font-size: 0.9rem;
+        transform: translate(-50%, -50%);
         pointer-events: none;
       }
       #lanes .tur .rider-avatar img {
@@ -2231,10 +2262,10 @@
       }
       @media (orientation: portrait) {
         #lanes .tur .rider-avatar {
-          top: -1.9rem;
-          width: 2.4rem;
-          height: 2.4rem;
-          font-size: 1.05rem;
+          top: 50%;
+          width: 1.7rem;
+          height: 1.7rem;
+          font-size: 0.8rem;
         }
       }
       #lanes .sl {
@@ -2745,10 +2776,13 @@
           </div>
           <div id="banner" class="disp" role="status" aria-live="polite"></div>
         </div>
+        <div id="raceClock" class="disp" role="timer" aria-live="off">
+          <span id="raceTime">01:00</span><small>TIEMPO DE CARRERA</small>
+        </div>
         <div id="joinCTA" aria-live="polite">
           <b id="ctaMain">💬 ESCRIBE EL NOMBRE DE UN PAÍS</b>
           <span id="ctaSub"
-            >El país con MÁS HINCHAS corre al DOBLE de velocidad ⚡</span
+            >El país con más apoyo corre al DOBLE de velocidad ⚡</span
           >
         </div>
         <div id="goal">
@@ -2849,7 +2883,7 @@
        *
        * El overlay consume SSE por defecto. Un WebSocket externo es opcional con ?ws=URL.
        * ?target=40 define la meta individual, ?goal=60 la meta comunitaria,
-       * Las tortugas avanzan lentamente si ningún espectador elige un país.
+       * La carrera dura como máximo 60 segundos aunque no haya espectadores.
        * Los efectos automáticos son solo visuales y no crean audiencia ni estadísticas.
        * El panel de pruebas manual se abre con P o ?panel=1.
        */
@@ -2861,7 +2895,6 @@
         win: +Q.get("win") || 100,
         goal: +Q.get("goal") || 60,
         target: +Q.get("target") || 40,
-        crawl: 0.15,
         restartMs: 7000,
         join: Q.has("join") ? +Q.get("join") : 0.5,
         countries: [0, 1, 2, 3, 4].map((i) => ({
@@ -2871,6 +2904,22 @@
           b: [],
         })),
       };
+      const RACE_DURATION_MS = 60_000,
+        RACE_WARNINGS = new Set([30, 15, 10, 5, 4, 3, 2, 1]);
+      function guaranteedRacePosition(elapsedMs) {
+        return Math.min(
+          CFG.win,
+          (CFG.win * Math.max(0, elapsedMs)) / RACE_DURATION_MS,
+        );
+      }
+      function formatRaceTime(remainingMs) {
+        const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+        return (
+          String(Math.floor(totalSeconds / 60)).padStart(2, "0") +
+          ":" +
+          String(totalSeconds % 60).padStart(2, "0")
+        );
+      }
       const $ = (id) => document.getElementById(id);
       const rnd = (a) => a[(Math.random() * a.length) | 0];
       const C = CFG.countries,
@@ -2879,6 +2928,7 @@
         liveEventLimit = 3,
         contestants = new Map();
       let connectorEventDisplayed = false;
+      let connectorEventTimer = null;
       let contestantSequence = 0;
       /* ===== v8 · PAÍSES en lugar de usuarios =====
    Los tres primeros países son fijos; se sortean dos adicionales de la lista popular. */
@@ -3105,46 +3155,6 @@
         ...WORLD_CUP_WINNERS,
         ...NATIONS.filter((team) => POPULAR_COUNTRIES.includes(team.code)),
       ];
-      const CUP_COUNTS = Object.fromEntries(
-        ROUND_POOL.map((team) => [team.code, 0]),
-      );
-      let cupStatsQueue = Promise.resolve();
-      function applyCupStats(stats) {
-        for (const country of stats.countries) {
-          if (Object.hasOwn(CUP_COUNTS, country.code)) {
-            CUP_COUNTS[country.code] = country.cups;
-          }
-        }
-        render();
-      }
-      function queueCupStats(path, method, code) {
-        cupStatsQueue = cupStatsQueue
-          .then(async () => {
-            const response = await fetch(path, {
-              method,
-              ...(code
-                ? {
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ code }),
-                  }
-                : {}),
-            });
-            if (!response.ok)
-              throw new Error("No se pudieron sincronizar las copas.");
-            applyCupStats(await response.json());
-          })
-          .catch((error) =>
-            console.error("Error al sincronizar las copas:", error),
-          );
-      }
-      function loadCupStats() {
-        queueCupStats("/api/cup-stats", "GET");
-      }
-      function recordCupWin(code) {
-        CUP_COUNTS[code]++;
-        render();
-        queueCupStats("/api/cup-stats", "POST", code);
-      }
       function shuffled(items) {
         const result = [...items];
         for (let i = result.length - 1; i > 0; i--) {
@@ -3605,7 +3615,7 @@
         const l = document.createElement("div");
         l.className = "lane empty";
         l.id = "ln-" + c.c;
-        l.innerHTML = `<div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
+        l.innerHTML = `<div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
         lanes.append(l);
       });
 
@@ -3689,13 +3699,13 @@
       /* Mensajes y eventos permanecen visibles hasta que el siguiente los reemplaza. */
       const VOICE_INTERVAL_MS = 10000,
         VOICE_PROMPTS = [
-          "Hinchas, comenten su país para apoyar a su tortuga.",
-          "Dejen un like y ayúdenla a avanzar.",
-          "Compartan el LIVE e inviten a más hinchas.",
-          "Sigan la cuenta y animen a su país.",
-          "Escriban un país en el chat y únanse.",
-          "Un regalo impulsa a su tortuga. ¡Vamos!",
-          "Comenten y ayuden a su tortuga a ganar.",
+        "Comenten su país para apoyar y elegir a su tortuga.",
+        "Tap tap: dejen un like tocando la pantalla para ayudar a avanzar.",
+        "Compartan el LIVE para darle impulso a su país.",
+        "Sigan la cuenta; cada nuevo follow ayuda.",
+        "Escriban TORTUGA en el chat para entrar a correr.",
+        "Únanse al LIVE, comenten, den like y compartan para ayudar.",
+        "Tap tap: toquen la pantalla y manden likes a su tortuga.",
         ];
       const voiceSynth =
           "speechSynthesis" in window &&
@@ -3875,7 +3885,7 @@
         clearTimeout(banner.t);
         banner.t = setTimeout(() => (b.className = "disp"), ms);
       }
-      /* Redibuja marcadores: puesto 1-6 de cada carril, puntos, victorias, hinchas y corona del líder. Se llama ~4 veces/seg. */
+      /* Redibuja marcadores: puesto, puntos y corona del líder. Se llama ~4 veces/seg. */
       /* Jugador dueño de una tortuga (slot 's0'..'s4'), o null si el carril está libre */
       function slotPlayer(code) {
         const k = S.slotUser[code];
@@ -3967,7 +3977,7 @@
             enqueueMsg(
               "👥 " +
                 CODES[C.findIndex((c) => c.c === L)] +
-                " tiene más hinchas: ¡VELOCIDAD x2! ⚡",
+                " tiene más apoyo: ¡VELOCIDAD x2! ⚡",
             );
         }
         C.forEach((c) => renderFans(c.c));
@@ -4115,40 +4125,53 @@
         } else placeholder();
         return e;
       }
-      function showTurtleAvatar(code, user) {
+      let priorityShellAvatar = null,
+        latestShellEventAvatar = null;
+      function preferredShellAvatar() {
+        return priorityShellAvatar || latestShellEventAvatar;
+      }
+      function showTurtleAvatar(code, user, isJoin = false) {
         const info = FANINFO[user],
           t = T[code];
         if (!info || !t) return;
+        if (isJoin) priorityShellAvatar = { code, user };
+        else latestShellEventAvatar = { code, user };
+        const selected = preferredShellAvatar(),
+          selectedInfo = FANINFO[selected.user],
+          selectedTurtle = T[selected.code];
         C.forEach((lane) => {
-          if (lane.c === code) return;
+          if (lane.c === selected.code) return;
           const previous = T[lane.c].tur.querySelector(".rider-avatar");
-          if (previous?.dataset.user === user) previous.remove();
+          if (previous) previous.remove();
         });
-        let rider = t.tur.querySelector(".rider-avatar");
+        let rider = selectedTurtle.tur.querySelector(".rider-avatar");
         if (!rider) {
           rider = document.createElement("span");
           rider.className = "rider-avatar";
-          t.tur.append(rider);
+          selectedTurtle.tur.append(rider);
         }
-        rider.dataset.user = user;
-        rider.title = info.name;
-        rider.setAttribute("aria-label", info.name);
+        rider.dataset.user = selected.user;
+        rider.title = selectedInfo.name;
+        rider.setAttribute("aria-label", selectedInfo.name);
         const placeholder = () => {
           rider.classList.add("placeholder");
           const initial = document.createElement("span");
           initial.textContent =
-            (info.name || "?").trim().charAt(0).toUpperCase() || "👤";
+            (selectedInfo.name || "?").trim().charAt(0).toUpperCase() || "👤";
           rider.replaceChildren(initial);
         };
-        if (info.avatar) {
+        if (selectedInfo.avatar) {
           const image = document.createElement("img");
           image.alt = "";
           image.referrerPolicy = "no-referrer";
           image.onerror = () => {
-            if (rider.dataset.user === user && rider.contains(image))
+            if (
+              rider.dataset.user === selected.user &&
+              rider.contains(image)
+            )
               placeholder();
           };
-          image.src = info.avatar;
+          image.src = selectedInfo.avatar;
           rider.classList.remove("placeholder");
           rider.replaceChildren(image);
         } else placeholder();
@@ -4192,24 +4215,11 @@
         });
         C.forEach((c) => {
           const p = slotPlayer(c.c);
-          $("nm-" + c.c).innerHTML =
-            '<i class="cd">' +
-            CODES[C.indexOf(c)] +
-            " 🏆" +
-            (CUP_COUNTS[NATIONS[C.indexOf(c)].code] || 0) +
-            '</i><br><i class="fn">👥' +
-            FANS[c.c].size +
-            "</i>" +
-            (c.c === S.fanLead ? '<br><i class="x2">⚡x2</i>' : "");
           T[c.c].tur.classList.toggle(
             "fanboost",
             c.c === S.fanLead && S.pos[c.c] > 4,
           );
-          const tg = T[c.c].tag || (T[c.c].tag = $("nm-" + c.c).parentNode);
-          $("tt-" + c.c).textContent = "";
-          T[c.c].tw = p
-            ? tg.offsetWidth
-            : 0; /* ancho de la etiqueta, para centrarla sin salirse de la pista */
+          T[c.c].tw = 0;
           const l = $("ln-" + c.c);
           l.classList.toggle(
             "lead",
@@ -4554,7 +4564,14 @@
       }
       function showConnectorEvent(entry) {
         connectorEventDisplayed = true;
-        $("specialEvent").textContent = formatConnectorEvent(entry);
+        const message = $("specialEvent");
+        message.textContent = formatConnectorEvent(entry);
+        message.className = "disp on";
+        clearTimeout(connectorEventTimer);
+        connectorEventTimer = setTimeout(() => {
+          message.classList.remove("on");
+          connectorEventDisplayed = false;
+        }, 4000);
       }
       function setLiveEventSnapshot(entries) {
         liveEvents.length = 0;
@@ -5009,7 +5026,10 @@
         musicSync();
         SFX.flag();
         const t = T[code],
-          p = slotPlayer(code);
+          p = slotPlayer(code),
+          country = NATIONS[C.findIndex((lane) => lane.c === code)];
+        $("raceTime").textContent = "FINAL";
+        $("raceClock").classList.remove("urgent");
         S.pos[code] = CFG.win;
         t.pend = 0;
         t.ve = 0;
@@ -5023,23 +5043,27 @@
             lane.ve = 0;
           }
         }
-        const w = (winsBy.get(p.key) || 0) + 1;
-        winsBy.set(p.key, w);
-        saveWins();
-        recordCupWin(nat(p).code);
-        if (S.lastWin === p.key) S.streak++;
-        else {
-          S.lastWin = p.key;
-          S.streak = 1;
+        if (p) {
+          const w = (winsBy.get(p.key) || 0) + 1;
+          winsBy.set(p.key, w);
+          saveWins();
+          if (S.lastWin === p.key) S.streak++;
+          else {
+            S.lastWin = p.key;
+            S.streak = 1;
+          }
+        } else {
+          S.lastWin = null;
+          S.streak = 0;
         }
-        banner("🏆 " + nat(p).n + " ¡CAMPEÓN!", CFG.restartMs - 600);
+        banner("🏆 " + country.n + " ¡CAMPEÓN!", CFG.restartMs - 600);
         showSpecialEvent(
           "Ronda " +
             S.round +
             " · " +
-            nat(p).n +
+            country.n +
             " gana" +
-            (S.streak >= 2 ? " · racha x" + S.streak : "") +
+            (p && S.streak >= 2 ? " · racha x" + S.streak : "") +
             " · ¡síguelo!",
         );
         clearTimeout(S.rt);
@@ -5137,6 +5161,10 @@
       let cdT = [];
       function countdown() {
         S.go = false;
+        raceStartedAt = 0;
+        raceWarningSecond = null;
+        $("raceTime").textContent = formatRaceTime(RACE_DURATION_MS);
+        $("raceClock").classList.remove("urgent");
         musicSync();
         cdT.forEach(clearTimeout);
         cdT = [];
@@ -5150,6 +5178,7 @@
               el.className = "disp on";
               if (i === 3) {
                 S.go = true;
+                raceStartedAt = performance.now();
                 SFX.go();
                 musicSync();
               } else SFX.tick();
@@ -5250,8 +5279,37 @@
       }
       let last = performance.now(),
         tNow = 0,
-        acc = 0;
-      /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio sin retroceder
+        acc = 0,
+        raceStartedAt = 0,
+        raceWarningSecond = null;
+      function updateRaceClock(now) {
+        const remainingMs = Math.max(
+            0,
+            RACE_DURATION_MS - (now - raceStartedAt),
+          ),
+          seconds = Math.ceil(remainingMs / 1000);
+        $("raceTime").textContent = formatRaceTime(remainingMs);
+        $("raceClock").classList.toggle(
+          "urgent",
+          seconds <= 10 && S.go && !S.over,
+        );
+        if (
+          S.go &&
+          !S.over &&
+          RACE_WARNINGS.has(seconds) &&
+          raceWarningSecond !== seconds
+        ) {
+          raceWarningSecond = seconds;
+          banner(
+            seconds === 1
+              ? "¡Último segundo! ¡Se acaba la carrera!"
+              : "¡Quedan " + seconds + " segundos!",
+            1800,
+          );
+          SFX.tick();
+        }
+      }
+      /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan sin retroceder
    ni generar puntos o decidir al ganador. En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
@@ -5264,6 +5322,7 @@
         last = now;
         if (dt <= 0) return;
         tNow += dt;
+        if (S.go && !S.over && raceStartedAt) updateRaceClock(now);
         const laneHeight = lanes.clientHeight,
           turtleHeight = T[C[0].c].tur.getBoundingClientRect().height,
           laneStep =
@@ -5283,8 +5342,9 @@
               0.6 * Math.sin(tNow * 0.7 + t.w) +
               0.3 * Math.sin(tNow * 1.9 + t.w * 2.3),
           );
-          /* Todos caminan: el avance base es lento; los eventos impulsan al país apoyado. */
-          const tgtC = CFG.crawl * t.base * wob;
+          /* El avance base garantiza la meta en un minuto; los eventos impulsan al país apoyado. */
+          const tgtC =
+            (CFG.win / (RACE_DURATION_MS / 1000)) * t.base * wob;
           t.cr += (tgtC - t.cr) * Math.min(1, dt * 2);
           let tgtE = 0;
           if (S.go && !isW && t.giftTarget !== null && S.pos[k] < t.giftTarget)
@@ -5300,6 +5360,11 @@
             CFG.win,
             S.pos[k] + d + crawl,
           ); /* puntos aceleran; cada participante también avanza lentamente */
+          if (S.go && !S.over && raceStartedAt)
+            S.pos[k] = Math.max(
+              S.pos[k],
+              guaranteedRacePosition(now - raceStartedAt),
+            );
           dropTrail(k, now);
           layPendingFanEggs(k);
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
@@ -5424,6 +5489,16 @@
             t.tur.style.setProperty("--p", _pv);
             t.trk.style.setProperty("--p", _pv);
           }
+        }
+        if (
+          !S.over &&
+          !S.winner &&
+          raceStartedAt &&
+          now - raceStartedAt >= RACE_DURATION_MS
+        ) {
+          S.winner = C.reduce((leader, country) =>
+            S.pos[country.c] > S.pos[leader.c] ? country : leader,
+          ).c;
         }
         if (!S.over && S.winner) finish(S.winner);
         acc += dt;
@@ -6242,7 +6317,12 @@
           spotlight(p);
         } /* v6: vidriera del ganador (3 s) con pedido de seguirlo */
         else {
-          bigFx("🏆 ¡CAMPEÓN!", p ? nat(p).n : "", 3, false);
+          bigFx(
+            "🏆 ¡CAMPEÓN!",
+            p ? nat(p).n : NATIONS[C.findIndex((lane) => lane.c === code)].n,
+            3,
+            false,
+          );
           screenFx(true);
           burst(100, true);
         }
@@ -6390,7 +6470,7 @@
         }, SHOW_MS + 60);
       }
       const HOW0 =
-        "🐢 Escribe TORTUGA para entrar · ❤️ Likes · 🔁 Comparte · ⭐ Sigue";
+        "🐢 Comenta TORTUGA para entrar · 👆 Tap tap/likes · 🔁 Comparte · ⭐ Sigue";
       let howI = 0;
       setInterval(() => {
         const L = [HOW0, "💚 Apoyá a los pequeños: seguí a quien va ganando"];
@@ -6434,7 +6514,6 @@
       newRound = function () {
         setRoundTeams();
         _newRound2.apply(this, arguments);
-        loadCupStats();
         if (!seedRoster() && IDLE.on) {
           seedIdleBots();
           idleFans();
@@ -6506,7 +6585,7 @@
             handleTikTokEntry.ctaTimer = setTimeout(() => {
               $("ctaMain").textContent = "💬 ESCRIBE EL NOMBRE DE UN PAÍS";
               $("ctaSub").textContent =
-                "El país con MÁS HINCHAS corre al DOBLE de velocidad ⚡";
+                "El país con más apoyo corre al DOBLE de velocidad ⚡";
               $("joinCTA").classList.remove("pulse");
             }, 4200);
           }
@@ -6552,8 +6631,19 @@
               _oldAvatar = FANINFO[_u]?.avatar;
             registerFan(_u, _code, entry);
             if (_newAvatar) layPendingFanEggs(_code, _u);
-            if (_newAvatar || FANINFO[_u]?.avatar !== _oldAvatar)
-              showTurtleAvatar(_code, _u);
+            const isJoin = ["join", "member", "enter", "joined"].includes(
+              entry.type,
+            );
+            if (
+              isJoin ||
+              _newAvatar ||
+              FANINFO[_u]?.avatar !== _oldAvatar
+            )
+              showTurtleAvatar(
+                _code,
+                _u,
+                isJoin,
+              );
             if (Date.now() - (handleTikTokEntry.sup[_u] || 0) > 8000) {
               handleTikTokEntry.sup[_u] = Date.now();
               const _o = _i >= 0 ? slotPlayer(_code) : null;
@@ -6564,7 +6654,7 @@
               }
               if (_i >= 0 && !isBot)
                 enqueueMsg(
-                  "💬 " + CODES[_i] + " +1 hincha · ya son " + FANS[_code].size,
+                  "💬 " + CODES[_i] + " recibe apoyo",
                 );
             }
             render();
@@ -6575,12 +6665,12 @@
       handleTikTokEntry.sup = {};
       const CTA_ROTATION = [
         [
-          "👥 MÁS HINCHAS = DOBLE VELOCIDAD ⚡",
-          "El país con más hinchas corre al DOBLE. ¡Comenta el tuyo!",
+          "⚡ MÁS APOYO = DOBLE VELOCIDAD",
+          "El país con más apoyo corre al DOBLE. ¡Comenta el tuyo!",
         ],
         [
           "💬 COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO",
-          "Más hinchas = tu país corre al DOBLE de velocidad ⚡",
+          "Más apoyo = tu país corre al DOBLE de velocidad ⚡",
         ],
         [
           "👍 TOCA LA PANTALLA: CADA LIKE AVANZA",
