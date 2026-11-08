@@ -2337,7 +2337,7 @@
           min-height: 0 !important;
         }
       }
-      /* ===== v10d · pantalla completa, 10 países, sin versión ===== */
+      /* ===== v10d · pantalla completa, 5 países, sin versión ===== */
       #overlayVersion {
         display: none !important;
       }
@@ -2358,7 +2358,7 @@
       }
       #lanes {
         --tw: min(13rem, 16vh);
-        --n: 9;
+        --n: 4;
         flex: 0.85 1 0;
       }
       #lanes .trk {
@@ -2832,7 +2832,7 @@
         crawl: 0.15,
         restartMs: 7000,
         join: Q.has("join") ? +Q.get("join") : 0.5,
-        countries: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => ({
+        countries: [0, 1, 2, 3, 4].map((i) => ({
           c: "s" + i,
           n: "",
           f: "",
@@ -2848,8 +2848,7 @@
         contestants = new Map();
       let contestantSequence = 0;
       /* ===== v8 · PAÍSES en lugar de usuarios =====
-   Los cuatro primeros países son fijos; los seis restantes se sortean al comenzar cada ronda.
-   El sorteo combina campeones del Mundial masculino y selecciones populares, sin clubes. */
+   Los tres primeros países son fijos; se sortean dos adicionales de la lista popular. */
       const NATIONS = (() => {
         const sv = (b) =>
           "data:image/svg+xml;utf8," +
@@ -3050,7 +3049,7 @@
           },
         ];
       })();
-      const FIXED_TEAMS = NATIONS.slice(0, 4);
+      const FIXED_TEAMS = NATIONS.slice(0, 3);
       const WORLD_CUP_WINNERS = NATIONS.filter((team) =>
         ["BR", "AR", "DE", "FR", "IT", "UY", "ES", "ENG"].includes(team.code),
       );
@@ -3123,10 +3122,12 @@
       }
       function chooseRoundTeams() {
         const fixedCodes = new Set(FIXED_TEAMS.map((team) => team.code));
-        const candidates = ROUND_POOL.filter(
-          (team) => !fixedCodes.has(team.code),
+        const candidates = NATIONS.filter(
+          (team) =>
+            POPULAR_COUNTRIES.includes(team.code) &&
+            !fixedCodes.has(team.code),
         );
-        return [...FIXED_TEAMS, ...shuffled(candidates).slice(0, 6)];
+        return [...FIXED_TEAMS, ...shuffled(candidates).slice(0, 2)];
       }
       NATIONS.splice(0, NATIONS.length, ...chooseRoundTeams());
       const FANINFO = {};
@@ -4027,7 +4028,7 @@
           const l = $("ln-" + c.c);
           l.classList.toggle(
             "lead",
-            !!p && S.pos[ord[0].c] > 1 && c.c === ord[0].c,
+            S.pos[ord[0].c] > 1 && c.c === ord[0].c,
           );
           l.classList.toggle("empty", !p);
           l.classList.toggle("win", c.c === S.winner);

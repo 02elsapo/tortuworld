@@ -36,8 +36,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /Esperando el LIVE de /);
     assert.match(overlaySource, /Date\.parse\(status\.nextRetryAt\)/);
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);
-    assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 9; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 4; flex: 0\.85 1 0;/);
     assert.match(overlaySource, /const T = \{\};\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
+    const leaderMarker = overlaySource.match(/l\.classList\.toggle\(\s*"lead",([\s\S]*?)\);/);
+    assert.ok(leaderMarker);
+    assert.match(leaderMarker[1], /S\.pos\[ord\[0\]\.c\] > 1 && c\.c === ord\[0\]\.c/);
+    assert.doesNotMatch(leaderMarker[1], /!!p/);
     assert.doesNotMatch(overlaySource, /class="lane-bot"/);
     assert.match(overlaySource, /function countryAssistantEvent\(code\)/);
     assert.match(overlaySource, /function scheduleCountryAssistant\(code, initial = false\)/);
@@ -60,8 +64,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /const crawl = S\.go && !S\.over \? t\.cr \* dt \* m : 0/);
     assert.match(overlaySource, /enabled: false/);
     assert.match(overlaySource, /\.lane\.empty \.tur \{ opacity: 1; filter: none; \}/);
-    assert.match(overlaySource, /const FIXED_TEAMS = NATIONS\.slice\(0, 4\)/);
-    assert.match(overlaySource, /shuffled\(candidates\)\.slice\(0, 6\)/);
+    assert.match(overlaySource, /countries: \[0, 1, 2, 3, 4\]\.map/);
+    assert.match(overlaySource, /const FIXED_TEAMS = NATIONS\.slice\(0, 3\)/);
+    assert.match(overlaySource, /POPULAR_COUNTRIES\.includes\(team\.code\)/);
+    assert.match(overlaySource, /shuffled\(candidates\)\.slice\(0, 2\)/);
     assert.match(overlaySource, /const POPULAR_COUNTRIES/);
     assert.match(overlaySource, /efectos automáticos son solo visuales y no crean audiencia ni estadísticas/);
     assert.match(overlaySource, /recordCupWin\(nat\(p\)\.code\)/);
