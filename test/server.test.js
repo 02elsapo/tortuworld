@@ -28,6 +28,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /<title>\s*Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores\s*<\/title>/);
     assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
     assert.match(overlaySource, /id="lanes"/);
+    assert.match(overlaySource, /#app \{ top: var\(--top, 12%\); bottom: var\(--bot, 7%\);/);
+    assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 9; flex: 0\.9 1 0;/);
     assert.match(overlaySource, /id="ctaMain">\s*💬 ESCRIBE EL NOMBRE DE UN PAÍS/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
     assert.match(overlaySource, /source\.addEventListener\("snapshot"/);
