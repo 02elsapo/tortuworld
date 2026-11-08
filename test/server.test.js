@@ -28,6 +28,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /<title>\s*Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores\s*<\/title>/);
     assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
     assert.match(overlaySource, /id="lanes"/);
+    assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
+    assert.match(overlaySource, /Esperando el LIVE de /);
+    assert.match(overlaySource, /Date\.parse\(status\.nextRetryAt\)/);
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);
     assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 9; flex: 0\.85 1 0;/);
     assert.match(overlaySource, /const T = \{\};\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);

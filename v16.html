@@ -2296,6 +2296,38 @@
         opacity: 0.5;
       }
       /* mensajes: pie de pantalla, texto que va pasando */
+      #connectionStatus {
+        position: fixed;
+        left: 3%;
+        right: 3%;
+        bottom: calc(1% + env(safe-area-inset-bottom, 0px) + 2.1rem);
+        z-index: 49;
+        min-height: 1.15rem;
+        padding: 0.14rem 0.45rem;
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 999px;
+        background: rgba(7, 38, 43, 0.9);
+        color: #fff;
+        font: 800 0.72rem/1.2 "Nunito", system-ui, sans-serif;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        pointer-events: none;
+      }
+      #connectionStatus.connected {
+        border-color: var(--mint);
+        color: var(--mint);
+      }
+      #connectionStatus.connecting,
+      #connectionStatus.reconnecting {
+        border-color: var(--sun);
+        color: var(--sun);
+      }
+      #connectionStatus.failed {
+        border-color: #ff8291;
+        color: #ffb1ba;
+      }
       #specialEvent {
         position: fixed !important;
         left: 0;
@@ -2720,6 +2752,9 @@
         </div>
       </div>
       <div id="lanes"></div>
+    </div>
+    <div id="connectionStatus" class="connection-status" role="status" aria-live="polite">
+      TikTok · esperando estado de conexión
     </div>
     <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
     <div id="bottom">
@@ -5266,6 +5301,48 @@
         }
         return list.length > 0;
       }
+      let latestTikTokStatus = null;
+      function renderTikTokConnectionStatus(status) {
+        const banner = $("connectionStatus"),
+          username =
+            typeof status.username === "string"
+              ? status.username.trim().replace(/^@+/, "")
+              : "",
+          handle = username ? "@" + username : "";
+        let message = "TikTok · usuario sin configurar",
+          stateClass = "disconnected";
+        if (status.connected) {
+          message = handle ? "Conectado a " + handle : "Conectado a TikTok";
+          stateClass = "connected";
+        } else if (handle && status.status === "connecting") {
+          message = "Conectando a " + handle + "…";
+          stateClass = "connecting";
+        } else if (handle && status.status === "reconnecting") {
+          const nextAttempt = Number.isFinite(status.connectionAttempts)
+              ? status.connectionAttempts + 1
+              : Math.max(1, Number(status.retryAttempt) || 1),
+            nextRetry = status.nextRetryAt
+              ? Date.parse(status.nextRetryAt)
+              : NaN,
+            seconds = Number.isFinite(nextRetry)
+              ? Math.max(0, Math.ceil((nextRetry - Date.now()) / 1000))
+              : null;
+          message =
+            "Esperando el LIVE de " +
+            handle +
+            " · reintento " +
+            nextAttempt +
+            (seconds === null ? "" : " en " + seconds + " s");
+          stateClass = "reconnecting";
+        } else if (handle && status.status === "failed") {
+          message = "No se pudo conectar con " + handle;
+          stateClass = "failed";
+        } else if (handle) {
+          message = "TikTok desconectado de " + handle;
+        }
+        banner.textContent = message;
+        banner.className = "connection-status " + stateClass;
+      }
       function setTikTokConnectionStatus(status) {
         const dot = $("dot");
         const connected =
@@ -5276,14 +5353,28 @@
           connected ? "TikTok conectado" : "TikTok desconectado",
         );
         if (status && typeof status === "object") {
+          latestTikTokStatus = status;
           const username =
             typeof status.username === "string"
               ? status.username.trim().replace(/^@+/, "")
               : "";
           $("overlayVersion").textContent =
             "v1.6.0 · rastro de avatares" + (username ? " · @" + username : "");
+        } else {
+          latestTikTokStatus = {
+            ...(latestTikTokStatus || {}),
+            connected: Boolean(status),
+            status: status ? "connected" : "disconnected",
+          };
         }
+        renderTikTokConnectionStatus(latestTikTokStatus || {
+          connected: false,
+          status: "disconnected",
+        });
       }
+      setInterval(() => {
+        if (latestTikTokStatus) renderTikTokConnectionStatus(latestTikTokStatus);
+      }, 1000);
       function connect() {
         if (Q.has("ws")) {
           let ws;
