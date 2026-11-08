@@ -36,13 +36,29 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="voiceToggle"[^>]*aria-pressed="false"/);
     assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
-    assert.match(overlaySource, /spanishVoices\.find\(\(candidate\) => \/google\/i\.test\(candidate\.name\)\)/);
-    assert.match(overlaySource, /if \(tkTip\) speakTickerMessage\(message\)/);
-    assert.match(overlaySource, /VOICE_PROMPTS = \[[\s\S]*?comenten su país en el chat[\s\S]*?Dejen un like[\s\S]*?Compartan el LIVE/);
+    assert.match(overlaySource, /const googleVoices = spanishVoices\.filter/);
+    assert.match(overlaySource, /googleVoices\[1\] \|\| googleVoices\[0\]/);
+    assert.match(overlaySource, /VOICE_INTERVAL_MS = 10000/);
+    assert.match(overlaySource, /setInterval\(speakEncouragement, VOICE_INTERVAL_MS\)/);
+    assert.match(overlaySource, /voiceWatchdog = setTimeout/);
+    assert.match(overlaySource, /"¡" \+ country \+ " va ganando! "/);
+    assert.match(overlaySource, /\.slice\(0, 2\)[\s\S]*?Usuarios más activos:[\s\S]*?[Ss]igan comentando/);
+    const voiceLoop = overlaySource.match(
+      /function speakEncouragement\(\) \{([\s\S]*?)\} function toggleTickerVoice/,
+    );
+    assert.ok(voiceLoop);
+    assert.doesNotMatch(voiceLoop[1], /enqueueMsg/);
+    assert.match(overlaySource, /VOICE_PROMPTS = \[[\s\S]*?comenten su país para apoyar[\s\S]*?Dejen un like[\s\S]*?Compartan el LIVE/);
+    const tickerLogic = overlaySource.match(
+      /function msgTick\(\) \{([\s\S]*?)\} function showSpecialEvent/,
+    );
+    assert.ok(tickerLogic);
+    assert.doesNotMatch(tickerLogic[1], /speakTickerMessage|speakEncouragement/);
     assert.match(overlaySource, /comment\.length > 100/);
     assert.match(overlaySource, /Esperando el LIVE de /);
     assert.match(overlaySource, /Date\.parse\(status\.nextRetryAt\)/);
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);
+    assert.match(overlaySource, /#specialEvent \{ display: none !important; right: 4\.6rem !important;/);
     assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 4; flex: 0\.85 1 0;/);
     assert.match(overlaySource, /const T = \{\};\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
     const leaderMarker = overlaySource.match(/l\.classList\.toggle\(\s*"lead",([\s\S]*?)\);/);
@@ -63,6 +79,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /swayLimit = Math\.max\(\s*0,\s*Math\.min\(\s*laneStep \* 0\.24,\s*laneTop,/);
     assert.match(overlaySource, /t\.sway \+= \(swayTarget - t\.sway\) \* Math\.min\(1, dt \* 1\.5\)/);
     assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", t\.sway\.toFixed\(2\) \+ "px"\)/);
+    assert.match(overlaySource, /const th = H \/ \(1 \+ 0\.625 \* \(C\.length - 1\)\)/);
+    assert.match(overlaySource, /W \* 0\.33/);
     assert.match(overlaySource, /id="ctaMain">\s*💬 ESCRIBE EL NOMBRE DE UN PAÍS/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
     assert.match(overlaySource, /source\.addEventListener\("snapshot"/);
@@ -83,7 +101,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /S\.pick\.get\(_u\)[\s\S]*?rnd\(C\)\.c/);
     assert.match(overlaySource, /PENDING_FANS\[code\]\.add\(user\)/);
     assert.match(overlaySource, /function layPendingFanEggs\(code\)/);
-    assert.match(overlaySource, /--fan-size: calc\(var\(--flag-size\) \* 1\.2\)/);
+    assert.match(overlaySource, /function trailEl\(item, progress, sway\)/);
+    assert.match(overlaySource, /e\.style\.setProperty\("--sway", sway \+ "px"\)/);
+    assert.match(overlaySource, /info\.sway = T\[code\]\.sway/);
+    assert.match(overlaySource, /egg\.style\.setProperty\("--sway", \(info\.sway \|\| 0\) \+ "px"\)/);
+    assert.match(overlaySource, /top: calc\(\s*var\(--rt\) \+ \(var\(--th\) - var\(--fan-size\)\) \/ 2 \+ var\(--sway, 0px\)\s*\);/);
+    assert.match(overlaySource, /--fan-size: calc\(var\(--flag-size\) \* 2\.4\)/);
     assert.match(overlaySource, /width: calc\(var\(--fan-size\) \* 0\.9\);\s*height: var\(--fan-size\)/);
     assert.match(overlaySource, /border-radius: 50%;\s*overflow: hidden/);
     assert.match(overlaySource, /#lanes \.fa img \{[^}]*width: 100%;[^}]*height: 100%;[^}]*border: 0;/);

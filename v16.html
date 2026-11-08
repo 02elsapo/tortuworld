@@ -2370,6 +2370,7 @@
         z-index: 60;
       }
       #specialEvent {
+        display: none !important;
         right: 4.6rem !important;
       }
       #app {
@@ -2442,10 +2443,10 @@
         right: -0.2rem;
         top: -1.1rem;
       }
-      /* Avatares de hinchas como marcadores ovalados del tamaño de la bandera. */
+      /* Avatares de hinchas como marcadores ovalados, al doble del tamaño anterior. */
       #lanes {
         --lane-step: calc((100% - var(--th)) / var(--n));
-        --fan-size: calc(var(--flag-size) * 1.2);
+        --fan-size: calc(var(--flag-size) * 2.4);
       }
       #lanes .fa {
         position: absolute;
@@ -2463,7 +2464,9 @@
         font: 800 calc(var(--fan-size) * 0.3)/1 "Nunito", sans-serif;
         text-align: center;
         box-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.52), inset 0 0 0 0.05rem rgba(255,255,255,.55);
-        top: calc(var(--rt) + (var(--th) - var(--fan-size)) / 2);
+        top: calc(
+          var(--rt) + (var(--th) - var(--fan-size)) / 2 + var(--sway, 0px)
+        );
         left: max(var(--g), calc(var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100 - var(--fan-size) * 0.45));
         pointer-events: none;
       }
@@ -3598,16 +3601,16 @@
         lanes.append(l);
       });
 
-      /* Tamaño de las tortugas según el alto real de la pista: como máximo 25 % de solape entre filas, y nunca más del 28 % del ancho. */
+      /* Aumenta el tamaño de las tortugas y distribuye sus filas con solape controlado. */
       function fitTurtles() {
         const H = lanes.clientHeight,
           W = lanes.clientWidth;
         if (!H || !W) return;
-        const th = H / (1 + 0.75 * (C.length - 1)),
+        const th = H / (1 + 0.625 * (C.length - 1)),
           tw = Math.min(
             (th * 70) / 46,
-            W * 0.28,
-            17 *
+            W * 0.33,
+            20 *
               parseFloat(getComputedStyle(document.documentElement).fontSize),
           );
         lanes.style.setProperty("--tw", tw.toFixed(1) + "px");
@@ -3680,14 +3683,15 @@
    alternan cada 3.5 s (cómo sumar puntos, quién lidera, distancia al 1°, meta de la comunidad). ?canal=minombre
    personaliza el mensaje de seguir. showSpecialEvent y feed ahora solo encolan: todo sale por esta barra. */
       const MQ = [],
+        VOICE_INTERVAL_MS = 10000,
         VOICE_PROMPTS = [
-          "Hinchas, comenten su país en el chat y apoyen a su tortuga.",
-          "Dejen un like para que su tortuga avance.",
-          "Compartan el LIVE e inviten a más hinchas a la carrera.",
+          "Hinchas, comenten su país para apoyar a su tortuga.",
+          "Dejen un like y ayúdenla a avanzar.",
+          "Compartan el LIVE e inviten a más hinchas.",
           "Sigan la cuenta y animen a su país.",
-          "Escriban el nombre de un país y únanse a la carrera.",
-          "Cada regalo impulsa a su tortuga. ¡Vamos, hinchas!",
-          "Comenten y ayuden a su tortuga a llegar a la meta.",
+          "Escriban un país en el chat y únanse.",
+          "Un regalo impulsa a su tortuga. ¡Vamos!",
+          "Comenten y ayuden a su tortuga a ganar.",
         ];
       const voiceButton = $("voiceToggle"),
         voiceSynth =
@@ -3703,7 +3707,10 @@
         tkTimer = 0,
         voiceEnabled = false,
         voiceSpeaking = false,
-        voicePromptIndex = 0;
+        voicePromptIndex = 0,
+        voiceLastSpokenAt = 0,
+        voiceTimer = 0,
+        voiceWatchdog = 0;
       function updateVoiceButton() {
         voiceButton.textContent = voiceEnabled ? "🔊 Voz" : "🔇 Voz";
         voiceButton.classList.toggle("act", voiceEnabled);
@@ -3737,8 +3744,12 @@
         const spanishVoices = voiceSynth
           .getVoices()
           .filter((voice) => /^es(?:-|$)/i.test(voice.lang));
+        const googleVoices = spanishVoices.filter((voice) =>
+          /google/i.test(voice.name),
+        );
         const voice =
-          spanishVoices.find((candidate) => /google/i.test(candidate.name)) ||
+          googleVoices[1] ||
+          googleVoices[0] ||
           spanishVoices.find((candidate) =>
             /(female|woman|mujer|femenina|helena|elena|sabina|dalia|luc[ií]a|laura|m[oó]nica|sof[ií]a|carmen)/i.test(
               candidate.name,
@@ -3751,37 +3762,81 @@
         utterance.pitch = 1.24;
         utterance.volume = 1;
         voiceSpeaking = true;
+        voiceLastSpokenAt = Date.now();
         utterance.onend = () => {
+          clearTimeout(voiceWatchdog);
+          voiceWatchdog = 0;
           voiceSpeaking = false;
           speakNextTickerMessage();
         };
         utterance.onerror = (event) => {
+          clearTimeout(voiceWatchdog);
+          voiceWatchdog = 0;
           voiceSpeaking = false;
           if (event.error !== "canceled")
             console.warn("No se pudo reproducir el mensaje de ánimo:", event.error);
           speakNextTickerMessage();
         };
+        voiceWatchdog = setTimeout(() => {
+          voiceSpeaking = false;
+          voiceSynth.cancel();
+        }, VOICE_INTERVAL_MS * 2);
         voiceSynth.speak(utterance);
       }
       function speakTickerMessage(text) {
-        if (!voiceEnabled || !voiceSynth) return;
+        if (
+          !voiceEnabled ||
+          !voiceSynth ||
+          voiceSpeaking ||
+          Date.now() - voiceLastSpokenAt < VOICE_INTERVAL_MS
+        )
+          return;
+        voiceQueue.length = 0;
         voiceQueue.push(String(text));
-        if (voiceQueue.length > 4) voiceQueue.shift();
         speakNextTickerMessage();
+      }
+      function nextEncouragement() {
+        const promptNumber = voicePromptIndex++;
+        const ranked = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]),
+          lane = ranked[promptNumber % ranked.length],
+          countryIndex = C.findIndex((item) => item.c === lane.c),
+          country = NATIONS[countryIndex].n,
+          place = (promptNumber % ranked.length) + 1,
+          action = VOICE_PROMPTS[promptNumber % VOICE_PROMPTS.length];
+        let message =
+          place === 1
+            ? "¡" + country + " va ganando! "
+            : "¡" + country + " está en el puesto " + place + "! ";
+        message += action;
+        const activeUsers = getTopPlayers()
+          .slice(0, 2)
+          .map((player) => String(player.name || "").trim().slice(0, 18))
+          .filter(Boolean);
+        if (activeUsers.length)
+          message +=
+            " Usuarios más activos: " +
+            activeUsers.join(" y ") +
+            ". ¡Sigan comentando!";
+        return message;
+      }
+      function speakEncouragement() {
+        if (!voiceEnabled) return;
+        const message = nextEncouragement();
+        speakTickerMessage(message);
       }
       function toggleTickerVoice() {
         if (!voiceSynth) return;
         voiceEnabled = !voiceEnabled;
         if (voiceEnabled) {
-          const current = $("tkIn");
-          if (tkTip && current && current.textContent) {
-            speakTickerMessage(current.textContent);
-          } else {
-            speakTickerMessage(
-              VOICE_PROMPTS[voicePromptIndex++ % VOICE_PROMPTS.length],
-            );
-          }
+          voiceLastSpokenAt = 0;
+          updateVoiceButton();
+          speakEncouragement();
+          voiceTimer = setInterval(speakEncouragement, VOICE_INTERVAL_MS);
         } else {
+          clearInterval(voiceTimer);
+          voiceTimer = 0;
+          clearTimeout(voiceWatchdog);
+          voiceWatchdog = 0;
           voiceQueue.length = 0;
           voiceSpeaking = false;
           voiceSynth.cancel();
@@ -3816,7 +3871,6 @@
         tkTip = !MQ.length;
         const message = MQ.length ? MQ.shift() : nextTip();
         sp.textContent = message;
-        if (tkTip) speakTickerMessage(message);
         sp.style.animation = "none";
         void sp.offsetWidth;
         const dur = Math.max(6, (el.clientWidth + sp.offsetWidth) / 150);
@@ -3897,6 +3951,7 @@
           const info = FANINFO[user],
             egg = existing.get(user) || fanEl(user, info);
           egg.style.setProperty("--p", info.progress || 0);
+          egg.style.setProperty("--sway", (info.sway || 0) + "px");
           egg.classList.toggle("fire", fire);
           t.trk.append(egg);
           keep.add(user);
@@ -4018,6 +4073,7 @@
             position = findFanEggPosition(code, desired, user);
           if (position === null) continue;
           info.progress = position;
+          info.sway = T[code].sway;
           info.fresh = true;
           PENDING_FANS[code].delete(user);
           laid = true;
@@ -4050,10 +4106,11 @@
         }
         return pool;
       }
-      function trailEl(item, progress) {
+      function trailEl(item, progress, sway) {
         const e = document.createElement("i");
         e.className = "fa trail fresh";
         e.style.setProperty("--p", progress);
+        e.style.setProperty("--sway", sway + "px");
         e.title = item.name;
         const placeholder = () => {
           e.classList.add("placeholder");
@@ -4086,7 +4143,7 @@
         if (!pool.length) return;
         const item = pool[tr.idx++ % pool.length],
           at = Math.max(0, pos - tr.gap * 0.6),
-          el = trailEl(item, at.toFixed(2));
+          el = trailEl(item, at.toFixed(2), t.sway);
         t.trk.append(el);
         tr.els.push(el);
         tr.last = pos;
