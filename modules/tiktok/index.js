@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { registerTikTokRoutes } = require('./routes');
 const { createTikTokMonitorService } = require('./tiktokMonitorService');
+const { createCommentStatsService } = require('./commentStatsService');
 
 const maxEvents = 100;
 
@@ -10,6 +11,7 @@ function createTikTokModule({
   monitorService = createTikTokMonitorService(),
   configurationPath = process.env.TIKTOK_CONFIG_PATH
     || path.join(__dirname, '..', '..', 'data', 'tiktok', 'config.json'),
+  commentStatsPath = process.env.TIKTOK_COMMENT_STATS_PATH,
   defaultUsername = process.env.TIKTOK_USERNAME || '',
 } = {}) {
   if (!stream || typeof stream.attach !== 'function' || typeof stream.broadcast !== 'function') {
@@ -17,6 +19,9 @@ function createTikTokModule({
   }
 
   const environmentUsername = String(defaultUsername).trim().replace(/^@+/, '');
+  const commentStats = createCommentStatsService({
+    filePath: commentStatsPath || path.join(path.dirname(configurationPath), 'comment-stats.json'),
+  });
   let username = environmentUsername;
   const events = [];
   const state = {
@@ -47,7 +52,25 @@ function createTikTokModule({
     events.unshift(entry);
     events.length = Math.min(events.length, maxEvents);
     state.lastEventAt = entry.time || new Date().toISOString();
+    if (entry.type === 'chat') {
+      const stats = commentStats.recordComment(entry.content);
+      publish('comment-stats', stats);
+    }
     publish('update', { entry, events });
+  }
+
+  function getCommentStats() {
+    return commentStats.getStats();
+  }
+
+  function getCupStats() {
+    return commentStats.getCupStats();
+  }
+
+  function recordCup(code) {
+    const stats = commentStats.recordCup(code);
+    if (stats) publish('cup-stats', stats);
+    return stats;
   }
 
   const unsubscribeEvents = monitorService.subscribeToEvents(handleEvent);
@@ -105,6 +128,9 @@ function createTikTokModule({
     registerTikTokRoutes(app, {
       getStatus,
       getConfiguration,
+      getCommentStats,
+      getCupStats,
+      recordCup,
       saveConfiguration,
       reconnect,
       openEventStream,

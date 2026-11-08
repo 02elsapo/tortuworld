@@ -25,6 +25,7 @@ El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra 
 | `HOST` | `0.0.0.0` | Interfaz de red de escucha. |
 | `TIKTOK_USERNAME` | vacío | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
 | `TIKTOK_CONFIG_PATH` | `data/tiktok/config.json` | Ruta del archivo JSON con el usuario configurado desde el backend. |
+| `TIKTOK_COMMENT_STATS_PATH` | Junto a `TIKTOK_CONFIG_PATH` | Archivo JSON persistente con comentarios y copas por país. |
 
 Monta almacenamiento persistente si necesitas conservar la configuración del backend entre reinicios. El directorio `data/` está excluido de Git.
 
@@ -36,14 +37,17 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /` o `GET /overlay` | Juego de carrera de tortugas; demo con `?demo=1`. | HTML |
-| `GET /backend` | Configurar la cuenta y ver su estado. | HTML |
+| `GET /` o `GET /overlay` | Juego de carrera de tortugas; movimiento lento sin espectadores y sin bots automáticos. | HTML |
+| `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
 | `GET /api/config` | Usuario configurado. | `{ "username": "usuario" }` |
 | `PUT /api/config` | Guarda el usuario y comienza la conexión. | Envío: `{ "username": "@usuario" }`; respuesta: `{ "ok": true, "username": "usuario" }` |
 | `POST /api/reconnect` | Reintenta la conexión configurada. | JSON; `409` si falta cuenta o ya se está conectando. |
-| `GET /api/events` | Flujo SSE de estado y actividad. | Eventos `status`, `snapshot` y `update`. |
+| `GET /api/comment-stats` | Conteo persistente de comentarios mencionando cada país y comentarios sin país. | JSON |
+| `GET /api/cup-stats` | Copas ganadas acumuladas por país. | JSON |
+| `POST /api/cup-stats` | Registra una copa al terminar una ronda. | Envío: `{ "code": "PY" }`; respuesta: estadísticas actualizadas. |
+| `GET /api/events` | Flujo SSE de estado, actividad y estadísticas. | Eventos `status`, `snapshot`, `update`, `comment-stats` y `cup-stats`. |
 
 Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` contienen el estado resumido; `snapshot` contiene los eventos recientes al conectar; cada `update` incluye el evento nuevo y la lista actualizada:
 
@@ -64,7 +68,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `v15.html` presenta una carrera de diez países: la audiencia apoya a un país en el chat y las interacciones hacen avanzar la carrera. También muestra el Top 5 de participantes, los eventos en vivo y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920` para la composición vertical. Los eventos se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). Se puede abrir `/backend` para configurar TikTok o probar el juego con `/?demo=1` y el panel con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
+El overlay `v15.html` presenta una carrera de diez países: Brasil, Paraguay, Argentina y Alemania son fijos; los otros seis se sortean por ronda entre campeones del Mundial masculino y selecciones populares, sin clubes ni duplicados. Las tortugas avanzan lentamente aunque no haya espectadores y no se generan acciones automáticas de bots. Los comentarios y las copas ganadas se guardan por país en JSON; el backend ofrece un botón de estadísticas con actualización en vivo. El overlay también muestra el Top 5 de participantes, los eventos y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. Los eventos se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). El panel de pruebas manual se abre con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
 
 ## Estructura
 

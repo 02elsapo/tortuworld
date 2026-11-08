@@ -8,6 +8,7 @@ const { registerOverlayRoutes } = require('./modules/overlay');
 function createWebserver({
   configurationPath = process.env.TIKTOK_CONFIG_PATH
     || path.join(__dirname, 'data', 'tiktok', 'config.json'),
+  commentStatsPath = process.env.TIKTOK_COMMENT_STATS_PATH,
   defaultUsername = process.env.TIKTOK_USERNAME || '',
   monitorService = createTikTokMonitorService(),
 } = {}) {
@@ -18,6 +19,8 @@ function createWebserver({
     stream: eventStream,
     monitorService,
     configurationPath,
+    commentStatsPath: commentStatsPath
+      || path.join(path.dirname(configurationPath), 'comment-stats.json'),
     defaultUsername,
   });
 

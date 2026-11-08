@@ -1,9 +1,10 @@
 <!doctype html>
 <!--
   Carrera de tortugas v15: diez países avanzan lentamente incluso sin espectadores.
-  Los eventos de TikTok suman puntos y aceleran al país que el espectador apoya.
-  Backend integrado: SSE en /api/events. Parámetros principales:
-  ?target=40, ?goal=60, ?idle=1, ?demo=1, ?panel=1, ?sound=0, ?music=0 y ?ws=URL.
+  Los primeros cuatro son fijos; seis campeones del mundo o selecciones populares se sortean
+  al iniciar cada ronda. Los eventos de TikTok aceleran al país que apoya cada espectador.
+  Backend integrado: SSE en /api/events. Parámetros: ?target=40, ?goal=60,
+  ?panel=1, ?sound=0, ?music=0 y ?ws=URL. No hay acciones de bots automáticos.
 -->
 <!-- Overlay 'Carrera de tortugas' para TikTok LIVE. Un solo archivo, sin dependencias de build.
      Para conectar eventos de TikTok desde Node, lee la GUÍA PARA EL PROGRAMADOR DE BACKEND al inicio del bloque de JavaScript. -->
@@ -2527,12 +2528,12 @@
       <div id="head" class="panel">
         <div id="slot">
           <div id="how">
-            💬 Escribe tu país · 👍 Like · 🔁 Comparte · ❤️ Sigue · 🎁 Turbo
+            💬 Escribe un país · 👍 Like · 🔁 Comparte · ❤️ Sigue · 🎁 Turbo
           </div>
           <div id="banner" class="disp" role="status" aria-live="polite"></div>
         </div>
         <div id="joinCTA" aria-live="polite">
-          <b id="ctaMain">💬 ESCRIBE EL NOMBRE DE TU PAÍS</b>
+          <b id="ctaMain">💬 ESCRIBE EL NOMBRE DE UN PAÍS</b>
           <span id="ctaSub"
             >El país con MÁS HINCHAS corre al DOBLE de velocidad ⚡</span
           >
@@ -2630,8 +2631,9 @@
        *
        * El overlay consume SSE por defecto. Un WebSocket externo es opcional con ?ws=URL.
        * ?target=40 define la meta individual, ?goal=60 la meta comunitaria,
-       * ?idle=1 activa interacciones de relleno y ?demo=1 activa bots de prueba.
-       * El panel de pruebas se abre con P o ?panel=1.
+       * Las tortugas avanzan lentamente si ningún espectador elige un país.
+       * No se generan eventos de audiencia ni interacciones automáticas.
+       * El panel de pruebas manual se abre con P o ?panel=1.
        */
 
       const Q = new URLSearchParams(location.search);
@@ -2660,9 +2662,8 @@
         contestants = new Map();
       let contestantSequence = 0;
       /* ===== v8 · PAÍSES en lugar de usuarios =====
-   El país se asigna por orden de llegada en la ronda (p.sequence): 1° Brasil, 2° Paraguay, 3° Argentina y el resto
-   ganadores/rivales de Copa del Mundo. Para cambiar el orden o agregar países edita NATIONS (n = nombre, c = color, u = bandera SVG).
-   Las banderas son SVG propios (data URI): no dependen de emojis, que en Windows/OBS se ven como letras. */
+   Los cuatro primeros países son fijos; los seis restantes se sortean al comenzar cada ronda.
+   El sorteo combina campeones del Mundial masculino y selecciones populares, sin clubes. */
       const NATIONS = (() => {
         const sv = (b) =>
           "data:image/svg+xml;utf8," +
@@ -2700,6 +2701,7 @@
         return [
           {
             n: "Brasil",
+            code: "BR",
             c: "#009C3B",
             u: sv(
               '<rect width="60" height="40" fill="#009C3B"/><path d="M30 4 56 20 30 36 4 20Z" fill="#FFDF00"/><circle cx="30" cy="20" r="8.5" fill="#002776"/><path d="M22 18.5Q30 15.5 38 22" stroke="#fff" stroke-width="1.6" fill="none"/>',
@@ -2707,6 +2709,7 @@
           },
           {
             n: "Paraguay",
+            code: "PY",
             c: "#D52B1E",
             u: sv(
               H3(
@@ -2719,6 +2722,7 @@
           },
           {
             n: "Argentina",
+            code: "AR",
             c: "#74ACDF",
             u: sv(
               H3(
@@ -2731,22 +2735,26 @@
           },
           {
             n: "Alemania",
+            code: "DE",
             c: "#DD0000",
             u: sv(H3("#000", "#DD0000", "#FFCE00")),
           },
           {
             n: "Francia",
+            code: "FR",
             c: "#0055A4",
             u: sv(V3("#0055A4", "#fff", "#EF4135")),
           },
           {
             n: "Italia",
+            code: "IT",
             c: "#008C45",
             u: sv(V3("#008C45", "#fff", "#CD212A")),
           },
-          { n: "Uruguay", c: "#0038A8", u: sv(uy) },
+          { n: "Uruguay", code: "UY", c: "#0038A8", u: sv(uy) },
           {
             n: "España",
+            code: "ES",
             c: "#AA151B",
             u: sv(
               '<rect width="60" height="40" fill="#AA151B"/><rect y="10" width="60" height="20" fill="#F1BF00"/>',
@@ -2754,44 +2762,201 @@
           },
           {
             n: "Inglaterra",
+            code: "ENG",
             c: "#CE1124",
             u: sv(
               '<rect width="60" height="40" fill="#fff"/><rect x="26" width="8" height="40" fill="#CE1124"/><rect y="16" width="60" height="8" fill="#CE1124"/>',
             ),
           },
           {
+            n: "Portugal",
+            code: "PT",
+            c: "#046A38",
+            u: sv(
+              '<rect width="24" height="40" fill="#046A38"/><rect x="24" width="36" height="40" fill="#DA291C"/><circle cx="24" cy="20" r="6" fill="#FFCD00"/>',
+            ),
+          },
+          {
             n: "Países Bajos",
-            c: "#F36C21",
+            code: "NL",
+            c: "#AE1C28",
             u: sv(H3("#AE1C28", "#fff", "#21468B")),
           },
           {
-            n: "Croacia",
-            c: "#171796",
+            n: "México",
+            code: "MX",
+            c: "#006847",
+            u: sv(V3("#006847", "#fff", "#CE1126")),
+          },
+          {
+            n: "Colombia",
+            code: "CO",
+            c: "#FCD116",
             u: sv(
-              H3(
-                "#FF0000",
-                "#fff",
-                "#171796",
-                '<rect x="25" y="14" width="10" height="12" fill="#fff" stroke="#171796" stroke-width="1"/><rect x="25" y="14" width="5" height="4" fill="#FF0000"/><rect x="30" y="18" width="5" height="4" fill="#FF0000"/><rect x="25" y="22" width="5" height="4" fill="#FF0000"/>',
-              ),
+              '<rect width="60" height="20" fill="#FCD116"/><rect y="20" width="60" height="10" fill="#003893"/><rect y="30" width="60" height="10" fill="#CE1126"/>',
             ),
+          },
+          {
+            n: "Chile",
+            code: "CL",
+            c: "#D52B1E",
+            u: sv(
+              '<rect width="60" height="20" fill="#fff"/><rect y="20" width="60" height="20" fill="#D52B1E"/><rect width="20" height="20" fill="#0039A6"/><path d="m10 3 2 5h5l-4 3 1.5 5L10 13l-4.5 3L7 11 3 8h5Z" fill="#fff"/>',
+            ),
+          },
+          {
+            n: "Japón",
+            code: "JP",
+            c: "#BC002D",
+            u: sv(
+              '<rect width="60" height="40" fill="#fff"/><circle cx="30" cy="20" r="9" fill="#BC002D"/>',
+            ),
+          },
+          {
+            n: "Corea del Sur",
+            code: "KR",
+            c: "#CD2E3A",
+            u: sv(
+              '<rect width="60" height="40" fill="#fff"/><path d="M30 10a10 10 0 0 1 0 20 5 5 0 0 0 0-10 5 5 0 0 1 0-10" fill="#CD2E3A"/><path d="M30 30a10 10 0 0 1 0-20 5 5 0 0 0 0 10 5 5 0 0 1 0 10" fill="#0047A0"/>',
+            ),
+          },
+          {
+            n: "Estados Unidos",
+            code: "US",
+            c: "#3C3B6E",
+            u: sv(
+              '<rect width="60" height="40" fill="#fff"/><path d="M0 0h60v3H0zm0 6h60v3H0zm0 6h60v3H0zm0 6h60v3H0zm0 6h60v3H0zm0 6h60v3H0zm0 6h60v3H0z" fill="#B22234"/><rect width="27" height="21" fill="#3C3B6E"/><g fill="#fff"><circle cx="5" cy="5" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="19" cy="5" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></g>',
+            ),
+          },
+          {
+            n: "Marruecos",
+            code: "MA",
+            c: "#C1272D",
+            u: sv(
+              '<rect width="60" height="40" fill="#C1272D"/><path d="m30 9 2.5 7.5h8l-6.5 4.7 2.5 7.6-6.5-4.7-6.5 4.7 2.5-7.6-6.5-4.7h8Z" fill="none" stroke="#006233" stroke-width="1.5"/>',
+            ),
+          },
+          {
+            n: "Croacia",
+            code: "HR",
+            c: "#171796",
+            u: sv(H3("#FF0000", "#fff", "#171796")),
+          },
+          {
+            n: "Nigeria",
+            code: "NG",
+            c: "#008751",
+            u: sv(V3("#008751", "#fff", "#008751")),
+          },
+          {
+            n: "Senegal",
+            code: "SN",
+            c: "#00853F",
+            u: sv(
+              H3("#00853F", "#FDEF42", "#E31B23", '<path d="m30 14 2 5h5l-4 3 1.5 5-4.5-3-4.5 3 1.5-5-4-3h5Z" fill="#00853F"/>'),
+            ),
+          },
+          {
+            n: "Bélgica",
+            code: "BE",
+            c: "#FAE042",
+            u: sv(V3("#000", "#FAE042", "#ED2939")),
           },
         ];
       })();
+      const FIXED_TEAMS = NATIONS.slice(0, 4);
+      const WORLD_CUP_WINNERS = NATIONS.filter((team) =>
+        ["BR", "AR", "DE", "FR", "IT", "UY", "ES", "ENG"].includes(team.code),
+      );
+      const POPULAR_COUNTRIES = [
+        "PT",
+        "NL",
+        "MX",
+        "CO",
+        "CL",
+        "JP",
+        "KR",
+        "US",
+        "MA",
+        "HR",
+        "NG",
+        "SN",
+        "BE",
+      ];
+      const ROUND_POOL = [
+        ...WORLD_CUP_WINNERS,
+        ...NATIONS.filter((team) => POPULAR_COUNTRIES.includes(team.code)),
+      ];
+      const CUP_COUNTS = Object.fromEntries(
+        ROUND_POOL.map((team) => [team.code, 0]),
+      );
+      let cupStatsQueue = Promise.resolve();
+      function applyCupStats(stats) {
+        for (const country of stats.countries) {
+          if (Object.hasOwn(CUP_COUNTS, country.code)) {
+            CUP_COUNTS[country.code] = country.cups;
+          }
+        }
+        render();
+      }
+      function queueCupStats(path, method, code) {
+        cupStatsQueue = cupStatsQueue
+          .then(async () => {
+            const response = await fetch(path, {
+              method,
+              ...(code
+                ? {
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code }),
+                  }
+                : {}),
+            });
+            if (!response.ok)
+              throw new Error("No se pudieron sincronizar las copas.");
+            applyCupStats(await response.json());
+          })
+          .catch((error) =>
+            console.error("Error al sincronizar las copas:", error),
+          );
+      }
+      function loadCupStats() {
+        queueCupStats("/api/cup-stats", "GET");
+      }
+      function recordCupWin(code) {
+        CUP_COUNTS[code]++;
+        render();
+        queueCupStats("/api/cup-stats", "POST", code);
+      }
+      function shuffled(items) {
+        const result = [...items];
+        for (let i = result.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
+      }
+      function chooseRoundTeams() {
+        const fixedCodes = new Set(FIXED_TEAMS.map((team) => team.code));
+        const candidates = ROUND_POOL.filter(
+          (team) => !fixedCodes.has(team.code),
+        );
+        return [...FIXED_TEAMS, ...shuffled(candidates).slice(0, 6)];
+      }
+      NATIONS.splice(0, NATIONS.length, ...chooseRoundTeams());
       const FANINFO = {};
-      const CODES = [
-          "BR",
-          "PY",
-          "AR",
-          "DE",
-          "FR",
-          "IT",
-          "UY",
-          "ES",
-          "ENG",
-          "NL",
-        ],
-        FANS = {};
+      let CODES = NATIONS.map((team) => team.code);
+      const FANS = {};
+      function setRoundTeams() {
+        const teams = chooseRoundTeams();
+        NATIONS.splice(0, NATIONS.length, ...teams);
+        CODES.splice(0, CODES.length, ...teams.map((team) => team.code));
+        C.forEach((lane, index) => {
+          const image = $("rk-" + lane.c).querySelector("img");
+          image.alt = teams[index].n;
+          image.src = teams[index].u;
+          T[lane.c].avKey = null;
+        });
+      }
       C.forEach((c) => (FANS[c.c] = new Set()));
       function nat(p) {
         const c = S.slotOf.get(p.key);
@@ -2799,13 +2964,7 @@
           const i = C.findIndex((x) => x.c === c);
           if (i >= 0) return NATIONS[i];
         }
-        return (
-          p.nation ||
-          (p.nation =
-            NATIONS[
-              C.length + ((p.sequence || 0) % (NATIONS.length - C.length))
-            ])
-        );
+        return (p.nation ||= ROUND_POOL[(p.sequence || 0) % ROUND_POOL.length]);
       }
       /* ESTADO GLOBAL de la partida (todo en memoria; solo "wins" se guarda en localStorage)
      round    número de ronda actual            over     true cuando alguien ya cruzó la meta
@@ -3338,7 +3497,7 @@
             () => "🎁 Un REGALO activa el MODO TURBO 🚀",
             () =>
               "👥 El país con MÁS HINCHAS corre al DOBLE de velocidad ⚡ · ¡comenta el tuyo!",
-            () => "💬 Comenta el nombre de tu PAÍS para apoyarlo",
+            () => "💬 Comenta el nombre de un EQUIPO para apoyarlo",
             () =>
               L
                 ? "👑 Va ganando " +
@@ -3476,7 +3635,7 @@
             '<i class="cd">' +
             CODES[C.indexOf(c)] +
             " 🏆" +
-            (p ? winsBy.get(p.key) || 0 : 0) +
+            (CUP_COUNTS[NATIONS[C.indexOf(c)].code] || 0) +
             '</i><br><i class="fn">👥' +
             FANS[c.c].size +
             "</i>" +
@@ -3519,7 +3678,7 @@
         a.im.onerror = () => a.im.removeAttribute("href");
         a.im.setAttribute("href", _nn.u);
       }
-      /* Los bots solo rellenan carriles libres; un usuario real puede reemplazar un bot, nunca al revés. */
+      /* Los participantes reales pueden ocupar carriles libres o reemplazar al de menor puntaje. */
       function claimSlot(p) {
         let code,
           lo = null;
@@ -3554,7 +3713,6 @@
           );
         }
         if (lo) {
-          S.pos[code] = 0;
           T[code].pend = 0;
           T[code].ve = 0;
           T[code].cr = 0;
@@ -4033,7 +4191,7 @@
             t.includes(c.n.toLowerCase()),
         );
       }
-      /* EVENTO "chat": asigna o cambia el equipo del usuario. Ignora comentarios sin país. */
+      /* EVENTO "chat": asigna o cambia el país del usuario. Ignora comentarios sin país. */
       function onChat(user, text) {
         if (queueAuditRequest(user, text)) return;
         const c = parseCountry(text);
@@ -4191,6 +4349,7 @@
         const w = (winsBy.get(p.key) || 0) + 1;
         winsBy.set(p.key, w);
         saveWins();
+        recordCupWin(nat(p).code);
         if (S.lastWin === p.key) S.streak++;
         else {
           S.lastWin = p.key;
@@ -4404,8 +4563,8 @@
       let last = performance.now(),
         tNow = 0,
         acc = 0;
-      /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio y dan vueltas
-   sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
+      /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio sin retroceder
+   ni generar puntos o decidir al ganador. En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
    Después: si alguien llegó, queda como campeón y finish() termina la carrera en ese momento.
@@ -4452,8 +4611,6 @@
             t.pend = 0;
             t.ve = 0;
           }
-          if (S.go && !S.over && !S.slotUser[k] && S.pos[k] >= CFG.win)
-            S.pos[k] = 0;
           t.vs += (t.cr + d / dt - t.vs) * Math.min(1, dt * 8);
           /* 🥬 La primera tortuga en pasar el 25%, 50% y 75% se lleva un bono de energía */
           if (S.go && !S.over && S.slotUser[k])
@@ -4741,7 +4898,7 @@
 
       /* ===== Bots de prueba: simulan eventos de TikTok llamando a los MISMOS manejadores que el WebSocket =====
    (onChat/onGift/onLike...), así que sirven para probar el juego sin servidor. Nunca envían nada a la red.
-   Antes: Bots integrados: panel con tecla P o ?panel=1, auto con ?demo=1 ===== */
+   Pruebas manuales opt-in desde el panel con P o ?panel=1. No se inician bots automáticamente. */
       const NAMES = [
         "Lucía",
         "Mateo",
@@ -4869,14 +5026,13 @@
       if (SND) document.querySelector("[data-a=sound]").classList.add("act");
       if (SND && MUSIC)
         document.querySelector("[data-a=music]").classList.add("act");
-      if (Q.get("demo")) toggleAuto();
 
       /* ===== Bots de relleno =====
-   Solo ocupan carriles cuando no hay usuarios reales guardados. ?idle=1 los activa. */
+   Desactivados: los carriles sin espectadores avanzan lentamente sin simular actividad. */
       var IDLE = {
         on: false,
         t: null,
-        enabled: Q.get("idle") === "1",
+        enabled: false,
         names: [
           "Ana",
           "Leo",
@@ -5012,7 +5168,7 @@
           clearTimeout(IDLE.t);
         }
       }
-      /* tras 60 s sin eventos reales los bots vuelven a emular interacción */
+      /* No se reactivan bots de relleno tras períodos sin actividad. */
       setInterval(() => {
         if (
           IDLE.enabled &&
@@ -5449,7 +5605,9 @@
 
       const _newRound2 = newRound;
       newRound = function () {
+        setRoundTeams();
         _newRound2.apply(this, arguments);
+        loadCupStats();
         if (!seedRoster() && IDLE.on) {
           seedIdleBots();
           idleFans();
@@ -5517,7 +5675,7 @@
             $("joinCTA").classList.add("pulse");
             clearTimeout(handleTikTokEntry.ctaTimer);
             handleTikTokEntry.ctaTimer = setTimeout(() => {
-              $("ctaMain").textContent = "💬 ESCRIBE EL NOMBRE DE TU PAÍS";
+              $("ctaMain").textContent = "💬 ESCRIBE EL NOMBRE DE UN PAÍS";
               $("ctaSub").textContent =
                 "El país con MÁS HINCHAS corre al DOBLE de velocidad ⚡";
               $("joinCTA").classList.remove("pulse");
@@ -5621,7 +5779,6 @@
 
       renderLiveEvents();
       newRound();
-      if (IDLE.enabled && !Q.get("demo")) startIdle();
       requestAnimationFrame(frame);
       msgTick();
       connect();

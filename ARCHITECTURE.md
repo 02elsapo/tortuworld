@@ -25,7 +25,8 @@ The connector starts only when a username is configured. Connection retries, sta
 |---|---|
 | `server.js` | Creates the Express app, HTTP server, SSE hub, overlay routes, and TikTok module; closes subscriptions and SSE clients when the server closes. |
 | `modules/tiktok/tiktokMonitorService.js` | Owns the TikTok SDK connection and reconnection lifecycle; emits normalized events and connection status. |
-| `modules/tiktok/index.js` | Loads and saves the configured username, delegates connection operations, stores the latest events, and adapts monitor callbacks to SSE. |
+| `modules/tiktok/index.js` | Loads and saves the configured username, persists country comment/cup statistics, stores the latest events, and adapts monitor callbacks to SSE. |
+| `modules/tiktok/commentStatsService.js` | Counts comments and earned cups by country in a JSON file; recognizes country names, codes, and flags. |
 | `modules/tiktok/eventConfig.js` | Defines the provider event names, display labels, defaults, and control event names. |
 | `modules/tiktok/eventFeedService.js` | Maintains an ordered event feed for connector diagnostics. |
 | `modules/tiktok/routes.js` | Maps HTTP requests to connector operations; it contains no connection logic. |
@@ -33,14 +34,15 @@ The connector starts only when a username is configured. Connection retries, sta
 | `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game, `/backend` to configuration, and serves the `tortu` PWA assets. |
 | `modules/overlay/public/` | Provides the `tortu` install manifest, full-screen service worker, and app icons. |
 | `v15.html` | Runs the country race and Top 5, consumes normalized SSE updates, and maps TikTok events to game actions. |
-| `modules/overlay/backend.html` | Reads status/configuration and submits an account change to the API. |
+| `modules/overlay/backend.html` | Reads status/configuration and displays live comment and cup statistics by country. |
 
 Add a mini app as a new module with its own routes and event subscription. Keep the provider connection reusable and app-agnostic.
 
 ## Configuration and persistence
 
-- `PORT`, `HOST`, `TIKTOK_USERNAME`, and `TIKTOK_CONFIG_PATH` are read from the process environment.
+- `PORT`, `HOST`, `TIKTOK_USERNAME`, `TIKTOK_CONFIG_PATH`, and `TIKTOK_COMMENT_STATS_PATH` are read from the process environment.
 - If `TIKTOK_CONFIG_PATH` is unset, the account is stored at `data/tiktok/config.json`.
+- If `TIKTOK_COMMENT_STATS_PATH` is unset, statistics are stored beside the TikTok configuration as `comment-stats.json`.
 - A configured environment username overrides the persisted username and is not written by the backend.
 - Configuration writes create the containing directory. Runtime `data/` is ignored by Git and should be mounted persistently when needed.
 - `.env.example` is documentation only; this project does not load dotenv files.
@@ -50,6 +52,8 @@ Add a mini app as a new module with its own routes and event subscription. Keep 
 `GET /health` reports server liveness. `GET /api/status` returns the facade status (`connected`, `status`, `error`, `username`, `lastEventAt`, `eventCount`) and the monitor diagnostic payload under `connector`. `GET /api/config` returns the configured `username`.
 
 `PUT /api/config` accepts `{ "username": "name" }`, trims whitespace and leading `@` characters, persists the username, and starts a connection. An empty value returns HTTP 400. `POST /api/reconnect` starts a retry for the current username; missing configuration or an active connection returns HTTP 409.
+
+`GET /api/comment-stats` returns totals by country and unassigned comments. Every incoming chat event is counted and persisted in JSON. `GET /api/cup-stats` returns cumulative cup wins by country; `POST /api/cup-stats` accepts `{ "code": "PY" }` to persist a winner. Both statistics are shown in `/backend` and broadcast through SSE as `comment-stats` and `cup-stats`.
 
 `GET /api/events` is an SSE stream:
 
