@@ -33,18 +33,25 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
     assert.match(overlaySource, /id="lanes"/);
     assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
-    assert.match(overlaySource, /id="voiceToggle"[^>]*aria-pressed="false"/);
+    assert.doesNotMatch(overlaySource, /voiceToggle/);
+    assert.doesNotMatch(overlaySource, /#dot|id="dot"|backend-link/);
     assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
-    assert.match(overlaySource, /const googleVoices = spanishVoices\.filter/);
+    assert.match(overlaySource, /const googleVoices = latinVoices\.filter/);
+    assert.match(overlaySource, /const latinVoices = spanishVoices\.filter/);
     assert.match(overlaySource, /googleVoices\[1\] \|\| googleVoices\[0\]/);
+    assert.match(overlaySource, /utterance\.lang = voice \? voice\.lang : "es-419"/);
     assert.match(overlaySource, /VOICE_INTERVAL_MS = 10000/);
     assert.match(overlaySource, /setInterval\(speakEncouragement, VOICE_INTERVAL_MS\)/);
+    assert.match(overlaySource, /voiceEnabled = Boolean\(voiceSynth\)/);
+    assert.match(overlaySource, /if \(voiceSynth\) \{ speakEncouragement\(\); voiceTimer = setInterval/);
+    assert.match(overlaySource, /addEventListener\(event, unlockVoiceAfterGesture, \{ once: true \}\)/);
+    assert.match(overlaySource, /voiceNeedsGesture = true/);
     assert.match(overlaySource, /voiceWatchdog = setTimeout/);
     assert.match(overlaySource, /"¡" \+ country \+ " va ganando! "/);
     assert.match(overlaySource, /\.slice\(0, 2\)[\s\S]*?Usuarios más activos:[\s\S]*?[Ss]igan comentando/);
     const voiceLoop = overlaySource.match(
-      /function speakEncouragement\(\) \{([\s\S]*?)\} function toggleTickerVoice/,
+      /function speakEncouragement\(\) \{([\s\S]*?)\} function unlockVoiceAfterGesture/,
     );
     assert.ok(voiceLoop);
     assert.doesNotMatch(voiceLoop[1], /enqueueMsg/);
@@ -106,6 +113,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /info\.sway = T\[code\]\.sway/);
     assert.match(overlaySource, /egg\.style\.setProperty\("--sway", \(info\.sway \|\| 0\) \+ "px"\)/);
     assert.match(overlaySource, /top: calc\(\s*var\(--rt\) \+ \(var\(--th\) - var\(--fan-size\)\) \/ 2 \+ var\(--sway, 0px\)\s*\);/);
+    assert.match(overlaySource, /function fanEl\(user, info\)[\s\S]*?animationend[\s\S]*?e\.classList\.remove\("fresh"\)/);
+    assert.match(overlaySource, /#lanes \.fa\.fresh \{ z-index: 4; animation: markerdrop/);
+    assert.match(overlaySource, /translateY\(calc\(-1 \* var\(--th\)\)\)/);
     assert.match(overlaySource, /--fan-size: calc\(var\(--flag-size\) \* 2\.4\)/);
     assert.match(overlaySource, /width: calc\(var\(--fan-size\) \* 0\.9\);\s*height: var\(--fan-size\)/);
     assert.match(overlaySource, /border-radius: 50%;\s*overflow: hidden/);
@@ -124,7 +134,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.doesNotMatch(overlaySource, /if \(Q\.get\("demo"\)\)/);
     assert.doesNotMatch(overlaySource, /S\.pos\[k\] = 0/);
     assert.match(overlaySource, /setRoundTeams\(\);/);
-    assert.match(overlaySource, /id="backend-link" href="\/backend"/);
+    assert.doesNotMatch(overlaySource, /id="backend-link"/);
     assert.match(overlaySource, /e\.classList\.add\("fresh"\)/);
     assert.match(overlaySource, /alreadyHere = FANS\[code\]\.has\(user\)/);
     assert.match(overlaySource, /FANINFO\[user\] = \{[\s\S]*?progress:/);

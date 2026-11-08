@@ -84,46 +84,6 @@
         pointer-events: none;
         z-index: 9;
       }
-      #backend-link {
-        position: fixed;
-        right: max(12px, env(safe-area-inset-right));
-        bottom: max(12px, env(safe-area-inset-bottom));
-        z-index: 20;
-        display: grid;
-        width: 40px;
-        height: 40px;
-        place-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        border-radius: 50%;
-        background: #e64952;
-        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
-        color: #fff;
-        text-decoration: none;
-        opacity: 0.9;
-        transition:
-          background 0.18s ease,
-          opacity 0.18s ease,
-          transform 0.18s ease;
-      }
-      #backend-link:hover,
-      #backend-link:focus-visible {
-        background: #fb5962;
-        opacity: 1;
-        transform: scale(1.06);
-      }
-      #backend-link:focus-visible {
-        outline: 2px solid #fff;
-        outline-offset: 3px;
-      }
-      #backend-link svg {
-        width: 17px;
-        height: 17px;
-        fill: none;
-        stroke: currentColor;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-width: 1.8;
-      }
       #cd,
       #win {
         display: none !important;
@@ -1095,22 +1055,6 @@
           padding: 0.1rem 0.3rem;
           font-size: 0.7rem;
         }
-      }
-      /* Panel de pruebas */
-      #dot {
-        position: fixed;
-        right: 0.7rem;
-        bottom: 0.7rem;
-        width: 0.85rem;
-        height: 0.85rem;
-        border-radius: 50%;
-        background: #ff4d4d;
-        box-shadow: 0 0 0.45rem rgba(0, 0, 0, 0.65);
-        z-index: 30;
-      }
-      #dot.on {
-        background: #36e276;
-        box-shadow: 0 0 0.55rem rgba(54, 226, 118, 0.8);
       }
       #overlayVersion {
         position: fixed;
@@ -2323,26 +2267,6 @@
         transform: translateX(100vw);
         will-change: transform;
       }
-      #voiceToggle {
-        position: fixed;
-        right: 1.25rem;
-        bottom: calc(1% + env(safe-area-inset-bottom, 0px));
-        z-index: 55;
-        min-height: 2rem;
-        padding: 0.25rem 0.55rem;
-        border: 0.12rem solid #fff;
-        border-radius: 999px;
-        background: var(--sun);
-        color: var(--ink);
-        font: 700 0.8rem "Bowlby One", sans-serif;
-        box-shadow: 0 0.15rem 0.4rem #0008;
-      }
-      #voiceToggle.act {
-        background: #d7f5a5;
-      }
-      #voiceToggle:disabled {
-        opacity: 0.55;
-      }
       @keyframes tkmove {
         from {
           transform: translateX(100vw);
@@ -2360,14 +2284,6 @@
       /* ===== v10d · pantalla completa, 5 países, sin versión ===== */
       #overlayVersion {
         display: none !important;
-      }
-      #dot {
-        right: 0.5rem;
-        bottom: calc(1% + 0.9rem);
-        width: 0.8rem;
-        height: 0.8rem;
-        opacity: 0.95;
-        z-index: 60;
       }
       #specialEvent {
         display: none !important;
@@ -2513,10 +2429,12 @@
         100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
       }
       #lanes .fa.fresh {
+        z-index: 4;
         animation: markerdrop 0.38s cubic-bezier(.2, 1.6, .4, 1) both;
       }
       @keyframes markerdrop {
-        from { opacity: 0; transform: translateY(-0.45rem) scale(.5) rotate(-12deg); }
+        from { opacity: 0; transform: translateY(calc(-1 * var(--th))) scale(.45) rotate(-12deg); }
+        60% { opacity: 1; transform: translateY(-0.15rem) scale(1.12) rotate(5deg); }
         to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
       }
       /* ===== v12 · velocidad x2 al país con más hinchas ===== */
@@ -2754,7 +2672,6 @@
       TikTok · esperando estado de conexión
     </div>
     <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
-    <button id="voiceToggle" type="button" aria-pressed="false" title="Activar voz alegre en español">🔇 Voz</button>
     <div id="bottom">
       <section id="standings" class="panel">
         <h2 class="disp">TOP 5 · CUENTAS CON MÁS PUNTOS</h2>
@@ -2793,16 +2710,7 @@
         <div class="sm2" id="nxt"></div>
       </div>
     </div>
-    <div id="dot" role="status" aria-label="TikTok desconectado"></div>
     <div id="overlayVersion">v1.6.0 · rastro de avatares</div>
-    <a id="backend-link" href="/backend" aria-label="Abrir el backend" title="Backend">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 7h9m4 0h3M4 17h3m4 0h9M4 12h3m4 0h9" />
-        <circle cx="15" cy="7" r="2" />
-        <circle cx="9" cy="12" r="2" />
-        <circle cx="9" cy="17" r="2" />
-      </svg>
-    </a>
     <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
     <div id="bots">
       <b>Pruebas de interacción (P)</b>
@@ -3693,8 +3601,7 @@
           "Un regalo impulsa a su tortuga. ¡Vamos!",
           "Comenten y ayuden a su tortuga a ganar.",
         ];
-      const voiceButton = $("voiceToggle"),
-        voiceSynth =
+      const voiceSynth =
           "speechSynthesis" in window &&
           "SpeechSynthesisUtterance" in window
             ? window.speechSynthesis
@@ -3705,30 +3612,14 @@
       let tkBusy = false,
         tkTip = false,
         tkTimer = 0,
-        voiceEnabled = false,
+        voiceEnabled = Boolean(voiceSynth),
         voiceSpeaking = false,
+        voiceNeedsGesture = false,
+        voiceHasStarted = false,
         voicePromptIndex = 0,
         voiceLastSpokenAt = 0,
         voiceTimer = 0,
         voiceWatchdog = 0;
-      function updateVoiceButton() {
-        voiceButton.textContent = voiceEnabled ? "🔊 Voz" : "🔇 Voz";
-        voiceButton.classList.toggle("act", voiceEnabled);
-        voiceButton.setAttribute("aria-pressed", String(voiceEnabled));
-        voiceButton.setAttribute(
-          "aria-label",
-          !voiceSynth
-            ? "Narración por voz no disponible en este navegador"
-            : voiceEnabled
-              ? "Desactivar voz"
-              : "Activar voz alegre en español",
-        );
-        voiceButton.title = !voiceSynth
-          ? "Este navegador no admite narración de voz"
-          : voiceEnabled
-            ? "Desactivar voz"
-            : "Activar voz alegre en español";
-      }
       function speakNextTickerMessage() {
         if (!voiceEnabled || voiceSpeaking || !voiceQueue.length) return;
         const text = voiceQueue
@@ -3744,41 +3635,75 @@
         const spanishVoices = voiceSynth
           .getVoices()
           .filter((voice) => /^es(?:-|$)/i.test(voice.lang));
-        const googleVoices = spanishVoices.filter((voice) =>
+        const latinVoices = spanishVoices.filter(
+          (voice) =>
+            /^es-(?:419|MX|US|AR|BO|CL|CO|CR|CU|DO|EC|GT|HN|NI|PA|PE|PR|PY|SV|UY|VE)(?:-|$)/i.test(
+              voice.lang,
+            ) ||
+            /(latam|latino|m[eé]xico|argentina|chile|colombia|per[uú]|paraguay|uruguay|venezuela)/i.test(
+              voice.name,
+            ),
+        );
+        const googleVoices = latinVoices.filter((voice) =>
+          /google/i.test(voice.name),
+        );
+        const allGoogleVoices = spanishVoices.filter((voice) =>
           /google/i.test(voice.name),
         );
         const voice =
           googleVoices[1] ||
           googleVoices[0] ||
+          allGoogleVoices[1] ||
+          allGoogleVoices[0] ||
+          latinVoices.find((candidate) =>
+            /(female|woman|mujer|femenina|helena|elena|sabina|dalia|luc[ií]a|laura|m[oó]nica|sof[ií]a|carmen)/i.test(
+              candidate.name,
+            ),
+          ) ||
           spanishVoices.find((candidate) =>
             /(female|woman|mujer|femenina|helena|elena|sabina|dalia|luc[ií]a|laura|m[oó]nica|sof[ií]a|carmen)/i.test(
               candidate.name,
             ),
           ) ||
+          latinVoices[0] ||
           spanishVoices[0];
-        utterance.lang = voice ? voice.lang : "es-ES";
+        utterance.lang = voice ? voice.lang : "es-419";
         if (voice) utterance.voice = voice;
         utterance.rate = 1.06;
         utterance.pitch = 1.24;
         utterance.volume = 1;
         voiceSpeaking = true;
+        voiceHasStarted = false;
         voiceLastSpokenAt = Date.now();
+        utterance.onstart = () => {
+          voiceHasStarted = true;
+          voiceNeedsGesture = false;
+        };
         utterance.onend = () => {
           clearTimeout(voiceWatchdog);
           voiceWatchdog = 0;
           voiceSpeaking = false;
+          voiceHasStarted = true;
           speakNextTickerMessage();
         };
         utterance.onerror = (event) => {
           clearTimeout(voiceWatchdog);
           voiceWatchdog = 0;
           voiceSpeaking = false;
+          if (event.error === "not-allowed") {
+            voiceNeedsGesture = true;
+            voiceLastSpokenAt = 0;
+          }
           if (event.error !== "canceled")
             console.warn("No se pudo reproducir el mensaje de ánimo:", event.error);
           speakNextTickerMessage();
         };
         voiceWatchdog = setTimeout(() => {
           voiceSpeaking = false;
+          if (!voiceHasStarted) {
+            voiceNeedsGesture = true;
+            voiceLastSpokenAt = 0;
+          }
           voiceSynth.cancel();
         }, VOICE_INTERVAL_MS * 2);
         voiceSynth.speak(utterance);
@@ -3820,32 +3745,28 @@
         return message;
       }
       function speakEncouragement() {
-        if (!voiceEnabled) return;
+        if (!voiceEnabled || voiceNeedsGesture) return;
         const message = nextEncouragement();
         speakTickerMessage(message);
       }
-      function toggleTickerVoice() {
-        if (!voiceSynth) return;
-        voiceEnabled = !voiceEnabled;
-        if (voiceEnabled) {
-          voiceLastSpokenAt = 0;
-          updateVoiceButton();
-          speakEncouragement();
-          voiceTimer = setInterval(speakEncouragement, VOICE_INTERVAL_MS);
-        } else {
-          clearInterval(voiceTimer);
-          voiceTimer = 0;
-          clearTimeout(voiceWatchdog);
-          voiceWatchdog = 0;
-          voiceQueue.length = 0;
-          voiceSpeaking = false;
-          voiceSynth.cancel();
-        }
-        updateVoiceButton();
+      function unlockVoiceAfterGesture() {
+        if (!voiceSynth || (!voiceNeedsGesture && voiceHasStarted)) return;
+        clearTimeout(voiceWatchdog);
+        voiceWatchdog = 0;
+        voiceQueue.length = 0;
+        voiceSynth.cancel();
+        voiceSpeaking = false;
+        voiceNeedsGesture = false;
+        voiceLastSpokenAt = 0;
+        speakEncouragement();
       }
-      voiceButton.disabled = !voiceSynth;
-      voiceButton.addEventListener("click", toggleTickerVoice);
-      updateVoiceButton();
+      if (voiceSynth) {
+        speakEncouragement();
+        voiceTimer = setInterval(speakEncouragement, VOICE_INTERVAL_MS);
+        ["pointerdown", "touchstart", "keydown"].forEach((event) =>
+          addEventListener(event, unlockVoiceAfterGesture, { once: true }),
+        );
+      }
       function enqueueMsg(t) {
         MQ.push(t);
         if (MQ.length > 4) MQ.shift();
@@ -3909,6 +3830,11 @@
         e.dataset.user = user;
         if (info.fresh) {
           e.classList.add("fresh");
+          e.addEventListener(
+            "animationend",
+            () => e.classList.remove("fresh"),
+            { once: true },
+          );
           info.fresh = false;
         }
         e.style.setProperty("--p", info.progress || 0);
@@ -5497,14 +5423,6 @@
         banner.className = "connection-status " + stateClass;
       }
       function setTikTokConnectionStatus(status) {
-        const dot = $("dot");
-        const connected =
-          typeof status === "object" ? status.connected : status;
-        dot.classList.toggle("on", Boolean(connected));
-        dot.setAttribute(
-          "aria-label",
-          connected ? "TikTok conectado" : "TikTok desconectado",
-        );
         if (status && typeof status === "object") {
           latestTikTokStatus = status;
           const username =
