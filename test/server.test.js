@@ -88,6 +88,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /function formatConnectorEvent\(entry\)/);
     assert.match(overlaySource, /function showConnectorEvent\(entry\) \{ connectorEventDisplayed = true; const message = \$\("specialEvent"\); message\.textContent = formatConnectorEvent\(entry\); message\.className = "disp on";/);
     assert.match(overlaySource, /id="raceClock" class="disp" role="timer"/);
+    assert.match(overlaySource, /<div id="win">\s*<div class="card"><img id="winnerFlag" alt="" \/><\/div>\s*<\/div>/);
     assert.doesNotMatch(overlaySource, /TIEMPO DE CARRERA|#raceClock small/);
     assert.match(overlaySource, /id="lanes"><\/div> <div id="raceProgressTrack" role="progressbar"/);
     assert.match(overlaySource, /raceProgressPercent\(remainingMs\) \+ "%"/);
@@ -133,7 +134,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", t\.sway\.toFixed\(2\) \+ "px"\)/);
     assert.match(overlaySource, /const th = H \/ \(1 \+ 0\.625 \* \(C\.length - 1\)\)/);
     assert.match(overlaySource, /W \* 0\.33/);
-    assert.match(overlaySource, /id="ctaMain">💬 COMENTA EL NOMBRE DE TU PAÍS<\/b>/);
+    assert.match(overlaySource, /id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE EN CADA VUELTA<\/b>/);
+    assert.match(overlaySource, /teams\.map\(\(team\) => team\.n\)\.join\(" · "\)/);
     assert.doesNotMatch(overlaySource, /id="ctaSub"|PARTICIPA EN LA CARRERA|COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO/);
     assert.doesNotMatch(overlaySource, /CTA_ROTATION|ESCRIBE EL NOMBRE DE UN PAÍS|El país con más apoyo corre al DOBLE|Toca su perfil y dale <b>Seguir/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
@@ -141,7 +143,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /source\.addEventListener\("update"/);
     assert.match(overlaySource, /startupRetryRequested[\s\S]*?fetch\("\/api\/reconnect", \{ method: "POST" \}\)/);
     assert.match(overlaySource, /const crawl = S\.go && !S\.over \? t\.cr \* dt \* m : 0/);
-    assert.match(overlaySource, /enabled: false/);
+    assert.match(overlaySource, /enabled: Q\.get\("demo"\) === "1"/);
     assert.match(overlaySource, /\.lane\.empty \.tur \{ opacity: 1; filter: none; \}/);
     assert.match(overlaySource, /countries: \[0, 1, 2\]\.map/);
     assert.match(overlaySource, /const FIXED_TEAMS = NATIONS\.slice\(0, 3\)/);
@@ -173,7 +175,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /S\.pos\[k\] >= t\.giftTarget/);
     assert.match(overlaySource, /const code = S\.pick\.get\(p\.key\) \|\| ownerCode, ownsLane = Boolean\(ownerCode && ownerCode === code\)/);
     assert.doesNotMatch(overlaySource, /const CLUBS/);
-    assert.doesNotMatch(overlaySource, /if \(Q\.get\("demo"\)\)/);
+    assert.match(overlaySource, /enabled: Q\.get\("demo"\) === "1"/);
+    assert.match(overlaySource, /id="demoMode" hidden>DEMO · EVENTOS SIMULADOS · NO SON REALES/);
     assert.doesNotMatch(overlaySource, /S\.pos\[k\] = 0/);
     assert.match(overlaySource, /setRoundTeams\(\);/);
     assert.doesNotMatch(overlaySource, /id="backend-link"/);

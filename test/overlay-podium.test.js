@@ -29,20 +29,22 @@ function createElement(tagName) {
 
 function createPodiumHarness() {
   const elements = new Map(
-    ['pod', 'wk', 'wt', 'ws', 'nxb', 'nxt', 'win'].map((id) => [
-      id,
-      createElement(id),
-    ]),
+    ['winnerFlag', 'win'].map((id) => [id, createElement(id)]),
   );
+  elements.get('win').classList = {
+    added: [],
+    add(name) {
+      this.added.push(name);
+    },
+  };
   const app = vm.createContext({
     C: [{ c: 's0' }, { c: 's1' }, { c: 's2' }],
     NATIONS: [
-      { n: 'Argentina', f: '🇦🇷' },
-      { n: 'Brasil', f: '🇧🇷' },
-      { n: 'Uruguay', f: '🇺🇾' },
+      { n: 'Argentina', u: 'flag-ar.svg' },
+      { n: 'Brasil', u: 'flag-br.svg' },
+      { n: 'Uruguay', u: 'flag-uy.svg' },
     ],
     S: { pos: { s0: 90, s1: 70, s2: 100 }, round: 4, nxI: 0 },
-    document: { createElement },
     $(id) {
       return elements.get(id);
     },
@@ -58,18 +60,11 @@ function createPodiumHarness() {
   return { app, elements };
 }
 
-test('winner and podium entries display flags for their own countries', () => {
+test('winner celebration displays only the winning country flag', () => {
   const { app, elements } = createPodiumHarness();
   app.showWin('s2');
 
-  assert.equal(elements.get('wt').textContent, '🇺🇾 Uruguay ¡CAMPEÓN!');
-  const places = elements.get('pod').children;
-  assert.equal(
-    places.find((place) => place.className === 'pc p1').children[0].textContent,
-    '🇺🇾',
-  );
-  assert.deepEqual(
-    places.map((place) => place.children[0].textContent),
-    ['🇦🇷', '🇺🇾', '🇧🇷'],
-  );
+  assert.equal(elements.get('winnerFlag').src, 'flag-uy.svg');
+  assert.equal(elements.get('winnerFlag').alt, 'Bandera de Uruguay');
+  assert.ok(elements.get('win').classList.added.includes('on'));
 });
