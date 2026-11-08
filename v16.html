@@ -2820,7 +2820,7 @@
        *
        * El overlay consume SSE por defecto. Un WebSocket externo es opcional con ?ws=URL.
        * ?target=40 define la meta individual, ?goal=60 la meta comunitaria,
-       * La carrera dura como máximo 60 segundos aunque no haya espectadores.
+       * La carrera dura como máximo tres minutos aunque no haya espectadores.
        * Sin ?demo=1 no se inventan eventos ni estadísticas; el modo demo identifica la actividad simulada.
        * El panel de pruebas manual se abre con P o ?panel=1.
        */
@@ -5028,6 +5028,7 @@
       function finish(code) {
         S.over = true;
         S.winner = code;
+        stopRaceClock();
         clearTimeout(racePromptTimer);
         racePromptTimer = 0;
         musicSync();
@@ -5143,6 +5144,7 @@
       let cdT = [],
         racePromptTimer = 0;
       function countdown() {
+        stopRaceClock();
         S.go = false;
         raceStartedAt = 0;
         clearTimeout(racePromptTimer);
@@ -5168,6 +5170,7 @@
               if (i === 3) {
                 S.go = true;
                 raceStartedAt = performance.now();
+                startRaceClock();
                 racePromptTimer = setTimeout(() => {
                   racePromptTimer = 0;
                   if (S.go && !S.over)
@@ -5279,7 +5282,8 @@
         tNow = 0,
         acc = 0,
         raceStartedAt = 0,
-        raceWarningSecond = null;
+        raceWarningSecond = null,
+        raceClockTimer = 0;
       function updateRaceClock(now) {
         const remainingMs = Math.max(
             0,
@@ -5314,6 +5318,28 @@
           SFX.tick();
         }
       }
+      function stopRaceClock() {
+        clearInterval(raceClockTimer);
+        raceClockTimer = 0;
+      }
+      function startRaceClock() {
+        stopRaceClock();
+        raceClockTimer = setInterval(() => {
+          if (!S.go || S.over || !raceStartedAt) return;
+          const now = performance.now(),
+            elapsedMs = now - raceStartedAt,
+            code = fallbackWinnerCode,
+            guaranteedPosition = guaranteedRacePosition(elapsedMs, true),
+            position = Math.max(S.pos[code], guaranteedPosition);
+          S.pos[code] = position;
+          const progress = Math.min(CFG.win, position).toFixed(2);
+          T[code].tur.style.setProperty("--p", progress);
+          T[code].trk.style.setProperty("--p", progress);
+          updateRaceClock(now);
+          if (elapsedMs >= RACE_DURATION_MS)
+            finish(S.winner || fallbackWinnerCode);
+        }, 100);
+      }
       /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan sin retroceder
    ni generar puntos o decidir al ganador. En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
@@ -5327,7 +5353,6 @@
         last = now;
         if (dt <= 0) return;
         tNow += dt;
-        if (S.go && !S.over && raceStartedAt) updateRaceClock(now);
         const laneHeight = lanes.clientHeight,
           turtleHeight = T[C[0].c].tur.getBoundingClientRect().height,
           laneStep =
@@ -5349,7 +5374,7 @@
               0.6 * Math.sin(tNow * 0.7 + t.w) +
               0.3 * Math.sin(tNow * 1.9 + t.w * 2.3),
           );
-          /* El avance base garantiza la meta en dos minutos; los eventos impulsan al país apoyado. */
+          /* El avance base mantiene movimiento continuo; los eventos impulsan al país apoyado. */
           const tgtC =
             (CFG.win / (RACE_DURATION_MS / 1000)) * t.base * wob;
           t.cr += (tgtC - t.cr) * Math.min(1, dt * 2);

@@ -93,6 +93,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /raceProgressPercent\(remainingMs\) \+ "%"/);
     assert.match(overlaySource, /id="raceProgress"><\/i>/);
     assert.match(overlaySource, /RACE_DURATION_MS = 180_000/);
+    assert.match(overlaySource, /raceClockTimer = setInterval\(\(\) => \{/);
+    assert.match(overlaySource, /raceStartedAt = performance\.now\(\);\s*startRaceClock\(\);/);
     assert.match(overlaySource, /aria-valuemax="180"[\s\S]*?aria-valuenow="180"[\s\S]*?aria-valuetext="03:00"/);
     assert.match(overlaySource, /guaranteedRacePosition\(\s*now - raceStartedAt,\s*k === fallbackWinnerCode,?\s*\)/);
     assert.match(overlaySource, /fraction:\s*\(CFG\.win - previousPosition\) \/ \(S\.pos\[k\] - previousPosition\)/);
