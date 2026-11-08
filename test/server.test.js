@@ -39,7 +39,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
     assert.match(overlaySource, /const googleVoices = latinVoices\.filter/);
     assert.match(overlaySource, /const latinVoices = spanishVoices\.filter/);
-    assert.match(overlaySource, /googleVoices\[1\] \|\| googleVoices\[0\]/);
+    assert.match(overlaySource, /googleVoices\[0\] \|\| googleVoices\[1\]/);
     assert.match(overlaySource, /utterance\.lang = voice \? voice\.lang : "es-419"/);
     assert.match(overlaySource, /VOICE_INTERVAL_MS = 10000/);
     assert.match(overlaySource, /setInterval\(speakEncouragement, VOICE_INTERVAL_MS\)/);
@@ -56,7 +56,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.ok(voiceLoop);
     assert.doesNotMatch(voiceLoop[1], /enqueueMsg/);
     assert.match(overlaySource, /VOICE_PROMPTS = \[[\s\S]*?comenten su país para apoyar[\s\S]*?Dejen un like[\s\S]*?Compartan el LIVE/);
-    assert.match(overlaySource, /function enqueueMsg\(t\) \{ \$\("specialEvent"\)\.textContent = String\(t \|\| ""\); \}/);
+    assert.match(overlaySource, /function enqueueMsg\(t\) \{ if \(!connectorEventDisplayed\) \$\("specialEvent"\)\.textContent = String\(t \|\| ""\); \}/);
+    assert.match(overlaySource, /function formatConnectorEvent\(entry\)/);
+    assert.match(overlaySource, /function showConnectorEvent\(entry\) \{ connectorEventDisplayed = true; \$\("specialEvent"\)\.textContent = formatConnectorEvent\(entry\); \}/);
+    assert.match(overlaySource, /function addLiveEvent\(entry\) \{[\s\S]*?showConnectorEvent\(entry\);/);
     assert.doesNotMatch(overlaySource, /#tkIn|tkmove|function msgTick/);
     assert.match(overlaySource, /comment\.length > 100/);
     assert.match(overlaySource, /Esperando el LIVE de /);

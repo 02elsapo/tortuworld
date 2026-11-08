@@ -2776,6 +2776,7 @@
       const liveEvents = [],
         liveEventLimit = 3,
         contestants = new Map();
+      let connectorEventDisplayed = false;
       let contestantSequence = 0;
       /* ===== v8 · PAÍSES en lugar de usuarios =====
    Los tres primeros países son fijos; se sortean dos adicionales de la lista popular. */
@@ -3640,8 +3641,8 @@
           /google/i.test(voice.name),
         );
         const voice =
-          googleVoices[1] ||
           googleVoices[0] ||
+          googleVoices[1] ||
           allGoogleVoices[1] ||
           allGoogleVoices[0] ||
           latinVoices.find((candidate) =>
@@ -3757,7 +3758,8 @@
         );
       }
       function enqueueMsg(t) {
-        $("specialEvent").textContent = String(t || "");
+        if (!connectorEventDisplayed)
+          $("specialEvent").textContent = String(t || "");
       }
       function showSpecialEvent(text) {
         enqueueMsg(text);
@@ -4369,6 +4371,47 @@
           body.append(row);
         });
       }
+      function formatConnectorEvent(entry) {
+        const labels = {
+            chat: "Comentario",
+            gift: "Regalo",
+            like: "Me gusta",
+            follow: "Nuevo seguidor",
+            share: "Compartido",
+            join: "Ingreso",
+            member: "Ingreso",
+            enter: "Ingreso",
+          },
+          icons = {
+            chat: "💬",
+            gift: "🎁",
+            like: "👍",
+            follow: "❤️",
+            share: "🔁",
+            join: "👋",
+            member: "👋",
+            enter: "👋",
+          },
+          type = String(entry.type || ""),
+          label = String(entry.eventLabel || labels[type] || type || "Evento"),
+          username = String(entry.username || "Sistema").trim() || "Sistema",
+          content = String(entry.content || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          detail = content.length > 90 ? content.slice(0, 89) + "…" : content;
+        return (
+          (icons[type] || "🔔") +
+          " " +
+          label +
+          " · " +
+          username +
+          (detail ? " · " + detail : "")
+        );
+      }
+      function showConnectorEvent(entry) {
+        connectorEventDisplayed = true;
+        $("specialEvent").textContent = formatConnectorEvent(entry);
+      }
       function setLiveEventSnapshot(entries) {
         liveEvents.length = 0;
         if (Array.isArray(entries)) {
@@ -4383,6 +4426,14 @@
             .forEach((entry) => liveEvents.push(entry));
         }
         renderLiveEvents();
+        if (liveEvents.length) {
+          const latest = liveEvents.reduce((newest, entry) =>
+            Date.parse(entry.time || "") > Date.parse(newest.time || "")
+              ? entry
+              : newest,
+          );
+          showConnectorEvent(latest);
+        }
       }
       function addLiveEvent(entry) {
         if (
@@ -4394,6 +4445,7 @@
         liveEvents.unshift(entry);
         liveEvents.length = Math.min(liveEvents.length, liveEventLimit);
         renderLiveEvents();
+        showConnectorEvent(entry);
       }
       function getTopPlayers() {
         return [...contestants.values()]
