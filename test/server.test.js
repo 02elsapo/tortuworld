@@ -48,12 +48,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /function showTurtleAvatar\(code, user, isJoin = false\)/);
     assert.match(overlaySource, /selectedTurtle\.tur\.append\(rider\)/);
     assert.match(overlaySource, /isJoin \|\| _newAvatar \|\| FANINFO\[_u\]\?\.avatar !== _oldAvatar/);
-    assert.match(overlaySource, /--track-flag-size: 4\.6rem/);
-    assert.match(overlaySource, /--track-flag-size: 4rem/);
-    assert.match(overlaySource, /#lanes \{ --g: 5\.6rem; \}/);
-    assert.match(overlaySource, /#lanes \.rk \{ position: absolute; z-index: 4; left: calc\(\(var\(--g\) - var\(--track-flag-size\)\) \/ 2\); top: calc\(var\(--rt\) \+ var\(--th\) \/ 2\); transform: translateY\(-50%\);/);
+    assert.match(overlaySource, /#lanes \{ --g: 1\.5rem; \}/);
+    assert.doesNotMatch(overlaySource, /--track-flag-size|#lanes \.rk|<div class="rk disp" id="rk-/);
     assert.match(overlaySource, /#lanes \.tag \{ top: calc\(var\(--rt\) \+ 0\.1rem\); \}/);
-    assert.match(overlaySource, /<div class="rk disp" id="rk-\$\{c\.c\}"><img alt="\$\{NATIONS\[li\]\.n\}"/);
     assert.doesNotMatch(overlaySource, /CUP_COUNTS|loadCupStats|recordCupWin/);
     assert.doesNotMatch(overlaySource, /<div class="tag">|MÁS HINCHAS/);
     assert.match(overlaySource, /if \(_newAvatar\) layPendingFanEggs\(_code, _u\)/);
@@ -79,7 +76,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /voiceNeedsGesture = true/);
     assert.match(overlaySource, /voiceWatchdog = setTimeout/);
     assert.match(overlaySource, /"¡Vamos " \+ NATIONS\[C\.findIndex\(\(country\) => country\.c === leader\.c\)\]\.n \+ "! ¡Qué buena carrera!"/);
-    assert.match(overlaySource, /Si quieres apoyar a un equipo, puedes comentar su país, usar tap tap, compartir o seguir la cuenta/);
+    assert.match(overlaySource, /Si quieres, comenta cuál es tu país favorito y alienta al equipo que prefieras/);
     const voiceLoop = overlaySource.match(
       /function speakEncouragement\(\) \{([\s\S]*?)\} function unlockVoiceAfterGesture/,
     );
@@ -140,8 +137,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", t\.sway\.toFixed\(2\) \+ "px"\)/);
     assert.match(overlaySource, /const th = H \/ \(1 \+ 0\.625 \* \(C\.length - 1\)\)/);
     assert.match(overlaySource, /W \* 0\.33/);
-    assert.match(overlaySource, /id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE<\/b>/);
+    assert.match(overlaySource, /id="ctaMain">💬 ¿QUÉ PAÍS TE GUSTARÍA QUE GANE\?<\/b>/);
     assert.match(overlaySource, /teams\.map\(\(team\) => team\.n\)\.join\(" · "\)/);
+    assert.match(overlaySource, /racePromptTimer = setTimeout\(\(\) => \{[\s\S]*?queueActionReminder\(\s*updateRacePrompt\(VOICE_INTERVAL_MS\)/);
     assert.doesNotMatch(overlaySource, /id="ctaSub"|PARTICIPA EN LA CARRERA|COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO/);
     assert.doesNotMatch(overlaySource, /CTA_ROTATION|ESCRIBE EL NOMBRE DE UN PAÍS|El país con más apoyo corre al DOBLE|Toca su perfil y dale <b>Seguir/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);

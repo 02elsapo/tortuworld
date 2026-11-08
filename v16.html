@@ -43,7 +43,6 @@
         --ink: #07262b;
         --ink2: #0d3a41;
         --flag-size: 2.3rem;
-        --track-flag-size: 4.6rem;
         --sun: #ffc93c;
         --pink: #ff3d7f;
         --cream: #fff6e0;
@@ -1965,51 +1964,6 @@
       .lab {
         width: 3.3rem;
       }
-      .rk {
-        position: relative;
-        width: var(--track-flag-size);
-        height: var(--track-flag-size);
-        padding: 0;
-        overflow: hidden;
-        border: 0.16rem solid var(--cream);
-        box-shadow: 0 0.12rem 0.35rem rgba(0, 0, 0, 0.55);
-      }
-      .rk img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-      .rk::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        pointer-events: none;
-        background:
-          radial-gradient(
-            circle at 30% 24%,
-            rgba(255, 255, 255, 0.6),
-            transparent 42%
-          ),
-          radial-gradient(
-            circle at 50% 55%,
-            transparent 55%,
-            rgba(0, 0, 0, 0.3) 100%
-          );
-      }
-      .rk.r1 {
-        border-color: var(--sun);
-        box-shadow:
-          0 0 0.55rem var(--sun),
-          0 0.12rem 0.35rem rgba(0, 0, 0, 0.55);
-      }
-      .rk.r2 {
-        border-color: #d9e2e5;
-      }
-      .rk.r3 {
-        border-color: #e3a46b;
-      }
       @media (orientation: portrait) {
         #ctaMain {
           font-size: 0.95rem;
@@ -2022,7 +1976,6 @@
         }
         :root {
           --flag-size: 2rem;
-          --track-flag-size: 4rem;
         }
       }
       /* ===== v10b · llamadas de acción grandes y vistosas ===== */
@@ -2168,13 +2121,6 @@
         background: none;
         z-index: 1;
         --rt: calc((100% - var(--th)) * var(--i)/var(--n));
-      }
-      #lanes .rk {
-        position: absolute;
-        z-index: 4;
-        left: calc((var(--g) - var(--track-flag-size)) / 2);
-        top: calc(var(--rt) + var(--th) / 2);
-        transform: translateY(-50%);
       }
       #lanes .trk .tur {
         top: calc(var(--rt) + var(--sway, 0px));
@@ -2439,14 +2385,14 @@
         --g: 4.6rem;
       }
       #lanes {
-        --g: 5.6rem;
+        --g: 1.5rem;
       }
       #lanes .tag {
         top: calc(var(--rt) + 0.1rem);
       }
       @media (orientation: portrait) {
         #lanes {
-          --g: 5rem;
+          --g: 1.5rem;
         }
       }
       #lanes .tag b i {
@@ -2768,7 +2714,7 @@
           <span id="raceTime">03:00</span>
         </div>
         <div id="joinCTA" aria-live="polite">
-          <b id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE</b>
+          <b id="ctaMain">💬 ¿QUÉ PAÍS TE GUSTARÍA QUE GANE?</b>
           <span id="ctaCountries"></span>
         </div>
         <div id="goal">
@@ -3174,10 +3120,7 @@
         NATIONS.splice(0, NATIONS.length, ...teams);
         $("ctaCountries").textContent = teams.map((team) => team.n).join(" · ");
         CODES.splice(0, CODES.length, ...teams.map((team) => team.code));
-        C.forEach((lane, index) => {
-          const image = $("rk-" + lane.c).querySelector("img");
-          image.alt = teams[index].n;
-          image.src = teams[index].u;
+        C.forEach((lane) => {
           T[lane.c].avKey = null;
         });
       }
@@ -3608,7 +3551,7 @@
         const l = document.createElement("div");
         l.className = "lane empty";
         l.id = "ln-" + c.c;
-        l.innerHTML = `<div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
+        l.innerHTML = `<div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
         lanes.append(l);
       });
 
@@ -3692,6 +3635,24 @@
       /* Mensajes y eventos permanecen visibles hasta que el siguiente los reemplaza. */
       const VOICE_INTERVAL_MS = 60000,
         ACTION_REMINDER_INTERVAL_MS = 180000;
+      const RACE_PROMPTS = [
+        {
+          screen: "💬 ¿QUÉ PAÍS TE GUSTARÍA QUE GANE?",
+          voice:
+            "¿Qué país te gustaría que gane? Si quieres, comenta una de las opciones.",
+        },
+        {
+          screen: "💬 SI QUERÉS, COMENTÁ CUÁL ES TU PAÍS FAVORITO",
+          voice:
+            "Si quieres, comenta cuál es tu país favorito y alienta al equipo que prefieras.",
+        },
+      ];
+      function updateRacePrompt(elapsedMs) {
+        const prompt =
+          elapsedMs < VOICE_INTERVAL_MS ? RACE_PROMPTS[0] : RACE_PROMPTS[1];
+        $("ctaMain").textContent = prompt.screen;
+        return prompt.voice;
+      }
       const voiceSynth =
           "speechSynthesis" in window &&
           "SpeechSynthesisUtterance" in window
@@ -3854,7 +3815,7 @@
       function speakActionReminder() {
         if (!voiceEnabled || voiceNeedsGesture || S.over) return;
         queueActionReminder(
-          "Si quieres apoyar a un equipo, puedes comentar su país, usar tap tap, compartir o seguir la cuenta.",
+          "Si quieres, comenta cuál es tu país favorito y alienta al equipo que prefieras.",
         );
       }
       function unlockVoiceAfterGesture() {
@@ -5067,6 +5028,8 @@
       function finish(code) {
         S.over = true;
         S.winner = code;
+        clearTimeout(racePromptTimer);
+        racePromptTimer = 0;
         musicSync();
         SFX.flag();
         const t = T[code],
@@ -5177,10 +5140,14 @@
       }
 
       /* Cuenta regresiva: las tortugas esperan en la línea de salida */
-      let cdT = [];
+      let cdT = [],
+        racePromptTimer = 0;
       function countdown() {
         S.go = false;
         raceStartedAt = 0;
+        clearTimeout(racePromptTimer);
+        racePromptTimer = 0;
+        updateRacePrompt(0);
         raceWarningSecond = null;
         $("raceTime").textContent = formatRaceTime(RACE_DURATION_MS);
         $("raceProgress").style.width = "100%";
@@ -5201,6 +5168,13 @@
               if (i === 3) {
                 S.go = true;
                 raceStartedAt = performance.now();
+                racePromptTimer = setTimeout(() => {
+                  racePromptTimer = 0;
+                  if (S.go && !S.over)
+                    queueActionReminder(
+                      updateRacePrompt(VOICE_INTERVAL_MS),
+                    );
+                }, VOICE_INTERVAL_MS);
                 SFX.go();
                 musicSync();
               } else SFX.tick();
