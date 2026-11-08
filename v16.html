@@ -2187,6 +2187,56 @@
           var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100
         );
       }
+      #lanes .tur .rider-avatar {
+        position: absolute;
+        z-index: 8;
+        left: 50%;
+        top: -2.5rem;
+        display: grid;
+        width: 3.2rem;
+        height: 3.2rem;
+        place-items: center;
+        overflow: hidden;
+        border: 0.14rem solid var(--sun);
+        border-radius: 50%;
+        background: var(--ink2);
+        color: #fff;
+        box-shadow: 0 0 0.6rem rgba(0, 0, 0, 0.65);
+        font-size: 1.4rem;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      #lanes .tur .rider-avatar img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #lanes .tur .rider-avatar.arriving {
+        animation: avatarArrive 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+      }
+      @keyframes avatarArrive {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -1.2rem) scale(0.45);
+        }
+        70% {
+          opacity: 1;
+          transform: translate(-50%, 0.15rem) scale(1.12);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0) scale(1);
+        }
+      }
+      @media (orientation: portrait) {
+        #lanes .tur .rider-avatar {
+          top: -1.9rem;
+          width: 2.4rem;
+          height: 2.4rem;
+          font-size: 1.05rem;
+        }
+      }
       #lanes .sl {
         left: calc(var(--g) + var(--tw));
       }
@@ -4064,6 +4114,47 @@
           e.append(im);
         } else placeholder();
         return e;
+      }
+      function showTurtleAvatar(code, user) {
+        const info = FANINFO[user],
+          t = T[code];
+        if (!info || !t) return;
+        C.forEach((lane) => {
+          if (lane.c === code) return;
+          const previous = T[lane.c].tur.querySelector(".rider-avatar");
+          if (previous?.dataset.user === user) previous.remove();
+        });
+        let rider = t.tur.querySelector(".rider-avatar");
+        if (!rider) {
+          rider = document.createElement("span");
+          rider.className = "rider-avatar";
+          t.tur.append(rider);
+        }
+        rider.dataset.user = user;
+        rider.title = info.name;
+        rider.setAttribute("aria-label", info.name);
+        const placeholder = () => {
+          rider.classList.add("placeholder");
+          const initial = document.createElement("span");
+          initial.textContent =
+            (info.name || "?").trim().charAt(0).toUpperCase() || "👤";
+          rider.replaceChildren(initial);
+        };
+        if (info.avatar) {
+          const image = document.createElement("img");
+          image.alt = "";
+          image.referrerPolicy = "no-referrer";
+          image.onerror = () => {
+            if (rider.dataset.user === user && rider.contains(image))
+              placeholder();
+          };
+          image.src = info.avatar;
+          rider.classList.remove("placeholder");
+          rider.replaceChildren(image);
+        } else placeholder();
+        rider.classList.remove("arriving");
+        void rider.offsetWidth;
+        rider.classList.add("arriving");
       }
       function dropTrail(code, now) {
         const tr = TRAIL[code],
@@ -6457,9 +6548,12 @@
               S.pick.get(_u) ||
               S.slotOf.get(_u) ||
               rnd(C).c;
-            const _newAvatar = !FANS[_code].has(_u);
+            const _newAvatar = !FANS[_code].has(_u),
+              _oldAvatar = FANINFO[_u]?.avatar;
             registerFan(_u, _code, entry);
             if (_newAvatar) layPendingFanEggs(_code, _u);
+            if (_newAvatar || FANINFO[_u]?.avatar !== _oldAvatar)
+              showTurtleAvatar(_code, _u);
             if (Date.now() - (handleTikTokEntry.sup[_u] || 0) > 8000) {
               handleTikTokEntry.sup[_u] = Date.now();
               const _o = _i >= 0 ? slotPlayer(_code) : null;

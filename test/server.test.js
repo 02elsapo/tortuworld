@@ -43,6 +43,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.doesNotMatch(overlaySource, /#dot|id="dot"|backend-link/);
     assert.match(overlaySource, /a\.im\.setAttribute\("href", _nn\.u\)/);
     assert.match(overlaySource, /im\.src = info\.avatar/);
+    assert.match(overlaySource, /#lanes \.tur \.rider-avatar \{ position: absolute; z-index: 8; left: 50%; top: -2\.5rem;/);
+    assert.match(overlaySource, /function showTurtleAvatar\(code, user\)/);
+    assert.match(overlaySource, /t\.tur\.append\(rider\)/);
+    assert.match(overlaySource, /if \(_newAvatar \|\| FANINFO\[_u\]\?\.avatar !== _oldAvatar\) showTurtleAvatar\(_code, _u\)/);
     assert.match(overlaySource, /--track-flag-size: 4\.6rem/);
     assert.match(overlaySource, /--track-flag-size: 4rem/);
     assert.match(overlaySource, /#lanes \{ --g: 5\.6rem; \}/);
