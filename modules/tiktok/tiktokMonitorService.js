@@ -18,10 +18,10 @@ function createTikTokMonitorService({
   webcastEvents = WebcastEvent,
   controlEvents = ControlEvent,
   connectorLoader = loadTikTokConnector,
-  retryFastIntervalMs = 15000,
-  retryFastWindowMs = 5 * 60 * 1000,
+  retryFastIntervalMs = 10000,
+  retryFastWindowMs = 20 * 60 * 1000,
   retrySlowIntervalMs = 60000,
-  connectTimeoutMs = 15000,
+  connectTimeoutMs = 10000,
   maxConnectionAttempts = null,
   now = Date.now,
   scheduleTimeout = setTimeout,
@@ -61,6 +61,7 @@ function createTikTokMonitorService({
   let connectionGeneration = 0;
   let retryStartedAt = null;
   let lastAttemptAt = null;
+  let lastRetryWindowRefreshAt = null;
   let retryTimer = null;
   let connectTimer = null;
 
@@ -463,6 +464,7 @@ function createTikTokMonitorService({
     const generation = connectionGeneration;
     retryStartedAt = now();
     lastAttemptAt = null;
+    lastRetryWindowRefreshAt = null;
     cancelScheduledRetry();
     cancelConnectionTimeout();
     state.retryAttempt = 0;
@@ -482,6 +484,26 @@ function createTikTokMonitorService({
     addLog(`Conectando a @${clean}...`);
     broadcastStatus();
     connectAttempt(clean, generation);
+  }
+
+  function refreshRetryWindow() {
+    if (!state.username || state.isConnected) return false;
+    const timestamp = now();
+    if (
+      lastRetryWindowRefreshAt !== null
+      && timestamp - lastRetryWindowRefreshAt < 5000
+    ) return true;
+
+    lastRetryWindowRefreshAt = timestamp;
+    retryStartedAt = timestamp;
+    state.retryAttempt = 0;
+    if (retryTimer !== null) {
+      cancelScheduledRetry();
+      connectAttempt(state.username, connectionGeneration);
+    } else {
+      broadcastStatus();
+    }
+    return true;
   }
 
   function disconnectUser() {
@@ -562,6 +584,7 @@ function createTikTokMonitorService({
   return {
     state,
     connectUser,
+    refreshRetryWindow,
     disconnectUser,
     setEnabledEvents,
     getStatusPayload,

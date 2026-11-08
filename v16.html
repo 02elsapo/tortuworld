@@ -5329,9 +5329,30 @@
           return;
         }
         const source = new EventSource("/api/events");
+        let startupRetryRequested = false;
         source.addEventListener("status", (e) => {
           try {
-            setTikTokConnectionStatus(JSON.parse(e.data));
+            const status = JSON.parse(e.data);
+            setTikTokConnectionStatus(status);
+            if (
+              !startupRetryRequested &&
+              !status.connected &&
+              typeof status.username === "string" &&
+              status.username
+            ) {
+              startupRetryRequested = true;
+              fetch("/api/reconnect", { method: "POST" })
+                .then(async (response) => {
+                  if (response.ok || response.status === 409) return;
+                  const result = await response.json();
+                  throw new Error(
+                    result.message || "No se pudo reactivar la conexión con TikTok.",
+                  );
+                })
+                .catch((error) =>
+                  console.error("Error al reactivar TikTok al abrir el overlay:", error),
+                );
+            }
           } catch {}
         });
         source.addEventListener("snapshot", (e) => {

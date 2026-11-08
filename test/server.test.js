@@ -38,6 +38,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
     assert.match(overlaySource, /source\.addEventListener\("snapshot"/);
     assert.match(overlaySource, /source\.addEventListener\("update"/);
+    assert.match(overlaySource, /startupRetryRequested[\s\S]*?fetch\("\/api\/reconnect", \{ method: "POST" \}\)/);
     assert.match(overlaySource, /const crawl = S\.go && !S\.over \? t\.cr \* dt \* m : 0/);
     assert.match(overlaySource, /enabled: false/);
     assert.match(overlaySource, /\.lane\.empty \.tur \{ opacity: 1; filter: none; \}/);
@@ -150,6 +151,7 @@ test('backend configuration connects the account and forwards TikTok events', as
   let statusListener;
   const monitorService = {
     state: { username: '', status: 'idle', isConnected: false, error: '' },
+    retryWindowRefreshes: 0,
     getStatusPayload: () => ({ ...monitorService.state }),
     subscribeToEvents(listener) {
       eventListener = listener;
@@ -164,6 +166,7 @@ test('backend configuration connects the account and forwards TikTok events', as
       statusListener({ ...monitorService.state });
     },
     disconnectUser() {},
+    refreshRetryWindow() { monitorService.retryWindowRefreshes += 1; },
     emit(entry) {
       eventListener(entry);
     },
@@ -199,6 +202,9 @@ test('backend configuration connects the account and forwards TikTok events', as
     });
 
     assert.equal((await fetch(`${baseUrl}/api/reconnect`, { method: 'POST' })).status, 409);
+    Object.assign(monitorService.state, { status: 'reconnecting', isConnected: false });
+    assert.equal((await fetch(`${baseUrl}/api/reconnect`, { method: 'POST' })).status, 200);
+    assert.equal(monitorService.retryWindowRefreshes, 1);
     Object.assign(monitorService.state, { status: 'disconnected', isConnected: false });
     const reconnect = await fetch(`${baseUrl}/api/reconnect`, { method: 'POST' });
     assert.equal(reconnect.status, 200);

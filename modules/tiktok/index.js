@@ -109,9 +109,12 @@ function createTikTokModule({
     if (!username) {
       return { ok: false, status: 409, message: 'Primero configura un usuario de TikTok.' };
     }
-    if (monitorService.state.isConnected
-      || ['connecting', 'reconnecting'].includes(monitorService.state.status)) {
-      return { ok: false, status: 409, message: 'La conexión ya está activa o intentando conectarse.' };
+    if (monitorService.state.isConnected) {
+      return { ok: false, status: 409, message: 'La conexión ya está activa.' };
+    }
+    if (['connecting', 'reconnecting'].includes(monitorService.state.status)) {
+      monitorService.refreshRetryWindow();
+      return { ok: true, username };
     }
     monitorService.connectUser(username);
     return { ok: true, username };
