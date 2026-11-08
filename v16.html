@@ -3720,18 +3720,38 @@
         voicePromptIndex = 0,
         voiceLastSpokenAt = 0,
         voiceTimer = 0,
+        voiceWatchdog = 0,
+        voiceCurrentItem = null;
+      function finishVoiceItem(item) {
+        if (item.completed) return;
+        item.completed = true;
+        clearTimeout(voiceWatchdog);
         voiceWatchdog = 0;
+        voiceSpeaking = false;
+        if (voiceCurrentItem === item) voiceCurrentItem = null;
+        if (item.onComplete) item.onComplete();
+        speakNextTickerMessage();
+      }
       function speakNextTickerMessage() {
         if (!voiceEnabled || voiceSpeaking || !voiceQueue.length) return;
-        const text = voiceQueue
-          .shift()
+        if (voiceNeedsGesture) {
+          const waiting = voiceQueue.splice(0);
+          waiting.forEach((item) => {
+            if (item.onComplete) item.onComplete();
+          });
+          return;
+        }
+        const item = voiceQueue.shift(),
+          text = item.text
           .replace(/[^\p{L}\p{N}\p{P}\p{Zs}]/gu, " ")
           .replace(/\s+/g, " ")
           .trim();
         if (!text) {
+          if (item.onComplete) item.onComplete();
           speakNextTickerMessage();
           return;
         }
+        voiceCurrentItem = item;
         const utterance = new SpeechSynthesisUtterance(text);
         const spanishVoices = voiceSynth
           .getVoices()
@@ -3781,31 +3801,25 @@
           voiceNeedsGesture = false;
         };
         utterance.onend = () => {
-          clearTimeout(voiceWatchdog);
-          voiceWatchdog = 0;
-          voiceSpeaking = false;
           voiceHasStarted = true;
-          speakNextTickerMessage();
+          finishVoiceItem(item);
         };
         utterance.onerror = (event) => {
-          clearTimeout(voiceWatchdog);
-          voiceWatchdog = 0;
-          voiceSpeaking = false;
           if (event.error === "not-allowed") {
             voiceNeedsGesture = true;
             voiceLastSpokenAt = 0;
           }
           if (event.error !== "canceled")
             console.warn("No se pudo reproducir el mensaje de ánimo:", event.error);
-          speakNextTickerMessage();
+          finishVoiceItem(item);
         };
         voiceWatchdog = setTimeout(() => {
-          voiceSpeaking = false;
           if (!voiceHasStarted) {
             voiceNeedsGesture = true;
             voiceLastSpokenAt = 0;
           }
           voiceSynth.cancel();
+          finishVoiceItem(item);
         }, VOICE_INTERVAL_MS * 2);
         voiceSynth.speak(utterance);
       }
@@ -3818,7 +3832,19 @@
         )
           return;
         voiceQueue.length = 0;
-        voiceQueue.push(String(text));
+        voiceQueue.push({ text: String(text) });
+        speakNextTickerMessage();
+      }
+      function speakWinnerAnnouncement(text, onComplete) {
+        if (!voiceEnabled || !voiceSynth || voiceNeedsGesture) {
+          onComplete();
+          return;
+        }
+        voiceQueue.unshift({
+          text: String(text),
+          onComplete,
+          required: true,
+        });
         speakNextTickerMessage();
       }
       function nextEncouragement() {
@@ -3854,12 +3880,23 @@
         if (!voiceSynth || (!voiceNeedsGesture && voiceHasStarted)) return;
         clearTimeout(voiceWatchdog);
         voiceWatchdog = 0;
+        if (voiceCurrentItem) {
+          voiceCurrentItem.completed = true;
+          voiceQueue.unshift({
+            ...voiceCurrentItem,
+            completed: false,
+          });
+        }
+        const required = voiceQueue.filter((item) => item.required);
         voiceQueue.length = 0;
+        voiceQueue.push(...required);
         voiceSynth.cancel();
         voiceSpeaking = false;
+        voiceCurrentItem = null;
         voiceNeedsGesture = false;
         voiceLastSpokenAt = 0;
-        speakEncouragement();
+        if (voiceQueue.length) speakNextTickerMessage();
+        else speakEncouragement();
       }
       if (voiceSynth) {
         speakEncouragement();
@@ -5067,7 +5104,7 @@
             " · ¡síguelo!",
         );
         clearTimeout(S.rt);
-        S.rt = setTimeout(newRound, CFG.restartMs);
+        S.rt = null;
         burst(80, true);
         render();
       }
@@ -6310,15 +6347,18 @@
       finish = function (code) {
         _finish(code);
         const p = slotPlayer(code);
+        const finishedAt = Date.now();
         const winnerName =
           p
             ? nat(p).n
             : NATIONS[C.findIndex((lane) => lane.c === code)].n;
-        speakTickerMessage(
-          "Ganó " +
-            winnerName +
-            ". ¡Celebramos su victoria! La nueva carrera comienza en unos segundos.",
-        );
+        const restartAfterCelebration = () => {
+          clearTimeout(S.rt);
+          S.rt = setTimeout(
+            newRound,
+            Math.max(0, finishedAt + CFG.restartMs - Date.now()),
+          );
+        };
         $("app").classList.add("finished");
         emojiFx(code, "follow", 10);
         ringFx(code, true);
@@ -6335,6 +6375,12 @@
           screenFx(true);
           burst(100, true);
         }
+        speakWinnerAnnouncement(
+          "Ganó " +
+            winnerName +
+            ". ¡Celebramos su victoria! La nueva carrera comienza en unos segundos.",
+          restartAfterCelebration,
+        );
       };
       /* al reiniciar la ronda se limpian los puestos recordados */
       const _newRound = newRound;
