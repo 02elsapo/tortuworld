@@ -37,7 +37,7 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /` o `GET /overlay` | Juego de carrera de tortugas; asistentes visuales por país, sin simular espectadores ni interacciones de TikTok. | HTML |
+| `GET /` o `GET /overlay` | Carrera de tortugas con eventos visuales internos por país, sin alterar estadísticas ni simular espectadores de TikTok. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -68,7 +68,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `v16.html` presenta una carrera de diez países: Brasil, Paraguay, Argentina y Alemania son fijos; los otros seis se sortean por ronda entre campeones del Mundial masculino y selecciones populares, sin clubes ni duplicados. Las tortugas avanzan lentamente aunque no haya espectadores, zigzaguean dentro de su carril y cada país tiene un asistente visual. Estos asistentes no simulan espectadores ni generan comentarios, likes o métricas de TikTok. Los avatares de los hinchas dejan un rastro en la pista. Los comentarios y las copas ganadas se guardan por país en JSON; el backend ofrece un botón de estadísticas con actualización en vivo. El overlay también muestra el Top 5 de participantes, los eventos y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. Los eventos se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). El panel de pruebas manual se abre con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
+El overlay `v16.html` presenta una carrera de diez países: Brasil, Paraguay, Argentina y Alemania son fijos; los otros seis se sortean por ronda entre campeones del Mundial masculino y selecciones populares, sin clubes ni duplicados. Las tortugas avanzan lentamente aunque no haya espectadores y zigzaguean dentro de su carril. Eventos visuales internos por país (likes, comentarios y regalos) mantienen dinámica la carrera sin aparecer como espectadores ni modificar estadísticas, el feed real o datos de TikTok. Los avatares de los hinchas dejan un rastro en la pista. Los comentarios y las copas ganadas se guardan por país en JSON; el backend ofrece un botón de estadísticas con actualización en vivo. El overlay también muestra el Top 5 de participantes, los eventos y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. Los eventos reales se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). El panel de pruebas manual se abre con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
 
 ## Estructura
 

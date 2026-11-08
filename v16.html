@@ -4,7 +4,7 @@
   Los primeros cuatro son fijos; seis campeones del mundo o selecciones populares se sortean
   al iniciar cada ronda. Los eventos de TikTok aceleran al país que apoya cada espectador.
   Backend integrado: SSE en /api/events. Parámetros: ?target=40, ?goal=60,
-  ?panel=1, ?sound=0, ?music=0 y ?ws=URL. No hay acciones de bots automáticos.
+  ?panel=1, ?sound=0, ?music=0 y ?ws=URL. No se inventan espectadores ni métricas de audiencia.
 -->
 <!-- Overlay 'Carrera de tortugas' para TikTok LIVE. Un solo archivo, sin dependencias de build.
      Para conectar eventos de TikTok desde Node, lee la GUÍA PARA EL PROGRAMADOR DE BACKEND al inicio del bloque de JavaScript. -->
@@ -426,31 +426,6 @@
         margin-top: -1.75rem;
         left: calc(0.8rem + (100% - 7rem) * var(--p, 0) / 100);
         z-index: 2;
-      }
-      #lanes .lane-bot {
-        position: absolute;
-        top: calc(var(--rt) + var(--th) * 0.5);
-        right: 1rem;
-        z-index: 3;
-        display: flex;
-        align-items: center;
-        gap: 0.12rem;
-        padding: 0.08rem 0.2rem;
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 999px;
-        background: rgba(7, 38, 43, 0.78);
-        color: #fff;
-        font: 800 0.48rem/1 system-ui, sans-serif;
-        transform: translateY(-50%);
-        pointer-events: none;
-      }
-      #lanes .lane-bot span {
-        display: inline-block;
-        font-size: 0.75rem;
-        animation: botcheer 0.8s ease-in-out infinite alternate;
-      }
-      @keyframes botcheer {
-        to { transform: translateY(-0.15rem) rotate(8deg); }
       }
       .tur svg {
         width: 100%;
@@ -1199,8 +1174,7 @@
         width: 100%;
       }
       @media (prefers-reduced-motion: reduce) {
-        .crown,
-        #lanes .lane-bot span {
+        .crown {
           animation: none;
         }
       }
@@ -2844,7 +2818,7 @@
        * El overlay consume SSE por defecto. Un WebSocket externo es opcional con ?ws=URL.
        * ?target=40 define la meta individual, ?goal=60 la meta comunitaria,
        * Las tortugas avanzan lentamente si ningún espectador elige un país.
-       * No se generan eventos de audiencia ni interacciones automáticas.
+       * Los efectos automáticos son solo visuales y no crean audiencia ni estadísticas.
        * El panel de pruebas manual se abre con P o ?panel=1.
        */
 
@@ -3598,7 +3572,7 @@
         l.className = "lane empty";
         l.id = "ln-" + c.c;
         l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
-  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div><div class="lane-bot" title="Asistente visual del juego para ${NATIONS[li].n}" aria-label="Bot asistente de ${NATIONS[li].n}"><span aria-hidden="true">🤖</span><small>BOT</small></div></div>`;
+  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
         lanes.append(l);
       });
 
@@ -4238,7 +4212,7 @@
           );
         }
         if (ty === "gift") putGiftAhead(code, entry);
-        /* Mensaje del evento que acaba de entrar (no durante los bots de espera, para no simular actividad real) */
+        /* Mensaje del evento que acaba de entrar. */
         if (!(IDLE && IDLE.on)) {
           if (ty === "gift")
             enqueueMsg(
@@ -4975,6 +4949,8 @@
           pause: 0,
           base: 1,
           laneIndex: li,
+          swayPhase: Math.random() * Math.PI * 2,
+          sway: 0,
           am: 0,
           hl: 0,
           du: 0,
@@ -4992,6 +4968,8 @@
           if (t.giftEl) t.giftEl.remove();
           t.giftEl = null;
           t.pause = 0;
+          t.swayPhase = Math.random() * Math.PI * 2;
+          t.sway = 0;
           t.step = Math.floor((t.ph + Math.PI / 2) / Math.PI);
           t.w = Math.random() * 10;
         });
@@ -5110,18 +5088,22 @@
           /* animación */
           const sp = Math.min(t.vs, VMAX),
             speedRatio = Math.max(0, sp / VMAX);
-          const laneTop = laneStep * t.laneIndex,
+          const walking = S.go && !S.over && d + crawl > 0.0001,
+            laneTop = laneStep * t.laneIndex,
             swayLimit = Math.max(
               0,
               Math.min(
-                laneStep * 0.32,
+                laneStep * 0.24,
                 laneTop,
                 laneHeight - turtleHeight - laneTop,
               ),
             ),
-            sway =
-              Math.sin(tNow * (0.8 + speedRatio * 0.25) + t.w) * swayLimit;
-          t.tur.style.setProperty("--sway", sway.toFixed(2) + "px");
+            swayTarget = walking
+              ? Math.sin(t.swayPhase) * swayLimit
+              : 0;
+          if (walking) t.swayPhase += dt * (0.25 + speedRatio * 0.12);
+          t.sway += (swayTarget - t.sway) * Math.min(1, dt * 1.5);
+          t.tur.style.setProperty("--sway", t.sway.toFixed(2) + "px");
           t.ph += dt * (1.5 + 4.5 * speedRatio);
           const step = Math.floor((t.ph + Math.PI / 2) / Math.PI);
           if (S.go && S.slotUser[k] && step !== t.step) {
@@ -5592,6 +5574,41 @@
       if (SND) document.querySelector("[data-a=sound]").classList.add("act");
       if (SND && MUSIC)
         document.querySelector("[data-a=music]").classList.add("act");
+
+      /* Asistentes internos: solo animan la carrera; nunca entran al feed ni a estadísticas. */
+      const ASSISTANT_MESSAGES = ["¡Vamos!", "¡Dale!", "¡Corre, tortuga!", "🐢💨"];
+      function countryAssistantEvent(code) {
+        const t = T[code];
+        if (!t || !S.go || S.over) return;
+        const roll = Math.random(),
+          remaining = Math.max(0, CFG.win - S.pos[code]);
+        if (roll < 0.55) {
+          const activityCount = 3 + ((Math.random() * 8) | 0);
+          evBadge(code, "like", { activityCount }, 0.2);
+          t.pend = Math.min(remaining, t.pend + 0.18);
+        } else if (roll < 0.92) {
+          const country = NATIONS[C.findIndex((lane) => lane.c === code)].n,
+            content = country + ": " + rnd(ASSISTANT_MESSAGES);
+          evBadge(code, "chat", { content }, 0.3);
+          t.pend = Math.min(remaining, t.pend + 0.3);
+        } else {
+          const entry = { content: "Regalo sorpresa", activityCount: 1 };
+          evBadge(code, "gift", entry, 1);
+          putGiftAhead(code, entry);
+        }
+      }
+      function scheduleCountryAssistant(code, initial = false) {
+        setTimeout(
+          () => {
+            countryAssistantEvent(code);
+            scheduleCountryAssistant(code);
+          },
+          initial
+            ? 5000 + Math.random() * 10000
+            : 18000 + Math.random() * 25000,
+        );
+      }
+      C.forEach((country) => scheduleCountryAssistant(country.c, true));
 
       /* ===== Bots de relleno =====
    Desactivados: los carriles sin espectadores avanzan lentamente sin simular actividad. */

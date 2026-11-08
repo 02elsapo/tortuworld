@@ -38,9 +38,20 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);
     assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 9; flex: 0\.85 1 0;/);
     assert.match(overlaySource, /const T = \{\};\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
-    assert.match(overlaySource, /class="lane-bot" title="Asistente visual del juego para \$\{NATIONS\[li\]\.n\}"/);
-    assert.match(overlaySource, /swayLimit = Math\.max\(\s*0,\s*Math\.min\(\s*laneStep \* 0\.32,\s*laneTop,/);
-    assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", sway\.toFixed\(2\) \+ "px"\)/);
+    assert.doesNotMatch(overlaySource, /class="lane-bot"/);
+    assert.match(overlaySource, /function countryAssistantEvent\(code\)/);
+    assert.match(overlaySource, /function scheduleCountryAssistant\(code, initial = false\)/);
+    assert.match(overlaySource, /C\.forEach\(\(country\) => scheduleCountryAssistant\(country\.c, true\)\)/);
+    const assistantLogic = overlaySource.match(
+      /function countryAssistantEvent\(code\) \{([\s\S]*?)\} function scheduleCountryAssistant/,
+    );
+    assert.ok(assistantLogic);
+    assert.doesNotMatch(assistantLogic[1], /addLiveEvent|handleTikTokEntry|registerFan/);
+    assert.match(overlaySource, /const walking = S\.go && !S\.over && d \+ crawl > 0\.0001/);
+    assert.match(overlaySource, /swayPhase \+= dt \* \(0\.25 \+ speedRatio \* 0\.12\)/);
+    assert.match(overlaySource, /swayLimit = Math\.max\(\s*0,\s*Math\.min\(\s*laneStep \* 0\.24,\s*laneTop,/);
+    assert.match(overlaySource, /t\.sway \+= \(swayTarget - t\.sway\) \* Math\.min\(1, dt \* 1\.5\)/);
+    assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", t\.sway\.toFixed\(2\) \+ "px"\)/);
     assert.match(overlaySource, /id="ctaMain">\s*💬 ESCRIBE EL NOMBRE DE UN PAÍS/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
     assert.match(overlaySource, /source\.addEventListener\("snapshot"/);
@@ -52,7 +63,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /const FIXED_TEAMS = NATIONS\.slice\(0, 4\)/);
     assert.match(overlaySource, /shuffled\(candidates\)\.slice\(0, 6\)/);
     assert.match(overlaySource, /const POPULAR_COUNTRIES/);
-    assert.match(overlaySource, /No se generan eventos de audiencia ni interacciones automáticas/);
+    assert.match(overlaySource, /efectos automáticos son solo visuales y no crean audiencia ni estadísticas/);
     assert.match(overlaySource, /recordCupWin\(nat\(p\)\.code\)/);
     assert.match(overlaySource, /loadCupStats\(\);/);
     assert.match(overlaySource, /function registerFan\(user, code, entry\)/);
