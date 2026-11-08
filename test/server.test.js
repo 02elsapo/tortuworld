@@ -45,6 +45,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.doesNotMatch(overlaySource, /if \(Q\.get\("demo"\)\)/);
     assert.doesNotMatch(overlaySource, /S\.pos\[k\] = 0/);
     assert.match(overlaySource, /setRoundTeams\(\);/);
+    assert.match(overlaySource, /id="backend-link" href="\/backend"/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
@@ -67,8 +68,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     const backend = await fetch(`${baseUrl}/backend`);
     assert.equal(backend.status, 200);
     const backendHtml = await backend.text();
-    assert.match(backendHtml, /Backend básico/);
-    assert.match(backendHtml, /Estadísticas de comentarios y copas/);
+    assert.match(backendHtml, /Panel de control/);
+    assert.match(backendHtml, /Comentarios recibidos y copas ganadas/);
 
     const status = await fetch(`${baseUrl}/api/status`);
     assert.equal(status.status, 200);

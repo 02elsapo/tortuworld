@@ -83,6 +83,46 @@
         pointer-events: none;
         z-index: 9;
       }
+      #backend-link {
+        position: fixed;
+        right: max(12px, env(safe-area-inset-right));
+        bottom: max(12px, env(safe-area-inset-bottom));
+        z-index: 20;
+        display: grid;
+        width: 40px;
+        height: 40px;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 50%;
+        background: #e64952;
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3);
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.9;
+        transition:
+          background 0.18s ease,
+          opacity 0.18s ease,
+          transform 0.18s ease;
+      }
+      #backend-link:hover,
+      #backend-link:focus-visible {
+        background: #fb5962;
+        opacity: 1;
+        transform: scale(1.06);
+      }
+      #backend-link:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 3px;
+      }
+      #backend-link svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+      }
       #cd,
       #win {
         display: none !important;
@@ -2593,6 +2633,14 @@
     </div>
     <div id="dot" role="status" aria-label="TikTok desconectado"></div>
     <div id="overlayVersion">v1.5.0 · ajuste de pista</div>
+    <a id="backend-link" href="/backend" aria-label="Abrir el backend" title="Backend">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h9m4 0h3M4 17h3m4 0h9M4 12h3m4 0h9" />
+        <circle cx="15" cy="7" r="2" />
+        <circle cx="9" cy="12" r="2" />
+        <circle cx="9" cy="17" r="2" />
+      </svg>
+    </a>
     <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
     <div id="bots">
       <b>Pruebas de interacción (P)</b>
