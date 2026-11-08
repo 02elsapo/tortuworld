@@ -63,10 +63,13 @@ test('winner and podium entries display flags for their own countries', () => {
   app.showWin('s2');
 
   assert.equal(elements.get('wt').textContent, '🇺🇾 Uruguay ¡CAMPEÓN!');
+  const places = elements.get('pod').children;
+  assert.equal(
+    places.find((place) => place.className === 'pc p1').children[0].textContent,
+    '🇺🇾',
+  );
   assert.deepEqual(
-    elements
-      .get('pod')
-      .children.map((place) => place.children[0].textContent),
+    places.map((place) => place.children[0].textContent),
     ['🇦🇷', '🇺🇾', '🇧🇷'],
   );
 });

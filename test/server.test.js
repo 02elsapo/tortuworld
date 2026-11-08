@@ -114,7 +114,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /#app \{ top: var\(--top, 4%\); bottom: var\(--bot, 50%\);/);
     assert.match(overlaySource, /#specialEvent \{ left: 3% !important; right: 3% !important;[\s\S]*?display: flex !important;[\s\S]*?white-space: normal !important;/);
     assert.match(overlaySource, /id="specialEvent"[^>]*> Esperando eventos del LIVE\.\.\./);
-    assert.match(overlaySource, /#lanes \{ --tw: min\(7\.5rem, 9vh\); --n: 2; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /#lanes \{ order: 1; --tw: min\(6rem, 7vh\); --n: 2; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /#raceProgressTrack \{\s*order: 2;\s*flex: none;[\s\S]*?height: 0\.22rem;/);
     assert.match(overlaySource, /--padr: 7%/);
     assert.doesNotMatch(overlaySource, /#lanes::after|--lane-step/);
     assert.match(overlaySource, /const T = \{\};\s*let fallbackWinnerCode = null;\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
@@ -131,7 +132,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", t\.sway\.toFixed\(2\) \+ "px"\)/);
     assert.match(overlaySource, /const th = H \/ \(1 \+ 0\.625 \* \(C\.length - 1\)\)/);
     assert.match(overlaySource, /W \* 0\.33/);
-    assert.match(overlaySource, /id="ctaMain">💬 COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO/);
+    assert.match(overlaySource, /id="ctaMain">💬 COMENTA EL NOMBRE DE TU PAÍS<\/b>/);
+    assert.doesNotMatch(overlaySource, /id="ctaSub"|PARTICIPA EN LA CARRERA|COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO/);
     assert.doesNotMatch(overlaySource, /CTA_ROTATION|ESCRIBE EL NOMBRE DE UN PAÍS|El país con más apoyo corre al DOBLE|Toca su perfil y dale <b>Seguir/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
     assert.match(overlaySource, /source\.addEventListener\("snapshot"/);
@@ -178,7 +180,6 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /alreadyHere = FANS\[code\]\.has\(user\)/);
     assert.match(overlaySource, /FANINFO\[user\] = \{[\s\S]*?progress:/);
     assert.match(overlaySource, /Carrera de tortugas en vivo/);
-    assert.match(overlaySource, /El primero en cruzar la meta gana/);
     assert.match(overlaySource, /function dropTrail\(code, now\)/);
     assert.match(overlaySource, /message \? "💬 “" \+ message \+ "”" : "💬 Comentó"/);
 
