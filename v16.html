@@ -2392,7 +2392,7 @@
       /* Avatares de hinchas como marcadores ovalados del tamaño de la bandera. */
       #lanes {
         --lane-step: calc((100% - var(--th)) / var(--n));
-        --fan-size: var(--flag-size);
+        --fan-size: calc(var(--flag-size) * 0.5);
       }
       #lanes .fa {
         position: absolute;
@@ -2446,7 +2446,7 @@
       /* v16 · rastro: la tortuga va soltando avatares a su paso */
       #lanes .fa.trail {
         z-index: 0;
-        left: max(var(--g), calc(var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100));
+        left: max(var(--g), calc(var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100 - var(--fan-size) * 0.45));
       }
       #lanes .fa.trail.fresh {
         animation: traildrop 0.55s cubic-bezier(.2, 1.5, .4, 1) both;
@@ -3838,7 +3838,7 @@
             rem * 0.8;
         if (trackLength <= 0) return 12;
         const flag = $("rk-" + code),
-          markerWidth = flag.getBoundingClientRect().width * 0.9;
+          markerWidth = flag.getBoundingClientRect().width * 0.45;
         return Math.max(2, Math.min(40, ((markerWidth + 8) / trackLength) * 100));
       }
       function findFanEggPosition(code, desired, user) {
