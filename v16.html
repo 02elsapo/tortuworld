@@ -46,7 +46,7 @@
         --ink: #07262b;
         --ink2: #0d3a41;
         --flag-size: 2.3rem;
-        --track-flag-size: 6.9rem;
+        --track-flag-size: 4.6rem;
         --sun: #ffc93c;
         --pink: #ff3d7f;
         --cream: #fff6e0;
@@ -2019,7 +2019,7 @@
         }
         :root {
           --flag-size: 2rem;
-          --track-flag-size: 6rem;
+          --track-flag-size: 4rem;
         }
       }
       /* ===== v10b · llamadas de acción grandes y vistosas ===== */
@@ -2160,7 +2160,7 @@
         position: absolute;
         z-index: 4;
         left: calc((var(--g) - var(--track-flag-size)) / 2);
-        top: calc(var(--rt) + var(--th) / 2 + 0.55rem);
+        top: calc(var(--rt) + (var(--th) - var(--track-flag-size)) / 2);
       }
       #lanes::after {
         content: "";
@@ -2337,7 +2337,15 @@
         --g: 4.6rem;
       }
       #lanes {
-        --g: 8rem;
+        --g: 5.6rem;
+      }
+      #lanes .tag {
+        top: calc(var(--rt) + 0.1rem);
+      }
+      @media (orientation: portrait) {
+        #lanes {
+          --g: 5rem;
+        }
       }
       #lanes .tag b i {
         font-style: normal;
