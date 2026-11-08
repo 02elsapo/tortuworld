@@ -46,6 +46,7 @@
         --ink: #07262b;
         --ink2: #0d3a41;
         --flag-size: 2.3rem;
+        --track-flag-size: 6.9rem;
         --sun: #ffc93c;
         --pink: #ff3d7f;
         --cream: #fff6e0;
@@ -1963,8 +1964,8 @@
       }
       .rk {
         position: relative;
-        width: var(--flag-size);
-        height: var(--flag-size);
+        width: var(--track-flag-size);
+        height: var(--track-flag-size);
         padding: 0;
         overflow: hidden;
         border: 0.16rem solid var(--cream);
@@ -2018,6 +2019,7 @@
         }
         :root {
           --flag-size: 2rem;
+          --track-flag-size: 6rem;
         }
       }
       /* ===== v10b · llamadas de acción grandes y vistosas ===== */
@@ -2157,7 +2159,7 @@
       #lanes .rk {
         position: absolute;
         z-index: 4;
-        left: calc((var(--g) - var(--flag-size)) / 2);
+        left: calc((var(--g) - var(--track-flag-size)) / 2);
         top: calc(var(--rt) + var(--th) / 2 + 0.55rem);
       }
       #lanes::after {
@@ -2333,6 +2335,9 @@
       /* ===== v10f · hinchas grandes y vivos, líder con resplandor ===== */
       #lanes {
         --g: 4.6rem;
+      }
+      #lanes {
+        --g: 8rem;
       }
       #lanes .tag b i {
         font-style: normal;
