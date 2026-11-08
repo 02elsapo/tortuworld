@@ -114,7 +114,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /#app \{ top: var\(--top, 4%\); bottom: var\(--bot, 50%\);/);
     assert.match(overlaySource, /#specialEvent \{ left: 3% !important; right: 3% !important;[\s\S]*?display: flex !important;[\s\S]*?white-space: normal !important;/);
     assert.match(overlaySource, /id="specialEvent"[^>]*> Esperando eventos del LIVE\.\.\./);
-    assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 2; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /#lanes \{ --tw: min\(7\.5rem, 9vh\); --n: 2; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /--padr: 7%/);
+    assert.doesNotMatch(overlaySource, /#lanes::after|--lane-step/);
     assert.match(overlaySource, /const T = \{\};\s*let fallbackWinnerCode = null;\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
     const leaderMarker = overlaySource.match(/l\.classList\.toggle\(\s*"lead",([\s\S]*?)\);/);
     assert.ok(leaderMarker);
@@ -161,7 +163,6 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /#lanes \.fa img \{[^}]*width: 100%;[^}]*height: 100%;[^}]*border: 0;/);
     assert.match(overlaySource, /#lanes \.fa\.trail \{[\s\S]*?var\(--fan-size\) \* 0\.45/);
     assert.match(overlaySource, /im\.referrerPolicy = "no-referrer";\s*im\.loading = "eager";\s*im\.onerror = placeholder;\s*im\.src = item\.avatar/);
-    assert.match(overlaySource, /#lanes::after[\s\S]*?background-image: radial-gradient/);
     assert.match(overlaySource, /im\.referrerPolicy = "no-referrer"/);
     assert.match(overlaySource, /C\.find\(\(c\) => c\.c === preferred && !S\.slotUser\[c\.c\]\)/);
     assert.match(overlaySource, /function putGiftAhead\(code, entry\)/);

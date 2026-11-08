@@ -963,7 +963,7 @@
       @media (orientation: portrait) {
         html {
           font-size: clamp(12px, min(3.2vw, 1.8vh), 32px);
-          --padr: 12%;
+          --padr: 7%;
         }
         #app {
           top: 3%;
@@ -2207,20 +2207,6 @@
         top: calc(var(--rt) + var(--th) / 2);
         transform: translateY(-50%);
       }
-      #lanes::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        background-image: radial-gradient(
-          circle,
-          rgba(7, 38, 43, 0.58) 1px,
-          transparent 1.5px
-        );
-        background-size: 7px var(--lane-step);
-        background-position: 0 calc(var(--lane-step) - 1px);
-        pointer-events: none;
-      }
       #lanes .trk .tur {
         top: calc(var(--rt) + var(--sway, 0px));
         width: var(--tw);
@@ -2425,7 +2411,7 @@
         bottom: var(--bot, 50%);
       }
       #lanes {
-        --tw: min(13rem, 16vh);
+        --tw: min(7.5rem, 9vh);
         --n: 2;
         flex: 0.85 1 0;
       }
@@ -2503,7 +2489,6 @@
       }
       /* Avatares de hinchas como marcadores ovalados, al doble del tamaño anterior. */
       #lanes {
-        --lane-step: calc((100% - var(--th)) / var(--n));
         --fan-size: calc(var(--flag-size) * 2.4);
       }
       #lanes .fa {
@@ -5143,15 +5128,16 @@
         pod.textContent = "";
         const winner = NATIONS[C.findIndex((lane) => lane.c === code)];
         $("wk").textContent = "🏁 RONDA " + S.round + " · GANADOR";
-        $("wt").textContent = winner.n + " ¡CAMPEÓN!";
+        $("wt").textContent = winner.f + " " + winner.n + " ¡CAMPEÓN!";
         $("ws").textContent =
         "Celebramos la victoria; la próxima carrera empieza después del anuncio.";
         [1, 0, 2].forEach((i) => {
           const c = ord[i],
+            country = NATIONS[C.findIndex((lane) => lane.c === c.c)],
             d = document.createElement("div");
           d.className = "pc p" + (i + 1);
           const f = document.createElement("span");
-          f.textContent = c.f;
+          f.textContent = country.f;
           const b = document.createElement("b");
           b.className = "disp";
           b.textContent = i + 1 + "°";
