@@ -21,15 +21,19 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     const overlay = await fetch(baseUrl);
     assert.equal(overlay.status, 200);
     const overlayHtml = await overlay.text();
-    assert.match(overlayHtml, /<link rel="manifest" href="\/manifest\.webmanifest">/);
-    assert.match(overlayHtml, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
-    assert.match(overlayHtml, /<title>Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores<\/title>/);
-    assert.match(overlayHtml, /id="overlayVersion">v1\.5\.0/);
-    assert.match(overlayHtml, /id="lanes"/);
-    assert.match(overlayHtml, /id="ctaMain">💬 ESCRIBE EL NOMBRE DE TU PAÍS/);
-    assert.match(overlayHtml, /const source=new EventSource\('\/api\/events'\)/);
-    assert.match(overlayHtml, /source\.addEventListener\('snapshot'/);
-    assert.match(overlayHtml, /source\.addEventListener\('update'/);
+    const overlaySource = overlayHtml.replace(/\s+/g, ' ');
+    assert.match(overlaySource, /<link rel="manifest" href="\/manifest\.webmanifest"\s*\/?>/);
+    assert.match(overlaySource, /navigator\.serviceWorker[\s\S]*?\.register\("\/sw\.js"\)/);
+    assert.match(overlaySource, /<title>\s*Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores\s*<\/title>/);
+    assert.match(overlaySource, /id="overlayVersion">v1\.5\.0/);
+    assert.match(overlaySource, /id="lanes"/);
+    assert.match(overlaySource, /id="ctaMain">\s*💬 ESCRIBE EL NOMBRE DE TU PAÍS/);
+    assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
+    assert.match(overlaySource, /source\.addEventListener\("snapshot"/);
+    assert.match(overlaySource, /source\.addEventListener\("update"/);
+    assert.match(overlaySource, /const crawl = S\.go && !S\.over \? t\.cr \* dt \* m : 0/);
+    assert.match(overlaySource, /enabled: Q\.get\("idle"\) === "1"/);
+    assert.match(overlaySource, /\.lane\.empty \.tur \{ opacity: 1; filter: none; \}/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);

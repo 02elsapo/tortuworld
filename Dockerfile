@@ -7,7 +7,7 @@ RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY server.js ./
 COPY modules ./modules
-COPY Carrera_de_Tortugas_TikTok_Live_v6.html ./
+COPY v15.html ./
 
 ENV NODE_ENV=production
 EXPOSE 80
