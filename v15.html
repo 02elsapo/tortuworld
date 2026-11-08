@@ -2207,7 +2207,22 @@
         inset: 0;
         border: 0;
         background: none;
+        z-index: 1;
         --rt: calc((100% - var(--th)) * var(--i)/4);
+      }
+      #lanes::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-image: radial-gradient(
+          circle,
+          rgba(7, 38, 43, 0.58) 1px,
+          transparent 1.5px
+        );
+        background-size: 7px var(--lane-step);
+        background-position: 0 calc(var(--lane-step) - 1px);
+        pointer-events: none;
       }
       #lanes .trk .tur {
         top: var(--rt);
@@ -2376,7 +2391,8 @@
       }
       /* Huevos con avatar de cada hincha, dejados en el punto de apoyo del país. */
       #lanes {
-        --egg: calc(var(--th) * 0.5);
+        --lane-step: calc((100% - var(--th)) / var(--n));
+        --egg: calc(var(--lane-step) * 0.25);
       }
       #lanes .fa {
         position: absolute;
@@ -2400,8 +2416,8 @@
       }
       #lanes .fa img {
         display: block;
-        width: 90%;
-        height: 84%;
+        width: 92%;
+        height: 88%;
         border: 0.08rem solid rgba(255, 255, 255, 0.95);
         border-radius: 50%;
         object-fit: cover;
@@ -3682,28 +3698,28 @@
       }
       /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 5 carriles. Se llama ~4 veces/seg. */
       const MAXF = 8;
-      function fanEl(k, info, extra) {
+      function fanEl(user, info) {
         const e = document.createElement("i");
         e.className = "fa";
+        e.dataset.user = user;
         if (info.fresh) {
           e.classList.add("fresh");
           info.fresh = false;
         }
         e.style.setProperty("--p", info.progress || 0);
-        e.title = extra ? extra + " hinchas más" : (info.name || "Hincha") + " dejó su huevo";
+        e.title = (info.name || "Hincha") + " dejó su huevo";
         const placeholder = () => {
           e.classList.add("placeholder");
           const icon = document.createElement("span");
           icon.textContent = "👤";
           e.replaceChildren(icon);
         };
-        if (extra) {
-          e.textContent = extra;
-          e.classList.add("more");
-        } else if (info.avatar) {
+        if (info.avatar) {
           const im = document.createElement("img");
           im.alt = "";
           im.src = info.avatar;
+          im.referrerPolicy = "no-referrer";
+          im.loading = "eager";
           im.onerror = () => {
             placeholder();
           };
@@ -3714,17 +3730,29 @@
       function renderFans(code) {
         const t = T[code];
         if (!t) return;
-        t.trk.querySelectorAll(".fa").forEach((e) => e.remove());
+        const existing = new Map(
+          [...t.trk.querySelectorAll(".fa[data-user]")].map((e) => [
+            e.dataset.user,
+            e,
+          ]),
+        );
         const list = [...FANS[code]].filter((user) =>
             Number.isFinite(FANINFO[user]?.progress),
           ),
           vis = list.slice(-MAXF).reverse();
         const fire = code === S.fanLead,
-          add = (e) => {
-            if (fire) e.classList.add("fire");
-            t.trk.append(e);
-          };
-        vis.forEach((u, i) => add(fanEl(i, FANINFO[u] || { name: u, progress: 0 })));
+          keep = new Set();
+        vis.forEach((user) => {
+          const info = FANINFO[user],
+            egg = existing.get(user) || fanEl(user, info);
+          egg.style.setProperty("--p", info.progress || 0);
+          egg.classList.toggle("fire", fire);
+          t.trk.append(egg);
+          keep.add(user);
+        });
+        for (const [user, egg] of existing) {
+          if (!keep.has(user)) egg.remove();
+        }
       }
       function fanLeader() {
         let best = null,
@@ -3796,7 +3824,9 @@
             (parseFloat(lanesStyle.getPropertyValue("--g")) || 0) -
             rem * 0.8;
         if (trackLength <= 0) return 12;
-        const eggWidth = turtleWidth * (46 / 70) * 0.5 * 0.72;
+        const laneCount = parseFloat(lanesStyle.getPropertyValue("--n")) || 9,
+          laneStep = (t.trk.clientHeight - t.tur.getBoundingClientRect().height) / laneCount,
+          eggWidth = laneStep * 0.25 * 0.72;
         return Math.max(2, Math.min(40, ((eggWidth + 8) / trackLength) * 100));
       }
       function findFanEggPosition(code, desired, user) {

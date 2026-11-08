@@ -45,8 +45,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /S\.pick\.get\(_u\)[\s\S]*?rnd\(C\)\.c/);
     assert.match(overlaySource, /PENDING_FANS\[code\]\.add\(user\)/);
     assert.match(overlaySource, /function layPendingFanEggs\(code\)/);
-    assert.match(overlaySource, /--egg: calc\(var\(--th\) \* 0\.5\)/);
-    assert.match(overlaySource, /width: 90%;\s*height: 84%/);
+    assert.match(overlaySource, /--egg: calc\(var\(--lane-step\) \* 0\.25\)/);
+    assert.match(overlaySource, /width: 92%;\s*height: 88%/);
+    assert.match(overlaySource, /#lanes::after[\s\S]*?background-image: radial-gradient/);
+    assert.match(overlaySource, /im\.referrerPolicy = "no-referrer"/);
     assert.match(overlaySource, /C\.find\(\(c\) => c\.c === preferred && !S\.slotUser\[c\.c\]\)/);
     assert.match(overlaySource, /function putGiftAhead\(code, entry\)/);
     assert.match(overlaySource, /tgtE = VMAX/);
