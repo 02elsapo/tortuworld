@@ -2154,6 +2154,12 @@
         z-index: 1;
         --rt: calc((100% - var(--th)) * var(--i)/4);
       }
+      #lanes .rk {
+        position: absolute;
+        z-index: 4;
+        left: calc((var(--g) - var(--flag-size)) / 2);
+        top: calc(var(--rt) + var(--th) / 2 + 0.55rem);
+      }
       #lanes::after {
         content: "";
         position: absolute;
@@ -3503,8 +3509,7 @@
         const l = document.createElement("div");
         l.className = "lane empty";
         l.id = "ln-" + c.c;
-        l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
-  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
+        l.innerHTML = `<div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
         lanes.append(l);
       });
 
@@ -4086,24 +4091,16 @@
       function setSlotAvatar(code, p) {
         const t = T[code],
           a = t.av,
-          _ln = NATIONS[C.findIndex((x) => x.c === code)],
-          _nn = p ? nat(p) : _ln,
-          avatarUrl =
-            p && typeof p.avatar === "string" && /^https?:\/\//i.test(p.avatar)
-              ? p.avatar
-              : _nn.u,
-          key = p ? p.key + "|" + _nn.n + "|" + avatarUrl : "-" + code;
+          key = p ? p.key + "|" + nat(p).n : "-" + code;
         if (t.avKey === key) return;
         t.avKey = key;
+        const _ln = NATIONS[C.findIndex((x) => x.c === code)],
+          _nn = p ? nat(p) : _ln;
         a.tx.textContent = "";
         a.bg.setAttribute("fill", _nn.c);
         a.im.removeAttribute("href");
-        a.im.onerror = () => {
-          a.im.onerror = null;
-          if (avatarUrl !== _nn.u) a.im.setAttribute("href", _nn.u);
-          else a.im.removeAttribute("href");
-        };
-        a.im.setAttribute("href", avatarUrl);
+        a.im.onerror = () => a.im.removeAttribute("href");
+        a.im.setAttribute("href", _nn.u);
       }
       /* Los participantes reales pueden ocupar carriles libres o reemplazar al de menor puntaje. */
       function claimSlot(p) {

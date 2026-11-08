@@ -35,8 +35,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
     assert.doesNotMatch(overlaySource, /voiceToggle/);
     assert.doesNotMatch(overlaySource, /#dot|id="dot"|backend-link/);
-    assert.match(overlaySource, /avatarUrl = p && typeof p\.avatar === "string"[\s\S]*?\? p\.avatar : _nn\.u/);
-    assert.match(overlaySource, /a\.im\.setAttribute\("href", avatarUrl\)/);
+    assert.match(overlaySource, /a\.im\.setAttribute\("href", _nn\.u\)/);
+    assert.match(overlaySource, /im\.src = info\.avatar/);
+    assert.match(overlaySource, /#lanes \.rk \{ position: absolute; z-index: 4; left: calc\(\(var\(--g\) - var\(--flag-size\)\) \/ 2\); top: calc\(var\(--rt\) \+ var\(--th\) \/ 2 \+ 0\.55rem\);/);
+    assert.match(overlaySource, /<div class="tag"><b id="nm-\$\{c\.c\}"><\/b><small id="tt-\$\{c\.c\}"><\/small><\/div><div class="rk disp" id="rk-\$\{c\.c\}">/);
     assert.match(overlaySource, /if \(_newAvatar\) layPendingFanEggs\(_code, _u\)/);
     assert.match(overlaySource, /type = \["member", "enter", "joined"\]\.includes\(entry\.type\) \? "join" : entry\.type; if \(type !== entry\.type\) entry = \{ \.\.\.entry, type \};/);
     assert.match(overlaySource, /const USER_EVENT_ADVANCE = 3/);
