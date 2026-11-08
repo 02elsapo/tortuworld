@@ -2400,7 +2400,7 @@
       }
       #lanes {
         order: 1;
-        --tw: min(6rem, 7vh);
+        --tw: min(5rem, 6vh);
         --n: 2;
         flex: 0.85 1 0;
       }
@@ -2765,10 +2765,10 @@
           <div id="banner" class="disp" role="status" aria-live="polite"></div>
         </div>
         <div id="raceClock" class="disp" role="timer" aria-live="off">
-          <span id="raceTime">01:00</span>
+          <span id="raceTime">03:00</span>
         </div>
         <div id="joinCTA" aria-live="polite">
-          <b id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE EN CADA VUELTA</b>
+          <b id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE</b>
           <span id="ctaCountries"></span>
         </div>
         <div id="goal">
@@ -2790,9 +2790,9 @@
         role="progressbar"
         aria-label="Tiempo de carrera restante"
         aria-valuemin="0"
-        aria-valuemax="60"
-        aria-valuenow="60"
-        aria-valuetext="01:00"
+        aria-valuemax="180"
+        aria-valuenow="180"
+        aria-valuetext="03:00"
       >
         <i id="raceProgress"></i>
       </div>
@@ -2895,8 +2895,8 @@
           b: [],
         })),
       };
-      const RACE_DURATION_MS = 60_000,
-        RACE_WARNINGS = new Set([30, 15, 10, 5, 4, 3, 2, 1]);
+      const RACE_DURATION_MS = 180_000,
+        RACE_WARNINGS = new Set([120, 60, 30, 15, 10, 5, 4, 3, 2, 1]);
       function guaranteedRacePosition(elapsedMs, designatedWinner) {
         const progress = Math.min(
           1,
@@ -4403,6 +4403,19 @@
         t.trk.append(gift);
         t.giftEl = gift;
       }
+      const REAL_USER_EVENT_TYPES = new Set([
+        "chat",
+        "gift",
+        "like",
+        "follow",
+        "share",
+        "join",
+      ]);
+      function realEventLaneAdvance(player, type) {
+        return !player.isBot && REAL_USER_EVENT_TYPES.has(type)
+          ? CFG.win * 0.2
+          : 0;
+      }
       function raceAdd(p, entry, points) {
         if (S.over) return;
         goalAdd(points);
@@ -4412,19 +4425,28 @@
           ownsLane = Boolean(ownerCode && ownerCode === code);
         if (!code) return;
         const t = T[code],
-          ty = entry.type;
+          ty = entry.type,
+          eventAdvance = realEventLaneAdvance(p, ty),
+          remaining = Math.max(0, CFG.win - S.pos[code]);
         if (ownsLane) {
           setSlotAvatar(code, p);
-          t.pend = Math.max(
+          const scoredAdvance = Math.max(
             0,
-            Math.min(CFG.win, (p.points / CFG.target) * CFG.win) -
-              S.pos[code],
+            Math.min(CFG.win, (p.points / CFG.target) * CFG.win) - S.pos[code],
+          );
+          t.pend = Math.min(
+            remaining,
+            Math.max(t.pend, scoredAdvance) + eventAdvance,
           );
         } else {
-          t.pend += Math.min(
-            Math.max(0, CFG.win - S.pos[code]),
-            Math.max(1, (points / CFG.target) * CFG.win),
-          );
+          const scoredAdvance =
+            points > 0
+              ? Math.min(
+                  remaining,
+                  Math.max(1, (points / CFG.target) * CFG.win),
+                )
+              : 0;
+          t.pend = Math.min(remaining, t.pend + scoredAdvance + eventAdvance);
         }
         if (ty === "gift") putGiftAhead(code, entry);
         /* Mensaje del evento que acaba de entrar. */
@@ -4754,7 +4776,7 @@
         const key = username.toLocaleLowerCase();
         let player = contestants.get(key);
         if (entry.type === "join" && player && !player.isBot)
-          return; /* ya es participante: el segundo 'join' no suma */
+          points = 0; /* ya es participante: el evento solo adelanta la tortuga */
         if (isBot && !S.slotOf.has(key) && !C.some((c) => !S.slotUser[c.c]))
           return;
         if (!player) {
@@ -4770,8 +4792,8 @@
         } else if (!isBot) player.isBot = false;
         if (entry.type === "chat") {
           const n = Date.now();
-          if (n - (player.lastChat || 0) < 8000) return;
-          player.lastChat = n;
+          if (n - (player.lastChat || 0) < 8000) points = 0;
+          else player.lastChat = n;
         }
         player.points += points;
         if (
@@ -5162,8 +5184,8 @@
         raceWarningSecond = null;
         $("raceTime").textContent = formatRaceTime(RACE_DURATION_MS);
         $("raceProgress").style.width = "100%";
-        $("raceProgressTrack").setAttribute("aria-valuenow", "60");
-        $("raceProgressTrack").setAttribute("aria-valuetext", "01:00");
+        $("raceProgressTrack").setAttribute("aria-valuenow", "180");
+        $("raceProgressTrack").setAttribute("aria-valuetext", "03:00");
         $("raceClock").classList.remove("urgent");
         musicSync();
         cdT.forEach(clearTimeout);
@@ -5353,7 +5375,7 @@
               0.6 * Math.sin(tNow * 0.7 + t.w) +
               0.3 * Math.sin(tNow * 1.9 + t.w * 2.3),
           );
-          /* El avance base garantiza la meta en un minuto; los eventos impulsan al país apoyado. */
+          /* El avance base garantiza la meta en dos minutos; los eventos impulsan al país apoyado. */
           const tgtC =
             (CFG.win / (RACE_DURATION_MS / 1000)) * t.base * wob;
           t.cr += (tgtC - t.cr) * Math.min(1, dt * 2);
@@ -6506,8 +6528,7 @@
         }
       };
 
-      /* ===== v7 · CONTADOR REAL DE INTERACCIONES + MENSAJES ROTATIVOS =====
-   Solo cuenta eventos recibidos del backend. No inventa seguidores ni actividad. */
+      /* ===== Conteo de interacciones reales del LIVE ===== */
       const SESSION = {
         chat: 0,
         like: 0,
@@ -6516,6 +6537,25 @@
         share: 0,
         join: 0,
       };
+      function recordSessionEvent(entry, isBot) {
+        if (isBot || !entry || typeof entry !== "object") return false;
+        if (entry.type === "chat") SESSION.chat++;
+        else if (entry.type === "like")
+          SESSION.like += Math.max(
+            1,
+            Number(entry.activityCount || entry.count) || 1,
+          );
+        else if (entry.type === "gift")
+          SESSION.gift += Math.max(
+            1,
+            Number(entry.activityCount || entry.count) || 1,
+          );
+        else if (entry.type === "follow") SESSION.follow++;
+        else if (entry.type === "share") SESSION.share++;
+        else if (entry.type === "join") SESSION.join++;
+        else return false;
+        return true;
+      }
       function updateSessionStats() {
         $("statJoin").textContent = SESSION.join;
         $("statChat").textContent = SESSION.chat;
@@ -6531,21 +6571,7 @@
             ? "join"
             : entry.type;
           if (type !== entry.type) entry = { ...entry, type };
-          if (type === "chat") SESSION.chat++;
-          else if (type === "like")
-            SESSION.like += Math.max(
-              1,
-              Number(entry.activityCount || entry.count) || 1,
-            );
-          else if (type === "gift")
-            SESSION.gift += Math.max(
-              1,
-              Number(entry.activityCount || entry.count) || 1,
-            );
-          else if (type === "follow") SESSION.follow++;
-          else if (type === "share") SESSION.share++;
-          else if (type === "join") SESSION.join++;
-          updateSessionStats();
+          if (recordSessionEvent(entry, isBot)) updateSessionStats();
         }
         if (
           entry &&

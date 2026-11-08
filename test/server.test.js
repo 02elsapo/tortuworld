@@ -36,6 +36,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="statJoin">0/);
     assert.match(overlaySource, /title="Ingresos al LIVE">👋 <b id="statJoin">0<\/b>/);
     assert.match(overlaySource, /\$\("statJoin"\)\.textContent = SESSION\.join/);
+    assert.match(overlaySource, /if \(recordSessionEvent\(entry, isBot\)\) updateSessionStats\(\)/);
     assert.match(overlaySource, /#liveStats \{ position: fixed; left: 3%; right: 3%; bottom: calc\(1% \+ env\(safe-area-inset-bottom, 0px\) \+ 3\.8rem\); z-index: 51; display: grid !important; grid-template-columns: repeat\(6, max-content\);/);
     assert.match(overlaySource, /grid-template-columns: repeat\(3, max-content\); gap: 0\.18rem 0\.42rem; font-size: 1\.12rem;/);
     assert.match(overlaySource, /font-size: 1\.5rem; pointer-events: none;/);
@@ -60,6 +61,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /const USER_EVENT_ADVANCE = 3/);
     assert.match(overlaySource, /entry\.type === "chat" \? \(CFG\.target \* 0\.15\) \/ USER_EVENT_ADVANCE/);
     assert.match(overlaySource, /points \*= USER_EVENT_ADVANCE/);
+    assert.match(overlaySource, /if \(n - \(player\.lastChat \|\| 0\) < 8000\) points = 0/);
     assert.match(overlaySource, /let ownerCode = S\.slotOf\.get\(p\.key\); if \(!ownerCode\) ownerCode = claimSlot\(p\); const code = S\.pick\.get\(p\.key\) \|\| ownerCode, ownsLane = Boolean\(ownerCode && ownerCode === code\);/);
     assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
@@ -93,13 +95,17 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="lanes"><\/div> <div id="raceProgressTrack" role="progressbar"/);
     assert.match(overlaySource, /raceProgressPercent\(remainingMs\) \+ "%"/);
     assert.match(overlaySource, /id="raceProgress"><\/i>/);
-    assert.match(overlaySource, /RACE_DURATION_MS = 60_000/);
+    assert.match(overlaySource, /RACE_DURATION_MS = 180_000/);
+    assert.match(overlaySource, /aria-valuemax="180"[\s\S]*?aria-valuenow="180"[\s\S]*?aria-valuetext="03:00"/);
     assert.match(overlaySource, /guaranteedRacePosition\(\s*now - raceStartedAt,\s*k === fallbackWinnerCode,?\s*\)/);
     assert.match(overlaySource, /fraction:\s*\(CFG\.win - previousPosition\) \/ \(S\.pos\[k\] - previousPosition\)/);
     assert.match(overlaySource, /S\.winner = firstFinisher\(finishers\)\.code/);
     assert.match(overlaySource, /S\.pos\[c\.c\] = Math\.min\(S\.pos\[c\.c\], Math\.max\(0, CFG\.win - 1\)\)/);
     assert.match(overlaySource, /fallbackWinnerCode = C\[\(Math\.random\(\) \* C\.length\) \| 0\]\.c/);
-    assert.match(overlaySource, /RACE_WARNINGS = new Set\(\[30, 15, 10, 5, 4, 3, 2, 1\]\)/);
+    assert.match(overlaySource, /RACE_WARNINGS = new Set\(\[120, 60, 30, 15, 10, 5, 4, 3, 2, 1\]\)/);
+    assert.match(overlaySource, /eventAdvance = realEventLaneAdvance\(p, ty\)/);
+    assert.match(overlaySource, /Math\.max\(t\.pend, scoredAdvance\) \+ eventAdvance/);
+    assert.match(overlaySource, /t\.pend \+ scoredAdvance \+ eventAdvance/);
     assert.match(overlaySource, /if \(p\) \{ const w = \(winsBy\.get\(p\.key\) \|\| 0\) \+ 1;/);
     assert.match(overlaySource, /speakWinnerAnnouncement\([\s\S]*?"Ganó "\s*\+[\s\S]*?winnerName[\s\S]*?restartAfterAnnouncement/);
     assert.match(overlaySource, /function finishVoiceItem\(item, spoken\)/);
@@ -116,7 +122,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /#app \{ top: var\(--top, 4%\); bottom: var\(--bot, 50%\);/);
     assert.match(overlaySource, /#specialEvent \{ left: 3% !important; right: 3% !important;[\s\S]*?display: flex !important;[\s\S]*?white-space: normal !important;/);
     assert.match(overlaySource, /id="specialEvent"[^>]*> Esperando eventos del LIVE\.\.\./);
-    assert.match(overlaySource, /#lanes \{ order: 1; --tw: min\(6rem, 7vh\); --n: 2; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /#lanes \{ order: 1; --tw: min\(5rem, 6vh\); --n: 2; flex: 0\.85 1 0;/);
     assert.match(overlaySource, /#raceProgressTrack \{\s*order: 2;\s*flex: none;[\s\S]*?height: 0\.42rem;/);
     assert.match(overlaySource, /--padr: 7%/);
     assert.doesNotMatch(overlaySource, /#lanes::after|--lane-step/);
@@ -134,7 +140,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", t\.sway\.toFixed\(2\) \+ "px"\)/);
     assert.match(overlaySource, /const th = H \/ \(1 \+ 0\.625 \* \(C\.length - 1\)\)/);
     assert.match(overlaySource, /W \* 0\.33/);
-    assert.match(overlaySource, /id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE EN CADA VUELTA<\/b>/);
+    assert.match(overlaySource, /id="ctaMain">💬 COMENTA QUÉ PAÍS QUERÉS QUE GANE<\/b>/);
     assert.match(overlaySource, /teams\.map\(\(team\) => team\.n\)\.join\(" · "\)/);
     assert.doesNotMatch(overlaySource, /id="ctaSub"|PARTICIPA EN LA CARRERA|COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO/);
     assert.doesNotMatch(overlaySource, /CTA_ROTATION|ESCRIBE EL NOMBRE DE UN PAÍS|El país con más apoyo corre al DOBLE|Toca su perfil y dale <b>Seguir/);

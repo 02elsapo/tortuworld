@@ -25,20 +25,20 @@ assert.ok(firstFinisherSource, 'firstFinisher must exist in the overlay');
 assert.ok(raceTimeSource, 'formatRaceTime must exist in the overlay');
 assert.ok(raceProgressSource, 'raceProgressPercent must exist in the overlay');
 
-const app = vm.createContext({ CFG: { win: 100 }, RACE_DURATION_MS: 60_000 });
+const app = vm.createContext({ CFG: { win: 100 }, RACE_DURATION_MS: 180_000 });
 vm.runInContext(
   `${racePositionSource[0]}\n${firstFinisherSource[0]}\n${raceTimeSource[0]}\n${raceProgressSource[0]}\nglobalThis.racePosition = guaranteedRacePosition; globalThis.firstFinisher = firstFinisher; globalThis.raceTime = formatRaceTime; globalThis.raceProgress = raceProgressPercent;`,
   app,
 );
 
-test('only the designated lane is guaranteed to reach the finish in one minute', () => {
+test('only the designated lane is guaranteed to reach the finish in three minutes', () => {
   assert.equal(app.racePosition(-100, true), 0);
-  assert.equal(app.racePosition(30_000, true), 50);
-  assert.equal(app.racePosition(30_000, false), 45);
-  assert.equal(app.racePosition(60_000, true), 100);
-  assert.equal(app.racePosition(60_000, false), 90);
-  assert.equal(app.racePosition(90_000, true), 100);
-  assert.equal(app.racePosition(90_000, false), 90);
+  assert.equal(app.racePosition(90_000, true), 50);
+  assert.equal(app.racePosition(90_000, false), 45);
+  assert.equal(app.racePosition(180_000, true), 100);
+  assert.equal(app.racePosition(180_000, false), 90);
+  assert.equal(app.racePosition(240_000, true), 100);
+  assert.equal(app.racePosition(240_000, false), 90);
 });
 
 test('the earliest crossing fraction wins when multiple lanes cross in one frame', () => {
@@ -60,16 +60,16 @@ test('the earliest crossing fraction wins when multiple lanes cross in one frame
 });
 
 test('race clock rounds up and displays zero at the deadline', () => {
-  assert.equal(app.raceTime(60_000), '01:00');
-  assert.equal(app.raceTime(59_500), '01:00');
-  assert.equal(app.raceTime(59_000), '00:59');
+  assert.equal(app.raceTime(180_000), '03:00');
+  assert.equal(app.raceTime(179_500), '03:00');
+  assert.equal(app.raceTime(179_000), '02:59');
   assert.equal(app.raceTime(0), '00:00');
 });
 
 test('race progress bar drains linearly and never exceeds its bounds', () => {
-  assert.equal(app.raceProgress(60_000), '100.00');
-  assert.equal(app.raceProgress(30_000), '50.00');
+  assert.equal(app.raceProgress(180_000), '100.00');
+  assert.equal(app.raceProgress(90_000), '50.00');
   assert.equal(app.raceProgress(0), '0.00');
   assert.equal(app.raceProgress(-100), '0.00');
-  assert.equal(app.raceProgress(90_000), '100.00');
+  assert.equal(app.raceProgress(240_000), '100.00');
 });
