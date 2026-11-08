@@ -8,6 +8,10 @@ const { createWebserver, startServer } = require('../server');
 const { createTikTokModule } = require('../modules/tiktok');
 
 test('starter serves the overlay, backend, health check, and TikTok API', async () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '..', 'Dockerfile'), 'utf8');
+  assert.match(dockerfile, /COPY v16\.html \.\//);
+  assert.doesNotMatch(dockerfile, /COPY v15\.html/);
+
   const { server } = createWebserver({
     configurationPath: path.join(os.tmpdir(), `tiktok-starter-${process.pid}.json`),
     commentStatsPath: path.join(os.tmpdir(), `tiktok-starter-${process.pid}-stats.json`),
