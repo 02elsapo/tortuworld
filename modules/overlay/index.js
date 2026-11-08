@@ -3,7 +3,7 @@ const express = require('express');
 
 function registerOverlayRoutes(app) {
   app.get(['/', '/overlay'], (request, response) => {
-    response.sendFile(path.join(__dirname, '..', '..', 'v15.html'));
+    response.sendFile(path.join(__dirname, '..', '..', 'v16.html'));
   });
 
   app.get('/backend', (request, response) => {

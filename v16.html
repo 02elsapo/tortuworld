@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Carrera de tortugas v15: diez países avanzan lentamente incluso sin espectadores.
+  Carrera de tortugas v16: diez países avanzan lentamente incluso sin espectadores.
   Los primeros cuatro son fijos; seis campeones del mundo o selecciones populares se sortean
   al iniciar cada ronda. Los eventos de TikTok aceleran al país que apoya cada espectador.
   Backend integrado: SSE en /api/events. Parámetros: ?target=40, ?goal=60,
@@ -2443,6 +2443,19 @@
         font-size: calc(var(--fan-size) * 0.32);
         padding: 0;
       }
+      /* v16 · rastro: la tortuga va soltando avatares a su paso */
+      #lanes .fa.trail {
+        z-index: 0;
+        left: max(var(--g), calc(var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100));
+      }
+      #lanes .fa.trail.fresh {
+        animation: traildrop 0.55s cubic-bezier(.2, 1.5, .4, 1) both;
+      }
+      @keyframes traildrop {
+        0% { opacity: 0; transform: translateY(-0.9rem) scale(.3) rotate(-20deg); }
+        60% { opacity: 1; transform: translateY(0.15rem) scale(1.15) rotate(6deg); }
+        100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+      }
       #lanes .fa.fresh {
         animation: markerdrop 0.38s cubic-bezier(.2, 1.6, .4, 1) both;
       }
@@ -2637,7 +2650,7 @@
       @keyframes giftcaught {
         to { opacity: 0; transform: translateX(-50%) scale(1.8) rotate(12deg); }
       }
-      /* ===== v15 · ajustes ===== */
+      /* ===== v16 · ajustes ===== */
       .lane.empty .tur {
         opacity: 1;
         filter: none;
@@ -2657,7 +2670,7 @@
       <div id="head" class="panel">
         <div id="slot">
           <div id="how">
-            💬 Comenta tu país y deja tu huevo 🥚 · 👍 Like · 🎁 Turbo
+            💬 Comenta tu país y deja tu avatar en la pista · 👍 Like · 🎁 Turbo
           </div>
           <div id="banner" class="disp" role="status" aria-live="polite"></div>
         </div>
@@ -2721,7 +2734,7 @@
       </div>
     </div>
     <div id="dot" role="status" aria-label="TikTok desconectado"></div>
-    <div id="overlayVersion">v1.5.0 · ajuste de pista</div>
+    <div id="overlayVersion">v1.6.0 · rastro de avatares</div>
     <a id="backend-link" href="/backend" aria-label="Abrir el backend" title="Backend">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 7h9m4 0h3M4 17h3m4 0h9M4 12h3m4 0h9" />
@@ -3874,6 +3887,80 @@
         if (laid) renderFans(code);
         return laid;
       }
+      /* ===== v16 · RASTRO DE AVATARES =====
+         Mientras la tortuga camina va soltando avatares cada cierta distancia (sin solaparse).
+         Salen, en rotación, el dueño de la tortuga, el patrocinador y los hinchas del país. */
+      const TRAIL = {};
+      C.forEach((c) => (TRAIL[c.c] = { last: 0, idx: 0, gap: 8, gapAt: 0, els: [] }));
+      const TRAIL_MAX = 40;
+      function trailPool(code) {
+        const pool = [],
+          seen = new Set();
+        const add = (name, avatar) => {
+          const key = String(name || "").trim() || avatar;
+          if (!key || seen.has(key)) return;
+          seen.add(key);
+          pool.push({ name: String(name || "Hincha"), avatar: avatar || "" });
+        };
+        const owner = slotPlayer(code);
+        if (owner) add(owner.username, owner.avatar);
+        const sp = S.sponsors && S.sponsors[code];
+        if (sp) add(sp.user, sp.avatar);
+        for (const user of FANS[code]) {
+          const info = FANINFO[user];
+          if (info) add(info.name, info.avatar || ROSTER.get(user)?.avatar);
+        }
+        return pool;
+      }
+      function trailEl(item, progress) {
+        const e = document.createElement("i");
+        e.className = "fa trail fresh";
+        e.style.setProperty("--p", progress);
+        e.title = item.name;
+        const placeholder = () => {
+          e.classList.add("placeholder");
+          const icon = document.createElement("span");
+          icon.textContent = (item.name || "?").trim().charAt(0).toUpperCase() || "👤";
+          e.replaceChildren(icon);
+        };
+        if (item.avatar) {
+          const im = document.createElement("img");
+          im.alt = "";
+          im.src = item.avatar;
+          im.referrerPolicy = "no-referrer";
+          im.onerror = placeholder;
+          e.append(im);
+        } else placeholder();
+        return e;
+      }
+      function dropTrail(code, now) {
+        const tr = TRAIL[code],
+          t = T[code];
+        if (!tr || !t || !S.go || S.over) return;
+        const pos = (S.pos[code] / CFG.win) * 100;
+        if (now - tr.gapAt > 1500) {
+          tr.gapAt = now;
+          tr.gap = fanMarkerGap(code);
+        }
+        if (pos - tr.last < tr.gap) return;
+        const pool = trailPool(code);
+        if (!pool.length) return;
+        const item = pool[tr.idx++ % pool.length],
+          at = Math.max(0, pos - tr.gap * 0.6),
+          el = trailEl(item, at.toFixed(2));
+        t.trk.append(el);
+        tr.els.push(el);
+        tr.last = pos;
+        while (tr.els.length > TRAIL_MAX) tr.els.shift().remove();
+      }
+      function clearTrails() {
+        for (const code in TRAIL) {
+          TRAIL[code].els.forEach((e) => e.remove());
+          TRAIL[code].els = [];
+          TRAIL[code].last = 0;
+          TRAIL[code].idx = 0;
+        }
+      }
       function render() {
         const ord = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]);
         ord.forEach((c, i) => {
@@ -4731,6 +4818,7 @@
         S.gp = 0;
         S.goal = CFG.goal;
         C.forEach((c) => FANS[c.c].clear());
+        clearTrails();
         renderFansAll();
         contestants.clear();
         contestantSequence = 0;
@@ -4913,7 +5001,7 @@
             CFG.win,
             S.pos[k] + d + crawl,
           ); /* puntos aceleran; cada participante también avanza lentamente */
-          layPendingFanEggs(k);
+          dropTrail(k, now);
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
             const collected = t.giftEl;
             t.giftTarget = null;
@@ -5146,7 +5234,7 @@
               ? status.username.trim().replace(/^@+/, "")
               : "";
           $("overlayVersion").textContent =
-            "v1.5.0 · ajuste de pista" + (username ? " · @" + username : "");
+            "v1.6.0 · rastro de avatares" + (username ? " · @" + username : "");
         }
       }
       function connect() {

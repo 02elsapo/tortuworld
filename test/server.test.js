@@ -26,7 +26,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /<link rel="manifest" href="\/manifest\.webmanifest"\s*\/?>/);
     assert.match(overlaySource, /navigator\.serviceWorker[\s\S]*?\.register\("\/sw\.js"\)/);
     assert.match(overlaySource, /<title>\s*Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores\s*<\/title>/);
-    assert.match(overlaySource, /id="overlayVersion">v1\.5\.0/);
+    assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
     assert.match(overlaySource, /id="lanes"/);
     assert.match(overlaySource, /id="ctaMain">\s*💬 ESCRIBE EL NOMBRE DE UN PAÍS/);
     assert.match(overlaySource, /const source = new EventSource\("\/api\/events"\)/);
@@ -64,7 +64,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /e\.classList\.add\("fresh"\)/);
     assert.match(overlaySource, /alreadyHere = FANS\[code\]\.has\(user\)/);
     assert.match(overlaySource, /FANINFO\[user\] = \{[\s\S]*?progress:/);
-    assert.match(overlaySource, /Comenta tu país y deja tu huevo 🥚/);
+    assert.match(overlaySource, /Comenta tu país y deja tu avatar en la pista/);
+    assert.match(overlaySource, /function dropTrail\(code, now\)/);
     assert.match(overlaySource, /message \? "💬 “" \+ message \+ "”" : "💬 Comentó"/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
