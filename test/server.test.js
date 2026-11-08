@@ -88,6 +88,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /function formatConnectorEvent\(entry\)/);
     assert.match(overlaySource, /function showConnectorEvent\(entry\) \{ connectorEventDisplayed = true; const message = \$\("specialEvent"\); message\.textContent = formatConnectorEvent\(entry\); message\.className = "disp on";/);
     assert.match(overlaySource, /id="raceClock" class="disp" role="timer"/);
+    assert.doesNotMatch(overlaySource, /TIEMPO DE CARRERA|#raceClock small/);
     assert.match(overlaySource, /id="lanes"><\/div> <div id="raceProgressTrack" role="progressbar"/);
     assert.match(overlaySource, /raceProgressPercent\(remainingMs\) \+ "%"/);
     assert.match(overlaySource, /id="raceProgress"><\/i>/);
@@ -115,7 +116,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /#specialEvent \{ left: 3% !important; right: 3% !important;[\s\S]*?display: flex !important;[\s\S]*?white-space: normal !important;/);
     assert.match(overlaySource, /id="specialEvent"[^>]*> Esperando eventos del LIVE\.\.\./);
     assert.match(overlaySource, /#lanes \{ order: 1; --tw: min\(6rem, 7vh\); --n: 2; flex: 0\.85 1 0;/);
-    assert.match(overlaySource, /#raceProgressTrack \{\s*order: 2;\s*flex: none;[\s\S]*?height: 0\.22rem;/);
+    assert.match(overlaySource, /#raceProgressTrack \{\s*order: 2;\s*flex: none;[\s\S]*?height: 0\.42rem;/);
     assert.match(overlaySource, /--padr: 7%/);
     assert.doesNotMatch(overlaySource, /#lanes::after|--lane-step/);
     assert.match(overlaySource, /const T = \{\};\s*let fallbackWinnerCode = null;\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
