@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Carrera de tortugas v16: una tortuga llega a la meta en un máximo de 60 segundos, incluso sin espectadores.
+  Carrera de tortugas v17: una tortuga llega a la meta en un máximo de tres minutos, incluso sin espectadores.
   Tres países compiten en cada ronda; los eventos de TikTok pueden impulsar a sus equipos.
   Backend integrado: SSE en /api/events. Parámetros: ?target=40, ?goal=60,
   ?panel=1, ?sound=0, ?music=0 y ?ws=URL. No se inventan espectadores ni métricas de audiencia.
@@ -2329,7 +2329,7 @@
         border-radius: 999px;
         background: rgba(7, 38, 43, 0.94);
       }
-      #liveStats #overlayVersion {
+      #liveStats #statsVersion {
         position: absolute;
         right: 0;
         bottom: calc(100% + 0.2rem);
@@ -2740,7 +2740,7 @@
           <span title="Aportes especiales">✨ <b id="statGift">0</b></span>
           <span title="Nuevos seguidores">➕ <b id="statFollow">0</b></span>
           <span title="Compartidos">🔁 <b id="statShare">0</b></span>
-          <span id="overlayVersion" aria-label="Versión 1 del overlay">v1</span>
+          <span id="statsVersion" aria-label="Versión 1 del overlay">v1</span>
         </div>
       </div>
       <div id="lanes"></div>

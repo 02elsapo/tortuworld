@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const test = require('node:test');
 
 const overlaySource = fs.readFileSync(
-  path.join(__dirname, '..', 'v16.html'),
+  path.join(__dirname, '..', 'v17.html'),
   'utf8',
 );
 const promptsSource = overlaySource.match(

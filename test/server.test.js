@@ -9,8 +9,8 @@ const { createTikTokModule } = require('../modules/tiktok');
 
 test('starter serves the overlay, backend, health check, and TikTok API', async () => {
   const dockerfile = fs.readFileSync(path.join(__dirname, '..', 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY v16\.html \.\//);
-  assert.doesNotMatch(dockerfile, /COPY v15\.html/);
+  assert.match(dockerfile, /COPY v17\.html \.\//);
+  assert.doesNotMatch(dockerfile, /COPY v16\.html/);
 
   const { server } = createWebserver({
     configurationPath: path.join(os.tmpdir(), `tiktok-starter-${process.pid}.json`),
@@ -25,12 +25,14 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
 
     const overlay = await fetch(baseUrl);
     assert.equal(overlay.status, 200);
+    assert.match(overlay.headers.get('cache-control'), /no-store/);
     const overlayHtml = await overlay.text();
     const overlaySource = overlayHtml.replace(/\s+/g, ' ');
     assert.match(overlaySource, /<link rel="manifest" href="\/manifest\.webmanifest"\s*\/?>/);
     assert.match(overlaySource, /navigator\.serviceWorker[\s\S]*?\.register\("\/sw\.js"\)/);
     assert.match(overlaySource, /<title>Carrera de tortugas · Países en vivo<\/title>/);
     assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
+    assert.equal((overlaySource.match(/id="overlayVersion"/g) || []).length, 1);
     assert.match(overlaySource, /id="lanes"/);
     assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
     assert.match(overlaySource, /id="statJoin">0/);
@@ -92,8 +94,8 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="lanes"><\/div> <div id="raceProgressTrack" role="progressbar"/);
     assert.match(overlaySource, /raceProgressPercent\(remainingMs\) \+ "%"/);
     assert.match(overlaySource, /id="raceProgress"><\/i>/);
-    assert.match(overlaySource, /id="overlayVersion"[^>]*>v1<\/span>/);
-    assert.match(overlaySource, /#liveStats #overlayVersion \{\s*position: absolute;/);
+    assert.match(overlaySource, /id="statsVersion"[^>]*>v1<\/span>/);
+    assert.match(overlaySource, /#liveStats #statsVersion \{\s*position: absolute;/);
     assert.match(overlaySource, /RACE_DURATION_MS = 180_000/);
     assert.match(overlaySource, /raceClockTimer = setInterval\(\(\) => \{/);
     assert.match(overlaySource, /raceStartedAt = performance\.now\(\);\s*startRaceClock\(\);/);
@@ -197,6 +199,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);
+    const versionedOverlay = await fetch(`${baseUrl}/v17.html`);
+    assert.equal(versionedOverlay.status, 200);
+    assert.match(versionedOverlay.headers.get('cache-control'), /no-store/);
+    assert.equal(await versionedOverlay.text(), overlayHtml);
 
     const manifestResponse = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifestResponse.status, 200);

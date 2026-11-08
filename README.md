@@ -68,7 +68,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `v16.html` presenta una carrera de diez países: Brasil, Paraguay, Argentina y Alemania son fijos; los otros seis se sortean por ronda entre campeones del Mundial masculino y selecciones populares, sin clubes ni duplicados. Las tortugas avanzan lentamente aunque no haya espectadores y zigzaguean dentro de su carril. Eventos visuales internos por país (likes, comentarios y regalos) mantienen dinámica la carrera sin aparecer como espectadores ni modificar estadísticas, el feed real o datos de TikTok. Los avatares de los hinchas dejan un rastro en la pista. Los comentarios y las copas ganadas se guardan por país en JSON; el backend ofrece un botón de estadísticas con actualización en vivo. El overlay también muestra el Top 5 de participantes, los eventos y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. Los eventos reales se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). El panel de pruebas manual se abre con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
+El overlay `v17.html` presenta una carrera de diez países: Brasil, Paraguay, Argentina y Alemania son fijos; los otros seis se sortean por ronda entre campeones del Mundial masculino y selecciones populares, sin clubes ni duplicados. Las tortugas avanzan lentamente aunque no haya espectadores y zigzaguean dentro de su carril. Eventos visuales internos por país (likes, comentarios y regalos) mantienen dinámica la carrera sin aparecer como espectadores ni modificar estadísticas, el feed real o datos de TikTok. Los avatares de los hinchas dejan un rastro en la pista. Los comentarios y las copas ganadas se guardan por país en JSON; el backend ofrece un botón de estadísticas con actualización en vivo. El overlay también muestra el Top 5 de participantes, los eventos y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. Los eventos reales se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). El panel de pruebas manual se abre con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
 
 ## Estructura
 
@@ -86,7 +86,7 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-v16.html                           # Juego y overlay transparente
+v17.html                           # Juego y overlay transparente
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
