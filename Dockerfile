@@ -7,7 +7,7 @@ RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY server.js ./
 COPY modules ./modules
-COPY v17.html ./
+COPY v45.html ./
 
 ENV NODE_ENV=production
 EXPOSE 80

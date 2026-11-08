@@ -228,7 +228,6 @@ test('monitor retries rejected, thrown, and timed-out connections until the limi
   const { monitor, timers } = createMonitor({
     now: () => clock.value,
     retryFastIntervalMs: 10,
-    retrySlowIntervalMs: 15,
     connectTimeoutMs: 5,
     maxConnectionAttempts: 4,
   });
@@ -263,67 +262,33 @@ test('monitor retries rejected, thrown, and timed-out connections until the limi
   monitor.disconnectUser();
 });
 
-test('browser startup refreshes ten-second retries for another twenty minutes', async () => {
+test('monitor retries every five seconds for five minutes, then pauses until restarted', async () => {
   const clock = { value: 0 };
   const { monitor, timers } = createMonitor({ now: () => clock.value });
   FakeConnection.connectBehavior = 'reject';
-  monitor.connectUser('delayed-live');
+  monitor.connectUser('paused-live');
   await new Promise((resolve) => setImmediate(resolve));
-  assert.equal([...timers.pending.values()][0].delay, 10000);
+  assert.equal([...timers.pending.values()][0].delay, 5000);
 
-  clock.value = 10 * 60 * 1000;
-  timers.fire();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal([...timers.pending.values()][0].delay, 10000);
-
-  clock.value = 21 * 60 * 1000;
-  timers.fire();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal([...timers.pending.values()][0].delay, 60000);
-
-  const attempts = monitor.state.connectionAttempts;
-  assert.equal(monitor.refreshRetryWindow(), true);
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(monitor.state.connectionAttempts, attempts + 1);
-  assert.equal([...timers.pending.values()][0].delay, 10000);
-  monitor.refreshRetryWindow();
-  assert.equal(monitor.state.connectionAttempts, attempts + 1);
-  monitor.disconnectUser();
-});
-
-test('monitor retries every ten seconds for twenty minutes, then continues every minute', async () => {
-  const clock = { value: 0 };
-  const { monitor, timers } = createMonitor({ now: () => clock.value });
-  const fireAfterDelay = async () => {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
     const timer = timers.pending.values().next().value;
     assert.ok(timer);
+    assert.equal(timer.delay, 5000);
     clock.value += timer.delay;
     timers.fire();
     await new Promise((resolve) => setImmediate(resolve));
-  };
+  }
 
-  FakeConnection.connectBehavior = 'reject';
-  monitor.connectUser('scheduled-retries');
+  assert.equal(clock.value, 5 * 60 * 1000);
+  assert.equal(monitor.state.status, 'failed');
+  assert.equal(monitor.state.connectionAttempts, 61);
+  assert.equal(timers.pending.size, 0);
+
+  monitor.connectUser('paused-live');
   await new Promise((resolve) => setImmediate(resolve));
-  for (let attempt = 0; attempt < 120; attempt += 1) {
-    assert.equal(timers.pending.values().next().value.delay, 10000);
-    await fireAfterDelay();
-  }
-
-  assert.equal(clock.value, 20 * 60 * 1000);
-  assert.equal(timers.pending.values().next().value.delay, 60000);
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    await fireAfterDelay();
-  }
-
-  assert.equal(clock.value, 50 * 60 * 1000);
   assert.equal(monitor.state.status, 'reconnecting');
-  assert.equal(monitor.state.connectionAttempts, 151);
-  assert.equal(timers.pending.values().next().value.delay, 60000);
-  await fireAfterDelay();
-  assert.equal(monitor.state.status, 'reconnecting');
-  assert.equal(monitor.state.connectionAttempts, 152);
-  assert.equal(timers.pending.size, 1);
+  assert.equal(monitor.state.connectionAttempts, 1);
+  assert.equal([...timers.pending.values()][0].delay, 5000);
   monitor.disconnectUser();
 });
 

@@ -2,8 +2,8 @@ const path = require('node:path');
 const express = require('express');
 
 function registerOverlayRoutes(app) {
-  const overlayPath = path.join(__dirname, '..', '..', 'v17.html');
-  app.get(['/', '/overlay', '/v17.html'], (request, response) => {
+  const overlayPath = path.join(__dirname, '..', '..', 'v45.html');
+  app.get(['/', '/overlay', '/v45.html'], (request, response) => {
     response.setHeader('Cache-Control', 'no-store, max-age=0');
     response.sendFile(overlayPath);
   });

@@ -18,9 +18,8 @@ function createTikTokMonitorService({
   webcastEvents = WebcastEvent,
   controlEvents = ControlEvent,
   connectorLoader = loadTikTokConnector,
-  retryFastIntervalMs = 10000,
-  retryFastWindowMs = 20 * 60 * 1000,
-  retrySlowIntervalMs = 60000,
+  retryFastIntervalMs = 5000,
+  retryFastWindowMs = 5 * 60 * 1000,
   connectTimeoutMs = 10000,
   maxConnectionAttempts = null,
   now = Date.now,
@@ -29,7 +28,6 @@ function createTikTokMonitorService({
 } = {}) {
   if (!Number.isFinite(retryFastIntervalMs) || retryFastIntervalMs <= 0
     || !Number.isFinite(retryFastWindowMs) || retryFastWindowMs <= 0
-    || !Number.isFinite(retrySlowIntervalMs) || retrySlowIntervalMs <= 0
     || !Number.isFinite(connectTimeoutMs) || connectTimeoutMs <= 0
     || (maxConnectionAttempts !== null
       && (!Number.isInteger(maxConnectionAttempts) || maxConnectionAttempts < 1))
@@ -338,6 +336,12 @@ function createTikTokMonitorService({
     if (generation !== connectionGeneration || retryTimer !== null) return;
 
     cancelConnectionTimeout();
+    if (state.isConnected) {
+      retryStartedAt = now();
+      lastAttemptAt = retryStartedAt;
+      state.retryAttempt = 0;
+      state.connectionAttempts = 0;
+    }
     if (failedConnection && state.connection === failedConnection) {
       state.connectionEventListeners.delete(failedConnection);
       state.connection = null;
@@ -355,8 +359,15 @@ function createTikTokMonitorService({
       return;
     }
 
-    const interval = elapsed < retryFastWindowMs ? retryFastIntervalMs : retrySlowIntervalMs;
-    const delay = Math.max(0, interval - (now() - lastAttemptAt));
+    if (elapsed >= retryFastWindowMs) {
+      state.status = 'failed';
+      state.nextRetryAt = null;
+      addLog(`Se pausaron los reintentos a @${username} tras cinco minutos.`);
+      broadcastStatus();
+      return;
+    }
+
+    const delay = Math.max(0, retryFastIntervalMs - (now() - lastAttemptAt));
     state.retryAttempt += 1;
     state.nextRetryAt = new Date(Date.now() + delay).toISOString();
     state.status = 'reconnecting';

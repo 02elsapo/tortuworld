@@ -13,7 +13,7 @@ $env:TIKTOK_USERNAME = "nombre_de_usuario"
 npm start
 ```
 
-El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. También puedes dejar `TIKTOK_USERNAME` vacío y guardar el usuario en el backend. La conexión comienza al arrancar si hay una cuenta configurada.
+El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. La prioridad de cuenta es `TIKTOK_USERNAME`, luego la cuenta guardada; si ninguna existe, se conecta a `@doraramoshuerta`.
 
 La aplicación también es instalable en Chrome como **tortu** y abre en pantalla completa. Entra al sitio por HTTPS (o por `http://localhost` durante desarrollo) y elige **Instalar tortu** en el menú de Chrome o en el icono de instalación de la barra de direcciones. El modo de pantalla completa se aplica al abrir la aplicación instalada; el overlay sigue disponible en `/` para TikTok LIVE Studio.
 
@@ -23,7 +23,7 @@ El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra 
 |---|---|---|
 | `PORT` | `80` | Puerto HTTP. |
 | `HOST` | `0.0.0.0` | Interfaz de red de escucha. |
-| `TIKTOK_USERNAME` | vacío | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
+| `TIKTOK_USERNAME` | `doraramoshuerta` | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
 | `TIKTOK_CONFIG_PATH` | `data/tiktok/config.json` | Ruta del archivo JSON con el usuario configurado desde el backend. |
 | `TIKTOK_COMMENT_STATS_PATH` | Junto a `TIKTOK_CONFIG_PATH` | Archivo JSON persistente con comentarios y copas por país. |
 
@@ -37,7 +37,7 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /` o `GET /overlay` | Carrera de tortugas con eventos visuales internos por país, sin alterar estadísticas ni simular espectadores de TikTok. | HTML |
+| `GET /`, `/overlay` o `/v45.html` | Overlay activo de la versión 45. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -68,7 +68,9 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `v17.html` presenta una carrera de diez países: Brasil, Paraguay, Argentina y Alemania son fijos; los otros seis se sortean por ronda entre campeones del Mundial masculino y selecciones populares, sin clubes ni duplicados. Las tortugas avanzan lentamente aunque no haya espectadores y zigzaguean dentro de su carril. Eventos visuales internos por país (likes, comentarios y regalos) mantienen dinámica la carrera sin aparecer como espectadores ni modificar estadísticas, el feed real o datos de TikTok. Los avatares de los hinchas dejan un rastro en la pista. Los comentarios y las copas ganadas se guardan por país en JSON; el backend ofrece un botón de estadísticas con actualización en vivo. El overlay también muestra el Top 5 de participantes, los eventos y una meta colectiva. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. Los eventos reales se reciben por SSE; el backend ignora eventos de audiencia (`roomUser`). El panel de pruebas manual se abre con `P` o `?panel=1`. Para un servidor WebSocket externo, especifica `?ws=ws://localhost:8080`.
+El overlay `v45.html` es la versión activa del juego y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El backend conserva su contrato de eventos y se adapta a este overlay. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
+
+El botón de estado del overlay muestra la cuenta conectada en verde y el estado de conexión en rojo. El conector reintenta cada 5 segundos durante un máximo de 5 minutos; si el overlay se abre después de agotarse ese plazo, inicia una nueva ventana de reintentos. También se puede iniciar manualmente desde el botón rojo.
 
 ## Estructura
 
@@ -86,7 +88,7 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-v17.html                           # Juego y overlay transparente
+v45.html                           # Juego y overlay transparente activo
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
