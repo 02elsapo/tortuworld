@@ -4596,7 +4596,7 @@
         const diamonds = Math.max(1, Number(entry.diamondCount) || 1);
         let points =
           entry.type === "chat"
-            ? 1
+            ? (CFG.target * 0.15) / USER_EVENT_ADVANCE
             : entry.type === "gift"
               ? diamonds * counts
               : entry.type === "like"

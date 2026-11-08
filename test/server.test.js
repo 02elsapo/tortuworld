@@ -50,6 +50,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /if \(_newAvatar\) layPendingFanEggs\(_code, _u\)/);
     assert.match(overlaySource, /type = \["member", "enter", "joined"\]\.includes\(entry\.type\) \? "join" : entry\.type; if \(type !== entry\.type\) entry = \{ \.\.\.entry, type \};/);
     assert.match(overlaySource, /const USER_EVENT_ADVANCE = 3/);
+    assert.match(overlaySource, /entry\.type === "chat" \? \(CFG\.target \* 0\.15\) \/ USER_EVENT_ADVANCE/);
     assert.match(overlaySource, /points \*= USER_EVENT_ADVANCE/);
     assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
