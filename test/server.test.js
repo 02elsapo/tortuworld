@@ -56,16 +56,14 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.ok(voiceLoop);
     assert.doesNotMatch(voiceLoop[1], /enqueueMsg/);
     assert.match(overlaySource, /VOICE_PROMPTS = \[[\s\S]*?comenten su país para apoyar[\s\S]*?Dejen un like[\s\S]*?Compartan el LIVE/);
-    const tickerLogic = overlaySource.match(
-      /function msgTick\(\) \{([\s\S]*?)\} function showSpecialEvent/,
-    );
-    assert.ok(tickerLogic);
-    assert.doesNotMatch(tickerLogic[1], /speakTickerMessage|speakEncouragement/);
+    assert.match(overlaySource, /function enqueueMsg\(t\) \{ \$\("specialEvent"\)\.textContent = String\(t \|\| ""\); \}/);
+    assert.doesNotMatch(overlaySource, /#tkIn|tkmove|function msgTick/);
     assert.match(overlaySource, /comment\.length > 100/);
     assert.match(overlaySource, /Esperando el LIVE de /);
     assert.match(overlaySource, /Date\.parse\(status\.nextRetryAt\)/);
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);
-    assert.match(overlaySource, /#specialEvent \{ display: none !important; right: 4\.6rem !important;/);
+    assert.match(overlaySource, /#specialEvent \{ left: 3% !important; right: 3% !important;[\s\S]*?display: flex !important;[\s\S]*?white-space: normal !important;/);
+    assert.match(overlaySource, /id="specialEvent"[^>]*> Esperando eventos del LIVE\.\.\./);
     assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 4; flex: 0\.85 1 0;/);
     assert.match(overlaySource, /const T = \{\};\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
     const leaderMarker = overlaySource.match(/l\.classList\.toggle\(\s*"lead",([\s\S]*?)\);/);

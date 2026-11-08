@@ -2261,20 +2261,6 @@
         padding: 0.3rem 0 !important;
         font-size: 1.35rem !important;
       }
-      #tkIn {
-        display: inline-block;
-        white-space: nowrap;
-        transform: translateX(100vw);
-        will-change: transform;
-      }
-      @keyframes tkmove {
-        from {
-          transform: translateX(100vw);
-        }
-        to {
-          transform: translateX(-100%);
-        }
-      }
       @media (orientation: portrait) {
         #specialEvent {
           font-size: 1.15rem !important;
@@ -2286,8 +2272,18 @@
         display: none !important;
       }
       #specialEvent {
-        display: none !important;
-        right: 4.6rem !important;
+        left: 3% !important;
+        right: 3% !important;
+        bottom: calc(1% + env(safe-area-inset-bottom, 0px));
+        display: flex !important;
+        min-height: 2.4rem !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 0.7rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.15 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        justify-content: center;
       }
       #app {
         top: var(--top, 18%);
@@ -2671,7 +2667,9 @@
     <div id="connectionStatus" class="connection-status" role="status" aria-live="polite">
       TikTok · esperando estado de conexión
     </div>
-    <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
+    <div id="specialEvent" class="disp" role="status" aria-live="polite">
+      Esperando eventos del LIVE...
+    </div>
     <div id="bottom">
       <section id="standings" class="panel">
         <h2 class="disp">TOP 5 · CUENTAS CON MÁS PUNTOS</h2>
@@ -3586,12 +3584,8 @@
       }
 
       /* ===== Pantalla ===== */
-      /* ===== Barra de mensajes rotativa =====
-   Cola de eventos recién llegados (máx. 4, se muestran primero) y, cuando no hay cola, consejos dinámicos que se
-   alternan cada 3.5 s (cómo sumar puntos, quién lidera, distancia al 1°, meta de la comunidad). ?canal=minombre
-   personaliza el mensaje de seguir. showSpecialEvent y feed ahora solo encolan: todo sale por esta barra. */
-      const MQ = [],
-        VOICE_INTERVAL_MS = 10000,
+      /* Mensajes y eventos permanecen visibles hasta que el siguiente los reemplaza. */
+      const VOICE_INTERVAL_MS = 10000,
         VOICE_PROMPTS = [
           "Hinchas, comenten su país para apoyar a su tortuga.",
           "Dejen un like y ayúdenla a avanzar.",
@@ -3607,12 +3601,7 @@
             ? window.speechSynthesis
             : null,
         voiceQueue = [];
-      let mqTip = 0,
-        mqAt = 0;
-      let tkBusy = false,
-        tkTip = false,
-        tkTimer = 0,
-        voiceEnabled = Boolean(voiceSynth),
+      let voiceEnabled = Boolean(voiceSynth),
         voiceSpeaking = false,
         voiceNeedsGesture = false,
         voiceHasStarted = false,
@@ -3768,40 +3757,7 @@
         );
       }
       function enqueueMsg(t) {
-        MQ.push(t);
-        if (MQ.length > 4) MQ.shift();
-        if (!tkBusy || tkTip) {
-          clearTimeout(tkTimer);
-          tkBusy = false;
-          msgTick();
-        }
-      }
-      function nextTip() {
-        return VOICE_PROMPTS[mqTip++ % VOICE_PROMPTS.length];
-      }
-      function msgTick() {
-        if (tkBusy) return;
-        const el = $("specialEvent");
-        let sp = el.firstElementChild;
-        if (!sp) {
-          el.textContent = "";
-          sp = document.createElement("span");
-          sp.id = "tkIn";
-          el.append(sp);
-        }
-        tkTip = !MQ.length;
-        const message = MQ.length ? MQ.shift() : nextTip();
-        sp.textContent = message;
-        sp.style.animation = "none";
-        void sp.offsetWidth;
-        const dur = Math.max(6, (el.clientWidth + sp.offsetWidth) / 150);
-        sp.style.animation = "tkmove " + dur + "s linear forwards";
-        mqAt = Date.now();
-        tkBusy = true;
-        tkTimer = setTimeout(() => {
-          tkBusy = false;
-          msgTick();
-        }, dur * 1000);
+        $("specialEvent").textContent = String(t || "");
       }
       function showSpecialEvent(text) {
         enqueueMsg(text);
@@ -6454,7 +6410,6 @@
       renderLiveEvents();
       newRound();
       requestAnimationFrame(frame);
-      msgTick();
       connect();
     </script>
   </body>
