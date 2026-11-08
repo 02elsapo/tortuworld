@@ -43,10 +43,16 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /loadCupStats\(\);/);
     assert.match(overlaySource, /function registerFan\(user, code, entry\)/);
     assert.match(overlaySource, /S\.pick\.get\(_u\)[\s\S]*?rnd\(C\)\.c/);
+    assert.match(overlaySource, /PENDING_FANS\[code\]\.add\(user\)/);
+    assert.match(overlaySource, /function layPendingFanEggs\(code\)/);
+    assert.match(overlaySource, /--egg: calc\(var\(--th\) \* 0\.5\)/);
+    assert.match(overlaySource, /width: 90%;\s*height: 84%/);
     assert.match(overlaySource, /C\.find\(\(c\) => c\.c === preferred && !S\.slotUser\[c\.c\]\)/);
     assert.match(overlaySource, /function putGiftAhead\(code, entry\)/);
     assert.match(overlaySource, /tgtE = VMAX/);
     assert.match(overlaySource, /S\.pos\[k\] >= t\.giftTarget/);
+    assert.match(overlaySource, /const ownsLane = Boolean\(code\)/);
+    assert.match(overlaySource, /const code = S\.slotOf\.get\(p\.key\) \|\| S\.pick\.get\(p\.key\)/);
     assert.doesNotMatch(overlaySource, /const CLUBS/);
     assert.doesNotMatch(overlaySource, /if \(Q\.get\("demo"\)\)/);
     assert.doesNotMatch(overlaySource, /S\.pos\[k\] = 0/);

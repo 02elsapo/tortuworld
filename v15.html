@@ -2376,35 +2376,49 @@
       }
       /* Huevos con avatar de cada hincha, dejados en el punto de apoyo del país. */
       #lanes {
-        --egg: calc(var(--th) * 0.3);
+        --egg: calc(var(--th) * 0.5);
       }
       #lanes .fa {
         position: absolute;
         z-index: 1;
         display: grid;
-        width: calc(var(--egg) * 0.82);
+        width: calc(var(--egg) * 0.72);
         height: var(--egg);
         place-items: center;
         border-radius: 50% 50% 45% 45% / 58% 58% 42% 42%;
         overflow: hidden;
         border: 0.14rem solid #fff1c8;
-        padding: 5%;
+        padding: 3%;
         background: radial-gradient(ellipse at 38% 27%, #fffef1 0 12%, #f8e9ba 55%, #d2a95f 100%);
         color: #fff;
-        font: 800 calc(var(--egg) * 0.38)/1 "Nunito", sans-serif;
+        font: 800 calc(var(--egg) * 0.3)/1 "Nunito", sans-serif;
         text-align: center;
         box-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.52), inset 0 0 0 0.05rem rgba(255,255,255,.55);
-        top: calc(var(--rt) + var(--th) * 0.69 + var(--row, 0) * var(--egg) * 0.32);
+        top: calc(var(--rt) + var(--th) * 0.5);
         left: max(var(--g), calc(var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100 - var(--egg) * 0.39));
         pointer-events: none;
       }
       #lanes .fa img {
         display: block;
-        width: 80%;
-        height: 66%;
+        width: 90%;
+        height: 84%;
         border: 0.08rem solid rgba(255, 255, 255, 0.95);
         border-radius: 50%;
         object-fit: cover;
+      }
+      #lanes .fa.placeholder {
+        border-color: #fff;
+        background: #35565d;
+      }
+      #lanes .fa.placeholder span {
+        display: grid;
+        width: 88%;
+        height: 82%;
+        place-items: center;
+        border-radius: 50%;
+        background: #9db6bb;
+        color: #234047;
+        font-size: calc(var(--egg) * 0.55);
       }
       #lanes .fa.more {
         border-color: #fff;
@@ -2498,23 +2512,23 @@
       /* ===== v14 · eventos sobre la tortuga ===== */
       #lanes .evb {
         position: absolute;
-        z-index: 9;
+        z-index: 12;
         white-space: nowrap;
         pointer-events: none;
-        padding: 0.1em 0.6em 0.15em;
+        padding: 0.16em 0.7em 0.2em;
         border-radius: 999px;
-        border: 0.14rem solid #fff;
+        border: 0.16rem solid #fff;
         color: #fff;
-        font-size: calc(var(--th) * 0.2);
+        font-size: calc(var(--th) * 0.24);
         line-height: 1.15;
         text-shadow: 0 0.08em 0 rgba(7, 38, 43, 0.7);
-        box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.45);
-        top: calc(var(--rt) + var(--th) * 0.02 - var(--o, 0) * 1.25em);
+        box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.6);
+        top: calc(var(--rt) - var(--th) * 0.15 - var(--o, 0) * var(--th) * 0.12);
         left: calc(
           var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) /
             100 + var(--tw) * 0.5
         );
-        animation: evup 1.6s ease-out forwards;
+        animation: evup 2.2s ease-out forwards;
       }
       @keyframes evup {
         0% {
@@ -3052,7 +3066,8 @@
       NATIONS.splice(0, NATIONS.length, ...chooseRoundTeams());
       const FANINFO = {};
       let CODES = NATIONS.map((team) => team.code);
-      const FANS = {};
+      const FANS = {},
+        PENDING_FANS = {};
       function setRoundTeams() {
         const teams = chooseRoundTeams();
         NATIONS.splice(0, NATIONS.length, ...teams);
@@ -3064,7 +3079,10 @@
           T[lane.c].avKey = null;
         });
       }
-      C.forEach((c) => (FANS[c.c] = new Set()));
+      C.forEach((c) => {
+        FANS[c.c] = new Set();
+        PENDING_FANS[c.c] = new Set();
+      });
       function nat(p) {
         const c = S.slotOf.get(p.key);
         if (c) {
@@ -3672,33 +3690,34 @@
           info.fresh = false;
         }
         e.style.setProperty("--p", info.progress || 0);
-        e.style.setProperty("--row", k % 2);
         e.title = extra ? extra + " hinchas más" : (info.name || "Hincha") + " dejó su huevo";
-        const ini = () => {
-          e.textContent =
-            extra || (info.name || "?").trim().charAt(0).toUpperCase();
-          e.style.background = "hsl(" + hue(info.name || "?") + ",65%,42%)";
+        const placeholder = () => {
+          e.classList.add("placeholder");
+          const icon = document.createElement("span");
+          icon.textContent = "👤";
+          e.replaceChildren(icon);
         };
         if (extra) {
-          ini();
+          e.textContent = extra;
           e.classList.add("more");
         } else if (info.avatar) {
           const im = document.createElement("img");
           im.alt = "";
           im.src = info.avatar;
           im.onerror = () => {
-            im.remove();
-            ini();
+            placeholder();
           };
           e.append(im);
-        } else ini();
+        } else placeholder();
         return e;
       }
       function renderFans(code) {
         const t = T[code];
         if (!t) return;
         t.trk.querySelectorAll(".fa").forEach((e) => e.remove());
-        const list = [...FANS[code]],
+        const list = [...FANS[code]].filter((user) =>
+            Number.isFinite(FANINFO[user]?.progress),
+          ),
           vis = list.slice(-MAXF).reverse();
         const fire = code === S.fanLead,
           add = (e) => {
@@ -3706,10 +3725,6 @@
             t.trk.append(e);
           };
         vis.forEach((u, i) => add(fanEl(i, FANINFO[u] || { name: u, progress: 0 })));
-        if (list.length > MAXF) {
-          const overflow = { progress: FANINFO[vis[vis.length - 1]]?.progress || 0 };
-          add(fanEl(vis.length, overflow, "+" + (list.length - MAXF)));
-        }
       }
       function fanLeader() {
         let best = null,
@@ -3744,7 +3759,7 @@
           avatar =
             typeof entry.avatar === "string" && /^https?:\/\//i.test(entry.avatar)
               ? entry.avatar
-              : oldInfo.avatar || "",
+              : oldInfo.avatar || ROSTER.get(user)?.avatar || "",
           alreadyHere = FANS[code].has(user);
         if (previous !== code) {
           if (previous && S.fans[previous] > 0) S.fans[previous]--;
@@ -3752,26 +3767,83 @@
           S.pick.set(user, code);
         }
         if (!alreadyHere) {
-          C.forEach((lane) => FANS[lane.c].delete(user));
+          C.forEach((lane) => {
+            FANS[lane.c].delete(user);
+            PENDING_FANS[lane.c].delete(user);
+          });
           FANS[code].add(user);
+          PENDING_FANS[code].add(user);
         }
         FANINFO[user] = {
           name: String(entry.username || oldInfo.name || "?"),
           avatar,
           code,
           fresh: !alreadyHere,
-          progress: alreadyHere
-            ? oldInfo.progress || 0
-            : Math.max(
-                0,
-                Math.min(
-                  100,
-                  ((S.pos[code] - Math.max(3, CFG.win * 0.05)) / CFG.win) *
-                    100,
-                ),
-              ),
+          progress: alreadyHere ? oldInfo.progress : null,
         };
         if (!alreadyHere || oldInfo.avatar !== avatar) renderFansAll();
+      }
+      function fanEggGap(code) {
+        const t = T[code],
+          lanesStyle = getComputedStyle($("lanes")),
+          rem =
+            parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+            16,
+          turtleWidth = t.tur.getBoundingClientRect().width,
+          trackLength =
+            t.trk.clientWidth -
+            turtleWidth -
+            (parseFloat(lanesStyle.getPropertyValue("--g")) || 0) -
+            rem * 0.8;
+        if (trackLength <= 0) return 12;
+        const eggWidth = turtleWidth * (46 / 70) * 0.5 * 0.72;
+        return Math.max(2, Math.min(40, ((eggWidth + 8) / trackLength) * 100));
+      }
+      function findFanEggPosition(code, desired, user) {
+        const gap = fanEggGap(code),
+          limit = (S.pos[code] / CFG.win) * 100 - gap;
+        if (limit < 0) return null;
+        const occupied = [...FANS[code]]
+            .filter((other) => other !== user)
+            .map((other) => FANINFO[other]?.progress)
+            .filter(Number.isFinite),
+          anchor = Math.min(desired, limit);
+        for (let offset = 0; offset <= 100; offset += gap) {
+          const candidates =
+            offset === 0 ? [anchor] : [anchor - offset, anchor + offset];
+          for (const candidate of candidates) {
+            if (
+              candidate >= 0 &&
+              candidate <= limit &&
+              occupied.every((position) => Math.abs(position - candidate) >= gap)
+            ) {
+              return candidate;
+            }
+          }
+        }
+        return null;
+      }
+      function layPendingFanEggs(code) {
+        let laid = false;
+        for (const user of [...PENDING_FANS[code]]) {
+          if (!FANS[code].has(user)) {
+            PENDING_FANS[code].delete(user);
+            continue;
+          }
+          const info = FANINFO[user],
+            desired = Math.max(
+              0,
+              ((S.pos[code] - Math.max(3, CFG.win * 0.05)) / CFG.win) * 100,
+            ),
+            position = findFanEggPosition(code, desired, user);
+          if (position === null) continue;
+          info.progress = position;
+          info.fresh = true;
+          PENDING_FANS[code].delete(user);
+          laid = true;
+        }
+        if (laid) renderFans(code);
+        return laid;
       }
       function render() {
         const ord = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]);
@@ -3890,13 +3962,17 @@
         if (!t) return;
         const show = (cls, txt) => {
           const old = t.trk.querySelectorAll(".evb");
-          if (old.length >= 3) old[0].remove();
+          if (old.length >= 5) old[0].remove();
           const e = document.createElement("div");
           e.className = "evb disp " + cls;
           e.textContent = txt;
           e.style.setProperty("--o", (t.evo = ((t.evo || 0) + 1) % 3));
+          e.style.setProperty(
+            "--p",
+            ((S.pos[code] / CFG.win) * 100).toFixed(2),
+          );
           t.trk.append(e);
-          setTimeout(() => e.remove(), 1700);
+          setTimeout(() => e.remove(), 2300);
         };
         const pts =
           points < 10 ? String(+points.toFixed(1)) : String(Math.round(points));
@@ -3963,15 +4039,25 @@
       function raceAdd(p, entry, points) {
         if (S.over) return;
         goalAdd(points);
-        const code = S.slotOf.get(p.key) || claimSlot(p);
+        let code = S.slotOf.get(p.key) || claimSlot(p);
+        const ownsLane = Boolean(code);
+        if (!code) code = S.pick.get(p.key);
         if (!code) return;
         const t = T[code],
           ty = entry.type;
-        setSlotAvatar(code, p);
-        t.pend = Math.max(
-          0,
-          Math.min(CFG.win, (p.points / CFG.target) * CFG.win) - S.pos[code],
-        );
+        if (ownsLane) {
+          setSlotAvatar(code, p);
+          t.pend = Math.max(
+            0,
+            Math.min(CFG.win, (p.points / CFG.target) * CFG.win) -
+              S.pos[code],
+          );
+        } else {
+          t.pend += Math.min(
+            Math.max(0, CFG.win - S.pos[code]),
+            Math.max(1, (points / CFG.target) * CFG.win),
+          );
+        }
         if (ty === "gift") putGiftAhead(code, entry);
         /* Mensaje del evento que acaba de entrar (no durante los bots de espera, para no simular actividad real) */
         if (!(IDLE && IDLE.on)) {
@@ -4798,6 +4884,7 @@
             CFG.win,
             S.pos[k] + d + crawl,
           ); /* puntos aceleran; cada participante también avanza lentamente */
+          layPendingFanEggs(k);
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
             const collected = t.giftEl;
             t.giftTarget = null;
@@ -5494,7 +5581,7 @@
       raceAdd = function (p, entry, points) {
         const had = S.slotOf.get(p.key);
         _raceAdd(p, entry, points);
-        const code = S.slotOf.get(p.key);
+        const code = S.slotOf.get(p.key) || S.pick.get(p.key);
         if (!code || S.over) return;
         const ty = entry.type;
         emojiFx(
