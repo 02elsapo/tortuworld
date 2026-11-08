@@ -6310,6 +6310,15 @@
       finish = function (code) {
         _finish(code);
         const p = slotPlayer(code);
+        const winnerName =
+          p
+            ? nat(p).n
+            : NATIONS[C.findIndex((lane) => lane.c === code)].n;
+        speakTickerMessage(
+          "Ganó " +
+            winnerName +
+            ". ¡Celebramos su victoria! La nueva carrera comienza en unos segundos.",
+        );
         $("app").classList.add("finished");
         emojiFx(code, "follow", 10);
         ringFx(code, true);

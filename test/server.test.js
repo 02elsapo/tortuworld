@@ -93,6 +93,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /guaranteedRacePosition\(now - raceStartedAt\)/);
     assert.match(overlaySource, /RACE_WARNINGS = new Set\(\[30, 15, 10, 5, 4, 3, 2, 1\]\)/);
     assert.match(overlaySource, /if \(p\) \{ const w = \(winsBy\.get\(p\.key\) \|\| 0\) \+ 1;/);
+    assert.match(overlaySource, /speakTickerMessage\([\s\S]*?"Ganó "\s*\+[\s\S]*?winnerName[\s\S]*?La nueva carrera comienza en unos segundos/);
     assert.match(overlaySource, /function addLiveEvent\(entry\) \{[\s\S]*?showConnectorEvent\(entry\);/);
     assert.doesNotMatch(overlaySource, /#tkIn|tkmove|function msgTick/);
     assert.match(overlaySource, /comment\.length > 100/);
