@@ -41,11 +41,22 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /No se generan eventos de audiencia ni interacciones automáticas/);
     assert.match(overlaySource, /recordCupWin\(nat\(p\)\.code\)/);
     assert.match(overlaySource, /loadCupStats\(\);/);
+    assert.match(overlaySource, /function registerFan\(user, code, entry\)/);
+    assert.match(overlaySource, /S\.pick\.get\(_u\)[\s\S]*?rnd\(C\)\.c/);
+    assert.match(overlaySource, /C\.find\(\(c\) => c\.c === preferred && !S\.slotUser\[c\.c\]\)/);
+    assert.match(overlaySource, /function putGiftAhead\(code, entry\)/);
+    assert.match(overlaySource, /tgtE = VMAX/);
+    assert.match(overlaySource, /S\.pos\[k\] >= t\.giftTarget/);
     assert.doesNotMatch(overlaySource, /const CLUBS/);
     assert.doesNotMatch(overlaySource, /if \(Q\.get\("demo"\)\)/);
     assert.doesNotMatch(overlaySource, /S\.pos\[k\] = 0/);
     assert.match(overlaySource, /setRoundTeams\(\);/);
     assert.match(overlaySource, /id="backend-link" href="\/backend"/);
+    assert.match(overlaySource, /e\.classList\.add\("fresh"\)/);
+    assert.match(overlaySource, /alreadyHere = FANS\[code\]\.has\(user\)/);
+    assert.match(overlaySource, /FANINFO\[user\] = \{[\s\S]*?progress:/);
+    assert.match(overlaySource, /Comenta tu país y deja tu huevo 🥚/);
+    assert.match(overlaySource, /message \? "💬 “" \+ message \+ "”" : "💬 Comentó"/);
 
     const overlayAlias = await fetch(`${baseUrl}/overlay`);
     assert.equal(await overlayAlias.text(), overlayHtml);

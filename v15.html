@@ -2374,46 +2374,51 @@
         right: -0.2rem;
         top: -1.1rem;
       }
-      /* ===== v11 · avatares de hinchas detrás de la tortuga de su país ===== */
+      /* Huevos con avatar de cada hincha, dejados en el punto de apoyo del país. */
       #lanes {
-        --fs: calc(var(--th) * 0.36);
-        --st: calc(var(--fs) * 0.62);
+        --egg: calc(var(--th) * 0.3);
       }
       #lanes .fa {
         position: absolute;
         z-index: 1;
-        display: block;
-        width: var(--fs);
-        height: var(--fs);
-        border-radius: 50%;
+        display: grid;
+        width: calc(var(--egg) * 0.82);
+        height: var(--egg);
+        place-items: center;
+        border-radius: 50% 50% 45% 45% / 58% 58% 42% 42%;
         overflow: hidden;
-        border: 0.13rem solid #fff;
-        background: #0d3a41;
+        border: 0.14rem solid #fff1c8;
+        padding: 5%;
+        background: radial-gradient(ellipse at 38% 27%, #fffef1 0 12%, #f8e9ba 55%, #d2a95f 100%);
         color: #fff;
-        font:
-          400 calc(var(--fs) * 0.5)/calc(var(--fs) - 0.26rem) "Bowlby One",
-          "Arial Black",
-          sans-serif;
+        font: 800 calc(var(--egg) * 0.38)/1 "Nunito", sans-serif;
         text-align: center;
-        box-shadow: 0 0.1rem 0.25rem rgba(0, 0, 0, 0.5);
-        top: calc(var(--rt) + var(--th) - var(--fs) - 0.15rem);
-        left: max(
-          var(--g),
-          calc(
-            var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) /
-              100 + var(--tw) * 0.14 - (var(--k) + 1) * var(--st)
-          )
-        );
+        box-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.52), inset 0 0 0 0.05rem rgba(255,255,255,.55);
+        top: calc(var(--rt) + var(--th) * 0.69 + var(--row, 0) * var(--egg) * 0.32);
+        left: max(var(--g), calc(var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) / 100 - var(--egg) * 0.39));
+        pointer-events: none;
       }
       #lanes .fa img {
         display: block;
-        width: 100%;
-        height: 100%;
+        width: 80%;
+        height: 66%;
+        border: 0.08rem solid rgba(255, 255, 255, 0.95);
+        border-radius: 50%;
         object-fit: cover;
       }
       #lanes .fa.more {
-        background: var(--pink);
-        font-size: calc(var(--fs) * 0.4);
+        border-color: #fff;
+        background: linear-gradient(145deg, #ff8090, #e72e60);
+        color: #fff;
+        font-size: calc(var(--egg) * 0.32);
+        padding: 0;
+      }
+      #lanes .fa.fresh {
+        animation: eggdrop 0.38s cubic-bezier(.2, 1.6, .4, 1) both;
+      }
+      @keyframes eggdrop {
+        from { opacity: 0; transform: translateY(-0.45rem) scale(.5) rotate(-12deg); }
+        to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
       }
       /* ===== v12 · velocidad x2 al país con más hinchas ===== */
       #lanes .tag b .x2 {
@@ -2467,7 +2472,7 @@
         left: 50%;
         top: -0.95em;
         transform: translateX(-50%);
-        font-size: calc(var(--fs) * 0.75);
+        font-size: calc(var(--egg) * 0.75);
         line-height: 1;
         filter: drop-shadow(0 0 0.3rem #ff6d00);
         animation: flame 0.5s ease-in-out infinite alternate;
@@ -2482,6 +2487,9 @@
         }
       }
       @media (prefers-reduced-motion: reduce) {
+        #lanes .fa.fresh {
+          animation: none;
+        }
         #lanes .fa.fire,
         #lanes .fa.fire::after {
           animation: none;
@@ -2548,6 +2556,57 @@
       #lanes .evb.e-jn {
         background: #7b4dff;
       }
+      #lanes .evb.e-ch {
+        max-width: min(72vw, 22rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        background: #fff;
+        color: #07262b;
+        text-shadow: none;
+        white-space: nowrap;
+      }
+      #lanes .evb.e-ch::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -0.34em;
+        border-top: 0.4em solid #fff;
+        border-right: 0.35em solid transparent;
+        border-left: 0.35em solid transparent;
+        transform: translateX(-50%);
+      }
+      #lanes .gift-bait {
+        position: absolute;
+        z-index: 4;
+        top: calc(var(--rt) + var(--th) * 0.13);
+        left: calc(
+          var(--g) + (100% - var(--tw) - var(--g) - 0.8rem) * var(--p, 0) /
+            100 + var(--tw) * 0.5
+        );
+        display: grid;
+        width: calc(var(--th) * 0.42);
+        height: calc(var(--th) * 0.42);
+        place-items: center;
+        border: 0.12rem solid #fff;
+        border-radius: 0.9rem;
+        background: linear-gradient(145deg, #fff4bd, #ffae21);
+        box-shadow: 0 0 0.6rem rgba(255, 201, 60, 0.9), 0 0.15rem 0.3rem rgba(0, 0, 0, 0.45);
+        font-size: calc(var(--th) * 0.3);
+        line-height: 1;
+        transform: translateX(-50%);
+        animation: giftbait 0.55s ease-in-out infinite alternate;
+        pointer-events: none;
+      }
+      #lanes .gift-bait.caught {
+        animation: giftcaught 0.24s ease-out forwards;
+      }
+      @keyframes giftbait {
+        from { margin-top: 0; filter: drop-shadow(0 0 0.15rem #fff); }
+        to { margin-top: -0.5rem; filter: drop-shadow(0 0 0.4rem #ffec98); }
+      }
+      @keyframes giftcaught {
+        to { opacity: 0; transform: translateX(-50%) scale(1.8) rotate(12deg); }
+      }
       /* ===== v15 · ajustes ===== */
       .lane.empty .tur {
         opacity: 1;
@@ -2568,7 +2627,7 @@
       <div id="head" class="panel">
         <div id="slot">
           <div id="how">
-            💬 Escribe un país · 👍 Like · 🔁 Comparte · ❤️ Sigue · 🎁 Turbo
+            💬 Comenta tu país y deja tu huevo 🥚 · 👍 Like · 🎁 Turbo
           </div>
           <div id="banner" class="disp" role="status" aria-live="polite"></div>
         </div>
@@ -3608,7 +3667,13 @@
       function fanEl(k, info, extra) {
         const e = document.createElement("i");
         e.className = "fa";
-        e.style.setProperty("--k", k);
+        if (info.fresh) {
+          e.classList.add("fresh");
+          info.fresh = false;
+        }
+        e.style.setProperty("--p", info.progress || 0);
+        e.style.setProperty("--row", k % 2);
+        e.title = extra ? extra + " hinchas más" : (info.name || "Hincha") + " dejó su huevo";
         const ini = () => {
           e.textContent =
             extra || (info.name || "?").trim().charAt(0).toUpperCase();
@@ -3640,9 +3705,11 @@
             if (fire) e.classList.add("fire");
             t.trk.append(e);
           };
-        vis.forEach((u, i) => add(fanEl(i, FANINFO[u] || { name: u })));
-        if (list.length > MAXF)
-          add(fanEl(vis.length, {}, "+" + (list.length - MAXF)));
+        vis.forEach((u, i) => add(fanEl(i, FANINFO[u] || { name: u, progress: 0 })));
+        if (list.length > MAXF) {
+          const overflow = { progress: FANINFO[vis[vis.length - 1]]?.progress || 0 };
+          add(fanEl(vis.length, overflow, "+" + (list.length - MAXF)));
+        }
       }
       function fanLeader() {
         let best = null,
@@ -3670,6 +3737,41 @@
             );
         }
         C.forEach((c) => renderFans(c.c));
+      }
+      function registerFan(user, code, entry) {
+        const previous = S.pick.get(user),
+          oldInfo = FANINFO[user] || {},
+          avatar =
+            typeof entry.avatar === "string" && /^https?:\/\//i.test(entry.avatar)
+              ? entry.avatar
+              : oldInfo.avatar || "",
+          alreadyHere = FANS[code].has(user);
+        if (previous !== code) {
+          if (previous && S.fans[previous] > 0) S.fans[previous]--;
+          S.fans[code]++;
+          S.pick.set(user, code);
+        }
+        if (!alreadyHere) {
+          C.forEach((lane) => FANS[lane.c].delete(user));
+          FANS[code].add(user);
+        }
+        FANINFO[user] = {
+          name: String(entry.username || oldInfo.name || "?"),
+          avatar,
+          code,
+          fresh: !alreadyHere,
+          progress: alreadyHere
+            ? oldInfo.progress || 0
+            : Math.max(
+                0,
+                Math.min(
+                  100,
+                  ((S.pos[code] - Math.max(3, CFG.win * 0.05)) / CFG.win) *
+                    100,
+                ),
+              ),
+        };
+        if (!alreadyHere || oldInfo.avatar !== avatar) renderFansAll();
       }
       function render() {
         const ord = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]);
@@ -3730,7 +3832,10 @@
       function claimSlot(p) {
         let code,
           lo = null;
-        const free = C.find((c) => !S.slotUser[c.c]);
+        const preferred = S.pick.get(p.key),
+          free =
+            C.find((c) => c.c === preferred && !S.slotUser[c.c]) ||
+            C.find((c) => !S.slotUser[c.c]);
         if (free) code = free.c;
         else {
           if (p.isBot) return null;
@@ -3821,11 +3926,39 @@
               " +" +
               Math.round(points),
           );
-        } else if (ty === "chat") show("e-ch", "💬 Comentó +1");
+        } else if (ty === "chat") {
+          const comment = String(entry.content || "").replace(/\s+/g, " ").trim();
+          const message = comment.length > 42 ? comment.slice(0, 41) + "…" : comment;
+          show("e-ch", message ? "💬 “" + message + "”" : "💬 Comentó");
+        }
         else if (ty === "share") show("e-sh", "🔁 Compartió +" + pts);
         else if (ty === "follow") show("e-fo", "❤️ Siguió +" + pts);
         else if (ty === "join") show("e-jn", "👋 Se unió");
         else if (ty === "support") show("e-ch", "💬 +1 hincha");
+      }
+      function putGiftAhead(code, entry) {
+        const t = T[code],
+          available = Math.max(0, CFG.win - 1 - S.pos[code]);
+        if (!t || available <= 0) return;
+        const distance = Math.min(
+          available,
+          Math.min(9, Math.max(3, t.pend * 0.6)),
+        );
+        if (distance <= 0) return;
+        if (t.giftEl) t.giftEl.remove();
+        t.giftTarget = S.pos[code] + distance;
+        t.pend = Math.max(t.pend, distance + 0.8);
+        const gift = document.createElement("span");
+        gift.className = "gift-bait";
+        gift.textContent = "🎁";
+        gift.title = "Regalo para recoger" + (entry.content ? ": " + entry.content : "");
+        gift.setAttribute("aria-label", gift.title);
+        gift.style.setProperty(
+          "--p",
+          ((t.giftTarget / CFG.win) * 100).toFixed(2),
+        );
+        t.trk.append(gift);
+        t.giftEl = gift;
       }
       function raceAdd(p, entry, points) {
         if (S.over) return;
@@ -3839,6 +3972,7 @@
           0,
           Math.min(CFG.win, (p.points / CFG.target) * CFG.win) - S.pos[code],
         );
+        if (ty === "gift") putGiftAhead(code, entry);
         /* Mensaje del evento que acaba de entrar (no durante los bots de espera, para no simular actividad real) */
         if (!(IDLE && IDLE.on)) {
           if (ty === "gift")
@@ -4389,11 +4523,16 @@
         S.pos[code] = CFG.win;
         t.pend = 0;
         t.ve = 0;
-        for (const c of C)
+        for (const c of C) {
+          const lane = T[c.c];
+          if (lane.giftEl) lane.giftEl.remove();
+          lane.giftEl = null;
+          lane.giftTarget = null;
           if (c.c !== code) {
-            T[c.c].pend = 0;
-            T[c.c].ve = 0;
+            lane.pend = 0;
+            lane.ve = 0;
           }
+        }
         const w = (winsBy.get(p.key) || 0) + 1;
         winsBy.set(p.key, w);
         saveWins();
@@ -4565,6 +4704,8 @@
           ve: 0,
           cr: 0,
           pend: 0,
+          giftTarget: null,
+          giftEl: null,
           pause: 0,
           base: 1,
           am: 0,
@@ -4580,6 +4721,9 @@
           t.cr = 0;
           t.vs = 0;
           t.pend = 0;
+          t.giftTarget = null;
+          if (t.giftEl) t.giftEl.remove();
+          t.giftEl = null;
           t.pause = 0;
           t.step = Math.floor((t.ph + Math.PI / 2) / Math.PI);
           t.w = Math.random() * 10;
@@ -4641,7 +4785,9 @@
           const tgtC = CFG.crawl * t.base * wob;
           t.cr += (tgtC - t.cr) * Math.min(1, dt * 2);
           let tgtE = 0;
-          if (S.go && !isW && t.pend > 0.02)
+          if (S.go && !isW && t.giftTarget !== null && S.pos[k] < t.giftTarget)
+            tgtE = VMAX;
+          else if (S.go && !isW && t.pend > 0.02)
             tgtE = Math.max(0.25, Math.min(VMAX, Math.sqrt(2 * DEC * t.pend)));
           t.ve += Math.max(-3 * dt, Math.min(ACC * dt, tgtE - t.ve));
           const m = k === S.fanLead && !S.over ? 2 : 1,
@@ -4652,6 +4798,15 @@
             CFG.win,
             S.pos[k] + d + crawl,
           ); /* puntos aceleran; cada participante también avanza lentamente */
+          if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
+            const collected = t.giftEl;
+            t.giftTarget = null;
+            t.giftEl = null;
+            if (collected) {
+              collected.classList.add("caught");
+              setTimeout(() => collected.remove(), 260);
+            }
+          }
           if (!S.winner && S.slotUser[k] && S.pos[k] >= CFG.win) S.winner = k;
           if (isW) S.pos[k] = CFG.win;
           else if (S.over && S.pos[k] > CFG.win - 1) {
@@ -5730,7 +5885,13 @@
             }, 4200);
           }
         }
-        if (entry && entry.type === "chat" && !S.over) {
+        if (
+          entry &&
+          !S.over &&
+          ["chat", "gift", "like", "follow", "share", "join"].includes(
+            entry.type,
+          )
+        ) {
           const _n = (x) =>
             String(x || "")
               .toLowerCase()
@@ -5745,43 +5906,39 @@
                   ...[...CODES[i]].map((ch) => 127397 + ch.charCodeAt(0)),
                 )
               : "";
-          const _i = C.findIndex(
-            (c, i) =>
-              _t.includes(_n(NATIONS[i].n)) ||
-              _t === CODES[i].toLowerCase() ||
-              (_fl(i) && _raw.includes(_fl(i))),
-          );
+          const _i =
+            entry.type === "chat"
+              ? C.findIndex(
+                  (c, i) =>
+                    _t.includes(_n(NATIONS[i].n)) ||
+                    _t === CODES[i].toLowerCase() ||
+                    (_fl(i) && _raw.includes(_fl(i))),
+                )
+              : -1;
           const _u = String(entry.username || "")
             .trim()
             .toLocaleLowerCase();
-          if (
-            _i >= 0 &&
-            _u &&
-            Date.now() - (handleTikTokEntry.sup[_u] || 0) > 8000
-          ) {
-            handleTikTokEntry.sup[_u] = Date.now();
-            C.forEach((c) => FANS[c.c].delete(_u));
-            FANS[C[_i].c].add(_u);
-            FANINFO[_u] = {
-              name: String(entry.username || "?"),
-              avatar:
-                typeof entry.avatar === "string" &&
-                /^https?:\/\//i.test(entry.avatar)
-                  ? entry.avatar
-                  : (FANINFO[_u] || {}).avatar || "",
-            };
-            renderFansAll();
-            const _o = slotPlayer(C[_i].c);
-            if (_o) {
-              _o.points += 1;
-              raceAdd(_o, { type: "support" }, 1);
-              renderTopPlayers();
+          if (_u) {
+            const _code =
+              (_i >= 0 && C[_i].c) ||
+              S.pick.get(_u) ||
+              S.slotOf.get(_u) ||
+              rnd(C).c;
+            registerFan(_u, _code, entry);
+            if (Date.now() - (handleTikTokEntry.sup[_u] || 0) > 8000) {
+              handleTikTokEntry.sup[_u] = Date.now();
+              const _o = _i >= 0 ? slotPlayer(_code) : null;
+              if (_o) {
+                _o.points += 1;
+                raceAdd(_o, { type: "support" }, 1);
+                renderTopPlayers();
+              }
+              if (_i >= 0 && !isBot)
+                enqueueMsg(
+                  "💬 " + CODES[_i] + " +1 hincha · ya son " + FANS[_code].size,
+                );
             }
             render();
-            if (!isBot)
-              enqueueMsg(
-                "💬 " + CODES[_i] + " +1 hincha · ya son " + FANS[C[_i].c].size,
-              );
           }
         }
         return _handleTikTokEntryV7(entry, isBot);
