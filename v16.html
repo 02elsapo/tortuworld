@@ -85,8 +85,7 @@
         pointer-events: none;
         z-index: 9;
       }
-      #cd,
-      #win {
+      #cd {
         display: none !important;
       }
       /* Todo fluye en una sola columna: nada se encima, en cualquier pantalla */
@@ -3720,18 +3719,38 @@
         voicePromptIndex = 0,
         voiceLastSpokenAt = 0,
         voiceTimer = 0,
+        voiceWatchdog = 0,
+        voiceCurrentItem = null;
+      function finishVoiceItem(item, spoken) {
+        if (item.completed) return;
+        item.completed = true;
+        clearTimeout(voiceWatchdog);
         voiceWatchdog = 0;
+        voiceSpeaking = false;
+        if (voiceCurrentItem === item) voiceCurrentItem = null;
+        if (item.onComplete) item.onComplete(spoken);
+        speakNextTickerMessage();
+      }
       function speakNextTickerMessage() {
         if (!voiceEnabled || voiceSpeaking || !voiceQueue.length) return;
-        const text = voiceQueue
-          .shift()
-          .replace(/[^\p{L}\p{N}\p{P}\p{Zs}]/gu, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+        if (voiceNeedsGesture) {
+          const waiting = voiceQueue.splice(0);
+          waiting.forEach((item) => {
+            if (item.onComplete) item.onComplete(false);
+          });
+          return;
+        }
+        const item = voiceQueue.shift(),
+          text = item.text
+            .replace(/[^\p{L}\p{N}\p{P}\p{Zs}]/gu, " ")
+            .replace(/\s+/g, " ")
+            .trim();
         if (!text) {
+          if (item.onComplete) item.onComplete(false);
           speakNextTickerMessage();
           return;
         }
+        voiceCurrentItem = item;
         const utterance = new SpeechSynthesisUtterance(text);
         const spanishVoices = voiceSynth
           .getVoices()
@@ -3781,31 +3800,25 @@
           voiceNeedsGesture = false;
         };
         utterance.onend = () => {
-          clearTimeout(voiceWatchdog);
-          voiceWatchdog = 0;
-          voiceSpeaking = false;
           voiceHasStarted = true;
-          speakNextTickerMessage();
+          finishVoiceItem(item, true);
         };
         utterance.onerror = (event) => {
-          clearTimeout(voiceWatchdog);
-          voiceWatchdog = 0;
-          voiceSpeaking = false;
           if (event.error === "not-allowed") {
             voiceNeedsGesture = true;
             voiceLastSpokenAt = 0;
           }
           if (event.error !== "canceled")
             console.warn("No se pudo reproducir el mensaje de ánimo:", event.error);
-          speakNextTickerMessage();
+          finishVoiceItem(item, false);
         };
         voiceWatchdog = setTimeout(() => {
-          voiceSpeaking = false;
           if (!voiceHasStarted) {
             voiceNeedsGesture = true;
             voiceLastSpokenAt = 0;
           }
           voiceSynth.cancel();
+          finishVoiceItem(item, false);
         }, VOICE_INTERVAL_MS * 2);
         voiceSynth.speak(utterance);
       }
@@ -3818,7 +3831,19 @@
         )
           return;
         voiceQueue.length = 0;
-        voiceQueue.push(String(text));
+        voiceQueue.push({ text: String(text) });
+        speakNextTickerMessage();
+      }
+      function speakWinnerAnnouncement(text, onComplete) {
+        if (!voiceEnabled || !voiceSynth || voiceNeedsGesture) {
+          onComplete(false);
+          return;
+        }
+        voiceQueue.unshift({
+          text: String(text),
+          onComplete,
+          required: true,
+        });
         speakNextTickerMessage();
       }
       function nextEncouragement() {
@@ -3846,7 +3871,7 @@
         return message;
       }
       function speakEncouragement() {
-        if (!voiceEnabled || voiceNeedsGesture) return;
+        if (!voiceEnabled || voiceNeedsGesture || S.over) return;
         const message = nextEncouragement();
         speakTickerMessage(message);
       }
@@ -3854,12 +3879,23 @@
         if (!voiceSynth || (!voiceNeedsGesture && voiceHasStarted)) return;
         clearTimeout(voiceWatchdog);
         voiceWatchdog = 0;
+        if (voiceCurrentItem) {
+          voiceCurrentItem.completed = true;
+          voiceQueue.unshift({
+            ...voiceCurrentItem,
+            completed: false,
+          });
+        }
+        const required = voiceQueue.filter((item) => item.required);
         voiceQueue.length = 0;
+        voiceQueue.push(...required);
         voiceSynth.cancel();
         voiceSpeaking = false;
+        voiceCurrentItem = null;
         voiceNeedsGesture = false;
         voiceLastSpokenAt = 0;
-        speakEncouragement();
+        if (voiceQueue.length) speakNextTickerMessage();
+        else speakEncouragement();
       }
       if (voiceSynth) {
         speakEncouragement();
@@ -5016,10 +5052,8 @@
         }
       }
 
-      /* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win. Guarda la victoria,
-   calcula la racha y MVP, detiene la música y programa el cartel (+1.6 s) y la siguiente ronda (+restartMs). */
-      /* Fin de ronda: guarda la victoria del DUEÑO de la tortuga, calcula su racha, muestra el banner de campeón
-   (el cartel #win queda oculto por CSS para no tapar el video) y programa la siguiente ronda. */
+      /* Fin de ronda: la primera tortuga que cruza decide al ganador de inmediato; se muestra el podio y se reinicia
+   después de que termine el anuncio de voz (o tras la espera normal si la voz no está disponible). */
       function finish(code) {
         S.over = true;
         S.winner = code;
@@ -5057,6 +5091,7 @@
           S.streak = 0;
         }
         banner("🏆 " + country.n + " ¡CAMPEÓN!", CFG.restartMs - 600);
+        showWin(code);
         showSpecialEvent(
           "Ronda " +
             S.round +
@@ -5067,11 +5102,11 @@
             " · ¡síguelo!",
         );
         clearTimeout(S.rt);
-        S.rt = setTimeout(newRound, CFG.restartMs);
+        S.rt = null;
         burst(80, true);
         render();
       }
-      /* Muestra el cartel con el podio (top 3 por posición; el ganador siempre primero) y la cuenta atrás. */
+      /* Muestra el podio al instante: el ganador va primero y los otros puestos siguen las posiciones actuales. */
       function showWin(code) {
         const ord = [...C]
             .sort(
@@ -5081,6 +5116,11 @@
             .slice(0, 3),
           pod = $("pod");
         pod.textContent = "";
+        const winner = NATIONS[C.findIndex((lane) => lane.c === code)];
+        $("wk").textContent = "🏁 RONDA " + S.round + " · GANADOR";
+        $("wt").textContent = winner.n + " ¡CAMPEÓN!";
+        $("ws").textContent =
+        "Celebramos la victoria; la próxima carrera empieza después del anuncio.";
         [1, 0, 2].forEach((i) => {
           const c = ord[i],
             d = document.createElement("div");
@@ -5093,23 +5133,11 @@
           d.append(f, b);
           pod.append(d);
         });
-        const ms = CFG.restartMs,
-          t0 = Date.now(),
-          bar = $("nxb");
+        const bar = $("nxb");
         bar.style.transition = "none";
-        bar.style.width = "100%";
-        void bar.offsetWidth;
-        bar.style.transition = "width " + ms + "ms linear";
         bar.style.width = "0%";
         clearInterval(S.nxI);
-        const upd = () => {
-          $("nxt").textContent =
-            "Siguiente ronda en " +
-            Math.max(0, Math.ceil((ms - (Date.now() - t0)) / 1000)) +
-            " s";
-        };
-        upd();
-        S.nxI = setInterval(upd, 500);
+        $("nxt").textContent = "Esperando el festejo en voz";
         $("win").classList.add("on");
         burst(300, true);
         setTimeout(() => burst(200), 700);
@@ -5121,6 +5149,8 @@
    conserva las victorias por usuario y lanza la cuenta regresiva. Se llama sola al cargar y al terminar cada ronda. */
       function newRound() {
         clearTimeout(S.rt);
+        clearInterval(S.nxI);
+        $("win").classList.remove("on");
         S.round++;
         S.over = false;
         S.winner = null;
@@ -6314,10 +6344,15 @@
           p
             ? nat(p).n
             : NATIONS[C.findIndex((lane) => lane.c === code)].n;
-        speakTickerMessage(
+        const restartAfterAnnouncement = (spoken) => {
+          clearTimeout(S.rt);
+          S.rt = setTimeout(newRound, spoken ? 0 : CFG.restartMs);
+        };
+        speakWinnerAnnouncement(
           "Ganó " +
             winnerName +
             ". ¡Celebramos su victoria! La nueva carrera comienza en unos segundos.",
+          restartAfterAnnouncement,
         );
         $("app").classList.add("finished");
         emojiFx(code, "follow", 10);
