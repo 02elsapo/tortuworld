@@ -4909,7 +4909,7 @@
      base  factor personal de velocidad de arrastre    pause  segundos que le quedan de pausa
      ph/am fase y amplitud del paso    hl  cuánto levanta la cabeza    w  semilla de ruido    du  temporizador de polvo */
       const T = {};
-      C.forEach((c) => {
+      C.forEach((c, li) => {
         const e = $("tu-" + c.c);
         T[c.c] = {
           tur: e,

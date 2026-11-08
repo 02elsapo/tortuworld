@@ -30,6 +30,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="lanes"/);
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);
     assert.match(overlaySource, /#lanes \{ --tw: min\(13rem, 16vh\); --n: 9; flex: 0\.85 1 0;/);
+    assert.match(overlaySource, /const T = \{\};\s*C\.forEach\(\(c, li\) => \{\s*const e = \$\("tu-" \+ c\.c\)/);
     assert.match(overlaySource, /class="lane-bot" title="Asistente visual del juego para \$\{NATIONS\[li\]\.n\}"/);
     assert.match(overlaySource, /swayLimit = Math\.max\(\s*0,\s*Math\.min\(\s*laneStep \* 0\.32,\s*laneTop,/);
     assert.match(overlaySource, /t\.tur\.style\.setProperty\("--sway", sway\.toFixed\(2\) \+ "px"\)/);
