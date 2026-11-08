@@ -33,6 +33,10 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
     assert.match(overlaySource, /id="lanes"/);
     assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
+    assert.match(overlaySource, /id="statJoin">0/);
+    assert.match(overlaySource, /title="Ingresos al LIVE">👋 <b id="statJoin">0<\/b>/);
+    assert.match(overlaySource, /\$\("statJoin"\)\.textContent = SESSION\.join/);
+    assert.match(overlaySource, /#liveStats \{ position: fixed; left: 3%; right: 3%; bottom: calc\(1% \+ env\(safe-area-inset-bottom, 0px\) \+ 3\.8rem\); z-index: 51; display: flex !important;/);
     assert.doesNotMatch(overlaySource, /voiceToggle/);
     assert.doesNotMatch(overlaySource, /#dot|id="dot"|backend-link/);
     assert.match(overlaySource, /a\.im\.setAttribute\("href", _nn\.u\)/);
