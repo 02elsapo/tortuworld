@@ -103,15 +103,33 @@ function createTikTokMonitorService({
     return user ? safeUserName(user) : 'Sistema';
   }
 
+  function pictureUrl(picture) {
+    if (typeof picture === 'string') return picture;
+    if (Array.isArray(picture)) {
+      return picture.find((url) => typeof url === 'string' && url) || '';
+    }
+    if (!picture || typeof picture !== 'object') return '';
+    return pictureUrl(
+      picture.urlList
+        || picture.url_list
+        || picture.urls
+        || picture.url
+        || '',
+    );
+  }
+
   function eventAvatar(data) {
     const user = data && (data.user || data.sender);
     if (!user || typeof user !== 'object') return '';
-    const picture = user.profilePictureUrl
-      || user.profilePictureUrls
-      || user.avatarThumb?.urlList?.[0]
-      || user.avatarThumb?.url_list?.[0]
-      || '';
-    return Array.isArray(picture) ? picture[0] || '' : picture;
+    return [
+      user.profilePictureUrl,
+      user.profilePictureUrls,
+      user.userDetails?.profilePictureUrls,
+      user.avatarThumb,
+      user.profilePicture,
+      user.avatarMedium,
+      user.avatarLarger,
+    ].map(pictureUrl).find(Boolean) || '';
   }
 
   function eventActivityCount(eventName, data) {

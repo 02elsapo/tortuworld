@@ -191,6 +191,8 @@ test('monitor normalizes every webcast event and event payload shape', async () 
     [eventNames.at(-1), { likeCount: 4 }],
     [eventNames.at(-1), { viewerCount: 3 }],
     [eventNames.at(-1), {}],
+    [WebcastEvent.CHAT, { user: { uniqueId: 'url-list', profilePictureUrl: { urlList: ['https://example.test/a.webp'] } }, comment: 'Paraguay' }],
+    [WebcastEvent.CHAT, { user: { uniqueId: 'nested-picture', userDetails: { profilePictureUrls: ['https://example.test/b.webp'] } }, comment: 'Argentina' }],
   ];
 
   for (const [eventName, payload] of cases) connection.emit(eventName, payload);
@@ -205,6 +207,8 @@ test('monitor normalizes every webcast event and event payload shape', async () 
   assert.equal(received[6].diamondCount, 7);
   assert.equal(received[14].avatar, 'member.png');
   assert.equal(received[15].username, 'Sistema');
+  assert.equal(received.at(-2).avatar, 'https://example.test/a.webp');
+  assert.equal(received.at(-1).avatar, 'https://example.test/b.webp');
   assert.equal(monitor.state.recentJoiners.length, 1);
   assert.equal(monitor.getEventFeed().length, cases.length);
   assert.equal(monitor.getStatusPayload('server-1').serverInstanceId, 'server-1');

@@ -2392,7 +2392,7 @@
       /* Avatares de hinchas como marcadores ovalados del tamaño de la bandera. */
       #lanes {
         --lane-step: calc((100% - var(--th)) / var(--n));
-        --fan-size: calc(var(--flag-size) * 0.5);
+        --fan-size: calc(var(--flag-size) * 1.2);
       }
       #lanes .fa {
         position: absolute;
@@ -2403,8 +2403,8 @@
         place-items: center;
         border-radius: 50%;
         overflow: hidden;
-        border: 0.12rem solid #fff;
-        padding: 2%;
+        border: 0.05rem solid #fff;
+        padding: 0;
         background: rgba(7, 38, 43, 0.92);
         color: #fff;
         font: 800 calc(var(--fan-size) * 0.3)/1 "Nunito", sans-serif;
@@ -2416,9 +2416,9 @@
       }
       #lanes .fa img {
         display: block;
-        width: 96%;
-        height: 96%;
-        border: 0.08rem solid rgba(255, 255, 255, 0.95);
+        width: 100%;
+        height: 100%;
+        border: 0;
         border-radius: 50%;
         object-fit: cover;
       }
@@ -3730,12 +3730,12 @@
         if (info.avatar) {
           const im = document.createElement("img");
           im.alt = "";
-          im.src = info.avatar;
           im.referrerPolicy = "no-referrer";
           im.loading = "eager";
           im.onerror = () => {
             placeholder();
           };
+          im.src = info.avatar;
           e.append(im);
         } else placeholder();
         return e;
@@ -3838,7 +3838,7 @@
             rem * 0.8;
         if (trackLength <= 0) return 12;
         const flag = $("rk-" + code),
-          markerWidth = flag.getBoundingClientRect().width * 0.45;
+          markerWidth = flag.getBoundingClientRect().width * 1.08;
         return Math.max(2, Math.min(40, ((markerWidth + 8) / trackLength) * 100));
       }
       function findFanEggPosition(code, desired, user) {
@@ -3926,9 +3926,10 @@
         if (item.avatar) {
           const im = document.createElement("img");
           im.alt = "";
-          im.src = item.avatar;
           im.referrerPolicy = "no-referrer";
+          im.loading = "eager";
           im.onerror = placeholder;
+          im.src = item.avatar;
           e.append(im);
         } else placeholder();
         return e;

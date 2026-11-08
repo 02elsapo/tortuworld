@@ -45,10 +45,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /S\.pick\.get\(_u\)[\s\S]*?rnd\(C\)\.c/);
     assert.match(overlaySource, /PENDING_FANS\[code\]\.add\(user\)/);
     assert.match(overlaySource, /function layPendingFanEggs\(code\)/);
-    assert.match(overlaySource, /--fan-size: calc\(var\(--flag-size\) \* 0\.5\)/);
+    assert.match(overlaySource, /--fan-size: calc\(var\(--flag-size\) \* 1\.2\)/);
     assert.match(overlaySource, /width: calc\(var\(--fan-size\) \* 0\.9\);\s*height: var\(--fan-size\)/);
     assert.match(overlaySource, /border-radius: 50%;\s*overflow: hidden/);
+    assert.match(overlaySource, /#lanes \.fa img \{[^}]*width: 100%;[^}]*height: 100%;[^}]*border: 0;/);
     assert.match(overlaySource, /#lanes \.fa\.trail \{[\s\S]*?var\(--fan-size\) \* 0\.45/);
+    assert.match(overlaySource, /im\.referrerPolicy = "no-referrer";\s*im\.loading = "eager";\s*im\.onerror = placeholder;\s*im\.src = item\.avatar/);
     assert.match(overlaySource, /#lanes::after[\s\S]*?background-image: radial-gradient/);
     assert.match(overlaySource, /im\.referrerPolicy = "no-referrer"/);
     assert.match(overlaySource, /C\.find\(\(c\) => c\.c === preferred && !S\.slotUser\[c\.c\]\)/);
