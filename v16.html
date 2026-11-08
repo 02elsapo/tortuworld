@@ -427,6 +427,31 @@
         left: calc(0.8rem + (100% - 7rem) * var(--p, 0) / 100);
         z-index: 2;
       }
+      #lanes .lane-bot {
+        position: absolute;
+        top: calc(var(--rt) + var(--th) * 0.5);
+        right: 1rem;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        gap: 0.12rem;
+        padding: 0.08rem 0.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 999px;
+        background: rgba(7, 38, 43, 0.78);
+        color: #fff;
+        font: 800 0.48rem/1 system-ui, sans-serif;
+        transform: translateY(-50%);
+        pointer-events: none;
+      }
+      #lanes .lane-bot span {
+        display: inline-block;
+        font-size: 0.75rem;
+        animation: botcheer 0.8s ease-in-out infinite alternate;
+      }
+      @keyframes botcheer {
+        to { transform: translateY(-0.15rem) rotate(8deg); }
+      }
       .tur svg {
         width: 100%;
         height: 100%;
@@ -1174,7 +1199,8 @@
         width: 100%;
       }
       @media (prefers-reduced-motion: reduce) {
-        .crown {
+        .crown,
+        #lanes .lane-bot span {
           animation: none;
         }
       }
@@ -2225,7 +2251,7 @@
         pointer-events: none;
       }
       #lanes .trk .tur {
-        top: var(--rt);
+        top: calc(var(--rt) + var(--sway, 0px));
         width: var(--tw);
         height: var(--th);
         aspect-ratio: auto;
@@ -3537,7 +3563,7 @@
         l.className = "lane empty";
         l.id = "ln-" + c.c;
         l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
-  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div></div>`;
+  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--g) + var(--tw) + (100% - var(--tw) - var(--g) - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur" id="tu-${c.c}" style="--p:0"><i class="crown">👑</i>${turtle(c)}</div><div class="lane-bot" title="Asistente visual del juego para ${NATIONS[li].n}" aria-label="Bot asistente de ${NATIONS[li].n}"><span aria-hidden="true">🤖</span><small>BOT</small></div></div>`;
         lanes.append(l);
       });
 
@@ -4913,6 +4939,7 @@
           giftEl: null,
           pause: 0,
           base: 1,
+          laneIndex: li,
           am: 0,
           hl: 0,
           du: 0,
@@ -4973,6 +5000,12 @@
         last = now;
         if (dt <= 0) return;
         tNow += dt;
+        const laneHeight = lanes.clientHeight,
+          turtleHeight = T[C[0].c].tur.getBoundingClientRect().height,
+          laneStep =
+            C.length > 1
+              ? (laneHeight - turtleHeight) / (C.length - 1)
+              : 0;
         const R = parseFloat(
           getComputedStyle(document.documentElement).fontSize,
         );
@@ -5042,6 +5075,18 @@
           /* animación */
           const sp = Math.min(t.vs, VMAX),
             speedRatio = Math.max(0, sp / VMAX);
+          const laneTop = laneStep * t.laneIndex,
+            swayLimit = Math.max(
+              0,
+              Math.min(
+                laneStep * 0.32,
+                laneTop,
+                laneHeight - turtleHeight - laneTop,
+              ),
+            ),
+            sway =
+              Math.sin(tNow * (0.8 + speedRatio * 0.25) + t.w) * swayLimit;
+          t.tur.style.setProperty("--sway", sway.toFixed(2) + "px");
           t.ph += dt * (1.5 + 4.5 * speedRatio);
           const step = Math.floor((t.ph + Math.PI / 2) / Math.PI);
           if (S.go && S.slotUser[k] && step !== t.step) {
