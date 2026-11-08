@@ -33,6 +33,13 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="overlayVersion">v1\.6\.0/);
     assert.match(overlaySource, /id="lanes"/);
     assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
+    assert.match(overlaySource, /id="voiceToggle"[^>]*aria-pressed="false"/);
+    assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
+    assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
+    assert.match(overlaySource, /spanishVoices\.find\(\(candidate\) => \/google\/i\.test\(candidate\.name\)\)/);
+    assert.match(overlaySource, /if \(tkTip\) speakTickerMessage\(message\)/);
+    assert.match(overlaySource, /VOICE_PROMPTS = \[[\s\S]*?comenten su país en el chat[\s\S]*?Dejen un like[\s\S]*?Compartan el LIVE/);
+    assert.match(overlaySource, /comment\.length > 100/);
     assert.match(overlaySource, /Esperando el LIVE de /);
     assert.match(overlaySource, /Date\.parse\(status\.nextRetryAt\)/);
     assert.match(overlaySource, /#app \{ top: var\(--top, 18%\); bottom: var\(--bot, 7%\);/);

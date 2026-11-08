@@ -2323,6 +2323,26 @@
         transform: translateX(100vw);
         will-change: transform;
       }
+      #voiceToggle {
+        position: fixed;
+        right: 1.25rem;
+        bottom: calc(1% + env(safe-area-inset-bottom, 0px));
+        z-index: 55;
+        min-height: 2rem;
+        padding: 0.25rem 0.55rem;
+        border: 0.12rem solid #fff;
+        border-radius: 999px;
+        background: var(--sun);
+        color: var(--ink);
+        font: 700 0.8rem "Bowlby One", sans-serif;
+        box-shadow: 0 0.15rem 0.4rem #0008;
+      }
+      #voiceToggle.act {
+        background: #d7f5a5;
+      }
+      #voiceToggle:disabled {
+        opacity: 0.55;
+      }
       @keyframes tkmove {
         from {
           transform: translateX(100vw);
@@ -2350,7 +2370,7 @@
         z-index: 60;
       }
       #specialEvent {
-        right: 1.8rem !important;
+        right: 4.6rem !important;
       }
       #app {
         top: var(--top, 18%);
@@ -2731,6 +2751,7 @@
       TikTok · esperando estado de conexión
     </div>
     <div id="specialEvent" class="disp" role="status" aria-live="polite"></div>
+    <button id="voiceToggle" type="button" aria-pressed="false" title="Activar voz alegre en español">🔇 Voz</button>
     <div id="bottom">
       <section id="standings" class="panel">
         <h2 class="disp">TOP 5 · CUENTAS CON MÁS PUNTOS</h2>
@@ -3659,12 +3680,117 @@
    alternan cada 3.5 s (cómo sumar puntos, quién lidera, distancia al 1°, meta de la comunidad). ?canal=minombre
    personaliza el mensaje de seguir. showSpecialEvent y feed ahora solo encolan: todo sale por esta barra. */
       const MQ = [],
-        CH = (Q.get("canal") || "").replace(/^@/, "");
+        VOICE_PROMPTS = [
+          "Hinchas, comenten su país en el chat y apoyen a su tortuga.",
+          "Dejen un like para que su tortuga avance.",
+          "Compartan el LIVE e inviten a más hinchas a la carrera.",
+          "Sigan la cuenta y animen a su país.",
+          "Escriban el nombre de un país y únanse a la carrera.",
+          "Cada regalo impulsa a su tortuga. ¡Vamos, hinchas!",
+          "Comenten y ayuden a su tortuga a llegar a la meta.",
+        ];
+      const voiceButton = $("voiceToggle"),
+        voiceSynth =
+          "speechSynthesis" in window &&
+          "SpeechSynthesisUtterance" in window
+            ? window.speechSynthesis
+            : null,
+        voiceQueue = [];
       let mqTip = 0,
         mqAt = 0;
       let tkBusy = false,
         tkTip = false,
-        tkTimer = 0;
+        tkTimer = 0,
+        voiceEnabled = false,
+        voiceSpeaking = false,
+        voicePromptIndex = 0;
+      function updateVoiceButton() {
+        voiceButton.textContent = voiceEnabled ? "🔊 Voz" : "🔇 Voz";
+        voiceButton.classList.toggle("act", voiceEnabled);
+        voiceButton.setAttribute("aria-pressed", String(voiceEnabled));
+        voiceButton.setAttribute(
+          "aria-label",
+          !voiceSynth
+            ? "Narración por voz no disponible en este navegador"
+            : voiceEnabled
+              ? "Desactivar voz"
+              : "Activar voz alegre en español",
+        );
+        voiceButton.title = !voiceSynth
+          ? "Este navegador no admite narración de voz"
+          : voiceEnabled
+            ? "Desactivar voz"
+            : "Activar voz alegre en español";
+      }
+      function speakNextTickerMessage() {
+        if (!voiceEnabled || voiceSpeaking || !voiceQueue.length) return;
+        const text = voiceQueue
+          .shift()
+          .replace(/[^\p{L}\p{N}\p{P}\p{Zs}]/gu, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!text) {
+          speakNextTickerMessage();
+          return;
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        const spanishVoices = voiceSynth
+          .getVoices()
+          .filter((voice) => /^es(?:-|$)/i.test(voice.lang));
+        const voice =
+          spanishVoices.find((candidate) => /google/i.test(candidate.name)) ||
+          spanishVoices.find((candidate) =>
+            /(female|woman|mujer|femenina|helena|elena|sabina|dalia|luc[ií]a|laura|m[oó]nica|sof[ií]a|carmen)/i.test(
+              candidate.name,
+            ),
+          ) ||
+          spanishVoices[0];
+        utterance.lang = voice ? voice.lang : "es-ES";
+        if (voice) utterance.voice = voice;
+        utterance.rate = 1.06;
+        utterance.pitch = 1.24;
+        utterance.volume = 1;
+        voiceSpeaking = true;
+        utterance.onend = () => {
+          voiceSpeaking = false;
+          speakNextTickerMessage();
+        };
+        utterance.onerror = (event) => {
+          voiceSpeaking = false;
+          if (event.error !== "canceled")
+            console.warn("No se pudo reproducir el mensaje de ánimo:", event.error);
+          speakNextTickerMessage();
+        };
+        voiceSynth.speak(utterance);
+      }
+      function speakTickerMessage(text) {
+        if (!voiceEnabled || !voiceSynth) return;
+        voiceQueue.push(String(text));
+        if (voiceQueue.length > 4) voiceQueue.shift();
+        speakNextTickerMessage();
+      }
+      function toggleTickerVoice() {
+        if (!voiceSynth) return;
+        voiceEnabled = !voiceEnabled;
+        if (voiceEnabled) {
+          const current = $("tkIn");
+          if (tkTip && current && current.textContent) {
+            speakTickerMessage(current.textContent);
+          } else {
+            speakTickerMessage(
+              VOICE_PROMPTS[voicePromptIndex++ % VOICE_PROMPTS.length],
+            );
+          }
+        } else {
+          voiceQueue.length = 0;
+          voiceSpeaking = false;
+          voiceSynth.cancel();
+        }
+        updateVoiceButton();
+      }
+      voiceButton.disabled = !voiceSynth;
+      voiceButton.addEventListener("click", toggleTickerVoice);
+      updateVoiceButton();
       function enqueueMsg(t) {
         MQ.push(t);
         if (MQ.length > 4) MQ.shift();
@@ -3675,34 +3801,7 @@
         }
       }
       function nextTip() {
-        const top = getTopPlayers(),
-          L = top[0],
-          fp = formatPlayerPoints,
-          g = [
-            () => "👍 Cada LIKE que das hace avanzar tu tortuga",
-            () => "🔁 COMPARTE el LIVE y tu tortuga avanza +3",
-            () =>
-              "❤️ SIGUE" +
-              (CH ? " a @" + CH : " el canal") +
-              " y tu tortuga salta +5",
-            () => "🎁 Un REGALO activa el MODO TURBO 🚀",
-            () =>
-              "👥 El país con MÁS HINCHAS corre al DOBLE de velocidad ⚡ · ¡comenta el tuyo!",
-            () => "💬 Comenta el nombre de un EQUIPO para apoyarlo",
-            () =>
-              L
-                ? "👑 Va ganando " +
-                  nat(L).n +
-                  " · ¡dale likes para alcanzarlo!"
-                : "🐢 ¡Sé el primero en correr!",
-            () =>
-              "🎯 Meta " +
-              Math.floor(S.gp) +
-              "/" +
-              S.goal +
-              " · al llenarla ¡todo vale x2!",
-          ];
-        return g[mqTip++ % g.length]();
+        return VOICE_PROMPTS[mqTip++ % VOICE_PROMPTS.length];
       }
       function msgTick() {
         if (tkBusy) return;
@@ -3715,7 +3814,9 @@
           el.append(sp);
         }
         tkTip = !MQ.length;
-        sp.textContent = MQ.length ? MQ.shift() : nextTip();
+        const message = MQ.length ? MQ.shift() : nextTip();
+        sp.textContent = message;
+        if (tkTip) speakTickerMessage(message);
         sp.style.animation = "none";
         void sp.offsetWidth;
         const dur = Math.max(6, (el.clientWidth + sp.offsetWidth) / 150);
@@ -4235,9 +4336,21 @@
                 Math.max(1, Math.round(points * 10)) +
                 " likes",
             );
-          } else if (ty === "chat")
-            enqueueMsg("💬 " + nat(p).n + " comentó · +1");
-          else if (ty === "join")
+          } else if (ty === "chat") {
+            const comment = String(entry.content || "")
+              .replace(/\s+/g, " ")
+              .trim();
+            enqueueMsg(
+              comment
+                ? "💬 " +
+                    nat(p).n +
+                    ": " +
+                    (comment.length > 100
+                      ? comment.slice(0, 99) + "…"
+                      : comment)
+                : "💬 " + nat(p).n + " comentó y apoya la carrera",
+            );
+          } else if (ty === "join")
             enqueueMsg("👋 " + nat(p).n + " se unió y ya corre");
         }
         evBadge(code, ty, entry, points);
