@@ -36,7 +36,9 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="statJoin">0/);
     assert.match(overlaySource, /title="Ingresos al LIVE">👋 <b id="statJoin">0<\/b>/);
     assert.match(overlaySource, /\$\("statJoin"\)\.textContent = SESSION\.join/);
-    assert.match(overlaySource, /#liveStats \{ position: fixed; left: 3%; right: 3%; bottom: calc\(1% \+ env\(safe-area-inset-bottom, 0px\) \+ 3\.8rem\); z-index: 51; display: flex !important;/);
+    assert.match(overlaySource, /#liveStats \{ position: fixed; left: 3%; right: 3%; bottom: calc\(1% \+ env\(safe-area-inset-bottom, 0px\) \+ 3\.8rem\); z-index: 51; display: grid !important; grid-template-columns: repeat\(6, max-content\);/);
+    assert.match(overlaySource, /grid-template-columns: repeat\(3, max-content\); gap: 0\.18rem 0\.42rem; font-size: 1\.12rem;/);
+    assert.match(overlaySource, /font-size: 1\.5rem; pointer-events: none;/);
     assert.doesNotMatch(overlaySource, /voiceToggle/);
     assert.doesNotMatch(overlaySource, /#dot|id="dot"|backend-link/);
     assert.match(overlaySource, /a\.im\.setAttribute\("href", _nn\.u\)/);
@@ -52,6 +54,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /const USER_EVENT_ADVANCE = 3/);
     assert.match(overlaySource, /entry\.type === "chat" \? \(CFG\.target \* 0\.15\) \/ USER_EVENT_ADVANCE/);
     assert.match(overlaySource, /points \*= USER_EVENT_ADVANCE/);
+    assert.match(overlaySource, /let ownerCode = S\.slotOf\.get\(p\.key\); if \(!ownerCode\) ownerCode = claimSlot\(p\); const code = S\.pick\.get\(p\.key\) \|\| ownerCode, ownsLane = Boolean\(ownerCode && ownerCode === code\);/);
     assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
     assert.match(overlaySource, /const googleVoices = latinVoices\.filter/);
@@ -146,8 +149,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /function putGiftAhead\(code, entry\)/);
     assert.match(overlaySource, /tgtE = VMAX/);
     assert.match(overlaySource, /S\.pos\[k\] >= t\.giftTarget/);
-    assert.match(overlaySource, /const ownsLane = Boolean\(code\)/);
-    assert.match(overlaySource, /const code = S\.slotOf\.get\(p\.key\) \|\| S\.pick\.get\(p\.key\)/);
+    assert.match(overlaySource, /const code = S\.pick\.get\(p\.key\) \|\| ownerCode, ownsLane = Boolean\(ownerCode && ownerCode === code\)/);
     assert.doesNotMatch(overlaySource, /const CLUBS/);
     assert.doesNotMatch(overlaySource, /if \(Q\.get\("demo"\)\)/);
     assert.doesNotMatch(overlaySource, /S\.pos\[k\] = 0/);
