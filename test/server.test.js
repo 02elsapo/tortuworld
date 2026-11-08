@@ -35,6 +35,12 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /id="connectionStatus"[^>]*role="status"/);
     assert.doesNotMatch(overlaySource, /voiceToggle/);
     assert.doesNotMatch(overlaySource, /#dot|id="dot"|backend-link/);
+    assert.match(overlaySource, /avatarUrl = p && typeof p\.avatar === "string"[\s\S]*?\? p\.avatar : _nn\.u/);
+    assert.match(overlaySource, /a\.im\.setAttribute\("href", avatarUrl\)/);
+    assert.match(overlaySource, /if \(_newAvatar\) layPendingFanEggs\(_code, _u\)/);
+    assert.match(overlaySource, /type = \["member", "enter", "joined"\]\.includes\(entry\.type\) \? "join" : entry\.type; if \(type !== entry\.type\) entry = \{ \.\.\.entry, type \};/);
+    assert.match(overlaySource, /const USER_EVENT_ADVANCE = 3/);
+    assert.match(overlaySource, /points \*= USER_EVENT_ADVANCE/);
     assert.match(overlaySource, /function speakNextTickerMessage\(\)/);
     assert.match(overlaySource, /voiceSynth\.speak\(utterance\)/);
     assert.match(overlaySource, /const googleVoices = latinVoices\.filter/);
@@ -108,7 +114,7 @@ test('starter serves the overlay, backend, health check, and TikTok API', async 
     assert.match(overlaySource, /function registerFan\(user, code, entry\)/);
     assert.match(overlaySource, /S\.pick\.get\(_u\)[\s\S]*?rnd\(C\)\.c/);
     assert.match(overlaySource, /PENDING_FANS\[code\]\.add\(user\)/);
-    assert.match(overlaySource, /function layPendingFanEggs\(code\)/);
+    assert.match(overlaySource, /function layPendingFanEggs\(code, preferredUser\)/);
     assert.match(overlaySource, /function trailEl\(item, progress, sway\)/);
     assert.match(overlaySource, /e\.style\.setProperty\("--sway", sway \+ "px"\)/);
     assert.match(overlaySource, /info\.sway = T\[code\]\.sway/);

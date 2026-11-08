@@ -3920,8 +3920,7 @@
       }
       function findFanEggPosition(code, desired, user) {
         const gap = fanMarkerGap(code),
-          limit = (S.pos[code] / CFG.win) * 100 - gap;
-        if (limit < 0) return null;
+          limit = Math.max(0, (S.pos[code] / CFG.win) * 100 - gap);
         const occupied = [...FANS[code]]
             .filter((other) => other !== user)
             .map((other) => FANINFO[other]?.progress)
@@ -3942,9 +3941,11 @@
         }
         return null;
       }
-      function layPendingFanEggs(code) {
-        let laid = false;
-        for (const user of [...PENDING_FANS[code]]) {
+      function layPendingFanEggs(code, preferredUser) {
+        const pending = [...PENDING_FANS[code]];
+        if (preferredUser && pending.includes(preferredUser))
+          pending.unshift(...pending.splice(pending.indexOf(preferredUser), 1));
+        for (const user of pending) {
           if (!FANS[code].has(user)) {
             PENDING_FANS[code].delete(user);
             continue;
@@ -3960,10 +3961,10 @@
           info.sway = T[code].sway;
           info.fresh = true;
           PENDING_FANS[code].delete(user);
-          laid = true;
+          renderFans(code);
+          return true;
         }
-        if (laid) renderFans(code);
-        return laid;
+        return false;
       }
       /* ===== v16 · RASTRO DE AVATARES =====
          Mientras la tortuga camina va soltando avatares cada cierta distancia (sin solaparse).
@@ -4085,16 +4086,24 @@
       function setSlotAvatar(code, p) {
         const t = T[code],
           a = t.av,
-          key = p ? p.key + "|" + nat(p).n : "-" + code;
+          _ln = NATIONS[C.findIndex((x) => x.c === code)],
+          _nn = p ? nat(p) : _ln,
+          avatarUrl =
+            p && typeof p.avatar === "string" && /^https?:\/\//i.test(p.avatar)
+              ? p.avatar
+              : _nn.u,
+          key = p ? p.key + "|" + _nn.n + "|" + avatarUrl : "-" + code;
         if (t.avKey === key) return;
         t.avKey = key;
-        const _ln = NATIONS[C.findIndex((x) => x.c === code)],
-          _nn = p ? nat(p) : _ln;
         a.tx.textContent = "";
         a.bg.setAttribute("fill", _nn.c);
         a.im.removeAttribute("href");
-        a.im.onerror = () => a.im.removeAttribute("href");
-        a.im.setAttribute("href", _nn.u);
+        a.im.onerror = () => {
+          a.im.onerror = null;
+          if (avatarUrl !== _nn.u) a.im.setAttribute("href", _nn.u);
+          else a.im.removeAttribute("href");
+        };
+        a.im.setAttribute("href", avatarUrl);
       }
       /* Los participantes reales pueden ocupar carriles libres o reemplazar al de menor puntaje. */
       function claimSlot(p) {
@@ -4522,6 +4531,7 @@
       function formatPlayerPoints(points) {
         return Number.isInteger(points) ? String(points) : points.toFixed(1);
       }
+      const USER_EVENT_ADVANCE = 3;
       /* PUNTUACIÓN: único punto de entrada de TODOS los eventos (reales, de espera y de prueba).
    1) calcula puntos  2) aplica empuje doble y combo de regalos  3) limita comentarios a 1 cada 8 s por usuario
    4) suma al jugador  5) raceAdd() mueve su tortuga  6) avisa si entra/desplaza del Top 5 o toma el primer lugar.
@@ -4559,6 +4569,7 @@
                       ? CFG.join
                       : 0;
         if (!points || S.over) return;
+        points *= USER_EVENT_ADVANCE;
         if (entry.type !== "join") points *= S.boost > Date.now() ? 2 : 1;
         if (entry.type === "gift") points *= combo(username).mult;
 
@@ -5155,6 +5166,7 @@
             S.pos[k] + d + crawl,
           ); /* puntos aceleran; cada participante también avanza lentamente */
           dropTrail(k, now);
+          layPendingFanEggs(k);
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
             const collected = t.giftEl;
             t.giftTarget = null;
@@ -6317,6 +6329,7 @@
           const type = ["member", "enter", "joined"].includes(entry.type)
             ? "join"
             : entry.type;
+          if (type !== entry.type) entry = { ...entry, type };
           if (type === "chat") SESSION.chat++;
           else if (type === "like")
             SESSION.like += Math.max(
@@ -6365,9 +6378,7 @@
         if (
           entry &&
           !S.over &&
-          ["chat", "gift", "like", "follow", "share", "join"].includes(
-            entry.type,
-          )
+          ["chat", "gift", "like", "follow", "share", "join"].includes(entry.type)
         ) {
           const _n = (x) =>
             String(x || "")
@@ -6401,7 +6412,9 @@
               S.pick.get(_u) ||
               S.slotOf.get(_u) ||
               rnd(C).c;
+            const _newAvatar = !FANS[_code].has(_u);
             registerFan(_u, _code, entry);
+            if (_newAvatar) layPendingFanEggs(_code, _u);
             if (Date.now() - (handleTikTokEntry.sup[_u] || 0) > 8000) {
               handleTikTokEntry.sup[_u] = Date.now();
               const _o = _i >= 0 ? slotPlayer(_code) : null;
