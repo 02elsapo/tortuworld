@@ -12,11 +12,6 @@ const registerFanSource = overlaySource.match(
   /function registerFan\(user, code, entry\) \{[\s\S]*?\n      \}(?=\n      function fanMarkerGap)/,
 );
 assert.ok(registerFanSource, 'registerFan must exist in the overlay');
-const assistantSource = overlaySource.match(
-  /function countryAssistantEvent\(code\) \{[\s\S]*?\n      \}(?=\n      function scheduleCountryAssistant)/,
-);
-assert.ok(assistantSource, 'countryAssistantEvent must exist in the overlay');
-
 function createFanHarness() {
   const context = vm.createContext({
     C: [{ c: 'AR' }, { c: 'BR' }],
@@ -88,47 +83,6 @@ test('repeat event preserves an existing fan marker and its avatar', () => {
   assert.equal(app.FANINFO.viewer.avatar, 'https://example.test/first.webp');
 });
 
-test('country assistant effects never register a fan or create feed statistics', () => {
-  for (const [rolls, expectedType] of [
-    [[0.1, 0.5], 'like'],
-    [[0.6, 0.1], 'chat'],
-    [[0.95], 'gift'],
-  ]) {
-    const app = vm.createContext({
-      C: [{ c: 'AR' }],
-      CFG: { win: 100 },
-      ASSISTANT_MESSAGES: ['¡Vamos!'],
-      FANS: { AR: new Set(['viewer']) },
-      NATIONS: [{ n: 'Argentina' }],
-      PENDING_FANS: { AR: new Set(['viewer']) },
-      S: { go: true, over: false, pos: { AR: 0 }, fans: { AR: 1 } },
-      T: { AR: { pend: 0 } },
-      feedEvents: [],
-      stats: [],
-      visualEvents: [],
-      Math: {
-        max: Math.max,
-        min: Math.min,
-        random: () => rolls.shift(),
-      },
-      evBadge(code, type) {
-        app.visualEvents.push({ code, type });
-      },
-      putGiftAhead() {},
-      rnd: (items) => items[0],
-    });
-    vm.runInContext(
-      `${assistantSource[0]}\nglobalThis.countryAssistantEvent = countryAssistantEvent;`,
-      app,
-    );
-
-    app.countryAssistantEvent('AR');
-
-    assert.deepEqual(app.visualEvents, [{ code: 'AR', type: expectedType }]);
-    assert.equal(app.FANS.AR.size, 1);
-    assert.equal(app.S.fans.AR, 1);
-    assert.equal(app.PENDING_FANS.AR.has('viewer'), true);
-    assert.deepEqual(app.feedEvents, []);
-    assert.deepEqual(app.stats, []);
-  }
+test('overlay does not synthesize interaction events', () => {
+  assert.doesNotMatch(overlaySource, /countryAssistantEvent|scheduleCountryAssistant/);
 });

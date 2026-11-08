@@ -1,8 +1,7 @@
 <!doctype html>
 <!--
   Carrera de tortugas v16: una tortuga llega a la meta en un máximo de 60 segundos, incluso sin espectadores.
-  Los primeros cuatro son fijos; seis campeones del mundo o selecciones populares se sortean
-  al iniciar cada ronda. Los eventos de TikTok aceleran al país que apoya cada espectador.
+  Tres países compiten en cada ronda; los eventos de TikTok pueden impulsar a sus equipos.
   Backend integrado: SSE en /api/events. Parámetros: ?target=40, ?goal=60,
   ?panel=1, ?sound=0, ?music=0 y ?ws=URL. No se inventan espectadores ni métricas de audiencia.
 -->
@@ -19,9 +18,7 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <title>
-      Sigue al líder de la carrera y ayuda a cuentas pequeñas a ganar seguidores
-    </title>
+    <title>Carrera de tortugas · Países en vivo</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/tortu-192.png" />
     <link
@@ -156,6 +153,23 @@
         color: #fff;
         font-size: 0.5em;
       }
+      #raceProgressTrack {
+        width: 100%;
+        height: 0.38rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.25);
+      }
+      #raceProgress {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--mint);
+      }
+      #raceClock.urgent #raceProgress {
+        background: #ff7777;
+      }
       #raceClock.urgent {
         border-color: #ff5b5b;
         color: #ff7777;
@@ -261,7 +275,7 @@
         animation: pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both;
       }
 
-      /* Pista: 5 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
+      /* Pista: 3 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
    Los anchos de .tur / .mk / .sl / .pl usan el mismo desplazamiento (.8rem de margen + pista de 100% - 7rem) para que
    la nariz de la tortuga coincida con las líneas de 25/50/75 % y con la meta. Si cambias el tamaño de .tur, ajusta los cuatro. */
       #lanes {
@@ -1230,7 +1244,7 @@
       .lane.empty .tag {
         display: none;
       }
-      /* Pantalla horizontal: se reduce el rem para que quepan los 5 carriles grandes sin tapar el panel inferior */
+      /* Pantalla horizontal: se reduce el rem para que quepan los 3 carriles sin tapar el panel inferior */
       @media (orientation: landscape) {
         html {
           font-size: min(3.8vw, 1.45vh);
@@ -2184,13 +2198,14 @@
         border: 0;
         background: none;
         z-index: 1;
-        --rt: calc((100% - var(--th)) * var(--i)/4);
+        --rt: calc((100% - var(--th)) * var(--i)/var(--n));
       }
       #lanes .rk {
         position: absolute;
         z-index: 4;
         left: calc((var(--g) - var(--track-flag-size)) / 2);
-        top: calc(var(--rt) + (var(--th) - var(--track-flag-size)) / 2);
+        top: calc(var(--rt) + var(--th) / 2);
+        transform: translateY(-50%);
       }
       #lanes::after {
         content: "";
@@ -2406,12 +2421,12 @@
         }
       }
       #app {
-        top: var(--top, 18%);
-        bottom: var(--bot, 7%);
+        top: var(--top, 4%);
+        bottom: var(--bot, 50%);
       }
       #lanes {
         --tw: min(13rem, 16vh);
-        --n: 4;
+        --n: 2;
         flex: 0.85 1 0;
       }
       #lanes .trk {
@@ -2771,7 +2786,7 @@
       <div id="head" class="panel">
         <div id="slot">
           <div id="how">
-            💬 Comenta tu país y deja tu avatar en la pista · 👍 Like · 🎁 Turbo
+            Carrera de tortugas en vivo
           </div>
           <div id="banner" class="disp" role="status" aria-live="polite"></div>
         </div>
@@ -2779,9 +2794,9 @@
           <span id="raceTime">01:00</span><small>TIEMPO DE CARRERA</small>
         </div>
         <div id="joinCTA" aria-live="polite">
-          <b id="ctaMain">💬 ESCRIBE EL NOMBRE DE UN PAÍS</b>
+          <b id="ctaMain">💬 COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO</b>
           <span id="ctaSub"
-            >El país con más apoyo corre al DOBLE de velocidad ⚡</span
+            >El primero en cruzar la meta gana.</span
           >
         </div>
         <div id="goal">
@@ -2792,12 +2807,23 @@
           <span title="Ingresos al LIVE">👋 <b id="statJoin">0</b></span>
           <span title="Comentarios">💬 <b id="statChat">0</b></span>
           <span title="Me gusta">❤️ <b id="statLike">0</b></span>
-          <span title="Regalos">🎁 <b id="statGift">0</b></span>
+          <span title="Aportes especiales">✨ <b id="statGift">0</b></span>
           <span title="Nuevos seguidores">➕ <b id="statFollow">0</b></span>
           <span title="Compartidos">🔁 <b id="statShare">0</b></span>
         </div>
       </div>
       <div id="lanes"></div>
+      <div
+        id="raceProgressTrack"
+        role="progressbar"
+        aria-label="Tiempo de carrera restante"
+        aria-valuemin="0"
+        aria-valuemax="60"
+        aria-valuenow="60"
+        aria-valuetext="01:00"
+      >
+        <i id="raceProgress"></i>
+      </div>
     </div>
     <div id="connectionStatus" class="connection-status" role="status" aria-live="polite">
       TikTok · esperando estado de conexión
@@ -2896,7 +2922,7 @@
         target: +Q.get("target") || 40,
         restartMs: 7000,
         join: Q.has("join") ? +Q.get("join") : 0.5,
-        countries: [0, 1, 2, 3, 4].map((i) => ({
+        countries: [0, 1, 2].map((i) => ({
           c: "s" + i,
           n: "",
           f: "",
@@ -2905,10 +2931,18 @@
       };
       const RACE_DURATION_MS = 60_000,
         RACE_WARNINGS = new Set([30, 15, 10, 5, 4, 3, 2, 1]);
-      function guaranteedRacePosition(elapsedMs) {
-        return Math.min(
-          CFG.win,
-          (CFG.win * Math.max(0, elapsedMs)) / RACE_DURATION_MS,
+      function guaranteedRacePosition(elapsedMs, designatedWinner) {
+        const progress = Math.min(
+          1,
+          Math.max(0, elapsedMs) / RACE_DURATION_MS,
+        );
+        return CFG.win * progress * (designatedWinner ? 1 : 0.9);
+      }
+      function firstFinisher(crossings) {
+        return crossings.reduce(
+          (first, crossing) =>
+            !first || crossing.fraction < first.fraction ? crossing : first,
+          null,
         );
       }
       function formatRaceTime(remainingMs) {
@@ -2918,6 +2952,13 @@
           ":" +
           String(totalSeconds % 60).padStart(2, "0")
         );
+      }
+      function raceProgressPercent(remainingMs) {
+        const remaining = Math.min(
+          RACE_DURATION_MS,
+          Math.max(0, remainingMs),
+        );
+        return ((remaining / RACE_DURATION_MS) * 100).toFixed(2);
       }
       const $ = (id) => document.getElementById(id);
       const rnd = (a) => a[(Math.random() * a.length) | 0];
@@ -2930,7 +2971,7 @@
       let connectorEventTimer = null;
       let contestantSequence = 0;
       /* ===== v8 · PAÍSES en lugar de usuarios =====
-   Los tres primeros países son fijos; se sortean dos adicionales de la lista popular. */
+   Los tres primeros países son fijos. */
       const NATIONS = (() => {
         const sv = (b) =>
           "data:image/svg+xml;utf8," +
@@ -3154,22 +3195,8 @@
         ...WORLD_CUP_WINNERS,
         ...NATIONS.filter((team) => POPULAR_COUNTRIES.includes(team.code)),
       ];
-      function shuffled(items) {
-        const result = [...items];
-        for (let i = result.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [result[i], result[j]] = [result[j], result[i]];
-        }
-        return result;
-      }
       function chooseRoundTeams() {
-        const fixedCodes = new Set(FIXED_TEAMS.map((team) => team.code));
-        const candidates = NATIONS.filter(
-          (team) =>
-            POPULAR_COUNTRIES.includes(team.code) &&
-            !fixedCodes.has(team.code),
-        );
-        return [...FIXED_TEAMS, ...shuffled(candidates).slice(0, 2)];
+        return [...FIXED_TEAMS];
       }
       NATIONS.splice(0, NATIONS.length, ...chooseRoundTeams());
       const FANINFO = {};
@@ -3206,7 +3233,7 @@
      pos      posición de cada país 0..win      tot      puntos (diamantes) de cada país en la ronda
      wins     victorias acumuladas              fans     cuántos usuarios eligieron cada país
      pick     Map usuario -> código de país     donors   Map usuario -> {name,code,pts,best} (ranking de la ronda)
-     combo    Map usuario -> {n,t} (racha de regalos)
+     combo    Map usuario -> {n,t} (racha de aportes especiales)
      gp/goal  progreso y objetivo de la meta de la comunidad
      cp       quién tomó cada lechuga (25/50/75)   pf  foto finish ya anunciado
      streak/lastWin  racha de victorias del mismo país    dirty  hay que redibujar el ranking */
@@ -3696,16 +3723,8 @@
 
       /* ===== Pantalla ===== */
       /* Mensajes y eventos permanecen visibles hasta que el siguiente los reemplaza. */
-      const VOICE_INTERVAL_MS = 10000,
-        VOICE_PROMPTS = [
-        "Comenten su país para apoyar y elegir a su tortuga.",
-        "Tap tap: dejen un like tocando la pantalla para ayudar a avanzar.",
-        "Compartan el LIVE para darle impulso a su país.",
-        "Sigan la cuenta; cada nuevo follow ayuda.",
-        "Escriban TORTUGA en el chat para entrar a correr.",
-        "Únanse al LIVE, comenten, den like y compartan para ayudar.",
-        "Tap tap: toquen la pantalla y manden likes a su tortuga.",
-        ];
+      const VOICE_INTERVAL_MS = 60000,
+        ACTION_REMINDER_INTERVAL_MS = 180000;
       const voiceSynth =
           "speechSynthesis" in window &&
           "SpeechSynthesisUtterance" in window
@@ -3716,7 +3735,6 @@
         voiceSpeaking = false,
         voiceNeedsGesture = false,
         voiceHasStarted = false,
-        voicePromptIndex = 0,
         voiceLastSpokenAt = 0,
         voiceTimer = 0,
         voiceWatchdog = 0,
@@ -3846,34 +3864,31 @@
         });
         speakNextTickerMessage();
       }
+      function queueActionReminder(text) {
+        if (!voiceEnabled || !voiceSynth || voiceNeedsGesture) return;
+        voiceQueue.push({ text: String(text), required: true });
+        speakNextTickerMessage();
+      }
       function nextEncouragement() {
-        const promptNumber = voicePromptIndex++;
-        const ranked = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]),
-          lane = ranked[promptNumber % ranked.length],
-          countryIndex = C.findIndex((item) => item.c === lane.c),
-          country = NATIONS[countryIndex].n,
-          place = (promptNumber % ranked.length) + 1,
-          action = VOICE_PROMPTS[promptNumber % VOICE_PROMPTS.length];
-        let message =
-          place === 1
-            ? "¡" + country + " va ganando! "
-            : "¡" + country + " está en el puesto " + place + "! ";
-        message += action;
-        const activeUsers = getTopPlayers()
-          .slice(0, 2)
-          .map((player) => String(player.name || "").trim().slice(0, 18))
-          .filter(Boolean);
-        if (activeUsers.length)
-          message +=
-            " Usuarios más activos: " +
-            activeUsers.join(" y ") +
-            ". ¡Sigan comentando!";
-        return message;
+        const leader = C.reduce((best, country) =>
+          S.pos[country.c] > S.pos[best.c] ? country : best,
+        );
+        return (
+          "¡Vamos " +
+          NATIONS[C.findIndex((country) => country.c === leader.c)].n +
+          "! ¡Qué buena carrera!"
+        );
       }
       function speakEncouragement() {
         if (!voiceEnabled || voiceNeedsGesture || S.over) return;
         const message = nextEncouragement();
         speakTickerMessage(message);
+      }
+      function speakActionReminder() {
+        if (!voiceEnabled || voiceNeedsGesture || S.over) return;
+        queueActionReminder(
+          "Si quieres apoyar a un equipo, puedes comentar su país, usar tap tap, compartir o seguir la cuenta.",
+        );
       }
       function unlockVoiceAfterGesture() {
         if (!voiceSynth || (!voiceNeedsGesture && voiceHasStarted)) return;
@@ -3900,6 +3915,7 @@
       if (voiceSynth) {
         speakEncouragement();
         voiceTimer = setInterval(speakEncouragement, VOICE_INTERVAL_MS);
+        setInterval(speakActionReminder, ACTION_REMINDER_INTERVAL_MS);
         ["pointerdown", "touchstart", "keydown"].forEach((event) =>
           addEventListener(event, unlockVoiceAfterGesture, { once: true }),
         );
@@ -3922,12 +3938,12 @@
         banner.t = setTimeout(() => (b.className = "disp"), ms);
       }
       /* Redibuja marcadores: puesto, puntos y corona del líder. Se llama ~4 veces/seg. */
-      /* Jugador dueño de una tortuga (slot 's0'..'s4'), o null si el carril está libre */
+      /* Jugador dueño de una tortuga (slot 's0'..'s2'), o null si el carril está libre */
       function slotPlayer(code) {
         const k = S.slotUser[code];
         return k ? contestants.get(k) : null;
       }
-      /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 5 carriles. Se llama ~4 veces/seg. */
+      /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 3 carriles. Se llama ~4 veces/seg. */
       const MAXF = 8;
       function fanEl(user, info) {
         const e = document.createElement("i");
@@ -4381,8 +4397,7 @@
           const c = Math.max(1, Number(entry.activityCount) || 1);
           show(
             "e-gf",
-            "🎁 " +
-              (entry.content || "Regalo") +
+            "✨ Aporte especial" +
               (c > 1 ? " x" + c : "") +
               " +" +
               Math.round(points),
@@ -4411,8 +4426,8 @@
         t.pend = Math.max(t.pend, distance + 0.8);
         const gift = document.createElement("span");
         gift.className = "gift-bait";
-        gift.textContent = "🎁";
-        gift.title = "Regalo para recoger" + (entry.content ? ": " + entry.content : "");
+        gift.textContent = "✨";
+        gift.title = "Impulso para recoger";
         gift.setAttribute("aria-label", gift.title);
         gift.style.setProperty(
           "--p",
@@ -4449,10 +4464,10 @@
         if (!(IDLE && IDLE.on)) {
           if (ty === "gift")
             enqueueMsg(
-              "🎁 " +
+              "✨ " +
                 nat(p).n +
-                " envió " +
-                (entry.content || "un regalo") +
+                " aportó " +
+                "aporte especial" +
                 (+entry.activityCount > 1 ? " x" + entry.activityCount : "") +
                 " · +" +
                 Math.round(points) +
@@ -4505,7 +4520,7 @@
         if (!top.length) {
           const e = document.createElement("div");
           e.className = "empty";
-          e.textContent = "Regala o da like y apareces aquí.";
+          e.textContent = "Los participantes aparecen aquí.";
           box.append(e);
           return;
         }
@@ -4549,9 +4564,9 @@
                   hour: "2-digit",
                   minute: "2-digit",
                 }),
-            entry.eventLabel || entry.type,
+            entry.type === "gift" ? "Apoyo" : entry.eventLabel || entry.type,
             entry.username || "Sistema",
-            entry.content || "",
+            entry.type === "gift" ? "Aporte especial" : entry.content || "",
           ];
           values.forEach((value) => {
             const cell = document.createElement("td");
@@ -4564,7 +4579,7 @@
       function formatConnectorEvent(entry) {
         const labels = {
             chat: "Comentario",
-            gift: "Regalo",
+            gift: "Apoyo",
             like: "Me gusta",
             follow: "Nuevo seguidor",
             share: "Compartido",
@@ -4583,9 +4598,15 @@
             enter: "👋",
           },
           type = String(entry.type || ""),
-          label = String(entry.eventLabel || labels[type] || type || "Evento"),
+          label = String(
+            type === "gift"
+              ? "Apoyo"
+              : entry.eventLabel || labels[type] || type || "Evento",
+          ),
           username = String(entry.username || "Sistema").trim() || "Sistema",
-          content = String(entry.content || "")
+          content = String(
+            type === "gift" ? "Aporte especial" : entry.content || "",
+          )
             .replace(/\s+/g, " ")
             .trim(),
           detail = content.length > 90 ? content.slice(0, 89) + "…" : content;
@@ -4721,7 +4742,7 @@
       }
       const USER_EVENT_ADVANCE = 3;
       /* PUNTUACIÓN: único punto de entrada de TODOS los eventos (reales, de espera y de prueba).
-   1) calcula puntos  2) aplica empuje doble y combo de regalos  3) limita comentarios a 1 cada 8 s por usuario
+   1) calcula puntos  2) aplica el impulso del equipo  3) limita comentarios a 1 cada 8 s por usuario
    4) suma al jugador  5) raceAdd() mueve su tortuga  6) avisa si entra/desplaza del Top 5 o toma el primer lugar.
    Se ignora todo mientras la ronda está terminada (S.over). */
       function scoreContestant(entry, isBot = false) {
@@ -4810,7 +4831,7 @@
           showSpecialEvent(nat(top[0]).n + " toma el primer lugar");
         } else if (entry.type === "gift" && points >= 20) {
           showSpecialEvent(
-            "Regalo destacado para " +
+            "Aporte destacado para " +
               nat(player).n +
               " · +" +
               formatPlayerPoints(points) +
@@ -4867,7 +4888,7 @@
         badge.title = user + " patrocina esta tortuga";
         badge.classList.add("on");
       }
-      /* EVENTO "boost" {seconds}: empuje doble (x2 de energía por regalo) durante sec segundos, con cuenta atrás en el aviso. */
+      /* EVENTO "boost" {seconds}: aplica impulso doble durante unos segundos. */
       function setBoost(sec) {
         S.boost = Date.now() + sec * 1000;
         clearInterval(setBoost.t);
@@ -4933,7 +4954,7 @@
         SFX.join();
         render();
       }
-      /* Equipo del usuario; si aún no tiene (regaló sin elegir), le toca uno al azar. */
+      /* Equipo del usuario; si todavía no tiene uno, se asigna al azar. */
       function assign(user) {
         let code = S.pick.get(user);
         if (!code) {
@@ -4953,7 +4974,7 @@
         d.code = code;
         return d;
       }
-      /* Combo: regalos seguidos del mismo usuario (menos de 6 s) suben el multiplicador hasta x2 */
+      /* Interacciones seguidas del mismo usuario pueden subir el multiplicador. */
       function combo(user) {
         const now = Date.now(),
           c = S.combo.get(user) || { n: 0, t: 0 };
@@ -4962,7 +4983,7 @@
         S.combo.set(user, c);
         return { n: c.n, mult: 1 + Math.min(c.n - 1, 4) * 0.25 };
       }
-      /* EVENTO "gift" {user, diamonds, count}: convierte el regalo en ENERGÍA para la tortuga de su país.
+      /* EVENTO "gift" {user, diamonds, count}: convierte el evento en energía para su equipo.
    No mueve la tortuga directamente: suma a T[país].pend y el bucle frame() la gasta caminando.
    Además suma puntos, combo, progreso de la meta de la comunidad, avisos y sonido. */
       function onGift(g) {
@@ -5073,6 +5094,10 @@
           lane.giftEl = null;
           lane.giftTarget = null;
           if (c.c !== code) {
+            S.pos[c.c] = Math.min(S.pos[c.c], Math.max(0, CFG.win - 1));
+            const stoppedAt = ((S.pos[c.c] / CFG.win) * 100).toFixed(2);
+            lane.tur.style.setProperty("--p", stoppedAt);
+            lane.trk.style.setProperty("--p", stoppedAt);
             lane.pend = 0;
             lane.ve = 0;
           }
@@ -5099,7 +5124,7 @@
             country.n +
             " gana" +
             (p && S.streak >= 2 ? " · racha x" + S.streak : "") +
-            " · ¡síguelo!",
+            " · felicitaciones",
         );
         clearTimeout(S.rt);
         S.rt = null;
@@ -5145,7 +5170,7 @@
       }
       /* Empieza una ronda: reinicia posiciones, puntos, ranking, combos, lechugas y meta; luego cuenta regresiva.
    Los equipos de los usuarios (S.pick) y las victorias se conservan. */
-      /* Nueva ronda: vacía puntos, jugadores y tortugas (los 5 carriles quedan libres, con avatar y posición en cero),
+      /* Nueva ronda: vacía puntos, jugadores y tortugas (los 3 carriles quedan libres, con avatar y posición en cero),
    conserva las victorias por usuario y lanza la cuenta regresiva. Se llama sola al cargar y al terminar cada ronda. */
       function newRound() {
         clearTimeout(S.rt);
@@ -5174,7 +5199,7 @@
         render();
         goalRender();
         renderTopPlayers();
-        banner("Ronda " + S.round + " · ¡comenta tu país y apóyalo!", 3500);
+        banner("Ronda " + S.round + " · carrera de países", 3500);
         countdown();
       }
       /* EVENTO "reset": borra victorias y racha, y reinicia en la ronda 1. */
@@ -5194,6 +5219,9 @@
         raceStartedAt = 0;
         raceWarningSecond = null;
         $("raceTime").textContent = formatRaceTime(RACE_DURATION_MS);
+        $("raceProgress").style.width = "100%";
+        $("raceProgressTrack").setAttribute("aria-valuenow", "60");
+        $("raceProgressTrack").setAttribute("aria-valuetext", "01:00");
         $("raceClock").classList.remove("urgent");
         musicSync();
         cdT.forEach(clearTimeout);
@@ -5220,14 +5248,15 @@
 
       /* ===== Movimiento realista =====
    - Cada tortuga tiene su ritmo de arrastre, que cambia suavemente, y a veces se detiene a mirar.
-   - Un regalo no teletransporta: es energía que se gasta caminando, con aceleración y frenado.
+   - Los aportes especiales se convierten en energía que se gasta caminando.
    - Las patas siguen un paso en diagonal; la velocidad cambia cadencia, balanceo y polvo. */
       /* Estado de FÍSICA y animación por tortuga (clave = código de país):
-     pend  energía de regalos pendiente de gastar     ve  velocidad extra por regalos (u/s)
+     pend  energía pendiente de gastar     ve  velocidad extra (u/s)
      cr    velocidad de avance base (u/s)              vs  velocidad total suavizada (anima patas y polvo)
      base  factor personal de velocidad de arrastre    pause  segundos que le quedan de pausa
      ph/am fase y amplitud del paso    hl  cuánto levanta la cabeza    w  semilla de ruido    du  temporizador de polvo */
       const T = {};
+      let fallbackWinnerCode = null;
       C.forEach((c, li) => {
         const e = $("tu-" + c.c);
         T[c.c] = {
@@ -5267,6 +5296,7 @@
         };
       });
       function reseed() {
+        fallbackWinnerCode = C[(Math.random() * C.length) | 0].c;
         C.forEach((c) => {
           const t = T[c.c];
           t.base = 0.7 + Math.random() * 0.7;
@@ -5319,6 +5349,13 @@
           ),
           seconds = Math.ceil(remainingMs / 1000);
         $("raceTime").textContent = formatRaceTime(remainingMs);
+        $("raceProgress").style.width =
+          raceProgressPercent(remainingMs) + "%";
+        $("raceProgressTrack").setAttribute("aria-valuenow", String(seconds));
+        $("raceProgressTrack").setAttribute(
+          "aria-valuetext",
+          formatRaceTime(remainingMs),
+        );
         $("raceClock").classList.toggle(
           "urgent",
           seconds <= 10 && S.go && !S.over,
@@ -5362,10 +5399,12 @@
         const R = parseFloat(
           getComputedStyle(document.documentElement).fontSize,
         );
+        const finishers = [];
         for (const c of C) {
           const k = c.c,
             t = T[k],
-            isW = k === S.winner;
+            isW = k === S.winner,
+            previousPosition = S.pos[k];
           const wob = Math.max(
             0.2,
             1 +
@@ -5393,8 +5432,21 @@
           if (S.go && !S.over && raceStartedAt)
             S.pos[k] = Math.max(
               S.pos[k],
-              guaranteedRacePosition(now - raceStartedAt),
+              guaranteedRacePosition(
+                now - raceStartedAt,
+                k === fallbackWinnerCode,
+              ),
             );
+          if (
+            !S.winner &&
+            previousPosition < CFG.win &&
+            S.pos[k] >= CFG.win
+          )
+            finishers.push({
+              code: k,
+              fraction:
+                (CFG.win - previousPosition) / (S.pos[k] - previousPosition),
+            });
           dropTrail(k, now);
           layPendingFanEggs(k);
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
@@ -5406,7 +5458,6 @@
               setTimeout(() => collected.remove(), 260);
             }
           }
-          if (!S.winner && S.slotUser[k] && S.pos[k] >= CFG.win) S.winner = k;
           if (isW) S.pos[k] = CFG.win;
           else if (S.over && S.pos[k] > CFG.win - 1) {
             S.pos[k] = CFG.win - 1;
@@ -5479,7 +5530,7 @@
           leg(E.lnF, -s, -cs);
           leg(E.lfB, -s, -cs);
           const gallop =
-            Math.abs(Math.sin(t.ph * 2)) * (0.2 + 1.8 * speedRatio);
+            Math.abs(Math.sin(t.ph)) * (0.2 + 1.8 * speedRatio);
           const by = -gallop + Math.sin(tNow * 1.6 + t.w) * 0.12;
           E.bd.setAttribute(
             "transform",
@@ -5520,16 +5571,15 @@
             t.trk.style.setProperty("--p", _pv);
           }
         }
+        if (!S.over && !S.winner && finishers.length)
+          S.winner = firstFinisher(finishers).code;
         if (
           !S.over &&
           !S.winner &&
           raceStartedAt &&
           now - raceStartedAt >= RACE_DURATION_MS
-        ) {
-          S.winner = C.reduce((leader, country) =>
-            S.pos[country.c] > S.pos[leader.c] ? country : leader,
-          ).c;
-        }
+        )
+          S.winner = fallbackWinnerCode;
         if (!S.over && S.winner) finish(S.winner);
         acc += dt;
         if (acc > 0.25) {
@@ -5924,41 +5974,6 @@
       if (SND && MUSIC)
         document.querySelector("[data-a=music]").classList.add("act");
 
-      /* Asistentes internos: solo animan la carrera; nunca entran al feed ni a estadísticas. */
-      const ASSISTANT_MESSAGES = ["¡Vamos!", "¡Dale!", "¡Corre, tortuga!", "🐢💨"];
-      function countryAssistantEvent(code) {
-        const t = T[code];
-        if (!t || !S.go || S.over) return;
-        const roll = Math.random(),
-          remaining = Math.max(0, CFG.win - S.pos[code]);
-        if (roll < 0.55) {
-          const activityCount = 3 + ((Math.random() * 8) | 0);
-          evBadge(code, "like", { activityCount }, 0.2);
-          t.pend = Math.min(remaining, t.pend + 0.18);
-        } else if (roll < 0.92) {
-          const country = NATIONS[C.findIndex((lane) => lane.c === code)].n,
-            content = country + ": " + rnd(ASSISTANT_MESSAGES);
-          evBadge(code, "chat", { content }, 0.3);
-          t.pend = Math.min(remaining, t.pend + 0.3);
-        } else {
-          const entry = { content: "Regalo sorpresa", activityCount: 1 };
-          evBadge(code, "gift", entry, 1);
-          putGiftAhead(code, entry);
-        }
-      }
-      function scheduleCountryAssistant(code, initial = false) {
-        setTimeout(
-          () => {
-            countryAssistantEvent(code);
-            scheduleCountryAssistant(code);
-          },
-          initial
-            ? 5000 + Math.random() * 10000
-            : 18000 + Math.random() * 25000,
-        );
-      }
-      C.forEach((country) => scheduleCountryAssistant(country.c, true));
-
       /* ===== Bots de relleno =====
    Desactivados: los carriles sin espectadores avanzan lentamente sin simular actividad. */
       var IDLE = {
@@ -6260,7 +6275,7 @@
         } else if (ty === "share") {
           bigFx("🚀 ¡COMPARTIÓ!", who, 1);
         } else if (ty === "gift") {
-          bigFx("🎁 ¡REGALO!", who + " · +" + Math.round(points) + " pts", 1);
+          bigFx("✨ ¡APORTE!", who + " · +" + Math.round(points) + " pts", 1);
         } else if (!had && !(IDLE && IDLE.on)) {
           if (ty === "join" && Date.now() - (raceAdd.jf || 0) < 3000)
             feed("👋 " + nat(p).n + " entra a la carrera", "soft");
@@ -6422,17 +6437,17 @@
         c.innerHTML =
           '<div class="stage"><i class="rays"></i><div class="sa"></div><i class="crown">👑</i></div>' +
           '<div class="sb"><div class="ribbon"></div><div class="name"></div><div class="badges"></div>' +
-          '<div class="cta">❤️ ¡SÍGANLO TODOS! ❤️</div><div class="cta2">Toca su perfil y dale <b>Seguir</b></div><div class="nx2"></div></div>' +
+          '<div class="cta">🏆 CAMPEÓN DE LA RONDA</div><div class="cta2">Enhorabuena a <b></b></div><div class="nx2"></div></div>' +
           '<div class="timer"><i></i></div>';
         c.querySelector(".ribbon").textContent =
           st >= 2 ? "🔥 ¡RACHA x" + st + "!" : "🏆 ¡NUEVO CAMPEÓN!";
         c.querySelector(".name").textContent = nat(p).n;
         const cta2 = c.querySelector(".cta2");
         cta2.textContent = "";
-        cta2.append("Su perfil: ");
+        cta2.append("Enhorabuena a ");
         const ub = document.createElement("b");
         ub.textContent = "@" + p.username;
-        cta2.append(ub, " · dale Seguir");
+        cta2.append(ub);
         const bd = c.querySelector(".badges");
         [
           ["🏅 " + wins + (wins === 1 ? " victoria" : " victorias")],
@@ -6469,7 +6484,7 @@
         upd();
         clearInterval(spotI);
         spotI = setInterval(upd, 250);
-        /* festejo: confeti, corazones que suben y sonido (el pedido de seguir se repite con el jingle de follow) */
+        /* festejo: confeti, corazones que suben y sonido */
         for (let k = 0; k < 6; k++)
           setTimeout(
             () =>
@@ -6513,24 +6528,10 @@
           clearInterval(spotI);
         }, SHOW_MS + 60);
       }
-      const HOW0 =
-        "🐢 Comenta TORTUGA para entrar · 👆 Tap tap/likes · 🔁 Comparte · ⭐ Sigue";
-      let howI = 0;
-      setInterval(() => {
-        const L = [HOW0, "💚 Apoyá a los pequeños: seguí a quien va ganando"];
-        if (SPOT) L.push("🌟 Cuenta destacada: @" + SPOT + " · ¡seguila!");
-        if (HALL.length)
-          L.push(
-            "🏅 Campeones: " +
-              HALL.slice(0, 3)
-                .map((n) => "@" + n)
-                .join(" · "),
-          );
-        howI = (howI + 1) % L.length;
-        $("how").textContent = L[howI];
-      }, 5000);
+      $("how").textContent =
+        "Carrera de tortugas en vivo";
 
-      /* v6 · tensión final: cuando el líder pasa el 88 % se avisa una vez por ronda para que el chat empuje */
+      /* Aviso neutral cuando el líder se acerca a la meta. */
       const _render3 = render;
       render = function () {
         _render3();
@@ -6546,8 +6547,8 @@
           S.nearEnd = true;
           const pl = slotPlayer(lc);
           if (pl) {
-            banner("🏁 ¡" + nat(pl).n + " casi gana! ¡Empújenlo!", 2600);
-            feed("🏁 " + nat(pl).n + " está a punto de ganar", "hot");
+            banner("🏁 " + nat(pl).n + " se acerca a la meta", 2600);
+            feed("🏁 " + nat(pl).n + " se acerca a la meta", "hot");
             SFX.cp && SFX.cp();
             screenFx(false);
           }
@@ -6621,15 +6622,14 @@
                 : _fl >= 0
                   ? NATIONS[_fl].n.toUpperCase()
                   : "UN NUEVO CORREDOR";
-            $("ctaMain").textContent = "🎉 ¡" + _cn + " YA ESTÁ EN LA CARRERA!";
-            $("ctaSub").textContent =
-              "¡Anímalo con likes y comparte el LIVE para que más personas entren!";
+            $("ctaMain").textContent = "🎉 " + _cn + " PARTICIPA EN LA CARRERA";
+            $("ctaSub").textContent = "Participa en esta ronda de tres países.";
             $("joinCTA").classList.add("pulse");
             clearTimeout(handleTikTokEntry.ctaTimer);
             handleTikTokEntry.ctaTimer = setTimeout(() => {
-              $("ctaMain").textContent = "💬 ESCRIBE EL NOMBRE DE UN PAÍS";
-              $("ctaSub").textContent =
-                "El país con más apoyo corre al DOBLE de velocidad ⚡";
+              $("ctaMain").textContent =
+                "💬 COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO";
+              $("ctaSub").textContent = "El primero en cruzar la meta gana.";
               $("joinCTA").classList.remove("pulse");
             }, 4200);
           }
@@ -6707,42 +6707,6 @@
         return _handleTikTokEntryV7(entry, isBot);
       };
       handleTikTokEntry.sup = {};
-      const CTA_ROTATION = [
-        [
-          "⚡ MÁS APOYO = DOBLE VELOCIDAD",
-          "El país con más apoyo corre al DOBLE. ¡Comenta el tuyo!",
-        ],
-        [
-          "💬 COMENTA EL NOMBRE DE TU PAÍS PARA APOYARLO",
-          "Más apoyo = tu país corre al DOBLE de velocidad ⚡",
-        ],
-        [
-          "👍 TOCA LA PANTALLA: CADA LIKE AVANZA",
-          "Más likes = tu tortuga corre más rápido.",
-        ],
-        [
-          "🔁 COMPARTE EL LIVE Y AVANZA +3",
-          "Compartir da más puntos que comentar.",
-        ],
-        [
-          "❤️ SÍGUEME Y SALTA +5 PUNTOS",
-          "Seguir es lo que más te hace avanzar. ¡Es gratis!",
-        ],
-        [
-          "🎁 REGALA Y ACTIVA EL MODO TURBO 🚀",
-          "Un regalo lanza tu tortuga a toda velocidad.",
-        ],
-      ];
-      let ctaIndex = 0;
-      setInterval(() => {
-        if ($("joinCTA").classList.contains("pulse")) return;
-        ctaIndex = (ctaIndex + 1) % CTA_ROTATION.length;
-        $("ctaMain").textContent = CTA_ROTATION[ctaIndex][0];
-        $("ctaMain").classList.remove("pop");
-        void $("ctaMain").offsetWidth;
-        $("ctaMain").classList.add("pop");
-        $("ctaSub").textContent = CTA_ROTATION[ctaIndex][1];
-      }, 6500);
       updateSessionStats();
 
       renderLiveEvents();
