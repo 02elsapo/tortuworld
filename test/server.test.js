@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const { once } = require('node:events');
 const os = require('node:os');
 const path = require('node:path');
+const vm = require('node:vm');
 const test = require('node:test');
 const { createWebserver, startServer } = require('../server');
 
@@ -89,6 +90,16 @@ test('serves the v1.6 overlay and leaves connection startup to the browser', asy
     const html = await rootResponse.text();
     assert.match(html, /id="versionBadge" aria-label="Versión 1\.6">v1\.6/);
     assert.doesNotMatch(html, /Países Bajos|Netherlands|code:\s*"NL"/);
+    const voiceSelectorSource = html.match(/function googleSpanishVoice\(voices\) \{[\s\S]*?\n      \}/)?.[0];
+    assert.ok(voiceSelectorSource, 'the narrator must select a Google Spanish voice');
+    const googleSpanishVoice = vm.runInNewContext(`(${voiceSelectorSource})`);
+    const selectedVoice = googleSpanishVoice([
+      { name: 'Microsoft Helena', lang: 'es-ES' },
+      { name: 'Google español', lang: 'es-ES' },
+      { name: 'Google English', lang: 'en-US' },
+    ]);
+    assert.equal(selectedVoice.name, 'Google español');
+    assert.equal(googleSpanishVoice([{ name: 'Microsoft Helena', lang: 'es-ES' }]), null);
     assert.match(html, /<title>Country Race<\/title>/);
     assert.match(html, /id="connectorStatus"/);
     assert.match(html, /new EventSource\("\/api\/events"\)/);

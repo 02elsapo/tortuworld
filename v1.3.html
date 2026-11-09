@@ -3595,18 +3595,11 @@
       }
       window.addEventListener("resize", () => { hintKey = ""; });
       const VOICE_ON = Q.get("voice") !== "0";
-      const FEMALE_VOICE_NAME =
-        /(?:^|[\s_-])(?:female|woman|mujer|helena|sabina|dalia|mon[ií]ca|paulina|luciana|laura|elena|sof[ií]a|carolina|camila|marisol|luc[ií]a|irene|noelia|catalina|valentina|fernanda|isabella)(?:$|[\s_( -])/i;
-      function femaleSpanishVoice(voices) {
-        const spanish = voices.filter((item) => /^es(?:[-_]|$)/i.test(item.lang));
+      function googleSpanishVoice(voices) {
         return (
-          spanish.find(
-            (item) =>
-              String(item.gender || "").toLowerCase() === "female" ||
-              FEMALE_VOICE_NAME.test(item.name),
-          ) ||
-          spanish.find((item) => /google/i.test(item.name)) ||
-          null
+          voices.find(
+            (item) => /^es(?:[-_]|$)/i.test(item.lang) && /google/i.test(item.name),
+          ) || null
         );
       }
       let voiceCommentAt = 0,
@@ -3871,9 +3864,9 @@
         const speak = () => {
           if (seq !== castSeq) return;
           const voices = engine.getVoices();
-          const voice = femaleSpanishVoice(voices);
+          const voice = googleSpanishVoice(voices);
           if (!voice) {
-            if (!voices.length && attempts++ < 8) {
+            if (attempts++ < 8) {
               speechVoiceTimer = setTimeout(speak, 250);
             } else castEnd();
             return;
@@ -3881,8 +3874,9 @@
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.voice = voice;
           utterance.lang = voice.lang;
-          utterance.rate = 1.08;
-          utterance.pitch = 1.16;
+          utterance.rate = 1.12;
+          utterance.pitch = 1.25;
+          utterance.volume = 1;
           utterance.onstart = () => { if (seq === castSeq) castBegin(); };
           utterance.onend = () => { if (seq === castSeq) castEnd(); };
           utterance.onerror = () => { if (seq === castSeq) castEnd(); };
