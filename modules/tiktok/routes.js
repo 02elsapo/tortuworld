@@ -3,6 +3,8 @@ function registerTikTokRoutes(app, {
   getConfiguration,
   getCommentStats,
   getCupStats,
+  getRecentUsers,
+  saveRecentUsers,
   recordCup,
   saveConfiguration,
   reconnect,
@@ -22,6 +24,19 @@ function registerTikTokRoutes(app, {
 
   app.get('/api/cup-stats', (request, response) => {
     response.json(getCupStats());
+  });
+
+  app.get('/api/recent-users', (request, response) => {
+    response.json(getRecentUsers());
+  });
+
+  app.put('/api/recent-users', (request, response) => {
+    const result = saveRecentUsers(request.body?.users);
+    if (!result) {
+      response.status(400).json({ ok: false, message: 'La lista de usuarios recientes no es válida.' });
+      return;
+    }
+    response.json(result);
   });
 
   app.post('/api/cup-stats', (request, response) => {

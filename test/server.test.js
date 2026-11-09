@@ -118,6 +118,7 @@ test('forwards normalized TikTok updates in the shape consumed by version 68', a
   const { server } = createWebserver({
     configurationPath: path.join(directory, 'config.json'),
     commentStatsPath: path.join(directory, 'comment-stats.json'),
+    recentUsersPath: path.join(directory, 'recent-users.json'),
     monitorService,
   });
   const baseUrl = await listen(server);
@@ -156,6 +157,23 @@ test('forwards normalized TikTok updates in the shape consumed by version 68', a
     const stats = await fetch(`${baseUrl}/api/comment-stats`).then((response) => response.json());
     assert.equal(stats.total, 1);
     assert.equal(stats.teams.find((team) => team.code === 'AR').comments, 1);
+
+    const recentUsers = [
+      { username: 'viewer-one', avatar: 'https://example.com/one.png', t: 1 },
+      { username: 'viewer-two', avatar: '', t: 2 },
+    ];
+    const savedUsersResponse = await fetch(`${baseUrl}/api/recent-users`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users: recentUsers }),
+    });
+    const savedUsers = await savedUsersResponse.json();
+    assert.match(savedUsers.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
+    assert.deepEqual(savedUsers.users, recentUsers);
+    assert.deepEqual(
+      await fetch(`${baseUrl}/api/recent-users`).then((response) => response.json()),
+      JSON.parse(fs.readFileSync(path.join(directory, 'recent-users.json'), 'utf8')),
+    );
   } finally {
     if (reader) await reader.cancel();
     await close(server);

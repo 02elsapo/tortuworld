@@ -5,7 +5,7 @@
   ═══════════════════════════════════════════════════════════════════════════
 
   DINÁMICA DEL JUEGO (cómo funciona hoy)
-    • 5 tortugas, cada una con su propio carril y país. El bot de prueba solo se activa en uno de los dos últimos países.
+    • 5 tortugas, cada una con su propio carril y país. El bot de prueba solo se activa en el último país.
       Cada tortuga pasea de arriba a abajo dentro de su carril.
     • El bot de prueba marca el ritmo: avanza de 0 a 100 en CFG.botSec (120 s por defecto). Las tortugas de usuarios avanzan
       con sus acciones y pueden llegar a la meta en un máximo de 10 interacciones.
@@ -18,12 +18,12 @@
     • Mientras haya bots activos (🤖), cada carril se delimita con líneas sólidas (html.hasbots, #laneLines; ?lines=1 las muestra siempre).
     • Un espectador elige país escribiendo su nombre, sigla o bandera en el chat (S.pick); claimSlot le asigna carril.
     • La primera tortuga en pasar el 25 %, 50 % y 75 % recibe un efecto de lechuga (S.cp); foto finish si llegan casi empatadas.
-    • Tras CFG.restartMs (7 s) empieza otra ronda con nuevos países. La música cambia de tema en cada ronda (THEMES).
+    • Tras CFG.restartMs (7 s) empieza otra ronda con nuevos países. La música alegre de carrera acelera con la líder.
     • Pista #hint compacta, con banderas en una sola fila para no tapar la carrera.
-    • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres. La tarjeta de ganador muestra victorias guardadas, racha, MVP de la ronda y tiempo.
+    • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres. El resultado muestra solo el podio de los tres usuarios reales con más interacciones.
 
   PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0
-                     ?music=0  ?theme=1-5  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
+                     ?music=0  ?theme=1  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
   ESCENARIOS DEL FONDO: cada ronda usa uno, en orden: 1 madrugada (va amaneciendo) · 2 mañana (hacia el mediodía) ·
     3 mediodía (hacia la tarde) · 4 tarde (va oscureciendo). El cielo avanza con el progreso del líder de la carrera.
   BACKEND: SSE en /api/events. Un solo archivo, sin dependencias de build.
@@ -1251,7 +1251,7 @@
         100%{ transform: scale(0.6); opacity: 0; }
       }
 
-      /* ===== al llegar a la meta se muestra el avatar del ganador durante 5 s ===== */
+      /* ===== al terminar la carrera se muestra el podio de los 3 usuarios con más interacciones ===== */
       #winner{
         position: fixed;
         inset: 0;
@@ -1285,6 +1285,10 @@
       #winner.out .wbox{
         animation: winout 0.35s ease-in forwards;
       }
+      #winner.podiumOnly .wav,
+      #winner.podiumOnly .wnm,
+      #winner.podiumOnly .wfl,
+      #winner.podiumOnly .wxtra{display:none}
       #winner .wttl{
         font: 1.7rem/1.1 "Bowlby One", "Arial Black", sans-serif;
         color: var(--sun, #ffc93c);
@@ -1477,12 +1481,12 @@
         right: -0.35em;
         padding: 0.28em 0.55em 0.2em;
         border-radius: 999px;
-        background: var(--sun);
-        color: var(--ink);
+        background: #07262b;
+        color: var(--sun);
         font: 0.85em/1 "Bowlby One", "Arial Black", sans-serif;
         letter-spacing: 0.02em;
         border: 0.14em solid var(--sun);
-        box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.55);
+        box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.75), 0 0 0.35em rgba(255, 201, 60, 0.8);
         animation: ctaX 0.9s ease-in-out infinite;
       }
       @keyframes ctaX{
@@ -1638,14 +1642,14 @@
       <div id="lanes"></div>
     </div>
     <div id="vig"></div>
-    <span id="versionBadge" aria-label="Versión 1.1">v1.1</span>
+    <span id="versionBadge" aria-label="Versión 1.3">v1.3</span>
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
     <div id="cd" aria-live="assertive"><div class="cdn" id="cdn"></div></div>
     <div id="winner"aria-live="polite">
       <div class="wbox">
-        <div class="wttl">🏆 ¡GANADOR!</div>
+        <div class="wttl">🏆 PODIO DE INTERACCIONES</div>
         <div class="wav"><img id="wImg" alt="" referrerpolicy="no-referrer" /><b id="wIni"></b></div>
         <div class="wnm" id="wNm"></div>
         <div class="wfl"><img id="wFl" alt="" /><span id="wCt"></span></div>
@@ -1732,7 +1736,7 @@
           b: [],
         })),
       };
-      /* VELOCIDADES (unidades de pista por segundo). El bot de prueba va a BOT_V constante y solo ocupa uno de los dos últimos países.
+      /* VELOCIDADES (unidades de pista por segundo). El bot de prueba va a BOT_V constante y solo ocupa el último país.
          Las demás caminan a BASE_V y cada interacción las multiplica ×2 / ×5 / ×10 / ×20+ un rato (EV_BOOST = [multiplicador, segundos]). */
       const BOT_V = CFG.win / CFG.botSec,
         BASE_V = BOT_V * (Q.has("base") ? +Q.get("base") : 0.4);
@@ -2232,26 +2236,40 @@
           [523, 659, 784].forEach((f, i) => setTimeout(() => soft(f, 0.3, 0.05), i * 120));
         },
       };
-      /* Música: Am – F – C – G, bajo triangular, arpegio de pulso, bombo, caja y hi-hat */
-      /* ===== Música MINIMALISTA (v68): un solo tema calmado; acorde suave de seno por compás y dos notas sueltas. Sigue acelerando con el avance de la líder (musicSpeed). ===== */
-      const THEMES = [{ name: "Calma", bpm: 84 }];
+      /* Chiptune de carrera: progresión mayor, bajo pulsante, melodía de ocho bits y percusión ligera. */
+      const THEMES = [{ name: "Carrera alegre", bpm: 132 }];
       const MUS = { timer: null, step: 0, next: 0, theme: THEMES[0], bpm: THEMES[0].bpm };
       const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
       /* Elige el tema de la ronda actual (se llama desde newRound). */
-      /* factor de velocidad de la música según el avance (0–100 %) de la tortuga que va primera: 0,5× al inicio → 1,5× en la meta */
-      const musicSpeed = (lead) => 0.5 + Math.max(0, Math.min(1, lead / CFG.win));
+      /* La música pasa de 0,8× a 1,25× conforme avanza la tortuga líder. */
+      const musicSpeed = (lead) => 0.8 + 0.45 * Math.max(0, Math.min(1, lead / CFG.win));
       function setMusicTheme() {
         const forced = +Q.get("theme");
         const i = forced >= 1 && forced <= THEMES.length ? forced - 1 : (S.round - 1) % THEMES.length;
         MUS.theme = THEMES[i];
-        MUS.bpm = MUS.theme.bpm * musicSpeed(0); /* cada ronda arranca al 50 % */
+        MUS.bpm = MUS.theme.bpm * musicSpeed(0);
       }
       function musStep(st, t, sd) {
         const bar = (st >> 4) & 3,
           k = st & 15,
-          ROOT = [57, 53, 48, 55]; /* La · Fa · Do · Sol */
-        if (k === 0) for (const iv of [0, 7, 12]) tone(mf(ROOT[bar] + iv), sd * 14, "sine", 0.045, t, GG);
-        if (k === 4 || k === 12) tone(mf(ROOT[bar] + 12 + (k === 4 ? 7 : 4)), sd * 5, "sine", 0.04, t, GG);
+          ROOT = [60, 55, 57, 53], /* Do · Sol · La menor · Fa */
+          minor = bar === 2,
+          scale = minor ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9],
+          riff = [0, 2, 4, 2, 1, 3, 4, 2];
+        if (k % 4 === 0) {
+          const beat = k >> 2;
+          tone(mf(ROOT[bar] - 12), sd * 3.5, "triangle", 0.055, t, GG);
+          if (beat === 0 || beat === 2) tone(110, sd * 0.8, "sine", 0.08, t, GG, 48);
+          else noise(0.09, 0.026, t, 1200, GG);
+        }
+        if (k % 2 === 0) {
+          noise(0.035, 0.009, t, 5000, GG);
+          tone(mf(ROOT[bar] + 12 + scale[riff[(k >> 1) % riff.length]]), sd * 1.55, "p25", 0.035, t, GG);
+        }
+        if (k === 0 || k === 8) {
+          const chord = minor ? [0, 3, 7] : [0, 4, 7];
+          for (const iv of chord) tone(mf(ROOT[bar] + 12 + iv), sd * 2.8, "sine", 0.016, t, GG);
+        }
       }
       function musSched() {
         if (!AC) return;
@@ -2418,14 +2436,13 @@
         }
       }
 
-      /* Tamaño de las tortugas: cada una tiene su carril (alto de pista / nº de carriles) y ocupa un poco más que el carril
-         (1.1×), sin chocar con nadie. Más grandes que antes; nunca más del 34 % del ancho. */
+      /* La tortuga ocupa aproximadamente el alto de su carril y nunca más del 34 % del ancho. */
       function fitTurtles() {
         const H = lanes.clientHeight,
           W = lanes.clientWidth;
         if (!H || !W) return;
         const bh = H / C.length,
-          th = bh * 1.1,
+          th = bh,
           tw = Math.min((th * 70) / 46, W * 0.34, 24 * remPx());
         lanes.style.setProperty("--tw", tw.toFixed(1) + "px");
       }
@@ -2904,25 +2921,6 @@
         setTimeout(fit, 400); /* tras cargar banderas/fuente */
       }
       window.addEventListener("resize", () => { hintKey = ""; });
-      /* Extras de la tarjeta de ganador: victorias guardadas, racha, MVP de la ronda y tiempo. */
-      function winnerExtras(p) {
-        const box = $("wXtra");
-        if (!box) return;
-        box.replaceChildren();
-        const add = (t) => { const s = document.createElement("span"); s.textContent = t; box.append(s); };
-        if (!p.tortubot) {
-          const w = winsBy.get(p.key) || 0;
-          if (w > 0) add("🏅 " + w + " " + tr(w === 1 ? "victoria" : "victorias", w === 1 ? "win" : "wins"));
-          if (S.streak >= 2) add("🔥 " + tr("Racha ×", "Streak ×") + S.streak);
-        }
-        let mv = null;
-        for (const q of contestants.values()) if (!q.tortubot && q.points > 0 && (!mv || q.points > mv.points)) mv = q;
-        if (mv && mv !== p) add("⭐ MVP @" + shownName(mv.username));
-        if (S.goAt) {
-          const sec = Math.max(0, Math.round((performance.now() - S.goAt) / 1000));
-          add("⏱ " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"));
-        }
-      }
       function raceAdd(p, entry, points) {
         if (S.over) return;
         let code = S.slotOf.get(p.key) || claimSlot(p);
@@ -3107,23 +3105,25 @@
       /* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win.
          Guarda la victoria del dueño del carril, suma una copa al país ganador, calcula su racha,
          lanza los efectos de festejo y programa la siguiente ronda (CFG.restartMs). */
-      /* al llegar a la meta: avatar del ganador en pantalla durante WINNER_MS (5 s) */
+      /* al terminar: podio de usuarios reales durante WINNER_MS (5 s) */
       const WINNER_MS = 5000;
       let winnerT = null, winnerT2 = null;
       function hideWinner() {
         clearTimeout(winnerT);
         clearTimeout(winnerT2);
         const el = $("winner");
-        if (el) el.classList.remove("show", "out");
+        if (el) el.classList.remove("show", "out", "podiumOnly");
+      }
+      function interactionLeaders() {
+        return [...contestants.values()]
+          .filter((p) => !p.isBot && !p.tortubot && p.interactions > 0)
+          .sort((a, b) => b.interactions - a.interactions || b.points - a.points || a.sequence - b.sequence);
       }
       function renderInteractionPodium() {
         const box = $("wTop"),
           first = $("wTopFirst"),
           pair = $("wTopPair"),
-          top = [...contestants.values()]
-            .filter((p) => !p.isBot && !p.tortubot && p.interactions > 0)
-            .sort((a, b) => b.interactions - a.interactions || b.points - a.points || a.sequence - b.sequence)
-            .slice(0, 3);
+          top = interactionLeaders().slice(0, 3);
         first.replaceChildren();
         pair.replaceChildren();
         box.hidden = top.length === 0;
@@ -3155,27 +3155,15 @@
         if (top[1]) pair.append(makeCard(top[1], "🥈 SEGUNDO PUESTO", false));
         if (top[2]) pair.append(makeCard(top[2], "🥉 TERCER PUESTO", false));
       }
-      function showWinner(p) {
+      function showWinner() {
         const el = $("winner");
-        if (!el || !p) return;
+        if (!el) return;
         clearTimeout(winnerT);
         clearTimeout(winnerT2);
-        const nn = nat(p),
-          av = el.querySelector(".wav"),
-          img = $("wImg"),
-          ini = (p.username || "?").trim().charAt(0).toUpperCase() || "?";
-        $("wNm").textContent = p.tortubot ? "🤖 TORTUBOT" : "@" + shownName(p.username || "Alguien");
-        $("wCt").textContent = nn.n;
-        $("wFl").src = nn.u;
-        winnerExtras(p);
         renderInteractionPodium();
-        $("wIni").textContent = ini;
-        /* la "foto de ganador" es la bandera del PAÍS ganador (no el avatar del usuario) */
-        av.classList.remove("noimg");
-        img.onerror = () => av.classList.add("noimg");
-        img.src = nn.u;
+        if ($("wTop").hidden) return;
         el.classList.remove("out");
-        el.classList.add("show");
+        el.classList.add("show", "podiumOnly");
         winnerT2 = setTimeout(() => el.classList.add("out"), WINNER_MS - 350);
         winnerT = setTimeout(hideWinner, WINNER_MS);
       }
@@ -3199,14 +3187,17 @@
             lane.ve = 0;
           }
         }
-        if (!p.tortubot) {
+        if (!p.isBot && !p.tortubot) {
           winsBy.set(p.key, (winsBy.get(p.key) || 0) + 1);
           saveWins();
-        }
-        if (S.lastWin === p.key) S.streak++;
-        else {
-          S.lastWin = p.key;
-          S.streak = 1;
+          if (S.lastWin === p.key) S.streak++;
+          else {
+            S.lastWin = p.key;
+            S.streak = 1;
+          }
+        } else {
+          S.lastWin = null;
+          S.streak = 0;
         }
         $("app").classList.add("finished");
         emojiFx(code, "follow", 10);
@@ -3214,7 +3205,7 @@
         screenFx(true);
         clearTimeout(S.rt);
         S.rt = setTimeout(newRound, Math.max(CFG.restartMs, WINNER_MS + 500));
-        showWinner(p);
+        showWinner();
         burst(80, true);
         render();
       }
@@ -3249,6 +3240,7 @@
           setSlotAvatar(c.c, null);
           clearCrew(c.c);
         });
+        seedRecentUsers();
         reseed();
         render();
         countdown();
@@ -3780,7 +3772,7 @@
           acc = 0;
           render();
           photo();
-          /* tempo de la melodía: arranca al 50 % y sube de forma continua hasta el 150 % cuando la tortuga PUNTERA llega a la meta */
+          /* el tempo sube de 0,8× a 1,25× conforme avanza la tortuga puntera */
           MUS.bpm = MUS.theme.bpm * musicSpeed(Math.max(...C.map((c) => S.pos[c.c])));
         }
       }
@@ -3854,9 +3846,9 @@
         if (!isBot) rosterTouch(entry);
         scoreContestant(entry, isBot);
       }
-      /* PRESENTES: guarda en el navegador los últimos cinco usuarios reales para reutilizarlos entre rondas y sesiones. */
+      /* PRESENTES: conserva los últimos cuatro usuarios reales para reutilizarlos entre rondas y sesiones. */
       const ROSTER_KEY = "tortugasRecentUsers",
-        ROSTER_LIMIT = 10;
+        ROSTER_LIMIT = 4;
       const ROSTER = (() => {
         try {
           const saved = JSON.parse(localStorage.getItem(ROSTER_KEY) || "[]"),
@@ -3881,6 +3873,112 @@
           return new Map();
         }
       })();
+      let rosterLastSaved = "",
+        rosterSyncTimer = null,
+        rosterSyncQueue = Promise.resolve();
+      function rosterSnapshot() {
+        return [...ROSTER.values()].slice(-ROSTER_LIMIT);
+      }
+      function saveRosterLocally() {
+        try {
+          localStorage.setItem(ROSTER_KEY, JSON.stringify(rosterSnapshot()));
+        } catch {}
+      }
+      function scheduleRosterSync() {
+        if (location.protocol === "file:") return;
+        clearTimeout(rosterSyncTimer);
+        rosterSyncTimer = setTimeout(() => {
+          const users = rosterSnapshot(),
+            payload = JSON.stringify(users);
+          rosterSyncQueue = rosterSyncQueue
+            .then(async () => {
+              if (payload === rosterLastSaved) return;
+              const response = await fetch("/api/recent-users", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ users }),
+              });
+              if (!response.ok)
+                throw new Error(`HTTP ${response.status}`);
+              const saved = await response.json();
+              if (!Array.isArray(saved.users))
+                throw new Error("Respuesta inválida del servidor.");
+              rosterLastSaved = JSON.stringify(saved.users);
+            })
+            .catch((error) =>
+              console.error("No se pudieron guardar los usuarios recientes.", error),
+            );
+        }, 250);
+      }
+      function mergeRecentUsers(users) {
+        for (const item of users) {
+          if (!item || typeof item.username !== "string") continue;
+          const username = item.username.trim(),
+            key = username.toLocaleLowerCase();
+          if (!username || key === "alguien") continue;
+          const t = Number.isSafeInteger(item.t) && item.t >= 0 ? item.t : 0,
+            previous = ROSTER.get(key);
+          if (previous && previous.t > t) continue;
+          ROSTER.delete(key);
+          ROSTER.set(key, {
+            username,
+            avatar: typeof item.avatar === "string" && /^https?:\/\//i.test(item.avatar)
+              ? item.avatar
+              : "",
+            t,
+          });
+        }
+        const latest = [...ROSTER.entries()]
+          .sort((a, b) => a[1].t - b[1].t)
+          .slice(-ROSTER_LIMIT);
+        ROSTER.clear();
+        latest.forEach(([key, user]) => ROSTER.set(key, user));
+        saveRosterLocally();
+      }
+      async function loadRecentUsers() {
+        if (location.protocol === "file:") return;
+        const controller = new AbortController(),
+          timeout = setTimeout(() => controller.abort(), 1500);
+        try {
+          const response = await fetch("/api/recent-users", {
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const saved = await response.json();
+          if (!Array.isArray(saved.users))
+            throw new Error("Respuesta inválida del servidor.");
+          mergeRecentUsers(saved.users);
+          rosterLastSaved = JSON.stringify(saved.users);
+          if (JSON.stringify(rosterSnapshot()) !== rosterLastSaved)
+            scheduleRosterSync();
+        } catch (error) {
+          console.error("No se pudieron cargar los usuarios recientes.", error);
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+      function seedRecentUsers() {
+        rosterSnapshot().forEach((user, index) => {
+          const lane = C[index];
+          if (!lane) return;
+          const key = user.username.toLocaleLowerCase(),
+            player = {
+              key,
+              username: user.username,
+              avatar: user.avatar,
+              points: 0,
+              interactions: 0,
+              sequence: contestantSequence++,
+              isBot: false,
+            };
+          contestants.set(key, player);
+          S.pick.set(key, lane.c);
+          S.slotUser[lane.c] = key;
+          S.slotOf.set(key, lane.c);
+          setMain(lane.c, player);
+        });
+      }
       function rosterTouch(e) {
         const name = e && String(e.username || "").trim();
         if (!name || name.toLocaleLowerCase() === "alguien") return;
@@ -3893,12 +3991,8 @@
         ROSTER.set(key, r);
         while (ROSTER.size > ROSTER_LIMIT)
           ROSTER.delete(ROSTER.keys().next().value);
-        try {
-          localStorage.setItem(
-            ROSTER_KEY,
-            JSON.stringify([...ROSTER.values()]),
-          );
-        } catch {}
+        saveRosterLocally();
+        scheduleRosterSync();
       }
       function connect() {
         const statusButton = document.getElementById("connectorStatus");
@@ -4177,7 +4271,7 @@
         }
       }
       /* ===== BOTS DE PRUEBA =====
-         Bots: el sistema agrega uno como máximo y solo en uno de los dos últimos países; simula likes, comentarios,
+         Bots: el sistema agrega uno como máximo y solo en el último país; simula likes, comentarios,
          comparte, sigue y a veces regala, con ritmo irregular. Sus eventos pasan por los MISMOS manejadores que los reales
          (registerSupport + scoreContestant) pero no se guardan en el ROSTER. */
       (() => {
@@ -4210,7 +4304,7 @@
           const bk = b.name.toLocaleLowerCase();
           if (b.joined && !S.slotOf.has(bk)) return window.botKicked(bk); /* perdió su tortuga: se da de baja */
           let i = NATIONS.findIndex((n) => n.code === b.fav);
-          if (i < NATIONS.length - 2 || (!b.joined && S.slotUser[C[i] && C[i].c])) {
+          if (i < NATIONS.length - 1 || (!b.joined && S.slotUser[C[i] && C[i].c])) {
             b.fav = pickFav();
             if (!b.fav) return window.botKicked(bk);
             i = NATIONS.findIndex((n) => n.code === b.fav);
@@ -4250,10 +4344,10 @@
           document.documentElement.classList.toggle("hasbots", bots.length > 0); /* líneas de carril solo con bots */
         };
         window.__botCount = count;
-        /* El bot solo puede ocupar los carriles de los dos últimos países de la ronda. */
+        /* El bot reserva el último carril, después de los cuatro usuarios recuperados. */
         function pickFav() {
           const use = (code) => bots.filter((x) => x.fav === code).length;
-          const pool = NATIONS.slice(-2).filter((n) => {
+          const pool = NATIONS.slice(-1).filter((n) => {
             const lane = C[NATIONS.indexOf(n)];
             return lane && !S.slotUser[lane.c];
           });
@@ -4301,7 +4395,7 @@
         window.stopBots = stopBots;
 
         /* ---- bot automático ----
-           Al empezar cada ronda entra un bot si hay libre uno de los dos últimos carriles.
+           Al empezar cada ronda entra un bot si está libre el último carril.
            Mantener pulsado 🤖 lo detiene hasta la próxima ronda. ?autobots=0 lo desactiva. */
         let autoOn = Q.get("autobots") !== "0";
         const baseNewRound = newRound;
@@ -4312,9 +4406,10 @@
           asleep = false;
           calmSince = 0;
           humanEv.length = 0;
+          if (autoOn) addBot();
         };
         /* DORMIR: si la actividad humana es alta (≥ SLEEP_HI eventos en 10 s) los bots de prueba se duermen y sueltan su tortuga
-           para que la tome una persona; despiertan cuando baja a ≤ SLEEP_LO durante 8 s. Al empezar la ronda ocupan uno de los dos últimos países. */
+           para que la tome una persona; despiertan cuando baja a ≤ SLEEP_LO durante 8 s. */
         const SLEEP_HI = 6, SLEEP_LO = 2;
         let asleep = false, calmSince = 0;
         const humanLevel = () => {
@@ -4357,7 +4452,7 @@
           const e = document.querySelector(sel);
           if (e) e.textContent = tr(es, en);
         };
-        set("#winner .wttl", "🏆 ¡GANADOR!", "🏆 WINNER!");
+        set("#winner .wttl", "🏆 PODIO DE INTERACCIONES", "🏆 INTERACTION PODIUM");
         set("#snd", "🔇 Toca la pantalla para activar el sonido", "🔇 Tap the screen to enable sound");
         set("#botsTitle", "Pruebas de interacción (P)", "Interaction tests (P)");
         const tt = (id, es, en) => {
@@ -4386,14 +4481,16 @@
           const wi = C.findIndex((x) => x.c === S.winner);
           if (wi >= 0) wc.textContent = NATIONS[wi].n;
           const wt = document.querySelector("#winner .wttl");
-          if (wt) wt.textContent = tr("🏆 ¡GANADOR!", "🏆 WINNER!");
+          if (wt) wt.textContent = tr("🏆 PODIO DE INTERACCIONES", "🏆 INTERACTION PODIUM");
         }
         if (window.__botCount) window.__botCount();
       }
       applyLang();
-      newRound();
       requestAnimationFrame(frame);
-      connect();
+      loadRecentUsers().then(() => {
+        newRound();
+        connect();
+      });
     </script>
   </body>
 </html>

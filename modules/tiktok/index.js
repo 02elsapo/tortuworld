@@ -3,6 +3,7 @@ const path = require('node:path');
 const { registerTikTokRoutes } = require('./routes');
 const { createTikTokMonitorService } = require('./tiktokMonitorService');
 const { createCommentStatsService } = require('./commentStatsService');
+const { createRecentUsersService } = require('./recentUsersService');
 
 const maxEvents = 100;
 
@@ -12,6 +13,7 @@ function createTikTokModule({
   configurationPath = process.env.TIKTOK_CONFIG_PATH
     || path.join(__dirname, '..', '..', 'data', 'tiktok', 'config.json'),
   commentStatsPath = process.env.TIKTOK_COMMENT_STATS_PATH,
+  recentUsersPath = process.env.TIKTOK_RECENT_USERS_PATH,
   defaultUsername = process.env.TIKTOK_USERNAME || '',
 } = {}) {
   if (!stream || typeof stream.attach !== 'function' || typeof stream.broadcast !== 'function') {
@@ -21,6 +23,9 @@ function createTikTokModule({
   const environmentUsername = String(defaultUsername).trim().replace(/^@+/, '');
   const commentStats = createCommentStatsService({
     filePath: commentStatsPath || path.join(path.dirname(configurationPath), 'comment-stats.json'),
+  });
+  const recentUsers = createRecentUsersService({
+    filePath: recentUsersPath || path.join(path.dirname(configurationPath), 'recent-users.json'),
   });
   let username = environmentUsername;
   const events = [];
@@ -66,6 +71,14 @@ function createTikTokModule({
 
   function getCupStats() {
     return commentStats.getCupStats();
+  }
+
+  function getRecentUsers() {
+    return recentUsers.getRecentUsers();
+  }
+
+  function saveRecentUsers(users) {
+    return recentUsers.saveRecentUsers(users);
   }
 
   function recordCup(code) {
@@ -138,6 +151,8 @@ function createTikTokModule({
       getConfiguration,
       getCommentStats,
       getCupStats,
+      getRecentUsers,
+      saveRecentUsers,
       recordCup,
       saveConfiguration,
       reconnect,

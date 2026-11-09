@@ -9,6 +9,7 @@ function createWebserver({
   configurationPath = process.env.TIKTOK_CONFIG_PATH
     || path.join(__dirname, 'data', 'tiktok', 'config.json'),
   commentStatsPath = process.env.TIKTOK_COMMENT_STATS_PATH,
+  recentUsersPath = process.env.TIKTOK_RECENT_USERS_PATH,
   defaultUsername = process.env.TIKTOK_USERNAME || '',
   monitorService = createTikTokMonitorService(),
 } = {}) {
@@ -21,6 +22,8 @@ function createWebserver({
     configurationPath,
     commentStatsPath: commentStatsPath
       || path.join(path.dirname(configurationPath), 'comment-stats.json'),
+    recentUsersPath: recentUsersPath
+      || path.join(path.dirname(configurationPath), 'recent-users.json'),
     defaultUsername,
   });
 
