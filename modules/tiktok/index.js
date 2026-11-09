@@ -41,7 +41,7 @@ function createTikTokModule({
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
-  if (!username) username = 'doraramoshuerta';
+  if (!username) username = 'labettydetemu';
   state.username = username;
 
   function publish(event, payload) {
@@ -100,9 +100,13 @@ function createTikTokModule({
     }
     fs.mkdirSync(path.dirname(configurationPath), { recursive: true });
     fs.writeFileSync(configurationPath, JSON.stringify({ username: nextUsername }, null, 2));
+    monitorService.disconnectUser();
     username = nextUsername;
     state.username = nextUsername;
-    monitorService.connectUser(nextUsername);
+    state.connected = false;
+    state.status = 'disconnected';
+    state.error = '';
+    publish('status', { ...state });
     return { ok: true, username };
   }
 
@@ -140,8 +144,6 @@ function createTikTokModule({
       openEventStream,
     });
   }
-
-  if (username) monitorService.connectUser(username);
 
   return {
     monitorService,

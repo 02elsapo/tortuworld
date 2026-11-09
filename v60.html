@@ -4,42 +4,23 @@
   CARRERA DE TORTUGAS · OVERLAY PARA TIKTOK LIVE
   ═══════════════════════════════════════════════════════════════════════════
 
-  REGLAS DE CONTENIDO (obligatorias; valen para cualquier texto, aviso, sonido o animación que se agregue)
-    1. NO PEDIR REGALOS. Ningún texto, cartel, mensaje ni animación puede pedir, sugerir o premiar con
-       promesas la compra de regalos. Los regalos solo se REPORTAN cuando llegan (el 🎁 que aparece delante
-       de la tortuga) y empujan a su país como cualquier otro evento.
-    2. NO HACER PROMESAS VACÍAS. Solo se anuncia lo que el código realmente cumple (por ejemplo, una ayuda
-       que describa algo que frame() realmente hace). Nada de "pronto…", "vas a ganar…",
-       ni premios o beneficios que el juego no entregue.
-    3. NO INSISTIR CON ACCIONES REPETIDAS. No hay mensajes rotativos, contadores de presión, pulsos
-       permanentes ni pedidos que se repitan ("dale like", "comparte", "sigue"). Los textos de ayuda son
-       fijos y se muestran una sola vez; la actividad de los espectadores solo se refleja, no se exige.
-
   DINÁMICA DEL JUEGO (cómo funciona hoy)
-    • son 5 tortugas (más grandes), una por país. Brasil, Paraguay y Argentina son fijos y su ORDEN cambia en cada partida:
-      los dos con más copas ocupan el 1.º y 2.º carril y el tercero queda en el 3.º. El 4.º carril es para el
-      país "en ascenso" (el de más copas que no sea BR/PY/AR) y los dos últimos se sortean entre campeones
-      del mundo y selecciones populares (chooseRoundTeams).
-    • Las tortugas avanzan siempre despacio (CFG.crawl), incluso sin espectadores. La carrera dura el doble (TIME_X = 2; ?time=1 la deja como antes).
-    • Un espectador elige país escribiendo su nombre, sigla o bandera en el chat. Esa elección (S.pick)
-      dirige su energía a esa tortuga si no tiene carril. Un espectador solo suma un punto de apoyo cada 8 s (lastSupportAt). Si alguien da like o regalo sin haber elegido país,
-      se le asigna uno al azar (registerSupport).
-    • Puntos por evento (scoreContestant): comentario 1 · like 0.1 c/u · compartir 3 · seguir 5 ·
-      entrar 0.5 (CFG.join) · regalo = diamantes × cantidad × combo (hasta ×2 si el mismo usuario envía
-      regalos seguidos en menos de 6 s). El empuje doble (tecla B del panel) multiplica ×2.
-    • Los puntos se convierten en ENERGÍA (T[país].pend) que la tortuga gasta caminando; nunca se teletransporta.
-      La posición objetivo de un espectador con carril es puntos / CFG.target × CFG.win (raceAdd).
-      Un regalo además deja un 🎁 delante de la tortuga, que corre a recogerlo (putGiftAhead).
-    • Cada espectador ocupa el carril de su país si está libre, o el primero libre (claimSlot); si no hay
-      carriles libres, quien tenga más puntos desplaza al que tenga menos.
-    • La primera tortuga en pasar el 25 %, 50 % y 75 % recibe un efecto de lechuga (S.cp); al 88 % del líder
-      hay un destello de tensión; si dos tortugas llegan casi empatadas a la zona final suena el foto finish (photo).
-    • Gana quien llega primero a CFG.win (100). La racha del ganador se actualiza, hay festejo, y tras CFG.restartMs (7 s) empieza otra ronda con nuevos países.
-    • La música cambia de tema en cada ronda: 5 temas originales (THEMES) que se turnan en orden.
-    • Los espectadores recientes se recuerdan en el navegador (ROSTER) y las victorias en localStorage.
+    • 6 tortugas, cada una con SU PROPIO CARRIL: 5 países (Brasil, Paraguay y Argentina fijos en orden cambiante + 2 sorteados)
+      y la TORTUBOT en el 6.º carril. NO HAY CHOQUES: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril.
+    • La TORTUBOT marca el tope de la carrera: va de 0 a 100 a velocidad constante en CFG.botSec (120 s = 2 minutos).
+      Si nadie la supera, llega ella. Las tortugas de los espectadores caminan a BASE_V (40 % de la velocidad de la bot).
+    • Cada interacción acelera la tortuga de su usuario mientras dura el efecto (EV_BOOST, addBoost):
+      like / entrar ×2 · comentario ×5 · compartir / seguir ×10 · regalo ×20. Gana quien llega primero a CFG.win (100).
+    • Ningún avatar queda ANCLADO en la pista: el avatar del usuario solo se ve sobre su tortuga (avatarPop está desactivado).
+    • Al final de cada carril hay una copa 🏆 (.prize) que la tortuga persigue; la ganadora se la lleva.
+    • Guía visual SIN TEXTO abajo (#howto): acciones con rayos ⚡ (de la mano 👋 a la copa) → eventos que hacen avanzar a la tortuga hasta llevarse la copa (?howto=0 la oculta).
+    • Mientras haya bots activos (🤖), cada carril se delimita con líneas sólidas (html.hasbots, #laneLines; ?lines=1 las muestra siempre).
+    • Un espectador elige país escribiendo su nombre, sigla o bandera en el chat (S.pick); claimSlot le asigna carril.
+    • La primera tortuga en pasar el 25 %, 50 % y 75 % recibe un efecto de lechuga (S.cp); foto finish si llegan casi empatadas.
+    • Tras CFG.restartMs (7 s) empieza otra ronda con nuevos países. La música cambia de tema en cada ronda (THEMES).
 
   PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0
-                     ?music=0  ?theme=1-5  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?demo=0 (sin alertas de demostración)  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma; el botón ES/EN lo cambia)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
+                     ?music=0  ?theme=1-5  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
   ESCENARIOS DEL FONDO: cada ronda usa uno, en orden: 1 madrugada (va amaneciendo) · 2 mañana (hacia el mediodía) ·
     3 mediodía (hacia la tarde) · 4 tarde (va oscureciendo). El cielo avanza con el progreso del líder de la carrera.
   BACKEND: SSE en /api/events. Un solo archivo, sin dependencias de build.
@@ -196,14 +177,14 @@
         background: #e3a46b;
         color: var(--ink);
       }
-
+      
       .nm{
         display: flex;
         flex-direction: column;
         line-height: 1.05;
         min-width: 0;
       }
-
+      
       .nm b{
         font-family: "Bowlby One", sans-serif;
         font-weight: 400;
@@ -308,7 +289,7 @@
         background: linear-gradient(90deg, transparent, var(--sun));
         border-radius: 999px;
       }
-
+      
       .dust{
         position: absolute;
         top: calc(50% + 0.6rem);
@@ -376,7 +357,7 @@
         #snd{
           display: none;
         }
-
+        
       }
       /* Panel de pruebas */
 
@@ -696,7 +677,7 @@
           filter 0.4s;
         opacity: 0.5;
       }
-
+      
       /* ===== PARTICIPACIÓN CLARA Y MEDIBLE ===== */
 
       /* ===== pista libre: sin bandera a la izquierda, sin nombre de país (solo copas) ===== */
@@ -854,7 +835,7 @@
       #lanes .sl{
         left: calc(var(--g) + var(--tw));
       }
-
+      
       #lanes .emo{
         top: calc(var(--rt) + var(--th) * 0.2);
         left: calc(
@@ -875,7 +856,7 @@
       #lanes .lane.empty .tag{
         display: flex !important;
       }
-
+      
       /* mensajes: pie de pantalla, texto que va pasando */
 
       /* ===== pantalla completa, 10 países, sin versión ===== */
@@ -886,7 +867,7 @@
       }
 
       /* ===== etiqueta de 2 líneas: iniciales + copas / hinchas ===== */
-
+      
       #lanes .tag{
         height: auto;
         overflow: visible;
@@ -900,11 +881,11 @@
         max-width: none;
       }
       /* ===== hinchas grandes y vivos, líder con resplandor ===== */
-
+      
       #lanes .tag b i{
         font-style: normal;
       }
-
+      
       #lanes .tag{
         top: calc(var(--rt) + var(--th) / 2 - 1.6em);
       }
@@ -1057,7 +1038,7 @@
       html.pbg #lanes .fin{
         display: none !important;
       }
-
+    
       /* ===== tortugas al 100 % de opacidad (también tras terminar la carrera) ===== */
       #lanes .tur,
       #lanes .lane.empty .tur,
@@ -1071,7 +1052,7 @@
       #lanes .lane.empty .tur{
         filter: none !important;
       }
-
+    
       /* ===== sin hinchas ni copas · la tortuga sale del borde izquierdo · caras ===== */
 
       #lanes .lane .tag,
@@ -1125,137 +1106,7 @@
         25%{ opacity: 1; }
         100%{ transform: translateY(4px); opacity: 0; }
       }
-
-      /* ===== botones pequeños (alertas / bot) y lista de alertas ===== */
-      #qbar{
-        position: fixed;
-        left: 0.6rem;
-        bottom: 0.5rem;
-        z-index: 45;
-        display: flex;
-        gap: 0.4rem;
-      }
-      #connectorStatus{
-        position: fixed;
-        bottom: 0.6rem;
-        right: 0.6rem;
-        z-index: 46;
-        max-width: min(72vw, 22rem);
-        overflow: hidden;
-        padding: 0.55rem 0.8rem;
-        border: 0.12rem solid #ff9292;
-        border-radius: 999px;
-        background: rgba(160, 27, 42, 0.96);
-        color: #fff;
-        font: 800 0.72rem/1.1 Nunito, system-ui, sans-serif;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      #connectorStatus.connected{
-        border-color: #6ce8a1;
-        background: rgba(23, 126, 69, 0.96);
-      }
-      #connectorStatus:disabled{
-        opacity: 1;
-      }
-      #qbar button{
-        position: relative;
-        width: 2.2rem;
-        height: 2.2rem;
-        border: 0.1rem solid rgba(255, 255, 255, 0.4);
-        border-radius: 50%;
-        background: rgba(7, 38, 43, 0.72);
-        color: #fff;
-        font-size: 1rem;
-        line-height: 1;
-        cursor: pointer;
-        opacity: 0.75;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-      }
-      #qbar button:hover,
-      #qbar button.act{
-        opacity: 1;
-      }
-      #qbar button.act{
-        background: var(--pink);
-        border-color: #fff;
-      }
-      #qLang{
-        font: 800 0.75rem/1 Nunito, system-ui, sans-serif !important;
-        letter-spacing: 0.02em;
-      }
-      #qBot[data-n]:not([data-n="0"])::after{
-        content: attr(data-n);
-        position: absolute;
-        right: -0.3rem;
-        top: -0.3rem;
-        min-width: 1.05rem;
-        padding: 0 0.2rem;
-        border-radius: 999px;
-        background: var(--sun);
-        color: var(--ink);
-        font: 800 0.65rem/1.05rem Nunito, system-ui, sans-serif;
-      }
-      #botCount{
-        align-self: center;
-        padding: 0.3rem 0.8rem;
-        border-radius: 999px;
-        background: rgba(7, 38, 43, 0.85);
-        border: 0.1rem solid rgba(255, 255, 255, 0.4);
-        color: var(--sun);
-        font: 800 1rem/1.2 Nunito, system-ui, sans-serif;
-        white-space: nowrap;
-      }
-      #alerts{
-        position: fixed;
-        left: 0.6rem;
-        bottom: 3.6rem;
-        z-index: 44;
-        display: flex;
-        flex-direction: column-reverse;
-        gap: 0.4rem;
-        width: min(94vw, 30rem);
-        pointer-events: none;
-      }
-      #alerts .al{
-        overflow: hidden;
-        padding: 0.4rem 0.8rem 0.45rem;
-        border-left: 0.35rem solid var(--mint);
-        border-radius: 0.7rem;
-        background: rgba(7, 38, 43, 0.84);
-        color: #fff;
-        font: 800 1.2rem/1.3 Nunito, system-ui, sans-serif;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        animation: alIn 0.25s ease-out, alOut 0.4s ease-in 3.6s forwards;
-      }
-      #alerts .al b{
-        color: var(--sun);
-      }
-      #alerts .al .demo{
-        margin-right: 0.45rem;
-        padding: 0.05rem 0.4rem;
-        border-radius: 0.25rem;
-        background: rgba(255, 246, 224, 0.18);
-        color: var(--cream);
-        font-size: 0.8rem;
-        font-style: normal;
-        letter-spacing: 0.04em;
-      }
-      #alerts .al.e-lk{ border-left-color: #ff3d7f; }
-      #alerts .al.e-gf{ border-left-color: #ffc93c; }
-      #alerts .al.e-sh{ border-left-color: #2e7bff; }
-      #alerts .al.e-fo{ border-left-color: #e5254b; }
-      #alerts .al.e-jn{ border-left-color: #7b4dff; }
-      @keyframes alIn{
-        from{ opacity: 0; transform: translateX(-1rem); }
-        to{ opacity: 1; transform: none; }
-      }
-      @keyframes alOut{
-        to{ opacity: 0; transform: translateX(-0.6rem); }
-      }
-
+    
       /* ===== física de marcha: la tortuga gira sobre sus patas y los choques muestran 💥 ===== */
       #lanes .trk .tur{
         transform-origin: 35% 90%;
@@ -1263,59 +1114,6 @@
       }
       #lanes::after{
         display: none !important;
-      }
-      #lanes .boom{
-        position: absolute;
-        z-index: 12;
-        font-style: normal;
-        line-height: 1;
-        pointer-events: none;
-        transform: translate(-50%, -50%);
-        filter: drop-shadow(0 0 0.3rem #ffc93c);
-        animation: boomPop 2.2s ease-out forwards;
-      }
-      @keyframes boomPop{
-        0%{ opacity: 1; transform: translate(-50%, -50%) scale(0.3) rotate(-15deg); }
-        35%{ opacity: 1; transform: translate(-50%, -50%) scale(1.25) rotate(8deg); }
-        100%{ opacity: 0; transform: translate(-50%, -62%) scale(1.5) rotate(0deg); }
-      }
-
-      /* AVATAR EMERGENTE: cada interacción hace salir un círculo con el avatar del usuario sobre el caparazón.
-         NO lleva --p propio: hereda el --p y --rt de la pista, que frame() actualiza en cada cuadro,
-         así que viaja pegado a la tortuga en vez de quedarse anclado donde nació. */
-      #lanes .avpop{
-        position: absolute;
-        z-index: 14;
-        pointer-events: none;
-        width: calc(var(--th) * 0.46);
-        height: calc(var(--th) * 0.46);
-        border-radius: 50%;
-        border: 0.14rem solid #fff;
-        background: var(--nc, #0d3a41);
-        color: #fff;
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-        font: calc(var(--th) * 0.24)/1 "Bowlby One", "Arial Black", sans-serif;
-        box-shadow: 0 0 0.6rem rgba(255, 201, 60, 0.9), 0 0.2rem 0.45rem rgba(0, 0, 0, 0.55);
-        top: calc(var(--rt) + var(--th) * 0.02);
-        left: calc((100% - var(--tw) - 0.8rem) * var(--p, 0) / 100 + var(--tw) * 0.38);
-        margin-left: calc(var(--th) * -0.23);
-        animation: avpop 1.8s ease-out forwards;
-      }
-      #lanes .avpop img{
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      @keyframes avpop{
-        0%{ transform: translateY(0.8rem) scale(0.3); opacity: 0; }
-        15%{ transform: translateY(-0.4rem) scale(1.2); opacity: 1; }
-        30%{ transform: translateY(-0.6rem) scale(1); opacity: 1; }
-        80%{ transform: translateY(-1.4rem) scale(1); opacity: 1; }
-        100%{ transform: translateY(-2.2rem) scale(0.9); opacity: 0; }
       }
 
       /* cartel "recibió regalo" sobre la tortuga mientras dura la protección */
@@ -1441,6 +1239,109 @@
         opacity: 1 !important;
       }
 
+      /* ===== cuenta regresiva emergente 3 · 2 · 1 · ¡YA! ===== */
+      #cd{
+        position: fixed;
+        inset: 0;
+        z-index: 65;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      #cd.show{
+        display: flex;
+      }
+      #cd .cdn{
+        font: min(34vw, 40vh)/1 "Bowlby One", "Arial Black", sans-serif;
+        color: var(--sun, #ffc93c);
+        -webkit-text-stroke: 0.05em #07262b;
+        paint-order: stroke fill;
+        text-shadow: 0 0.06em 0 #07262b, 0 0 0.35em rgba(255, 61, 127, 0.85), 0 0 0.7em rgba(255, 201, 60, 0.7);
+        animation: cdpop 0.9s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+      }
+      #cd .cdn.go{
+        font-size: min(26vw, 30vh);
+        color: var(--mint, #5cf2c0);
+        text-shadow: 0 0.06em 0 #07262b, 0 0 0.35em rgba(92, 242, 192, 0.9), 0 0 0.8em rgba(255, 201, 60, 0.7);
+      }
+      @keyframes cdpop{
+        0%{ transform: scale(2.6); opacity: 0; }
+        25%{ transform: scale(1); opacity: 1; }
+        75%{ transform: scale(1); opacity: 1; }
+        100%{ transform: scale(0.6); opacity: 0; }
+      }
+
+      /* ===== BARRA INFERIOR: contador de eventos por tipo (comentario, like, unión, compartir, regalo) ===== */
+      #stats{
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 1.2%;
+        z-index: 44;
+        display: flex;
+        justify-content: center;
+        gap: 0.5em;
+        padding: 0 0.6em;
+        font-size: min(2.6vh, 4.4vw);
+        line-height: 1;
+        pointer-events: none;
+      }
+      #connectorStatus{
+        position: fixed;
+        right: 0.75rem;
+        bottom: 0.75rem;
+        z-index: 9999;
+        max-width: min(80vw, 22rem);
+        min-height: 2.5rem;
+        padding: 0.65rem 1rem;
+        overflow: hidden;
+        border: 0.12rem solid rgba(255,255,255,0.8);
+        border-radius: 999px;
+        color: #fff;
+        font: 800 0.85rem/1.2 system-ui, sans-serif;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        box-shadow: 0 0.15rem 0.5rem rgba(0,0,0,0.5);
+        cursor: pointer;
+        pointer-events: auto;
+      }
+      #connectorStatus.connected{ background: #168a50; }
+      #connectorStatus.disconnected{ background: #c6283d; }
+      #stats .st2{
+        display: flex;
+        align-items: center;
+        gap: 0.35em;
+        padding: 0.3em 0.7em 0.3em 0.45em;
+        border-radius: 999px;
+        border: 0.14em solid #fff;
+        background: rgba(7, 38, 43, 0.88);
+        box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.55);
+        color: #fff;
+      }
+      #stats .st2 i{
+        font-style: normal;
+        font-size: 1.35em;
+      }
+      #stats .st2 b{
+        font: 1.15em/1 "Bowlby One", "Arial Black", sans-serif;
+        min-width: 1.2em;
+        text-align: left;
+      }
+      #stats .st2.k-ch{ border-color: #1fb58a; }
+      #stats .st2.k-lk{ border-color: #ff3d7f; }
+      #stats .st2.k-jn{ border-color: #7b4dff; }
+      #stats .st2.k-sh{ border-color: #2e7bff; }
+      #stats .st2.k-gf{ border-color: #ffc93c; }
+      #stats .st2.bump{
+        animation: statbump 0.35s ease-out;
+      }
+      @keyframes statbump{
+        0%{ transform: scale(1); }
+        40%{ transform: scale(1.22); }
+        100%{ transform: scale(1); }
+      }
+
       /* ===== al llegar a la meta se muestra el avatar del ganador durante 5 s ===== */
       #winner{
         position: fixed;
@@ -1522,9 +1423,61 @@
         color: #fff;
       }
       #winner .wfl img{
+        display: none; /* la bandera ya es la foto grande */
         height: 1.5rem;
         border-radius: 0.2rem;
         border: 0.08rem solid var(--ink, #07262b);
+      }
+      #winner .helpers{
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        width: min(78vw, 28rem);
+      }
+      #winner .helper{
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        color: #fff;
+      }
+      #winner .helper strong{
+        color: var(--sun, #ffc93c);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+      #winner .helper-avatar{
+        position: relative;
+        width: min(15vmin, 5rem);
+        height: min(15vmin, 5rem);
+        overflow: hidden;
+        border: 0.15rem solid #fff;
+        border-radius: 50%;
+        background: #0d3a41;
+      }
+      #winner .helper-avatar img{
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #winner .helper-avatar b{
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+      }
+      #winner .helper-avatar.noimg img{ display: none; }
+      #winner .helper-avatar.noimg b{ display: flex; }
+      #winner .helper-name{
+        max-width: 35vw;
+        overflow: hidden;
+        font-size: 0.78rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       @keyframes winpop{
         from{ transform: scale(0.4); opacity: 0; }
@@ -1542,64 +1495,415 @@
           top: var(--top, 31%); /* un poco más de cielo para el 1.er puesto grande */
           bottom: var(--bot, 27%);
         }
-        #hitsEl{
-          top: 74.5% !important; /* en el césped, bajo la pista (el cielo queda para el 1.er puesto) */
-          left: 4% !important;
-          font-size: 0.8rem !important;
+      }
+
+      /* ===== 6 carriles propios, avatares anclados y pista sin cartel de podio ===== */
+      #lanes{
+        --lane-step: calc(100% / (var(--n) + 1));
+      }
+      html body #app{
+        top: var(--top, 24%);
+        bottom: var(--bot, 7%);
+      }
+      @media (orientation: portrait){
+        html body #app{
+          top: var(--top, 22%);
+          bottom: var(--bot, 27%);
         }
-        html #podium .pd.p1{
-          min-width: 82%;
-          font-size: clamp(16px, calc(var(--ph) * 0.5), 100px);
-          border-width: 3px;
-          padding: 0 1rem 0 0.4rem;
+      }
+      #lanes .anchav{
+        position: absolute;
+        z-index: 13;
+        pointer-events: none;
+        left: calc((100% - var(--tw) - 0.8rem) * var(--ap, 0) / 100 + var(--tw) * 0.41);
+        width: calc(var(--th) * 0.42 * var(--sz, 1));
+        height: calc(var(--th) * 0.42 * var(--sz, 1));
+        transform: translate(-50%, -50%);
+        animation: anchIn 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+      }
+      #lanes .anchav .ai{
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        overflow: hidden;
+        background: var(--nc, #0d3a41);
+        border: 0.14rem solid #fff;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font: calc(var(--th) * 0.22 * var(--sz, 1)) / 1 "Bowlby One", "Arial Black", sans-serif;
+        box-shadow: 0 0 0.6rem rgba(255, 201, 60, 0.9), 0 0.2rem 0.45rem rgba(0, 0, 0, 0.55);
+      }
+      #lanes .anchav .ai img{
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #lanes .anchav small{
+        position: absolute;
+        left: 50%;
+        bottom: -0.55em;
+        transform: translateX(-50%);
+        padding: 0.05em 0.4em;
+        border-radius: 999px;
+        background: #ffc93c;
+        color: #07262b;
+        border: 0.08rem solid #07262b;
+        font: 800 calc(var(--th) * 0.14) / 1.1 system-ui, sans-serif;
+        white-space: nowrap;
+      }
+      /* PREMIO EN LA META: una copa 🏆 al final de cada carril, a la altura de la tortuga, para que la persiga. */
+      #lanes .prize{
+        position: absolute;
+        z-index: 3;
+        pointer-events: none;
+        right: calc(var(--th) * 0.04);
+        top: calc(var(--rt) + var(--th) * 0.5);
+        width: calc(var(--th) * 0.62);
+        height: calc(var(--th) * 0.62);
+        margin-top: calc(var(--th) * -0.31);
+        display: grid;
+        place-items: center;
+        font-size: calc(var(--th) * 0.5);
+        line-height: 1;
+        filter: drop-shadow(0 0 0.5rem rgba(255, 201, 60, 0.95)) drop-shadow(0 0.15rem 0.2rem rgba(0, 0, 0, 0.5));
+        animation: prizeBob 1.1s ease-in-out infinite;
+      }
+      @keyframes prizeBob{
+        0%, 100%{ transform: translateY(-6%) scale(1) rotate(-6deg); }
+        50%{ transform: translateY(6%) scale(1.12) rotate(6deg); }
+      }
+      /* la tortuga ganadora se lleva la copa: crece y rebota */
+      #lanes .lane.win .prize{
+        animation: prizeWin 0.9s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
+      }
+      @keyframes prizeWin{
+        0%{ transform: scale(1) rotate(0deg); }
+        60%{ transform: scale(1.9) rotate(-12deg); }
+        100%{ transform: scale(1.6) rotate(0deg); }
+      }
+      /* ===== GUÍA VISUAL SIN TEXTO (#howto): cómo se juega, en 3 pasos animados con íconos ===== */
+      #howto{
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: var(--how-top, 17%);
+        height: var(--how-h, 4rem);
+        font-size: min(calc(var(--how-h, 4rem) / 3.1), 3.7vw);
+        z-index: 45;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        gap: 0.4em;
+        padding: 0 0.6em;
+        box-sizing: border-box;
+        background: linear-gradient(180deg, #0a2a33, #0d1838);
+        border-top: 0.12em solid #ff5fae;
+        border-bottom: 0.12em solid #3ff3ff;
+        pointer-events: none;
+        line-height: 1;
+        overflow: hidden;
+      }
+      #howto .st{
+        display: flex;
+        align-items: center;
+        gap: 0.3em;
+        height: 2.7em;
+        position: relative;
+      }
+      #howto .ar{
+        color: var(--sun);
+        font-size: 1em;
+        animation: htArrow 1.2s ease-in-out infinite;
+      }
+      @keyframes htArrow{
+        0%, 100%{ transform: translateX(-0.12em); opacity: 0.6; }
+        50%{ transform: translateX(0.12em); opacity: 1; }
+      }
+      #howto .em{
+        font-size: 1.35em;
+      }
+      /* paso 1: persona -> mensaje -> bandera de su país (rota por todas las banderas de la carrera) */
+      #howto .fl{
+        position: relative;
+        width: 2.1em;
+        height: 2.1em;
+        border-radius: 50%;
+        border: 0.12em solid #fff;
+        overflow: hidden;
+        background: #0d3a41;
+      }
+      #howto .fl img{
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        animation: htFlag 4s steps(1, end) infinite;
+      }
+      @keyframes htFlag{
+        0%{ opacity: 1; }
+        20%, 100%{ opacity: 0; }
+      }
+      /* paso 2: cada acción da más rayos = más velocidad */
+      #howto .bz{
+        display: flex;
+        gap: 0.45em;
+      }
+      #howto .bt{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15em;
+        animation: htPulse 3.2s ease-in-out infinite;
+      }
+      #howto .bt .em{
+        font-size: 1.2em;
+      }
+      #howto .bt .bo{
+        font-size: 0.62em;
+        letter-spacing: -0.1em;
+        filter: drop-shadow(0 0 0.2em rgba(255, 201, 60, 0.9));
+        min-height: 0.7em;
+      }
+      @keyframes htPulse{
+        0%, 22%, 100%{ transform: scale(1); filter: none; }
+        8%, 14%{ transform: scale(1.28); filter: drop-shadow(0 0 0.35em #ffc93c); }
+      }
+      /* paso 3 (ciclo de 6 s): cada EVENTO (❤️ 💬 ➕ 🎁 con sus rayos ⚡) hace saltar a la tortuga hacia adelante;
+         al llegar a la meta se lleva la copa 🏆 (rebota con destellos) y se repite */
+      #howto .rc{
+        position: relative;
+        width: 10em;
+        height: 2.7em;
+      }
+      #howto .rc .ln{
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0.45em;
+        border-top: 0.16em dashed rgba(255, 246, 214, 0.8);
+      }
+      #howto .rc .tu{
+        position: absolute;
+        left: 0;
+        bottom: 0.5em;
+        font-size: 1.25em;
+        transform: scaleX(-1);
+        opacity: 0;
+        animation: htRun 6s ease-in-out infinite;
+      }
+      @keyframes htRun{
+        0%{ left: 0; opacity: 0; }
+        3%, 6%{ left: 0; opacity: 1; }
+        18%, 26%{ left: calc((100% - 3.1em) * 0.25); opacity: 1; }
+        40%, 48%{ left: calc((100% - 3.1em) * 0.5); opacity: 1; }
+        62%, 70%{ left: calc((100% - 3.1em) * 0.75); opacity: 1; }
+        84%, 95%{ left: calc(100% - 3.1em); opacity: 1; }
+        100%{ left: calc(100% - 3.1em); opacity: 0; }
+      }
+      /* evento: aparece sobre la tortuga justo antes de cada salto */
+      #howto .rc .ev{
+        position: absolute;
+        bottom: 1.85em;
+        font-size: 0.8em;
+        white-space: nowrap;
+        letter-spacing: -0.12em;
+        opacity: 0;
+        transform: translate(-50%, 0.4em) scale(0.5);
+        filter: drop-shadow(0 0 0.25em rgba(255, 201, 60, 0.9));
+        animation: htEv 6s ease-out infinite;
+      }
+      @keyframes htEv{
+        0%{ opacity: 0; transform: translate(-50%, 0.4em) scale(0.5); }
+        2%{ opacity: 1; transform: translate(-50%, 0) scale(1.35); }
+        5%, 9%{ opacity: 1; transform: translate(-50%, 0) scale(1); }
+        13%{ opacity: 0; transform: translate(-50%, -0.4em) scale(1); }
+        100%{ opacity: 0; transform: translate(-50%, -0.4em) scale(1); }
+      }
+      /* la copa de la meta: se agita cuando llega la tortuga y pasa a ser suya */
+      #howto .rc .tr{
+        position: absolute;
+        right: 0;
+        bottom: 0.3em;
+        font-size: 1.75em;
+        filter: drop-shadow(0 0 0.3em rgba(255, 201, 60, 0.95));
+        animation: htTrophy 6s ease-out infinite;
+      }
+      @keyframes htTrophy{
+        0%, 78%{ opacity: 1; transform: scale(1) rotate(0deg); }
+        82%{ opacity: 1; transform: scale(1.5) rotate(-10deg); }
+        85%, 97%{ opacity: 0; transform: scale(0.6); }
+        100%{ opacity: 1; transform: scale(1) rotate(0deg); }
+      }
+      /* la copa ya en poder de la tortuga ganadora */
+      #howto .rc .tw{
+        position: absolute;
+        left: calc(100% - 3.1em);
+        bottom: 1.25em;
+        font-size: 1.05em;
+        opacity: 0;
+        filter: drop-shadow(0 0 0.3em rgba(255, 201, 60, 0.95));
+        animation: htWin 6s ease-out infinite;
+      }
+      @keyframes htWin{
+        0%, 83%{ opacity: 0; transform: translateY(0.6em) scale(0.4); }
+        87%{ opacity: 1; transform: translateY(-0.15em) scale(1.5) rotate(-8deg); }
+        91%{ opacity: 1; transform: translateY(0) scale(1.15) rotate(6deg); }
+        95%{ opacity: 1; transform: translateY(0) scale(1.3) rotate(-4deg); }
+        98%, 100%{ opacity: 0; transform: translateY(0) scale(1.3); }
+      }
+      #howto .rc .sp{
+        position: absolute;
+        bottom: 1.6em;
+        font-size: 0.7em;
+        opacity: 0;
+        animation: htSpark 6s ease-out infinite;
+      }
+      @keyframes htSpark{
+        0%, 84%{ opacity: 0; transform: scale(0); }
+        88%{ opacity: 1; transform: scale(1.3); }
+        93%{ opacity: 1; transform: scale(0.8); }
+        97%, 100%{ opacity: 0; transform: scale(0); }
+      }
+      /* ===== LLAMAR LA ATENCIÓN: borde de neón que late, destello que cruza la guía, íconos que saltan y flechas brillantes ===== */
+      #howto{
+        background: linear-gradient(180deg, #0f3a47, #1a1250);
+        border-top-width: 0.16em;
+        border-bottom-width: 0.16em;
+        animation: htGlow 2.4s ease-in-out infinite;
+      }
+      @keyframes htGlow{
+        0%, 100%{
+          box-shadow: 0 0 0.6em rgba(255, 95, 174, 0.55), inset 0 0 0.8em rgba(63, 243, 255, 0.18);
+          border-top-color: #ff5fae;
+          border-bottom-color: #3ff3ff;
         }
-        html #podium .pd.p1 .md{ font-size: 1.2em; }
-        /* mensajes de eventos: dentro del césped, bajo la pista */
-        #alerts{
-          bottom: 9%;
-          left: 3%;
-          width: 82%;
+        50%{
+          box-shadow: 0 0 1.6em rgba(63, 243, 255, 0.95), inset 0 0 1.4em rgba(255, 95, 174, 0.35);
+          border-top-color: #3ff3ff;
+          border-bottom-color: #ff5fae;
         }
-        #qbar{
-          bottom: 0.4rem;
-        }
-        html #podium .pd{
-          gap: 0.2rem;
-          padding: 0 0.35rem 0 0.2rem;
-          font-size: clamp(11px, calc(var(--ph) * 0.38), 30px);
-        }
-        html #podium .md{ font-size: 1.05em; }
-        html #podium .pc{ min-width: 2em; }
+      }
+      #howto::after{
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -35%;
+        width: 25%;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+        transform: skewX(-18deg);
+        animation: htShine 3.6s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes htShine{
+        0%{ left: -35%; }
+        60%, 100%{ left: 120%; }
+      }
+      #howto .ar{
+        font-size: 1.6em;
+        color: #ffd84a;
+        text-shadow: 0 0 0.45em #ffc93c;
+        animation: htArrow 0.8s ease-in-out infinite;
+      }
+      @keyframes htPulse{
+        0%, 24%, 100%{ transform: scale(1) rotate(0deg); filter: none; }
+        6%{ transform: scale(1.4) rotate(-8deg); filter: drop-shadow(0 0 0.45em #ffc93c) drop-shadow(0 0 0.2em #fff); }
+        12%{ transform: scale(1.3) rotate(7deg); filter: drop-shadow(0 0 0.45em #ffc93c) drop-shadow(0 0 0.2em #fff); }
+        18%{ transform: scale(1.15) rotate(0deg); filter: drop-shadow(0 0 0.3em #ffc93c); }
+      }
+      #howto .rc .tu{
+        filter: drop-shadow(0 0 0.3em #7dff7d);
+        animation: htRun 6s ease-in-out infinite, htHop 0.45s ease-in-out infinite;
+      }
+      @keyframes htHop{
+        0%, 100%{ bottom: 0.5em; }
+        50%{ bottom: 0.72em; }
+      }
+      #howto .rc .tr{
+        filter: drop-shadow(0 0 0.4em #ffc93c) drop-shadow(0 0 0.8em rgba(255, 201, 60, 0.8));
+      }
+      /* Líneas que delimitan cada carril: SOLO visibles mientras hay bots activos (html.hasbots). */
+      #laneLines{
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        display: none;
+      }
+      html.hasbots #laneLines,
+      html.forcelines #laneLines{
+        display: block;
+      }
+      #laneLines i{
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 0.3rem;
+        margin-top: -0.15rem;
+        /* líneas de carril como en una pista de atletismo de arcilla: rayas blancas/crema de bloques duros, bien visibles */
+        background: repeating-linear-gradient(90deg, #fff6d6 0 1.2rem, transparent 1.2rem 2rem);
+        opacity: 0.95;
+        top: calc((100% - var(--th)) * (var(--k) - 0.5) / var(--n) + var(--th) / 2);
+      }
+      @keyframes anchIn{
+        0%{ transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+        45%{ transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+        100%{ transform: translate(-50%, -50%) scale(1); opacity: 1; }
       }
     </style>
   </head>
   <body>
     <canvas id="bg"></canvas>
     <canvas id="fx"></canvas>
-    <button id="connectorStatus" type="button" aria-live="polite">
-      ● Conectando a @doraramoshuerta
-    </button>
 
     <div id="app">
       <div id="lanes"></div>
     </div>
     <div id="vig"></div>
-    <div id="winner" aria-live="polite">
+    <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
+      Conectando…
+    </button>
+    <div id="stats" aria-hidden="true">
+      <div class="st2 k-ch" data-k="ch"><i>💬</i><b>0</b></div>
+      <div class="st2 k-lk" data-k="lk"><i>👍</i><b>0</b></div>
+      <div class="st2 k-jn" data-k="jn"><i>👋</i><b>0</b></div>
+      <div class="st2 k-sh" data-k="sh"><i>🔁</i><b>0</b></div>
+      <div class="st2 k-gf" data-k="gf"><i>🎁</i><b>0</b></div>
+    </div>
+    <div id="cd" aria-live="assertive"><div class="cdn" id="cdn"></div></div>
+    <div id="winner"aria-live="polite">
       <div class="wbox">
-        <div class="wttl">🏆 ¡GANADOR!</div>
+        <div class="wttl">🏆 1.º PUESTO</div>
         <div class="wav"><img id="wImg" alt="" referrerpolicy="no-referrer" /><b id="wIni"></b></div>
         <div class="wnm" id="wNm"></div>
         <div class="wfl"><img id="wFl" alt="" /><span id="wCt"></span></div>
+        <div class="helpers" aria-label="Usuarios que más aportaron">
+          <div class="helper">
+            <strong id="helper2Title">2.º · más apoyo</strong>
+            <div class="helper-avatar noimg" id="helper2Avatar">
+              <img id="helper2Img" alt="" referrerpolicy="no-referrer" />
+              <b id="helper2Initial">—</b>
+            </div>
+            <span class="helper-name" id="helper2Name">Sin participante</span>
+          </div>
+          <div class="helper">
+            <strong id="helper3Title">3.º · más apoyo</strong>
+            <div class="helper-avatar noimg" id="helper3Avatar">
+              <img id="helper3Img" alt="" referrerpolicy="no-referrer" />
+              <b id="helper3Initial">—</b>
+            </div>
+            <span class="helper-name" id="helper3Name">Sin participante</span>
+          </div>
+        </div>
       </div>
     </div>
     <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
-    <div id="alerts" aria-live="polite"></div>
-    <div id="qbar">
-      <button id="qAlert" class="act" title="Alertas de eventos (like, comentario, regalo…)" aria-label="Alertas de eventos">🔔</button>
-      <button id="qLang" title="Idioma: Español · toca para cambiar a English" aria-label="Idioma">ES</button>
-      <button id="qBot" data-n="0" title="Agrega un bot que simula espectadores reales · mantén pulsado para detenerlos" aria-label="Agregar bot de prueba">🤖</button>
-      <span id="botCount" aria-live="polite">🤖 Bots activos: 0</span>
-    </div>
+    <div id="howto" aria-hidden="true"></div>
     <div id="bots">
       <b id="botsTitle">Pruebas de interacción (P)</b>
       <button data-a="rose">1 Rosa</button
@@ -1643,7 +1947,7 @@
        */
 
       const Q = new URLSearchParams(location.search);
-      /* ===== IDIOMA: inglés por defecto. El botón ES/EN (abajo a la izquierda) cambia TODO el overlay a español y muestra el idioma activo.
+      /* ===== IDIOMA: inglés por defecto. Ya no hay botón de idioma: se elige con ?lang=es o ?lang=en.
          ?lang=es lo abre en español. tr(es, en) devuelve el texto del idioma activo. ===== */
       let LANG = "en";
       try {
@@ -1662,6 +1966,7 @@
         target: +Q.get("target") || 40,
         crawl: 0.15 / TIME_X,
         restartMs: 7000,
+        botSec: Math.max(20, +Q.get("bot") || 120) /* la TORTUBOT va de 0 a win en estos segundos (2 min): es el tope de la carrera */,
         join: Q.has("join") ? +Q.get("join") : 0.5,
         countries: [0, 1, 2, 3, 4].map((i) => ({
           c: "s" + i,
@@ -1670,78 +1975,21 @@
           b: [],
         })),
       };
-      /* EVENT_STEP: cada evento que cuenta (like, regalo, comentario, follow, share, join) hace avanzar 20 % de la pista.
-         STRAIGHT_UNTIL: hasta este % de la pista van en línea recta (sin desvíos ni choques). Ahora 0: se mueven al azar y pueden chocar desde la salida. */
-      const EVENT_STEP = 20 / TIME_X,
-        STRAIGHT_UNTIL = 0;
-      const $ = (id) => document.getElementById(id);
-      const DEFAULT_CONNECTOR_USERNAME = "doraramoshuerta";
-      let connectorState = {
-        connected: false,
-        status: "connecting",
-        username: DEFAULT_CONNECTOR_USERNAME,
+      /* VELOCIDADES (unidades de pista por segundo). La TORTUBOT (6.º carril) va a BOT_V constante: 0 → 100 en CFG.botSec.
+         Las demás caminan a BASE_V (40 % de la bot; ?base=0.4) y cada interacción las multiplica ×2 / ×5 / ×10 / ×20 un rato
+         (EV_BOOST = [multiplicador, segundos]). Gana quien llega primero a CFG.win. */
+      const BOT_V = CFG.win / CFG.botSec,
+        BASE_V = BOT_V * (Q.has("base") ? +Q.get("base") : 0.4);
+      const EV_BOOST = {
+        join: [2, 3],
+        like: [2, 3],
+        support: [2, 2],
+        chat: [5, 4],
+        share: [10, 5],
+        follow: [10, 5],
+        gift: [20, 6],
       };
-      let connectorStatusInitialized = false;
-      let connectorRestartPending = false;
-      function renderConnectorStatus(state) {
-        connectorState = { ...connectorState, ...state };
-        const button = $("connectorStatus");
-        const connected = Boolean(connectorState.connected || connectorState.isConnected);
-        const username = String(
-          connectorState.username || connectorState.connector?.username || DEFAULT_CONNECTOR_USERNAME,
-        ).replace(/^@+/, "");
-        const paused = connectorState.status === "failed";
-        const waiting = ["connecting", "reconnecting"].includes(connectorState.status);
-        button.classList.toggle("connected", connected);
-        button.disabled = connected || waiting || connectorRestartPending;
-        button.textContent = connected
-          ? `● ${tr(`Conectado a @${username}`, `Connected to @${username}`)}`
-          : paused
-            ? `● ${tr(`Sin conexión · @${username}`, `Disconnected · @${username}`)}`
-            : `● ${tr(`Conectando · @${username}`, `Connecting · @${username}`)}`;
-        button.title = connected
-          ? tr(`Conectado a @${username}`, `Connected to @${username}`)
-          : paused
-            ? tr(
-                `Reintentos pausados. Haz clic para reintentar @${username}.`,
-                `Retries paused. Click to retry @${username}.`,
-              )
-            : tr(
-                `Sin conexión. Reintentando cada 5 segundos durante 5 minutos: @${username}.`,
-                `Disconnected. Retrying every 5 seconds for 5 minutes: @${username}.`,
-              );
-        button.setAttribute("aria-label", button.textContent);
-      }
-      async function reconnectFromOverlay() {
-        if (connectorRestartPending) return;
-        connectorRestartPending = true;
-        renderConnectorStatus({ connected: false, status: "connecting" });
-        try {
-          const response = await fetch("/api/reconnect", { method: "POST" });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.message || "No se pudo reconectar.");
-        } catch (error) {
-          console.error("No se pudo reintentar la conexión de TikTok:", error);
-          renderConnectorStatus({
-            connected: false,
-            status: "failed",
-            error: error.message,
-          });
-        } finally {
-          connectorRestartPending = false;
-          renderConnectorStatus(connectorState);
-        }
-      }
-      function handleConnectorStatus(state) {
-        renderConnectorStatus(state);
-        if (connectorStatusInitialized) return;
-        connectorStatusInitialized = true;
-        if (
-          !connectorState.connected
-          && ["failed", "disconnected", "idle"].includes(connectorState.status)
-        ) reconnectFromOverlay();
-      }
-      $("connectorStatus").addEventListener("click", reconnectFromOverlay);
+      const $ = (id) => document.getElementById(id);
       const rnd = (a) => a[(Math.random() * a.length) | 0];
       /* Helpers compartidos: tamaño del rem en px y reinicio de una animación CSS */
       const remPx = () => parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -1752,6 +2000,7 @@
       };
       const C = CFG.countries,
         byCode = Object.fromEntries(C.map((c) => [c.c, c]));
+      const HUMAN_N = C.length;
       const contestants = new Map();
       let contestantSequence = 0;
       /* ===== PAÍSES en lugar de usuarios =====
@@ -1998,7 +2247,7 @@
         }
         return result;
       }
-      /* 5 tortugas: BR, PY y AR son fijos (en orden aleatorio) y 2 países más se sortean. Sin copas. */
+      /* 5 tortugas: BR, PY y AR son fijos (en orden aleatorio) y 2 países más se sortean. */
       function chooseRoundTeams() {
         const fixed = shuffled(FIXED_TEAMS);
         const candidates = ROUND_POOL.filter(
@@ -2050,10 +2299,9 @@
         combo: new Map(),
         cp: { 25: 0, 50: 0, 75: 0 },
         pf: false,
+        ramT: 12 /* s hasta la próxima embestida */,
         streak: 0,
         lastWin: null,
-        hits: 0 /* choques ocurridos en la carrera actual */,
-        giftQ: [] /* tortugas que recibieron un regalo y deben provocar un choque inmediato */,
       };
       C.forEach((c) => {
         S.pos[c.c] = 0;
@@ -2323,6 +2571,31 @@
             0.09,
           );
         },
+        /* MÚSICA DE VICTORIA (~4 s): fanfarria con melodía, acordes de bajo y brillo final */
+        victory: () => {
+          if (!SND || !ac()) return;
+          const t0 = AC.currentTime + 0.15,
+            mel = [
+              [523, 0.13], [659, 0.13], [784, 0.13], [1047, 0.26],
+              [784, 0.13], [1047, 0.52],
+              [988, 0.2], [880, 0.2], [988, 0.2], [1175, 0.2],
+              [1319, 0.45], [1175, 0.2], [1319, 0.2], [1568, 1.1],
+            ];
+          let t = t0;
+          for (const [f, d] of mel) {
+            tone(f, d * 1.15, "p25", 0.07, t);
+            tone(f / 2, d * 1.1, "square", 0.03, t);
+            t += d;
+          }
+          /* bajo y acordes: C - G - F - C */
+          [[131, 0], [98, 0.78], [87, 1.58], [131, 2.4]].forEach(([f, o]) => {
+            tone(f, 0.7, "triangle", 0.12, t0 + o);
+            tone(f * 2, 0.7, "triangle", 0.06, t0 + o + 0.02);
+          });
+          /* cierre brillante */
+          [523, 659, 784, 1047].forEach((f) => tone(f, 1.3, "square", 0.04, t0 + 2.4));
+          noise(0.6, 0.05, t0 + 2.4, 3000);
+        },
         win: () => {
           ac();
           if (!AC) return;
@@ -2561,21 +2834,46 @@
         l.className = "lane empty";
         l.id = "ln-" + c.c;
         l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
-  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
+  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="prize">🏆</div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
         lanes.append(l);
       });
 
-      /* Tamaño de las tortugas según el alto real de la pista: como máximo 25 % de solape entre filas, y nunca más del 28 % del ancho. */
+      /* Líneas divisorias entre carriles (n-1 líneas para n carriles); solo se muestran con bots activos. */
+      {
+        const ll = document.createElement("div");
+        ll.id = "laneLines";
+        for (let k = 1; k < C.length; k++) {
+          const i = document.createElement("i");
+          i.style.setProperty("--k", k);
+          ll.append(i);
+        }
+        lanes.append(ll);
+        if (Q.get("lines") === "1") document.documentElement.classList.add("forcelines"); /* ?lines=1: siempre visibles, sin bots */
+      }
+
+      /* ===== GUÍA VISUAL SIN TEXTO: 1) acciones con rayos (más rayos = más velocidad)
+         → 2) cada evento hace saltar a la tortuga y llega a la copa 🏆. Solo íconos y animación; ?howto=0 la oculta. ===== */
+      {
+        const ht = $("howto");
+        if (Q.get("howto") === "0") ht.remove();
+        else {
+          const bolts = (n) => "⚡".repeat(n);
+          ht.innerHTML =
+            `<div class="st bz">${[["👋", 1], ["❤️", 1], ["💬", 2], ["➕", 3], ["↪️", 3], ["🎁", 4]].map(([e, n], i, arr) => `<span class="bt" style="animation-delay:${(i * 3.2) / arr.length}s"><span class="em">${e}</span><span class="bo">${bolts(n)}</span></span>`).join("")}</div>` +
+            `<span class="ar">▶</span>` +
+            `<div class="st rc"><i class="ln"></i><span class="tu">🐢</span>${[[0, "❤️", 1, 0.02], [0.25, "💬", 2, 0.22], [0.5, "➕", 3, 0.44], [0.75, "🎁", 4, 0.66]].map(([u, e, n, t]) => `<span class="ev" style="left:calc((100% - 3.1em) * ${u} + 0.9em);animation-delay:${(t * 6).toFixed(2)}s">${e}${bolts(n)}</span>`).join("")}<span class="tr">🏆</span><span class="tw">🏆</span><span class="sp" style="left:calc(100% - 3.5em)">✨</span><span class="sp" style="left:calc(100% - 1.2em)">✨</span></div>`;
+        }
+      }
+
+      /* Tamaño de las tortugas: cada una tiene su carril (alto de pista / nº de carriles) y ocupa un poco más que el carril
+         (1.1×), sin chocar con nadie. Más grandes que antes; nunca más del 34 % del ancho. */
       function fitTurtles() {
         const H = lanes.clientHeight,
           W = lanes.clientWidth;
         if (!H || !W) return;
-        const th = H / (1 + 0.75 * (C.length - 1)),
-          tw = Math.min(
-            (th * 66) / 46,
-            W * 0.28,
-            17 * remPx(),
-          ) * 0.75; /* 5 tortugas, un poco más chicas */
+        const bh = H / C.length,
+          th = bh * 1.1,
+          tw = Math.min((th * 66) / 46, W * 0.34, 24 * remPx());
         lanes.style.setProperty("--tw", tw.toFixed(1) + "px");
       }
       addEventListener("resize", fitTurtles);
@@ -2734,7 +3032,7 @@
         if (t.avKey === key) return;
         t.avKey = key;
         const nn = NATIONS[C.findIndex((x) => x.c === code)],
-          initial = p ? (p.isBot ? "🤖" : (p.username || "?").trim().charAt(0).toUpperCase() || "?") : "";
+          initial = p ? (p.isBot || p.tortubot ? "🤖" : (p.username || "?").trim().charAt(0).toUpperCase() || "?") : "";
         t.tur.classList.toggle("owned", !!p);
         a.bg.setAttribute("fill", nn.c);
         a.im.removeAttribute("href");
@@ -2809,7 +3107,7 @@
         t.mainP = null;
         renderCrew(code);
       }
-      /* Los participantes reales pueden ocupar carriles libres o reemplazar al de menor puntaje. */
+      /* Sin carriles libres, el participante nuevo reemplaza al dueño con mayor puntaje. */
       function claimSlot(p) {
         let code,
           lo = null;
@@ -2830,10 +3128,10 @@
           } else {
             for (const c of C) {
               const o = slotPlayer(c.c);
-              if (o && c.c !== S.winner && (!lo || o.points < lo.o.points))
+              if (o && !o.tortubot && c.c !== S.winner && (!lo || o.points > lo.o.points))
                 lo = { c, o };
             }
-            if (!lo || p.points <= lo.o.points) return null;
+            if (!lo) return null;
             code = lo.c.c;
           }
           S.slotOf.delete(lo.o.key);
@@ -2868,7 +3166,7 @@
           if (old.length >= 5) old[0].remove();
           const e = document.createElement("div");
           e.className = "evb disp " + cls;
-          e.textContent = txt;
+          e.textContent = txt + (t.lastM > 1 ? " ⚡×" + t.lastM : "");
           e.style.setProperty("--o", (t.evo = ((t.evo || 0) + 1) % 3));
           e.style.setProperty(
             "--p",
@@ -2943,54 +3241,75 @@
       /* Un evento de un espectador (p) vale `points`: la tortuga camina hasta (puntos del dueño / CFG.target) * CFG.win.
          Si el espectador no tiene carril, su energía va a la tortuga del país que apoya. Añade efectos visuales y sonido. */
       const LEVELS = [10, 25, 50, 100, 200, 400];
-      /* Avatar redondo que sale sobre el caparazón en CADA interacción. Es hijo de la pista (.trk) y no define --p/--rt,
-         por lo que sigue a la tortuga mientras camina. Máx. 4 a la vez y 1 por usuario cada 0.5 s (los likes llegan a ráfagas). */
-      function avatarPop(code, p) {
+      /* AVATAR ANCLADO: cada interacción crea un círculo con el avatar del usuario en el CENTRO del caparazón, pero NO viaja con
+         la tortuga: queda fijo en el punto de la pista donde se generó (posición y altura de ese instante). Así el usuario ve
+         su avatar en la carrera. Su tamaño crece con la relevancia (×2 / ×5 / ×10 / ×20) y lleva el multiplicador.
+         Máx. ANCHOR_PER_USER por usuario y ANCHOR_MAX por carril (se borra el más viejo); se limpian al empezar la ronda. */
+      const ANCHOR_MAX = 120; /* tope de seguridad por carril: los avatares NO se borran hasta que termina la ronda */
+      function avatarPop(code, p, mult) {
+        return; /* NINGÚN avatar queda anclado en la pista (ni de usuarios ni de bots): el avatar solo va sobre la tortuga */
         const t = T[code];
-        if (!t || !p) return;
+        if (!t || !p || p.tortubot) return;
         const now = performance.now();
         if (now - (p.popAt || 0) < 500) return;
         p.popAt = now;
-        const old = t.trk.querySelectorAll(".avpop");
-        if (old.length >= 4) old[0].remove();
+        const all = t.trk.querySelectorAll(".anchav");
+        if (all.length >= ANCHOR_MAX) all[0].remove();
         const nn = NATIONS[C.findIndex((x) => x.c === code)],
-          e = document.createElement("div");
-        e.className = "avpop";
+          e = document.createElement("div"),
+          ai = document.createElement("span");
+        e.className = "anchav";
+        e.dataset.u = p.key;
         e.style.setProperty("--nc", nn ? nn.c : "#0d3a41");
-        e.style.marginTop = (((Math.random() - 0.5) * 0.5).toFixed(2)) + "rem";
-        const initial = p.isBot ? "🤖" : (p.username || "?").trim().charAt(0).toUpperCase() || "?";
-        e.textContent = initial;
+        e.style.setProperty("--ap", Math.min(100, S.pos[code]).toFixed(2));
+        e.style.setProperty("--sz", String(mult >= 20 ? 1.5 : mult >= 10 ? 1.32 : mult >= 5 ? 1.15 : 1));
+        /* leve desplazamiento al azar para que varios avatares generados casi a la vez no se tapen entre sí */
+        e.style.top = ((t.rtPx || 0) + GEO.th * (0.45 + (Math.random() - 0.5) * 0.3)).toFixed(1) + "px";
+        e.style.marginLeft = ((Math.random() - 0.5) * GEO.th * 0.4).toFixed(1) + "px";
+        ai.className = "ai";
+        ai.textContent = p.isBot ? "🤖" : (p.username || "?").trim().charAt(0).toUpperCase() || "?";
         if (p.avatar) {
           const im = document.createElement("img");
           im.alt = "";
           im.referrerPolicy = "no-referrer";
           im.onerror = () => im.remove();
           im.src = p.avatar;
-          e.append(im);
+          ai.append(im);
+        }
+        e.append(ai);
+        if (mult > 1) {
+          const m = document.createElement("small");
+          m.textContent = "×" + mult;
+          e.append(m);
         }
         t.trk.append(e);
-        setTimeout(() => e.remove(), 1900);
+      }
+      /* Cada interacción acelera la tortuga de su usuario: ×2, ×5, ×10 o ×20 durante unos segundos (gana el mayor multiplicador activo). */
+      function addBoost(code, ty, entry, p) {
+        const t = T[code],
+          b = EV_BOOST[ty] || [2, 2];
+        let sec = b[1],
+          m = b[0];
+        /* Los bots de prueba (los que dan el ejemplo) valen 4-6 veces menos que un usuario normal: su empuje extra se divide entre 4 y 6. */
+        if (p && p.isBot) m = Math.max(1, +(1 + (m - 1) / (4 + Math.random() * 2)).toFixed(1));
+        if (ty === "gift")
+          sec += Math.min(6, (Math.max(1, Number(entry.diamondCount) || 1) * Math.max(1, Number(entry.activityCount) || 1)) / 50);
+        t.boosts.push({ m, until: tNow + sec });
+        t.lastM = m;
+        if (t.boosts.length > 40) t.boosts.splice(0, t.boosts.length - 40);
+        return { m, sec };
       }
       function raceAdd(p, entry, points) {
         if (S.over) return;
         let code = S.slotOf.get(p.key) || claimSlot(p);
-        const ownsLane = Boolean(code);
         if (!code) code = S.pick.get(p.key);
         if (!code) return;
         const t = T[code],
           ty = entry.type;
         if (entry.type !== "support") setMain(code, p); /* el último evento manda: su avatar es el principal */
-        avatarPop(code, p); /* círculo con el avatar que sale sobre el caparazón y viaja con la tortuga */
-        /* cada evento suma EVENT_STEP (20 %) de pista a la tortuga, sin importar los puntos; camina esa energía (no se teletransporta) */
-        t.pend = Math.min(
-          Math.max(0, CFG.win - S.pos[code]),
-          t.pend + Math.min(Math.max(0, CFG.win - S.pos[code]), EVENT_STEP),
-        );
-        if (ty === "gift") {
-          putGiftAhead(code, entry);
-          t.protT = GIFT_PROT_S; /* protección anti-choque 15 s desde el último regalo */
-          if (!S.giftQ.includes(code) && S.giftQ.length < 3) S.giftQ.push(code);
-        }
+        const bst = addBoost(code, ty, entry, p); /* ×2 / ×5 / ×10 / ×20 según la relevancia del evento */
+        avatarPop(code, p, bst.m); /* avatar anclado en el centro del caparazón, en el punto donde se generó */
+        if (ty === "gift") putGiftAhead(code, entry);
         evBadge(code, ty, entry, points);
         if (points >= 15) {
           t.tur.classList.add("turbo");
@@ -3035,6 +3354,30 @@
    1) calcula puntos  2) aplica empuje doble y combo de regalos  3) limita comentarios a 1 cada 8 s por usuario
    4) suma al jugador  5) raceAdd() mueve su tortuga  6) avisa si entra/desplaza del Top 5 o toma el primer lugar.
    Se ignora todo mientras la ronda está terminada (S.over). */
+      /* Contador inferior acumulado entre rondas; ignora bots.
+         comentario = chat · like = suma de likes · unión = join + seguir · compartir = share · regalo = unidades de regalo */
+      const EVC = { ch: 0, lk: 0, jn: 0, sh: 0, gf: 0 };
+      const EVK = { chat: "ch", like: "lk", join: "jn", follow: "jn", share: "sh", gift: "gf" };
+      function paintStats(bump) {
+        const box = $("stats");
+        if (!box) return;
+        box.querySelectorAll(".st2").forEach((el) => {
+          const k = el.dataset.k,
+            b = el.querySelector("b"),
+            v = String(Math.round(EVC[k]));
+          if (b && b.textContent !== v) {
+            b.textContent = v;
+            if (bump === k) restartAnim(el, "bump");
+          }
+        });
+      }
+      function countEvent(entry) {
+        const k = EVK[entry.type];
+        if (!k) return;
+        const n = Number(entry.activityCount);
+        EVC[k] += entry.type === "like" || entry.type === "gift" ? (Number.isFinite(n) && n > 0 ? n : 1) : 1;
+        paintStats(k);
+      }
       function scoreContestant(entry, isBot = false) {
         if (
           !entry ||
@@ -3068,6 +3411,7 @@
                       ? CFG.join
                       : 0;
         if (!points || S.over) return;
+        if (!isBot) countEvent(entry); /* solo eventos reales del backend, no los de bots/pruebas */
         if (entry.type !== "join") points *= S.boost > Date.now() ? 2 : 1;
         if (entry.type === "gift") points *= combo(username).mult;
 
@@ -3138,6 +3482,39 @@
         const el = $("winner");
         if (el) el.classList.remove("show", "out");
       }
+      function topHelpers(excludedUserKey) {
+        return [...contestants.values()]
+          .filter((player) =>
+            !player.isBot &&
+            !player.tortubot &&
+           player.key !== excludedUserKey &&
+            player.username &&
+            player.username.trim().toLocaleLowerCase() !== "alguien"
+          )
+          .sort((a, b) => b.points - a.points || a.sequence - b.sequence)
+          .slice(0, 2);
+      }
+      function setHelper(place, player) {
+        const avatar = $(`helper${place}Avatar`),
+          img = $(`helper${place}Img`),
+          initial = $(`helper${place}Initial`),
+          name = $(`helper${place}Name`);
+        avatar.classList.add("noimg");
+        img.removeAttribute("src");
+        img.onerror = () => avatar.classList.add("noimg");
+        if (!player) {
+          initial.textContent = "—";
+          name.textContent = tr("Sin participante", "No participant");
+          return;
+        }
+        const username = String(player.username || "Alguien").trim() || "Alguien";
+        initial.textContent = username.charAt(0).toUpperCase() || "?";
+        name.textContent = "@" + shownName(username.replace(/^@+/, ""));
+        if (typeof player.avatar === "string" && /^https?:\/\//i.test(player.avatar)) {
+          avatar.classList.remove("noimg");
+          img.src = player.avatar;
+        }
+      }
       function showWinner(p) {
         const el = $("winner");
         if (!el || !p) return;
@@ -3147,15 +3524,17 @@
           av = el.querySelector(".wav"),
           img = $("wImg"),
           ini = (p.username || "?").trim().charAt(0).toUpperCase() || "?";
-        $("wNm").textContent = "@" + shownName(p.username || "Alguien");
+        $("wNm").textContent = p.tortubot ? "🤖 TORTUBOT" : "@" + shownName(p.username || "Alguien");
         $("wCt").textContent = nn.n;
         $("wFl").src = nn.u;
         $("wIni").textContent = ini;
+        const helpers = topHelpers(p.key);
+        setHelper(2, helpers[0]);
+        setHelper(3, helpers[1]);
+        /* la "foto de ganador" es la bandera del PAÍS ganador (no el avatar del usuario) */
         av.classList.remove("noimg");
-        if (p.avatar) {
-          img.onerror = () => av.classList.add("noimg");
-          img.src = p.avatar;
-        } else av.classList.add("noimg");
+        img.onerror = () => av.classList.add("noimg");
+        img.src = nn.u;
         el.classList.remove("out");
         el.classList.add("show");
         winnerT2 = setTimeout(() => el.classList.add("out"), WINNER_MS - 350);
@@ -3165,7 +3544,7 @@
         S.over = true;
         S.winner = code;
         musicSync();
-        SFX.flag();
+        SFX.victory(); /* reemplaza al sonido corto SFX.flag() */
         const t = T[code],
           p = slotPlayer(code);
         S.pos[code] = CFG.win;
@@ -3181,9 +3560,10 @@
             lane.ve = 0;
           }
         }
-        const w = (winsBy.get(p.key) || 0) + 1;
-        winsBy.set(p.key, w);
-        saveWins();
+        if (!p.tortubot) {
+          winsBy.set(p.key, (winsBy.get(p.key) || 0) + 1);
+          saveWins();
+        }
         if (S.lastWin === p.key) S.streak++;
         else {
           S.lastWin = p.key;
@@ -3215,11 +3595,8 @@
         S.combo.clear();
         S.cp = { 25: 0, 50: 0, 75: 0 };
         S.pf = false;
-        S.hits = 0;
-        S.giftQ = [];
+        S.ramT = 12;
         S.recAt = null; /* la cuenta de los 3 s empieza cuando arranca la carrera */
-        C.forEach((c) => { if (T[c.c]) T[c.c].hits = 0; });
-        updHits();
         contestants.clear();
         contestantSequence = 0;
         S.slotUser = {};
@@ -3235,6 +3612,21 @@
       }
       /* Cuenta regresiva 3-2-1-¡YA!: solo sonido; las tortugas esperan en la salida hasta S.go = true. */
       let cdT = [];
+      /* Número emergente grande en el centro (reinicia la animación en cada paso). */
+      function showCd(txt, go) {
+        const box = $("cd"),
+          n = $("cdn");
+        if (!box || !n) return;
+        if (txt === null) {
+          box.classList.remove("show");
+          return;
+        }
+        n.textContent = txt;
+        n.className = "cdn" + (go ? " go" : "");
+        box.classList.remove("show");
+        void box.offsetWidth; /* fuerza reflow para reiniciar la animación */
+        box.classList.add("show");
+      }
       function countdown() {
         S.go = false;
         musicSync();
@@ -3245,11 +3637,17 @@
             setTimeout(() => {
               if (i === 3) {
                 S.go = true;
+                S.goAt = performance.now();
+                showCd(tr("¡YA!", "GO!"), true);
                 SFX.go();
                 musicSync();
-              } else SFX.tick();
+              } else {
+                showCd(String(3 - i));
+                SFX.tick();
+              }
             }, i * 900),
           );
+        cdT.push(setTimeout(() => showCd(null), 3 * 900 + 900));
       }
 
       /* ===== Movimiento realista =====
@@ -3293,6 +3691,9 @@
           ve: 0,
           cr: 0,
           pend: 0,
+          boosts: [] /* [{m: multiplicador, until: segundo en que acaba}] */,
+          mult: 1,
+          rtPx: 0 /* altura actual (px) de la tortuga en la pista */,
           giftTarget: null,
           giftEl: null,
           pause: 0,
@@ -3305,36 +3706,26 @@
           vaPrev: 0,
           fa: 0 /* pasos por segundo (ciclos de marcha) */,
           lean: 0 /* inclinación sobre las patas (grados) */,
-          jl: 0, jv: 0 /* sacudida por choque: ángulo y velocidad */,
-          hit: 0 /* 1 al chocar, decae: la cabeza se encoge */,
-          ox: 0, oy: 0, ovx: 0, ovy: 0 /* desplazamiento por choque (px) y su velocidad */,
           zy: 0, zvy: 0 /* zigzag lateral (px) */,
           psi: 0 /* rumbo (grados) */,
-          slow: 1 /* factor de velocidad: un choque lo baja y se recupera solo */,
           zT: 0, zTimer: 1 + Math.random() * 3 /* desvío lateral objetivo (px) y tiempo al próximo cambio */,
-          immT: 0 /* inmunidad a choques (s) */,
-          protT: 0 /* protección anti-choque por regalo (s): no puede ser elegida ni golpeada */,
-          ouchT: 0 /* segundos que le quedan con la cara de golpe */,
-          back: 0 /* retroceso pendiente por choque (unidades de pista, se gasta suave) */,
-          dodgeDir: 0, dodgeT: 0 /* esquive vertical tras el choque (-1 arriba, +1 abajo) y segundos que le quedan */,
-          hits: 0 /* choques de esta tortuga en la carrera (máx. MAX_PER_TURTLE) */,
-          angryT: 0 /* segundos que le quedan con cara de enojada (ya decidió chocar) */,
-          rage: 0 /* 0..1: cuánto se acerca el choque (rojo de la cabeza) */,
-          fs: 0 /* volteo por choque: 0 normal · 1 boca arriba girando mientras retrocede (patas y cabeza adentro) · 2 saca las patas y patalea · 3 se endereza girando */,
-          fT: 0, fX: 0, fZ: 0 /* tiempo en la fase, ángulo de volteo (X) y de giro (Z) en grados */,
+          /* choques */
+          ouchT: 0 /* s con cara de golpe */, immT: 0 /* s de inmunidad tras un impacto */, angryT: 0 /* s embistiendo */,
+          dodgeT: 0, dodgeDir: 0 /* esquive vertical tras el impacto */, back: 0 /* retroceso pendiente (unidades de pista) */,
+          hits: 0, ramTo: null, ramDir: 0, jl: 0, jv: 0 /* sacudida del caparazón */,
         };
       });
       function reseed() {
         C.forEach((c) => {
           const t = T[c.c];
-          t.base = 0.7 + Math.random() * 0.7;
-          t.hits = 0;
-          t.angryT = 0;
-          t.rage = 0;
-          t.fs = 0; t.fT = 0; t.fX = 0; t.fZ = 0;
+          t.base = 0.92 + Math.random() * 0.16;
+          t.boosts = [];
+          t.mult = 1;
+          t.zy = 0;
+          t.trk.querySelectorAll(".anchav").forEach((x) => x.remove());
           t.cryT = 0;
-          t.tur.classList.remove("cry");
-          t.tur.classList.remove("angry");
+          t.tur.classList.remove("cry", "ouch", "angry");
+          t.ouchT = 0; t.immT = 0; t.angryT = 0; t.dodgeT = 0; t.dodgeDir = 0; t.back = 0; t.hits = 0; t.ramTo = null; t.jl = 0; t.jv = 0; t.sprint = false;
           t.ve = 0;
           t.cr = 0;
           t.vs = 0;
@@ -3344,8 +3735,8 @@
           t.giftEl = null;
           t.pause = 0;
           t.step = Math.floor(t.ph / Math.PI);
-          t.va = 0; t.vaPrev = 0; t.fa = 0; t.lean = 0; t.jl = 0; t.jv = 0; t.hit = 0;
-          t.ret = 0; t.ox = 0; t.oy = 0; t.ovx = 0; t.ovy = 0; t.zy = 0; t.zvy = 0; t.psi = 0; t.slow = 1; t.ouchT = 0; t.immT = 0; t.protT = 0; t.lastEv = performance.now(); t.tur.classList.remove("ouch"); t.back = 0; t.dodgeDir = 0; t.dodgeT = 0; t.zT = 0; t.zTimer = 1 + Math.random() * 3;
+          t.va = 0; t.vaPrev = 0; t.fa = 0; t.lean = 0;
+          t.zy = 0; t.zvy = 0; t.psi = 0; t.lastEv = performance.now(); t.zT = 0; t.zTimer = 1 + Math.random() * 3;
           t.w = Math.random() * 10;
         });
       }
@@ -3393,258 +3784,102 @@
         GEO.H = H;
       }
       /* Cada tortuga = 3 círculos para el caparazón + 1 para la cabeza (coordenadas del SVG de 66×46). */
-      const HIT = [[12, 27, 10], [27, 21, 15], [42, 27, 10], [56, 26, 8.5]]; /* domo + cabeza en el SVG de 66×46 */
       /* AJUSTE DE CHOQUES (para que el juego avance): inmunidad tras un golpe, tope de retroceso y frecuencia de embestidas */
       const MOOD_HOLD = 4 /* s mínimos que dura una expresión antes de poder cambiar */,
         MOOD_STABLE = 1.5; /* s que debe sostenerse la condición de la nueva expresión */
       const TIRED_MS = 10000; /* una tortuga sin interacción durante 10 s pone cara de agotado */
-      const IMMUNE_S = 12 /* s sin poder chocar otra vez tras un golpe (a ninguna de las dos) */,
-        RAM_P = 0.12 /* probabilidad de embestir a la más cercana en cada decisión */,
-        DECIDE_MIN = 6,
-        DECIDE_VAR = 8; /* cada 6-14 s decide qué hacer */
-      /* CUOTA DE CHOQUES: cada carrera tiene hasta MAX_HITS choques (nunca más). Se reparten entre el 30 % y el
-         HITS_DONE_AT % del recorrido de la líder; si van atrasados respecto a ese calendario, el juego FUERZA el choque. */
-      /* Máx. 3 choques por tortuga. Cada choque involucra a DOS tortugas: con 5 tortugas × 3 = 15 "golpes" (impactos recibidos),
-         y como van de a pares caben 7 choques (14 golpes; un 15.º golpe exigiría un choque de tres). Los choques son PROGRAMADOS:
-         se reparten de forma proporcional al avance de la líder (30 % → HITS_DONE_AT %) y siempre eligen a las tortugas con menos golpes. */
-      const GIFT_PROT_S = 15; /* segundos de protección anti-choque tras recibir un regalo */
-      const MAX_PER_TURTLE = 3,
-        MAX_HITS = Math.floor((5 * MAX_PER_TURTLE) / 2) /* 7 choques */,
-        HITS_DONE_AT = 92;
-      const hitsEl = document.createElement("div");
-      hitsEl.id = "hitsEl";
-      hitsEl.style.cssText = "position:fixed;left:8px;top:8px;z-index:50;padding:3px 9px;border-radius:12px;background:rgba(0,0,0,.55);color:#fff;font:700 14px system-ui,sans-serif;pointer-events:none";
-      document.body.append(hitsEl);
-      function updHits() { hitsEl.textContent = "💥 " + S.hits + "/" + MAX_HITS + " · " + (S.hits * 2) + "/" + MAX_PER_TURTLE * 5 + " hits"; }
-      updHits();
-      function hitQuota() {
-        let L = 0;
-        for (const c of C) L = Math.max(L, S.pos[c.c]);
-        const f = Math.max(0, Math.min(1, (L - STRAIGHT_UNTIL) / (HITS_DONE_AT - STRAIGHT_UNTIL)));
-        return Math.ceil(MAX_HITS * f);
-      }
       const CRY_LEFT = 30; /* % de pista que le falta a la líder para que los últimos 3 puestos lloren */
-      const flipTf = (t) => (t.fs ? " perspective(700px) rotateX(" + t.fX.toFixed(1) + "deg) rotateZ(" + t.fZ.toFixed(1) + "deg)" : "");
-      const SUPER_V = 22; /* unidades de pista/s de SÚPER ENERGÍA que se suman a la agresora cuando corre a atacar (VMAX normal = 2.4; antes 9) */
-      const idleT = (t) => performance.now() - (t.lastEv || 0) > TIRED_MS; /* sin interacción durante TIRED_MS = inactiva */
-      const HIT_AFTER_REC = 3; /* el siguiente choque ocurre HIT_AFTER_REC s DESPUÉS de que todas se recuperaron del anterior (sin retroceso, sin volteo, sin cara de golpe) */
-      const ANGRY_LEAD = 1; /* s de cara de enojo y cabeza roja ANTES de salir corriendo a atacar (antes 10 s; ahora corto para que el ataque ocurra ~3 s tras recuperarse) */
-      let hitPlan = null; /* {a, b, go}: par elegido para el próximo choque y tNow en que se arma */
-      const pairCool = {},
-        pairLock = {}; /* par en contacto que ya tuvo su choque */
-      function boom(x, y, s) {
-        if (lanes.querySelectorAll(".boom").length > 6) return;
-        const e = document.createElement("i");
-        e.className = "boom";
-        e.textContent = "💥";
-        e.style.left = x.toFixed(1) + "px";
-        e.style.top = y.toFixed(1) + "px";
-        e.style.fontSize = (1.2 + 1.6 * s).toFixed(2) + "rem";
-        lanes.append(e);
-        setTimeout(() => e.remove(), 2250);
+      /* ===== CHOQUES ENTRE CAPARAZONES =====
+         Cada tortuga pasea por su carril; cada RAM_MIN..RAM_MAX s dos tortugas vecinas que van lado a lado hacen que una embista
+         a la otra (angryT, brillo rojo). Si sus caparazones se tocan (RX × ancho, RY × alto; RY_NAT si ninguna embiste) hay UN solo impacto por contacto:
+         las dos ponen cara de golpe HIT_FACE_S s, retroceden RECOIL unidades (a RECOIL_RATE u/s), se sacuden, una esquiva hacia
+         arriba y la otra hacia abajo, y quedan inmunes IMMUNE_S s. Después se recuperan solas. Máx. HIT_MAX choques por tortuga. */
+      const HIT = { RECOIL: 6, RECOIL_RATE: 7, FACE_S: 4.5, IMMUNE_S: 7, MAX: 3, RAM_MIN: 14, RAM_MAX: 26, RAM_S: 5, RX: 0.55, RY: 0.75, RY_NAT: 0.55, NEAR: 1.2, START: 5, END: 85 };
+      const inFight = (t) => t.angryT > 0 || t.dodgeT > 0;
+      function hitPair(a, b) {
+        /* a = la de arriba (carril menor), b = la de abajo */
+        [[a, -1, b], [b, 1, a]].forEach(([k, dir, other]) => {
+          const t = T[k], isBot = !!(slotPlayer(k) && slotPlayer(k).isBot);
+          t.ouchT = HIT.FACE_S;
+          t.immT = HIT.IMMUNE_S;
+          t.hits++;
+          t.angryT = 0;
+          t.ramTo = null;
+          t.dodgeT = 1.6;
+          t.dodgeDir = dir; /* la de arriba sale hacia arriba y la de abajo hacia abajo */
+          t.jv = 70 * dir; /* sacudida del caparazón */
+          if (!isBot) { t.back += HIT.RECOIL; t.vs *= 0.3; } /* el bot de prueba conserva su ritmo exacto */
+          emojiFx(k, "hit", 3);
+          ringFx(k, false);
+        });
+        SFX.crash(0.6);
+        burstAt(...turPos(a), 16, true);
       }
-      /* Física de choques y transformación final de cada tortuga. Los desplazamientos por choque (ox, oy)
-         son visuales: vuelven a 0 con un resorte amortiguado y no tocan S.pos. */
+      function collisions(dt) {
+        if (!GEO.k) return;
+        const bh = GEO.H / C.length, live = S.go && !S.over;
+        C.forEach((c) => {
+          const t = T[c.c];
+          t.ouchT = Math.max(0, t.ouchT - dt);
+          t.immT = Math.max(0, t.immT - dt);
+          t.angryT = Math.max(0, t.angryT - dt);
+          t.dodgeT = Math.max(0, t.dodgeT - dt);
+          if (t.angryT <= 0) t.ramTo = null;
+          t.jv += (-70 * t.jl - 8 * t.jv) * dt; /* vaivén amortiguado tras el golpe */
+          t.jl += t.jv * dt;
+          t.sprint = t.angryT > 0;
+          t.tur.classList.toggle("ouch", t.ouchT > 0);
+          t.tur.classList.toggle("angry", t.angryT > 0 && live);
+        });
+        if (!live) return;
+        /* 1) cada tanto, una tortuga embiste a su vecina */
+        S.ramT -= dt;
+        if (S.ramT <= 0) {
+          S.ramT = HIT.RAM_MIN + Math.random() * (HIT.RAM_MAX - HIT.RAM_MIN);
+          const cand = [];
+          for (let i = 0; i < C.length - 1; i++) {
+            const a = T[C[i].c], b = T[C[i + 1].c], pa = S.pos[C[i].c], pb = S.pos[C[i + 1].c];
+            if (a.immT > 0 || b.immT > 0 || a.hits >= HIT.MAX || b.hits >= HIT.MAX || inFight(a) || inFight(b)) continue;
+            if (pa > HIT.END || pb > HIT.END || pa < HIT.START || pb < HIT.START || Math.abs(pa - pb) * GEO.ppu > HIT.NEAR * GEO.tw) continue;
+            cand.push(i);
+          }
+          if (cand.length) {
+            const i = rnd(cand), up = Math.random() < 0.5, ag = T[C[up ? i : i + 1].c];
+            ag.angryT = HIT.RAM_S;
+            ag.ramTo = C[up ? i + 1 : i].c;
+            ag.ramDir = up ? 1 : -1;
+          }
+        }
+        /* 2) la embestidora apunta su altura hacia la vecina (el caparazón queda a 0.4 de alto de distancia) */
+        C.forEach((c) => {
+          const t = T[c.c];
+          if (t.angryT > 0 && t.ramTo) t.zT = T[t.ramTo].zy + t.ramDir * (bh - 0.4 * GEO.th);
+        });
+        /* 3) impacto entre caparazones vecinos */
+        for (let i = 0; i < C.length - 1; i++) {
+          const ka = C[i].c, kb = C[i + 1].c, a = T[ka], b = T[kb];
+          if (a.immT > 0 || b.immT > 0 || a.hits >= HIT.MAX || b.hits >= HIT.MAX) continue;
+          if (S.pos[ka] < HIT.START || S.pos[kb] < HIT.START) continue; /* en la salida van todas lado a lado: aún no chocan */
+          const dx = Math.abs(S.pos[kb] - S.pos[ka]) * GEO.ppu, dy = Math.abs(b.rtPx - a.rtPx);
+          const ry = a.angryT > 0 || b.angryT > 0 ? HIT.RY : HIT.RY_NAT; /* embistiendo alcanza más; al azar solo si de verdad se montan */
+          if (dx < HIT.RX * GEO.tw && dy < ry * GEO.th) hitPair(ka, kb);
+        }
+      }
       function physics(dt) {
         const g = GEO;
         if (!g.k) return;
-        const n = C.length,
-          live = S.go && !S.over;
-        const P = C.map((c, i) => {
+        const bh = g.H / C.length;
+        C.forEach((c, i) => {
           const t = T[c.c];
-          return {
-            t,
-            k: c.c,
-            bx: g.ppu * Math.min(100, S.pos[c.c]),
-            by: ((g.H - g.th) * i) / (n - 1),
-          };
+          t.rtPx = i * bh + (bh - g.th) / 2 + t.zy;
+          /* --rt = altura real de la tortuga en la pista: con ella se mueven también 🎁, polvo y etiquetas */
+          t.trk.style.setProperty("--rt", t.rtPx.toFixed(1) + "px");
+          t.tur.style.transform = "rotate(" + t.psi.toFixed(2) + "deg)";
         });
-        for (const p of P) {
-          const t = p.t;
-          t.ovx += (-28 * t.ox - 10 * t.ovx) * dt; /* resorte casi críticamente amortiguado: empuja y vuelve sin rebotar */
-          t.ovy += (-28 * t.oy - 10 * t.ovy) * dt;
-          t.ox += t.ovx * dt;
-          t.oy += t.ovy * dt;
-          t.ox = Math.max(-0.7 * g.tw, Math.min(0.7 * g.tw, t.ox));
-          t.oy = Math.max(-0.6 * g.th, Math.min(0.6 * g.th, t.oy));
-        }
-        for (const q of P) q.t.sprint = false; /* la súper energía se recalcula en cada cuadro */
-        /* RECUPERACIÓN: S.recAt = instante en que TODAS quedaron recuperadas (sin retroceso, sin volteo y sin cara de golpe); null si alguna no */
-        const allOk = live && P.every((q) => !q.t.fs && q.t.back <= 0.05 && q.t.ouchT <= 0);
-        if (!allOk) S.recAt = null;
-        else if (S.recAt == null) S.recAt = tNow;
-        const behind = live && S.hits < hitQuota();
-        /* PLAN DE CHOQUE: primero se ELIGE al par y se enojan (cara de enojo) ANGRY_LEAD s antes; recién entonces se arma el
-           choque (se buscan y pueden impactar). Solo impacta el par del plan. */
-        if (!live) hitPlan = null;
-        const pk = (k) => P.find((q) => q.k === k);
-        if (hitPlan) {
-          const Pa = pk(hitPlan.a), Pb = pk(hitPlan.b);
-          const vq = hitPlan.ag === hitPlan.a ? Pb : Pa; /* la golpeada (el tope de golpes solo cuenta para ella) */
-          if (hitPlan.gift ? (!Pa || !Pb || tNow > hitPlan.go + 25) : !Pa || !Pb || vq.t.hits >= MAX_PER_TURTLE || tNow > hitPlan.go + 25) hitPlan = null;
-        }
-        /* REGALO: la tortuga que lo recibe embiste YA a otra (la puntera si va detrás, si no la más cercana). Queda protegida GIFT_PROT_S s:
-           no ataca en choques programados y, si la golpean, no sufre daño: quien la ataque vuelve a la línea de partida. */
-        if (live && S.giftQ.length && !(hitPlan && hitPlan.gift)) {
-          const ga = pk(S.giftQ.shift());
-          if (ga) {
-            /* REGLA: ataca SIEMPRE la última. Si la última es otra, embiste a la del regalo (protegida: no recibe daño y la atacante vuelve a la salida);
-               si la del regalo es la última, ella embiste a la puntera. */
-            const lastQ = P.reduce((m, q) => (S.pos[q.k] < S.pos[m.k] ? q : m));
-            let atk = null, vic = null;
-            if (lastQ !== ga) { atk = lastQ; vic = ga; }
-            else {
-              const others = P.filter((q) => q !== ga && q.t.hits < MAX_PER_TURTLE && q.t.ouchT <= 0 && !q.t.fs && q.t.back <= 0.05);
-              if (others.length) { atk = ga; vic = others.reduce((m, q) => (S.pos[q.k] > S.pos[m.k] ? q : m)); }
-            }
-            if (atk && atk.t.ouchT <= 0 && !atk.t.fs && atk.t.back <= 0.05) {
-              pairLock[atk.k + vic.k] = pairLock[vic.k + atk.k] = false;
-              hitPlan = { a: atk.k, b: vic.k, ag: atk.k, go: tNow, gift: true };
-            }
-          }
-        }
-        if (!hitPlan && behind && S.recAt != null) { /* el plan se arma apenas se recuperan todas: enojo + carrera de ataque caben dentro de los 3 s */
-          /* REGLA: el que ataca es SIEMPRE el que va en el ÚLTIMO puesto. Embiste a la tortuga puntera; si esa no puede ser golpeada,
-             a la más cercana que sí pueda (sin cupo de golpes agotado ni adolorida). */
-          const lastP = [...P].sort((x, y) => S.pos[x.k] - S.pos[y.k])[0];
-          const cands = P.filter((q) => q !== lastP && q.t.hits < MAX_PER_TURTLE && q.t.ouchT <= 0 && !pairLock[lastP.k + q.k] && !pairLock[q.k + lastP.k]);
-          if (lastP.t.ouchT <= 0 && cands.length) {
-            const lead = cands.reduce((m, q) => (S.pos[q.k] > S.pos[m.k] ? q : m)),
-              vic = lead;
-            hitPlan = { a: lastP.k, b: vic.k, ag: lastP.k, go: tNow + ANGRY_LEAD };
-          }
-        }
-        const armed = !!hitPlan && tNow >= hitPlan.go;
-        if (hitPlan) {
-          const fa = pk(hitPlan.ag),
-            fb = pk(hitPlan.ag === hitPlan.a ? hitPlan.b : hitPlan.a); /* fa = agresor, fb = la que recibe el golpe */
-          /* SOLO el agresor se enoja (cara de enojo + cabeza roja hirviendo) desde ANGRY_LEAD s antes */
-          fa.t.rage = Math.max(0, Math.min(1, 1 - (hitPlan.go - tNow) / ANGRY_LEAD));
-          fa.t.angryT = 3;
-          if (armed) {
-            const span = g.H - g.th;
-            /* el agresor se dirige hacia la otra y no cambia de idea; la otra sigue su camino */
-            fa.t.zT = Math.max(-fa.by, Math.min(span - fa.by, fb.by + fb.t.zy - fa.by));
-            fa.t.zTimer = 5;
-            /* la de adelante afloja un poco para que la de atrás la alcance (sin regalar la victoria) */
-            const lead = S.pos[fa.k] >= S.pos[fb.k] ? fa : fb;
-            if (S.pos[fa.k] <= S.pos[fb.k] + 1.5) fa.t.sprint = Math.max(0.3, Math.min(1, (S.pos[fb.k] - S.pos[fa.k] + 2) / 8)); /* ¡SÚPER ENERGÍA!: la agresora que va atrás sale corriendo a atacar */
-            else if (S.pos[lead.k] < 96 && Math.abs(S.pos[fa.k] - S.pos[fb.k]) * g.ppu > 0.7 * g.tw) lead.t.slow = Math.min(lead.t.slow, 0.2); /* agresora adelantada: espera a la otra */
-          }
-        }
-        /* la física de cuerpos rígidos corre SIEMPRE (también en la salida y la meta): las tortugas nunca se encimen */
-        for (let a = 0; a < n - 1; a++)
-           for (let b2 = a + 1; b2 < n; b2++) {
-            const A = P[a],
-              B = P[b2];
-            if (S.pos[A.k] < STRAIGHT_UNTIL || S.pos[B.k] < STRAIGHT_UNTIL) continue; /* tramo recto, sin choques */
-            const
-              ta = A.t,
-              tb = B.t;
-            const ax = A.bx + ta.ox,
-              ay = A.by + ta.zy + ta.oy,
-              bx = B.bx + tb.ox,
-              by = B.by + tb.zy + tb.oy;
-            let best = 0, nx = 0, ny = 1, hx = 0, hy = 0;
-            for (const ca of HIT)
-              for (const cb of HIT) {
-                const dx = bx + cb[0] * g.k - (ax + ca[0] * g.k),
-                  dy = by + cb[1] * g.k - (ay + ca[1] * g.k),
-                  d = Math.hypot(dx, dy),
-                  pen = (ca[2] + cb[2]) * g.k - d;
-                if (pen > best) {
-                  best = pen;
-                  nx = d > 0.001 ? dx / d : 0;
-                  ny = d > 0.001 ? dy / d : 1;
-                  hx = ax + ca[0] * g.k + nx * ca[2] * g.k;
-                  hy = ay + ca[1] * g.k + ny * ca[2] * g.k;
-                }
-              }
-            const key = A.k + B.k;
-            if (best <= 0) {
-              /* el contacto termina → se libera el par (con una pausa mínima) para un choque futuro */
-              if (pairLock[key] && tNow - (pairCool[key] || -9) > 1) pairLock[key] = false;
-              continue;
-            }
-            /* velocidades de cada tortuga en px/s (avance + zigzag + rebote) */
-            const vax = ta.va * g.ppu + ta.ovx,
-              vay = ta.zvy + ta.ovy,
-              vbx = tb.va * g.ppu + tb.ovx,
-              vby = tb.zvy + tb.ovy;
-            const vn = (vax - vbx) * nx + (vay - vby) * ny; /* >0 = se acercan */
-            /* SÓLIDOS: se resuelve TODA la penetración en el mismo cuadro (mitad cada una) y se anula la velocidad con que se
-               acercan (choque inelástico), así ninguna atraviesa ni se encima sobre la otra */
-            const sep = best * 0.55;
-            ta.ox -= nx * sep; ta.oy -= ny * sep;
-            tb.ox += nx * sep; tb.oy += ny * sep;
-            if (vn > 0) {
-              const imp = vn * 0.5;
-              ta.ovx -= nx * imp; ta.ovy -= ny * imp;
-              tb.ovx += nx * imp; tb.ovy += ny * imp;
-            }
-            /* UN SOLO CHOQUE por contacto: mientras sigan tocándose no se repite impacto, sonido ni frenado */
-            if (pairLock[key]) continue; /* un solo choque por contacto */
-            const gp = !!hitPlan && !!hitPlan.gift; /* choque por regalo: sin cuota global ni espera de recuperación */
-            if (!gp && S.hits >= MAX_HITS) continue; /* cuota completa: ya no hay más choques en esta carrera */
-            if (!gp && (S.recAt == null || tNow - S.recAt < HIT_AFTER_REC)) continue; /* solo 3 s después de que todas se recuperaron */
-            /* los choques son programados: solo impacta el par del plan, y solo después de los ANGRY_LEAD s de enojo */
-            if (!armed || !hitPlan || !((hitPlan.a === A.k && hitPlan.b === B.k) || (hitPlan.a === B.k && hitPlan.b === A.k))) continue;
-            if (!gp && (hitPlan.ag === A.k ? tb : ta).hits >= MAX_PER_TURTLE) continue; /* máx. 3 golpes recibidos por tortuga */
-            const vnE = Math.max(vn, 30); /* velocidad de choque efectiva (que siempre se note el rebote) */
-            pairLock[key] = true;
-            pairCool[key] = tNow;
-            const agK = hitPlan.ag; /* quién atacó (el plan se borra justo después) */
-            S.recAt = null;
-            hitPlan = null;
-            const isGift = gp,
-              atkT = agK === A.k ? ta : tb, /* la que atacó */
-              vicT = atkT === ta ? tb : ta, /* la golpeada */
-              shielded = vicT.protT > 0, /* golpeó a una protegida: ella no sufre daño y la atacante lo paga */
-              fxT = shielded ? [atkT] : isGift ? [vicT] : [ta, tb]; /* a quién afecta el golpe */
-            if (shielded) { if (!isGift) { S.hits++; atkT.hits++; } }
-            else if (isGift) vicT.hits++;
-            else { S.hits++; ta.hits++; tb.hits++; }
-            updHits();
-            ta.immT = tb.immT = IMMUNE_S;
-            const s = Math.min(1, Math.max(0.25, vnE / 40));
-            /* rebote único (casi elástico, e = 0.6; ×1.6 exagera para que se vea) */
-            /* SIN REBOTE: tras el choque las tortugas no salen disparadas; solo se separa lo justo para no atravesarse
-               y la agresora se desliza hacia atrás (retroceso) hasta el punto que le corresponde */
-            const j = 0;
-            fxT.forEach((q) => { q.hit = 1; });
-            ta.angryT = tb.angryT = 0;
-            ta.rage = tb.rage = 0;
-            for (const q of fxT) { q.fs = 1; q.fT = 0; q.fX = 0; q.fZ = 0; q.ret = 0; } /* voltea el caparazón y gira mientras retrocede */
-            fxT.forEach((q) => { q.ouchT = 9; }); /* cara de golpe en las dos: dura todo el retroceso (~12 s) y un rato más */
-            /* el choque FRENA a las dos: pierden hasta 65 % de velocidad y la recuperan en ~2 s */
-            fxT.forEach((q) => { q.slow = Math.min(q.slow, 1 - 0.65 * s); q.ve *= 1 - 0.5 * s; });
-            /* La que atacó vuelve al INICIO de la partida (se desliza hacia atrás hasta 0);
-               la colisionada (víctima) retrocede el 50 % del recorrido TOTAL (50 de 100), o hasta la salida si lleva menos */
-            if (!S.over && !S.winner) {
-              const q = agK === A.k ? A : B,
-                v = q === A ? B : A;
-              if ((shielded || !isGift) && S.pos[q.k] < CFG.win) { q.t.back = S.pos[q.k]; q.t.backTot = q.t.back; }
-              if (!shielded && S.pos[v.k] < CFG.win) { v.t.back = Math.min(S.pos[v.k], CFG.win * 0.5); v.t.backTot = v.t.back; }
-            }
-            /* una sale hacia arriba y la otra hacia abajo */
-            const up = ay <= by ? ta : tb,
-              dn = up === ta ? tb : ta;
-            up.dodgeDir = -1; dn.dodgeDir = 1; /* (sin empujón vertical ni desvío: se quedan en su carril) */
-            /* giro: la de arriba gira a la izquierda, la de abajo a la derecha; más fuerte = más rápido */
-            up.dodgeT = dn.dodgeT = 0;
-            SFX.crash(s);
-            boom(hx, hy, s);
-          }
-        for (const p of P) {
-          const t = p.t;
-          /* --rt = altura real de la tortuga en la pista libre: con ella se mueven también 🎁, polvo y etiquetas */
-          t.trk.style.setProperty("--rt", (p.by + t.zy + t.oy).toFixed(1) + "px");
-          t.tur.style.transform =
-            "translate(" + t.ox.toFixed(2) + "px,0) rotate(" + t.psi.toFixed(2) + "deg)" + flipTf(t);
-        }
+        collisions(dt);
       }
-      /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio sin retroceder
-   ni generar puntos o decidir al ganador. En cada cuadro, para cada tortuga:
+      /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio
+   (y pueden chocar con su vecina) sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
    Después: si alguien llegó, queda como campeón y finish() termina la carrera en ese momento.
@@ -3678,50 +3913,35 @@
           const k = c.c,
             t = T[k],
             isW = k === S.winner;
-          /* retroceso por choque: cede el 30 % del recorrido total de la pista, deslizándose hacia atrás (no se teletransporta) */
-          if (t.back > 0) {
-            /* retroceso MUY LENTO: ~3 unidades/s como máximo y frena poco a poco al llegar al punto de retroceso (~12 s para 30 unidades) */
-            const bsp = Math.min(Math.max(3, (t.backTot || 0) / 8), Math.max(0.75, t.back * 0.6)),
-              bd = Math.min(t.back, bsp * dt);
-            S.pos[k] = Math.max(0, S.pos[k] - bd);
-            t.back -= bd;
-            t.ouchT = Math.max(t.ouchT, 1); /* mantiene la cara de golpe mientras retrocede */
-            if (t.back <= 0.05) { /* llegó al punto de partida: se recupera RÁPIDO (se endereza, la cara de dolor se va y recupera la velocidad) */
-              t.back = 0;
-              t.ret = 1;
-              t.ouchT = Math.min(t.ouchT, 1);
+          /* VELOCIDAD: la TORTUBOT va a ritmo constante (0 → 100 en CFG.botSec s). Las demás caminan a BASE_V y cada
+             interacción las multiplica ×2 / ×5 / ×10 / ×20 mientras dura su efecto (t.boosts). Los choques entre caparazones vecinos los resuelve collisions(). */
+          const p0 = S.pos[k],
+            own = slotPlayer(k),
+            isBotT = !!(own && own.isBot); /* la tortuga que corre el bot de prueba marca el ritmo: 0 → 100 en CFG.botSec */
+          let tgtV = 0;
+          if (S.go && !S.over) {
+            if (isBotT) tgtV = BOT_V;
+            else {
+              let mult = 1;
+              t.boosts = t.boosts.filter((b) => b.until > tNow);
+              for (const b of t.boosts) if (b.m > mult) mult = b.m;
+              t.mult = mult;
+              const wob = 1 + 0.12 * Math.sin(tNow * 0.7 + t.w) + 0.06 * Math.sin(tNow * 1.9 + t.w * 2.3);
+              tgtV = BASE_V * t.base * wob * mult;
             }
-            if (S.over || S.winner) t.back = 0;
+          } else t.mult = 1;
+          if (!isBotT && tgtV > 0) {
+            if (t.angryT > 0) tgtV *= 1.4; /* la embestidora acelera */
+            if (t.ouchT > 0) tgtV *= 0.4 + 0.6 * (1 - t.ouchT / HIT.FACE_S); /* aturdida: arranca despacio y se recupera */
           }
-          if (t.dodgeT > 0) t.dodgeT = Math.max(0, t.dodgeT - dt);
-          const p0 = S.pos[k]; /* para medir el avance real de este cuadro */
-          const wob = Math.max(
-            0.2,
-            1 +
-              0.6 * Math.sin(tNow * 0.7 + t.w) +
-              0.3 * Math.sin(tNow * 1.9 + t.w * 2.3),
-          );
-          /* Todos caminan: el avance base es lento; los eventos impulsan al país apoyado. */
-          const tgtC = CFG.crawl * t.base * wob;
-          t.cr += (tgtC - t.cr) * Math.min(1, dt * 2);
-          let tgtE = 0;
-          if (S.go && !isW && t.giftTarget !== null && S.pos[k] < t.giftTarget)
-            tgtE = VMAX;
-          else if (S.go && !isW && t.pend > 0.02)
-            tgtE = Math.max(0.25, Math.min(VMAX, Math.sqrt(2 * DEC * t.pend)));
-          t.ve += Math.max(-3 * dt, Math.min(ACC * dt, tgtE - t.ve));
-          t.slow += (1 - t.slow) * Math.min(1, dt * (t.ret ? 1.2 : 0.22)); /* se recupera despacio del choque (~8 s) */
-          const m = t.slow,
-            d = Math.min(t.ve * dt * m, t.pend);
-          t.pend = t.pend - d < 0.001 ? 0 : t.pend - d;
-          const crawl = S.go && !S.over ? t.cr * dt * m : 0;
-          S.pos[k] = Math.min(
-            CFG.win,
-            S.pos[k] + d + crawl,
-          ); /* puntos aceleran; cada participante también avanza lentamente */
-          /* SÚPER ENERGÍA: la agresora enojada que va atrás corre a atacar (sube y baja suave; nunca pasa del 95 %) */
-          t.sv = (t.sv || 0) + ((SUPER_V * (+t.sprint || 0)) - (t.sv || 0)) * Math.min(1, dt * 6);
-          if (t.sv > 0.05 && S.pos[k] < 95 && !S.over && !S.winner) S.pos[k] = Math.min(95, S.pos[k] + t.sv * dt);
+          if (isBotT) t.vs = tgtV; /* exacta: llega a 100 justo a los CFG.botSec s */
+          else t.vs += (tgtV - t.vs) * Math.min(1, dt * (tgtV > t.vs ? 2.5 : 1.2)); /* acelera y frena con suavidad */
+          S.pos[k] = Math.min(CFG.win, S.pos[k] + (S.go && !S.over && !isW ? t.vs * dt : 0));
+          if (t.back > 0) { /* retroceso por impacto: se gasta suave y nunca baja de 0 */
+            const d = Math.min(t.back, HIT.RECOIL_RATE * dt, S.pos[k]);
+            S.pos[k] -= d;
+            t.back -= d;
+          }
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
             const collected = t.giftEl;
             t.giftTarget = null;
@@ -3738,7 +3958,6 @@
             t.pend = 0;
             t.ve = 0;
           }
-          t.vs += (t.cr + d / dt + (t.sv || 0) - t.vs) * Math.min(1, dt * 8);
           /* 🥬 La primera tortuga en pasar el 25%, 50% y 75% se lleva un bono de energía */
           if (S.go && !S.over && S.slotUser[k])
             for (const m of [25, 50, 75])
@@ -3753,14 +3972,14 @@
             speedRatio = Math.max(0, sp / VMAX);
           /* cara: lento = triste, rápido = feliz, turbo (o ganadora) = súper feliz */
           /* quien va primero lleva corona y cara de líder, sin importar la velocidad */
-          const tired = S.go && !S.over && !isW && performance.now() - (t.lastEv || 0) > TIRED_MS; /* sin interacción: agotada */
+          const tired = S.go && !S.over && !isW && !isBotT && performance.now() - (t.lastEv || 0) > TIRED_MS; /* sin interacción: agotada */
           const mood = tired
             ? "tired"
             : k === firstK
               ? "lead"
-              : isW || t.tur.classList.contains("turbo") || t.vs > 1.4 / TIME_X
+              : isW || t.tur.classList.contains("turbo") || t.mult >= 5
                 ? "turbo"
-                : t.vs > 0.4 / TIME_X
+                : t.mult >= 2 || isBotT
                   ? "happy"
                   : "sad";
           t.tur.classList.toggle("first", k === firstK);
@@ -3822,47 +4041,7 @@
           };
           let fA = foot(0),
             fB = foot(0.5);
-          /* ===== VOLTERETA POR CHOQUE =====
-             1) se da la vuelta (boca arriba) y GIRA sobre su caparazón mientras retrocede, con patas y cabeza metidas;
-             2) al terminar el retroceso frena el giro, SACA LAS PATAS y patalea;
-             3) se endereza con otra vuelta completa y sigue caminando. */
           let legS = 1;
-          if (t.fs) {
-            t.fT += dt;
-            if (S.over || S.winner) { t.fs = 0; t.fX = 0; t.fZ = 0; }
-            else if (t.fs === 1) {
-              /* se da vuelta en ~1,3 s (arranque y llegada suaves) y al caer se bambolea un poco hasta quedar quieta */
-              const u1 = Math.min(1, t.fT / 1.3),
-                e1 = u1 * u1 * (3 - 2 * u1),
-                tr = Math.max(0, t.fT - 1.3);
-              t.fX = 180 * e1 + 5 * Math.exp(-2.6 * tr) * Math.sin(7 * tr);
-              t.hit = 1; /* cabeza adentro */
-              /* SIN GIRO: queda boca arriba y mueve las patas mientras retrocede */
-              t.fZ = 0;
-              const ul = Math.max(0, Math.min(1, (t.fT - 0.9) / 1.0));
-              legS = 0.05 + 0.95 * ul * ul * (3 - 2 * ul); /* las patas salen poco a poco al quedar boca arriba */
-              if (t.fT >= 2.6 && t.back <= 0.05) { t.fs = 2; t.fT = 0; t.fX = 180; } /* terminó el retroceso: sigue pataleando */
-            } else if (t.fs === 2) {
-              t.fX = 180;
-              t.hit = Math.max(0, 1 - t.fT * 1.2); /* asoma la cabeza */
-              legS = 1; /* las patas ya están afuera */
-              if (t.fT >= (t.ret ? 0.7 : 1.8)) { t.fs = 3; t.fT = 0; }
-            } else {
-              /* se endereza sin dar otra vuelta (la única vuelta ya la dio boca abajo) */
-              const u = Math.min(1, t.fT / (t.ret ? 1.1 : 2.0)),
-                e = u * u * (3 - 2 * u);
-              t.fX = 180 + 180 * e;
-              t.fZ = 0;
-              if (u >= 1) { t.fs = 0; t.fX = 0; t.fZ = 0; }
-            }
-            if ((t.fs === 1 && t.fT >= 1.0) || t.fs === 2 || (t.fs === 3 && t.fT < 1.0)) {
-              /* patalea boca arriba con un ritmo lento y suave (intensidad entra y sale gradualmente) */
-              const kk = t.fs === 1 ? Math.min(1, (t.fT - 1.0) / 0.8) : t.fs === 3 ? Math.max(0, 1 - t.fT / 1.0) : 1;
-              const kx = Math.sin(tNow * 8) * 2.2 * kk, ky = -Math.abs(Math.cos(tNow * 8)) * 2.4 * kk;
-              fA = "translate(" + kx.toFixed(2) + " " + ky.toFixed(2) + ")";
-              fB = "translate(" + (-kx).toFixed(2) + " " + (-ky * 0.7).toFixed(2) + ")";
-            }
-          }
           const lg = (f, cx, cy) => (legS < 1 ? f + " translate(" + cx + " " + cy + ") scale(" + legS.toFixed(2) + ") translate(" + -cx + " " + -cy + ")" : f);
           E.lnB.setAttribute("transform", lg(fA, 11.5, 38.8));
           E.lfF.setAttribute("transform", lg(fA, 36, 38.6));
@@ -3875,41 +4054,11 @@
             Math.max(-2, Math.min(2, acl * 0.9)) +
             0.9 * Math.sin(4 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv;
           t.lean += (leanT - t.lean) * Math.min(1, dt * 10);
-          t.jv += (-70 * t.jl - 8 * t.jv) * dt;
-          t.jl += t.jv * dt;
-          t.hit *= Math.max(0, 1 - dt * 0.55); /* la cabeza se asoma de nuevo poco a poco */
-          t.hs = (t.hs || 0) + (t.hit - (t.hs || 0)) * Math.min(1, dt * (t.hit > (t.hs || 0) ? 4 : 2)); /* cabeza suavizada: nunca salta */
-          if (t.ouchT > 0) t.ouchT = Math.max(0, t.ouchT - dt);
-          if (t.immT > 0) t.immT = Math.max(0, t.immT - dt);
-          if (t.protT > 0) t.protT = Math.max(0, t.protT - dt);
-          t.tur.classList.toggle("shield", t.protT > 0 && !(S.over || S.winner));
-          /* mientras dura la protección, un cartel sobre la tortuga informa que recibió un regalo (con los segundos que le quedan) */
-          if (t.protT > 0 && !(S.over || S.winner)) {
-            if (!t.pb) {
-              t.pb = document.createElement("div");
-              t.pb.className = "pbadge disp";
-              t.trk.append(t.pb);
-              t.pbS = 0;
-            }
-            const sec = Math.ceil(t.protT);
-            if (t.pbS !== sec || t.pbL !== LANG) {
-              t.pbS = sec;
-              t.pbL = LANG;
-              t.pb.textContent = "🎁 " + tr("Recibió regalo", "Got a gift") + " · 🛡️ " + sec + "s";
-            }
-          } else if (t.pb) {
-            t.pb.remove();
-            t.pb = null;
-          }
-          if (t.angryT > 0) t.angryT = Math.max(0, t.angryT - dt);
           /* llora mientras esté entre los últimos 3; si sube de puesto, sigue llorando 3 s más (sin cambios bruscos) */
           if (lastSet.has(k)) t.cryT = 3;
           else if (t.cryT > 0) t.cryT = Math.max(0, t.cryT - dt);
           t.tur.classList.toggle("cry", t.cryT > 0);
-          t.tur.classList.toggle("angry", t.angryT > 0 && !(S.over || S.winner));
           t.tur.classList.toggle("charge", !!t.sprint && !(S.over || S.winner));
-          t.tur.style.setProperty("--rg", (0.3 + 0.7 * t.rage).toFixed(2));
-          t.tur.classList.toggle("ouch", t.ouchT > 0);
           const lean = Math.max(-9, Math.min(9, t.lean + t.jl)),
             roll = 1.2 * Math.sin(2 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv, /* leve balanceo al apoyar cada par de patas */
             sk = " translate(0 42) skewX(" + lean.toFixed(2) + ") translate(0 -42)",
@@ -3920,13 +4069,12 @@
             "transform",
             "translate(" +
               (
-                sp * 0.25 -
-                t.hs * 5 +
+                sp * 0.25 +
                 Math.sin(2 * Math.PI * phi - 0.6) * 0.9 * Math.min(1, t.am / 2.5) * mv + /* el cuello acompaña el paso */
                 Math.sin(tNow * 0.8 + t.w) * 1.2 * t.hl
               ).toFixed(2) +
               " " +
-              (-2.8 * t.hl + sp * 0.12 + t.hs * 1.4 + Math.sin(tNow * 1.5 + t.w) * 0.25 + Math.sin(4 * Math.PI * phi) * 0.3 * Math.min(1, t.am / 2.5) * mv).toFixed(2) + /* respiración + leve vaivén */
+              (-2.8 * t.hl + sp * 0.12 + Math.sin(tNow * 1.5 + t.w) * 0.25 + Math.sin(4 * Math.PI * phi) * 0.3 * Math.min(1, t.am / 2.5) * mv).toFixed(2) + /* respiración + leve vaivén */
               ")" +
               skH,
           );
@@ -3936,50 +4084,32 @@
               (Math.sin(t.ph + 1) * 10 * Math.min(1, a / 2) * mv).toFixed(2) +
               " 6.8 35)",
           );
-          /* PISTA LIBRE : ya no hay carriles. Cada tortuga serpentea por TODO el ancho de la pista, de punta a punta,
-             hacia un objetivo propio que cambia despacio. Solo se mueve de lado a lado (nunca despega del suelo) y su
-             velocidad lateral está limitada por la de avance; gira hacia donde se desplaza. Las que no se mueven se quedan. */
+          /* CARRIL PROPIO: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril (±20 % del alto del carril).
+             Cada 2-6 s elige una altura nueva y se desplaza suave hacia ella mientras camina; gira hacia donde va. */
           {
             const li = C.indexOf(c),
-              thp = GEO.th,
-              span = GEO.k ? GEO.H - thp : 0,
-              base = (span * li) / (C.length - 1),
+              bh = GEO.k ? GEO.H / C.length : 0,
+              over = Math.max(0, (GEO.th - bh) / 2), /* cuánto sobresale la tortuga de su carril por arriba y por abajo */
+              fight = inFight(t),
+              rng = bh * (fight ? 0.7 : 0.2), /* al embestir o esquivar puede salirse del carril */
+              lo = li === 0 ? over : -rng, /* la 1.ª y la última no se salen de la pista */
+              hi = li === C.length - 1 ? -over : rng,
               vxp = Math.max(t.va * GEO.ppu, 6);
-            /* sin zigzag, pero con CONTACTO: cada 6-14 s decide (a) rara vez embestir a la más cercana,
-               (b) un desvío chico al azar o (c) seguir derecho (pocas colisiones). */
-            const straight = S.pos[k] < STRAIGHT_UNTIL; /* primeros 30 % en línea recta */
-            if (straight) { t.zT = 0; t.zTimer = 1; }
             t.zTimer -= dt;
             if (t.zTimer <= 0) {
-              t.zTimer = DECIDE_MIN + Math.random() * DECIDE_VAR;
-              const rr = Math.random(),
-                row = span / (C.length - 1);
-              let zn = null;
-              if (rr < RAM_P) {
-                let bj = -1, bd = 3 * GEO.tw;
-                for (let j = 0; j < C.length; j++) {
-                  if (j === li) continue;
-                  const d = Math.abs(S.pos[k] - S.pos[C[j].c]) * GEO.ppu;
-                  if (d < bd) { bd = d; bj = j; }
-                }
-                if (bj >= 0) zn = row * bj + T[C[bj].c].zy - base;
-              }
-              if (zn === null && rr < 0.5) zn = (Math.random() * 2 - 1) * 0.35 * thp;
-              if (zn !== null) t.zT = Math.max(-base, Math.min(span - base, zn));
+              t.zTimer = 2 + Math.random() * 4;
+              t.zT = lo + Math.random() * Math.max(0, hi - lo);
             }
-            const ya = base + t.zT;
-            /* tras un choque, una sube y la otra baja (dodgeDir) durante ~1.6 s */
-            const dg = !straight && t.dodgeT > 0 ? t.dodgeDir * 1.3 * thp * Math.min(1, t.dodgeT) : 0,
-              mz = Math.max(mv, Math.min(1, t.dodgeT) * 0.7);
-            let zt = t.zy + (ya + dg - base - t.zy) * mz;
-            t.zvy += ((zt - t.zy) * 4 - t.zvy * 4) * dt;
-            const vyMax = Math.max(1.2 * Math.max(vxp, 10) * (0.5 + 0.5 * mv), 0.45 * thp * mz) * (t.sprint ? 3 : 1);
+            if (t.dodgeT > 0) t.zT = t.dodgeDir * rng; /* tras el impacto: una sale hacia arriba y la otra hacia abajo */
+            t.zT = Math.max(lo, Math.min(hi, t.zT));
+            const zt = t.zy + (t.zT - t.zy) * (fight ? 1 : mv);
+            t.zvy += ((zt - t.zy) * 3 - t.zvy * 4) * dt;
+            const vyMax = (3 + 0.45 * vxp) * (fight ? 8 : 0.3 + 0.7 * mv); /* en embestida/esquive se mueve rápido aunque esté frenada */
             t.zvy = Math.max(-vyMax, Math.min(vyMax, t.zvy));
             t.zy += t.zvy * dt;
-            if (t.zy < -base) { t.zy = -base; t.zvy = Math.max(0, t.zvy); }
-            if (t.zy > span - base) { t.zy = span - base; t.zvy = Math.min(0, t.zvy); }
-            const psiT =
-              (Math.max(-0.4, Math.min(0.4, Math.atan2(t.zvy, vxp))) * 180) / Math.PI;
+            if (t.zy < lo) { t.zy = lo; t.zvy = Math.max(0, t.zvy); }
+            if (t.zy > hi) { t.zy = hi; t.zvy = Math.min(0, t.zvy); }
+            const psiT = (Math.max(-0.18, Math.min(0.18, Math.atan2(t.zvy, vxp))) * 180) / Math.PI * mv;
             t.psi += (psiT - t.psi) * Math.min(1, dt * 3);
           }
           if (t.vs > 1.3 / TIME_X) {
@@ -4039,10 +4169,11 @@
             entry.type === "chat"
               ? C.findIndex(
                   (c, i) =>
-                    _t.includes(_n(NATIONS[i].es)) ||
-                    _t.includes(_n(NATIONS[i].en)) ||
-                    _t === CODES[i].toLowerCase() ||
-                    (_fl(i) && _raw.includes(_fl(i))),
+                    i < HUMAN_N &&
+                    (_t.includes(_n(NATIONS[i].es)) ||
+                      _t.includes(_n(NATIONS[i].en)) ||
+                      _t === CODES[i].toLowerCase() ||
+                      (_fl(i) && _raw.includes(_fl(i)))),
                 )
               : -1;
           const _u = String(entry.username || "")
@@ -4053,7 +4184,7 @@
               (_i >= 0 && C[_i].c) ||
               S.pick.get(_u) ||
               S.slotOf.get(_u) ||
-              rnd(C).c;
+              rnd(C.slice(0, HUMAN_N)).c;
             registerPick(_u, _code);
             if (Date.now() - (lastSupportAt[_u] || 0) > 8000) {
               lastSupportAt[_u] = Date.now();
@@ -4122,22 +4253,8 @@
         } catch {}
       }
       function connect() {
-        fetch("/api/status")
-          .then((response) => {
-            if (!response.ok) throw new Error("No se pudo consultar la conexión de TikTok.");
-            return response.json();
-          })
-          .then(handleConnectorStatus)
-          .catch((error) => {
-            console.error("No se pudo consultar la conexión de TikTok:", error);
-            handleConnectorStatus({
-              connected: false,
-              status: "failed",
-              username: DEFAULT_CONNECTOR_USERNAME,
-              error: error.message,
-            });
-          });
         if (Q.has("ws")) {
+          document.getElementById("connectorStatus").hidden = true;
           let ws;
           try {
             ws = new WebSocket(CFG.ws);
@@ -4175,12 +4292,43 @@
           return;
         }
         const source = new EventSource("/api/events");
+        const statusButton = document.getElementById("connectorStatus");
+        let connectorState = { connected: false, username: "", status: "idle" };
+        const renderConnectorStatus = (next) => {
+          connectorState = { ...connectorState, ...next };
+          const username = String(connectorState.username || "").trim();
+          const connected = Boolean(connectorState.connected || connectorState.isConnected);
+          statusButton.classList.toggle("connected", connected);
+          statusButton.classList.toggle("disconnected", !connected);
+          statusButton.textContent = connected
+            ? `Conectado · @${username}`
+            : username
+              ? `Sin conexión · @${username}`
+              : "Configura TikTok en /backend";
+          statusButton.title = connected
+            ? `Conectado a @${username}. Haz clic para comprobar la conexión.`
+            : connectorState.status === "failed"
+              ? `Se agotaron los reintentos para @${username}. Haz clic para intentarlo de nuevo.`
+              : `Conectando a @${username}. Haz clic para reiniciar los reintentos.`;
+        };
+        const requestConnection = async () => {
+          try {
+            const response = await fetch("/api/reconnect", { method: "POST" });
+            const result = await response.json();
+            if (!response.ok && response.status !== 409) {
+              throw new Error(result.message || "No se pudo iniciar la conexión.");
+            }
+            if (result.username) connectorState.username = result.username;
+            if (result.message) statusButton.title = result.message;
+          } catch (error) {
+            statusButton.title = `No se pudo iniciar la conexión: ${error.message}`;
+          }
+        };
+        statusButton.addEventListener("click", requestConnection);
         source.addEventListener("status", (e) => {
           try {
-            handleConnectorStatus(JSON.parse(e.data));
-          } catch (error) {
-            console.error("No se pudo leer el estado de TikTok:", error);
-          }
+            renderConnectorStatus(JSON.parse(e.data));
+          } catch {}
         });
         source.addEventListener("update", (e) => {
           try {
@@ -4188,6 +4336,7 @@
             handleTikTokEntry(entry);
           } catch {}
         });
+        requestConnection();
       }
 
       /* ===== Bots de prueba: simulan eventos de TikTok llamando a los MISMOS manejadores que el WebSocket =====
@@ -4330,6 +4479,7 @@
         share: ["🔁", "🚀", "📣"],
         chat: ["💬", "🐢", "👏"],
         join: ["👋", "🐢", "✨"],
+        hit: ["💥", "💫", "⭐"],
       };
       /* Confeti que sale de un punto (x, y) de la pantalla */
       function burstAt(x, y, n, gold) {
@@ -4375,76 +4525,15 @@
           restartAnim(a, "shake");
         }
       }
-      /* ===== ALERTAS DE EVENTOS + BOTS DE PRUEBA =====
-         Alertas: lista corta abajo a la izquierda que REPORTA lo que llega (like, comentario, regalo, seguir, compartir, entrar).
-         Refleja la actividad que llega: no pide nada ni repite mensajes (reglas de contenido 1-3). Sin actividad muestra alertas de ejemplo marcadas DEMO.
-         Bots: cada pulsación de 🤖 agrega un espectador simulado (hasta 2) que entra, escribe su país, da likes, comenta,
+      /* ===== BOTS DE PRUEBA =====
+         Bots: los agrega el sistema solo (sin botón; hasta 2), cada uno un espectador simulado que entra, escribe su país, da likes, comenta,
          comparte, sigue y a veces regala, con ritmo irregular. Sus eventos pasan por los MISMOS manejadores que los reales
-         (registerSupport + scoreContestant) pero no se guardan en el ROSTER. Mantener pulsado 🤖 los detiene a todos. */
+         (registerSupport + scoreContestant) pero no se guardan en el ROSTER. */
       (() => {
-        const al = $("alerts"),
-          bA = $("qAlert"),
-          bB = $("qBot");
-        let on = Q.get("alerts") !== "0";
-        bA.classList.toggle("act", on);
-        bA.onclick = () => {
-          on = !on;
-          bA.classList.toggle("act", on);
-          if (!on) al.textContent = "";
-        };
-        let badge = "";
-        const toast = (cls, icon, user, text) => {
-          if (!on) return null;
-          const e = document.createElement("div");
-          e.className = "al " + cls;
-          const b = document.createElement("b");
-          b.textContent = user;
-          if (badge) {
-            const d = document.createElement("i");
-            d.className = "demo";
-            d.textContent = badge;
-            e.append(d);
-          }
-          e.append(icon + " ", b, " " + text);
-          while (al.children.length >= 4) al.firstChild.remove();
-          al.append(e);
-          setTimeout(() => e.remove(), 4000);
-          return e;
-        };
-        const likeToast = {};
-        function alertEvent(en) {
-          if (!on || !en || typeof en.type !== "string") return;
-          const u = shownName(String(en.username || "Alguien").trim().slice(0, 18) || "Alguien");
-          let ty = en.type;
-          if (["member", "enter", "joined"].includes(ty)) ty = "join";
-          if (ty === "like") {
-            const n = Math.max(1, Number(en.activityCount || en.count) || 1),
-              k = u.toLowerCase(),
-              L = likeToast[k];
-            if (L && L.e.isConnected && Date.now() - L.t < 2500) {
-              L.n += n;
-              L.t = Date.now();
-              L.e.lastChild.textContent = tr(" dio ", " gave ") + L.n + " likes";
-            } else {
-              const e = toast("e-lk", "👍", u, tr("dio ", "gave ") + (n === 1 ? tr("un like", "a like") : n + " likes"));
-              if (e) likeToast[k] = { e, n, t: Date.now() };
-            }
-          } else if (ty === "chat") {
-            const m = String(en.content || en.text || "").replace(/\s+/g, " ").trim();
-            toast("e-ch", "💬", u + ":", m ? (m.length > 36 ? m.slice(0, 35) + "…" : m) : tr("comentó", "commented"));
-          } else if (ty === "gift") {
-            const c = Math.max(1, Number(en.activityCount) || 1);
-            toast("e-gf", "🎁", u, tr("envió ", "sent ") + (en.content || tr("un regalo", "a gift")) + (c > 1 ? " ×" + c : ""));
-          } else if (ty === "follow") toast("e-fo", "❤️", u, tr("empezó a seguir", "started following"));
-          else if (ty === "share") toast("e-sh", "🔁", u, tr("compartió", "shared"));
-          else if (ty === "join") toast("e-jn", "👋", u, tr("entró", "joined"));
-        }
+        const humanEv = []; /* marcas de tiempo de eventos de personas reales */
         const baseHandle = handleTikTokEntry;
         handleTikTokEntry = function (entry, isBot) {
-          lastActivity = Date.now();
-          badge = entry && entry.sim ? "BOT" : "";
-          try { alertEvent(entry); } catch {}
-          badge = "";
+          if (entry && !entry.sim) humanEv.push(Date.now());
           if (entry && entry.sim) {
             (window.SIMK = window.SIMK || new Set()).add(String(entry.username).trim().toLocaleLowerCase());
             registerSupport(entry, true);
@@ -4455,39 +4544,8 @@
           return baseHandle(entry, isBot);
         };
 
-        /* ---- alertas de demostración ----
-           Mientras no llega ninguna actividad (ni real ni de bots), se muestran alertas de ejemplo con la insignia DEMO.
-           Son solo avisos visuales: NO suman puntos ni mueven las tortugas, no se guardan y se detienen en cuanto llega
-           el primer evento. Si hay 8 s sin actividad, vuelven. La campanita 🔔 las activa o las apaga. ?demo=0 las desactiva. */
-        let lastActivity = 0;
-        const DEMO_IDLE_MS = 8000;
-        if (Q.get("demo") !== "0") {
-          const DEMO_USERS = ["Lucía", "Mateo", "Ana_PY", "Carlos", "Sofi", "Diego", "Valen", "Rocío"];
-          const DEMO_CHAT_ES = ["vamos Paraguay", "qué carrera", "🐢🐢🐢", "dale Brasil", "uff"],
-            DEMO_CHAT_EN = ["go Paraguay", "what a race", "🐢🐢🐢", "come on Brazil", "wow"];
-          const DEMO_GIFT_ES = ["Rosa", "Corazón", "Dona"],
-            DEMO_GIFT_EN = ["Rose", "Heart", "Doughnut"];
-          const demoStep = () => {
-            if (Date.now() - lastActivity >= DEMO_IDLE_MS) {
-              const u = rnd(DEMO_USERS), r = Math.random();
-              const en =
-                r < 0.35 ? { type: "like", activityCount: 1 + ((Math.random() * 8) | 0) }
-                : r < 0.55 ? { type: "chat", content: rnd(tr(DEMO_CHAT_ES, DEMO_CHAT_EN)) }
-                : r < 0.7 ? { type: "join" }
-                : r < 0.82 ? { type: "share" }
-                : r < 0.92 ? { type: "follow" }
-                : { type: "gift", content: rnd(tr(DEMO_GIFT_ES, DEMO_GIFT_EN)), activityCount: 1 };
-              badge = "DEMO";
-              try { alertEvent({ ...en, username: u }); } catch {}
-              badge = "";
-            }
-            setTimeout(demoStep, 2500 + Math.random() * 3500);
-          };
-          setTimeout(demoStep, 2500);
-        }
-
         /* ---- bots ---- */
-        const MAXB = 2,
+        const MAXB = 1, /* un solo bot de prueba activo a la vez (el encadenado de más bots era legado) */
           bots = [];
         const GENERIC = ["jajaja", "qué carrera", "🐢🐢🐢", "vamos vamos", "uff", "quién gana?", "🔥🔥"],
           GENERIC_EN = ["lol", "what a race", "🐢🐢🐢", "let's go", "wow", "who wins?", "🔥🔥"];
@@ -4502,7 +4560,7 @@
           if (b.joined && !S.slotOf.has(bk)) return window.botKicked(bk); /* perdió su tortuga: se da de baja */
           let i = NATIONS.findIndex((n) => n.code === b.fav);
           if (i < 0) {
-            b.fav = rnd(NATIONS).code;
+            b.fav = rnd(NATIONS.slice(0, HUMAN_N)).code;
             i = NATIONS.findIndex((n) => n.code === b.fav);
             send("chat", b.name, { content: NATIONS[i].n });
           }
@@ -4536,28 +4594,18 @@
           b.t = setTimeout(() => botStep(b), 1200 + Math.random() * 4800);
         }
         const count = () => {
-          bB.setAttribute("data-n", String(bots.length));
-          $("botCount").textContent = tr("🤖 Bots activos: ", "🤖 Active bots: ") + bots.length;
+          document.documentElement.classList.toggle("hasbots", bots.length > 0); /* líneas de carril solo con bots */
         };
         window.__botCount = count;
         /* País de la ronda con menos bots (para repartirlos entre las tortugas). */
         function pickFav() {
           const use = (code) => bots.filter((x) => x.fav === code).length;
-          const min = Math.min(...NATIONS.map((n) => use(n.code)));
-          return rnd(NATIONS.filter((n) => use(n.code) === min)).code;
-        }
-        /* Avance (0..win) de la tortuga que el bot realmente empuja: la casilla que ocupa (S.slotOf), o null si aún no tiene.
-           La primera vez que la tiene se anota su posición inicial (p0). */
-        function botProgress(b) {
-          if (!b.slot) {
-            b.slot = S.slotOf.get(b.name.toLocaleLowerCase());
-            if (!b.slot) return null;
-            b.p0 = S.pos[b.slot] || 0;
-          }
-          return (S.pos[b.slot] || 0) - b.p0;
+          const pool = NATIONS.slice(0, HUMAN_N),
+            min = Math.min(...pool.map((n) => use(n.code)));
+          return rnd(pool.filter((n) => use(n.code) === min)).code;
         }
         function addBot() {
-          if (bots.length >= MAXB) return; /* máximo 2 bots; mantener pulsado 🤖 los detiene */
+          if (bots.length >= MAXB) return; /* máximo 1 bot; mantener pulsado 🤖 los detiene */
           if (!C.some((c) => !S.slotUser[c.c])) return; /* sin tortugas libres no entran más bots: son para las personas */
           const b = {
             name: rnd(NAMES) + ((100 + Math.random() * 900) | 0),
@@ -4570,7 +4618,6 @@
             t: null,
           };
           bots.push(b);
-          bB.classList.add("act");
           count();
           b.t = setTimeout(() => botStep(b), 200 + Math.random() * 600);
         }
@@ -4581,7 +4628,6 @@
             clearTimeout(b.t);
           }
           bots.length = 0;
-          bB.classList.remove("act");
           count();
         }
         /* Baja de un bot (una persona real tomó su tortuga, o no consiguió una). */
@@ -4591,7 +4637,6 @@
           bots[i].on = false;
           clearTimeout(bots[i].t);
           bots.splice(i, 1);
-          if (!bots.length) bB.classList.remove("act");
           count();
         };
         window.addBot = addBot;
@@ -4607,30 +4652,44 @@
           baseNewRound();
           stopBots();
           autoOn = Q.get("autobots") !== "0";
+          asleep = false;
+          calmSince = 0;
+          humanEv.length = 0;
         };
+        /* DORMIR: si la actividad humana es alta (≥ SLEEP_HI eventos en 10 s) los bots de prueba se duermen y sueltan su tortuga
+           para que la tome una persona; despiertan cuando baja a ≤ SLEEP_LO durante 8 s. Al empezar la ronda corren en cualquier tortuga libre. */
+        const SLEEP_HI = 6, SLEEP_LO = 2;
+        let asleep = false, calmSince = 0;
+        const humanLevel = () => {
+          const now = Date.now();
+          while (humanEv.length && now - humanEv[0] > 10000) humanEv.shift();
+          return humanEv.length;
+        };
+        function releaseBotLane(key) {
+          const code = S.slotOf.get(key);
+          if (!code) return;
+          S.slotOf.delete(key);
+          delete S.slotUser[code];
+          contestants.delete(key);
+          clearCrew(code);
+          setSlotAvatar(code, null);
+          T[code].tur.classList.remove("owned");
+        }
         setInterval(() => {
-          if (!autoOn || !S.go || S.over) return;
-          if (!bots.length) return addBot();
-          const last = bots[bots.length - 1];
-          if (bots.length < MAXB && (botProgress(last) || 0) >= CFG.win * 0.1) addBot();
+          const lvl = humanLevel();
+          if (!asleep && lvl >= SLEEP_HI && bots.length) {
+            asleep = true;
+            for (const b of [...bots]) { const k = b.name.toLocaleLowerCase(); window.botKicked(k); releaseBotLane(k); }
+            render();
+          } else if (asleep) {
+            if (lvl <= SLEEP_LO) { if (!calmSince) calmSince = Date.now(); else if (Date.now() - calmSince > 8000) { asleep = false; calmSince = 0; } }
+            else calmSince = 0;
+          }
+        }, 500);
+        setInterval(() => {
+          if (!autoOn || asleep || !S.go || S.over) return;
+          if (!bots.length) addBot();
         }, 300);
-        let hold = null,
-          held = false;
-        bB.addEventListener("pointerdown", () => {
-          held = false;
-          hold = setTimeout(() => {
-            held = true;
-            stopBots(true);
-          }, 700);
-        });
-        const up = () => clearTimeout(hold);
-        bB.addEventListener("pointerup", up);
-        bB.addEventListener("pointerleave", up);
-        bB.addEventListener("pointercancel", up);
-        bB.addEventListener("click", () => {
-          if (!held) addBot();
-        });
-        bB.addEventListener("contextmenu", (e) => e.preventDefault());
       })();
 
       /* Aplica el idioma activo a todo lo estático (título, botones, panel de pruebas, nombres de país). */
@@ -4641,7 +4700,9 @@
           const e = document.querySelector(sel);
           if (e) e.textContent = tr(es, en);
         };
-        set("#winner .wttl", "🏆 ¡GANADOR!", "🏆 WINNER!");
+        set("#winner .wttl", "🏆 1.º PUESTO", "🏆 1ST PLACE");
+        set("#helper2Title", "2.º · más apoyo", "2ND · TOP SUPPORTER");
+        set("#helper3Title", "3.º · más apoyo", "3RD · TOP SUPPORTER");
         set("#snd", "🔇 Toca la pantalla para activar el sonido", "🔇 Tap the screen to enable sound");
         set("#botsTitle", "Pruebas de interacción (P)", "Interaction tests (P)");
         const tt = (id, es, en) => {
@@ -4650,10 +4711,6 @@
           e.title = tr(es, en);
           e.setAttribute("aria-label", tr(es, en));
         };
-        tt("qAlert", "Alertas de eventos (like, comentario, regalo…)", "Event alerts (like, comment, gift…)");
-        tt("qBot", "Agrega un bot que simula espectadores reales · mantén pulsado para detenerlos", "Adds a bot that simulates real viewers · hold to stop them");
-        tt("qLang", "Idioma: Español · toca para cambiar a English", "Language: English · tap to switch to Español");
-        $("qLang").textContent = LANG.toUpperCase();
         const PANEL = {
           rose: ["1 Rosa", "1 Rose"], donut: ["2 Dona", "2 Doughnut"], galaxy: ["3 Galaxia", "3 Galaxy"], join: ["J Se une", "J Joins"],
           like: ["L Likes", "L Likes"], flood: ["F Avalancha", "F Flood"], follow: ["Seguidor", "Follower"], auto: ["A Auto", "A Auto"],
@@ -4674,14 +4731,10 @@
           const wi = C.findIndex((x) => x.c === S.winner);
           if (wi >= 0) wc.textContent = NATIONS[wi].n;
           const wt = document.querySelector("#winner .wttl");
-          if (wt) wt.textContent = tr("🏆 ¡GANADOR!", "🏆 WINNER!");
+          if (wt) wt.textContent = tr("🏆 1.º PUESTO", "🏆 1ST PLACE");
         }
         if (window.__botCount) window.__botCount();
       }
-      $("qLang").addEventListener("click", () => {
-        LANG = LANG === "es" ? "en" : "es";
-        applyLang();
-      });
       applyLang();
       newRound();
       requestAnimationFrame(frame);
@@ -4696,20 +4749,6 @@
         if (!cx) return;
         root.classList.add("pbg");
         const off = D.createElement("canvas"), o = off.getContext("2d");
-        const GL = {
-          C: [".XXX.", "X...X", "X....", "X....", "X....", "X...X", ".XXX."],
-          A: [".XXX.", "X...X", "X...X", "XXXXX", "X...X", "X...X", "X...X"],
-          R: ["XXXX.", "X...X", "X...X", "XXXX.", "X.X..", "X..X.", "X...X"],
-          E: ["XXXXX", "X....", "X....", "XXXX.", "X....", "X....", "XXXXX"],
-          P: ["XXXX.", "X...X", "X...X", "XXXX.", "X....", "X....", "X...."],
-          "Í": ["...X.", ".XXX.", "..X..", "..X..", "..X..", "..X..", ".XXX."],
-          S: [".XXXX", "X....", "X....", ".XXX.", "....X", "....X", "XXXX."],
-          O: [".XXX.", "X...X", "X...X", "X...X", "X...X", "X...X", ".XXX."],
-          U: ["X...X", "X...X", "X...X", "X...X", "X...X", "X...X", ".XXX."],
-          N: ["X...X", "XX..X", "XX..X", "X.X.X", "X..XX", "X..XX", "X...X"],
-          T: ["XXXXX", "..X..", "..X..", "..X..", "..X..", "..X..", "..X.."],
-          I: [".XXX.", "..X..", "..X..", "..X..", "..X..", "..X..", ".XXX."],
-        };
         const mk = (s) => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
         const hs = (x, y) => {
           let h = (x * 374761393 + y * 668265263) | 0;
@@ -4721,8 +4760,11 @@
         const SKIN = ["#f2c09a", "#d9986c", "#a86b44", "#7a4a2c", "#ffd9b8"],
           HAIR = ["#2b1b12", "#4a2c17", "#e8c14a", "#c24a1e", "#111111"],
           SHIRT = ["#ff3b4e", "#2f7bff", "#35d36a", "#ffd23a", "#ff4fd8", "#22e0e0", "#ffffff", "#ff8a1e", "#9b5cff"].map((c) => [c, sh(c, 0.7)]);
-        let G = null, people = [], stars = [], glow = [], clouds = [], fl = { i: -1, u: 0 };
+        let G = null, people = [], stars = [], glow = [], clouds = [], fl = { i: -1, u: 0 }, lamps = [], lightImg = null;
 
+        /* ILUMINACIÓN: cuando baja el sol (sc.n sube) el estadio se oscurece y se encienden los focos; de día quedan apagados.
+           LAMP_OFF = foco apagado; LAMP_ON = foco encendido. NIGHT_TINT = color por el que se multiplica la escena de noche. */
+        const LAMP_OFF = "#6b668f", NIGHT_TINT = [105, 118, 186];
         const build = () => {
           const vw = innerWidth, vh = innerHeight;
           const P = Math.max(4, Math.round(Math.min(vw, vh) / 150));
@@ -4745,8 +4787,11 @@
           const sx = Math.round(L.left / P), fw = Math.max(3, Math.round((0.8 * rem) / P)), fx = Math.round(L.right / P) - fw;
           const s = Math.max(1, Math.min(3, Math.floor((Hv * 0.3) / 7), Math.floor((W - 20) / 80)));
           /* el estadio ocupa lo justo (fachada + gradas) y TODO el resto es cielo */
-          const wallTop = T - 3, standRows = Math.max(6, Math.round(Hv * 0.14));
-          const facTop = Math.max(6, wallTop - standRows - (7 * s + 6)), signY = facTop + 3, facBot = signY + 7 * s + 3;
+          const wallTop = T - 3, standRows = Math.max(6, Math.round(Hv * 0.14)) + (D.getElementById("howto") ? Math.round(((vw > vh ? 0.065 : 0.05) * vh) / P) : 0); /* gradas más altas: dejan sitio a la guía visual bajo el cartel */
+          const facTop0 = Math.max(6, wallTop - standRows - (7 * s + 6)), signY = facTop0 + 3, facBot = signY + 7 * s + 3, facTop = facBot; /* sin cartel ni fachada: el cielo llega hasta las gradas */
+          /* franja libre bajo el cartel grande (sobre las gradas): ahí va la guía visual #howto, de ancho completo */
+          root.style.setProperty("--how-top", (facBot + 1) * P + "px");
+          root.style.setProperty("--how-h", Math.max(36, (T - 2 - (facBot + 1)) * P) + "px");
           const f = (c, x, y, w, h) => { o.fillStyle = c; o.fillRect(Math.round(x), Math.round(y), w, h); };
 
           /* el cielo, el sol, la luna, las nubes y el brillo de los focos se dibujan en draw() según el escenario */
@@ -4754,24 +4799,22 @@
           const mx = Math.round(W * 0.82), mr = Math.max(3, Math.round(facTop * 0.26)), my = Math.max(mr + 3, Math.round(facTop * 0.46));
           /* torres de focos (la estructura es fija; el halo se dibuja de noche) */
           glow = [];
-          [3, W - 6].forEach((tx) => {
+          lamps = [];
+          [3, W - 6].forEach((tx, ti) => {
             const top = Math.max(1, Math.round(facTop * 0.3));
             for (let y = top - 2; y <= top + 4; y++) for (let x = tx - 3; x <= tx + 5; x++)
               if (y < facTop && x >= 0 && x < W && ((x + y) & 1) === 0 && (y < top || y > top + 2 || x < tx - 1 || x > tx + 3)) glow.push([x, y]);
             f("#1a1840", tx + 1, top + 3, 1, facTop - top - 3);
             f("#232050", tx - 1, top, 5, 3);
-            [0, 1, 2].forEach((k) => f("#fffbd0", tx + k, top + 1, 1, 1));
+            [0, 1, 2].forEach((k) => f(LAMP_OFF, tx + k, top + 1, 1, 1)); /* apagadas: draw() las enciende según la luz del día */
+            lamps.push({ x: tx + 1, y: top + 1, tx, dir: ti === 0 ? 1 : -1 });
           });
           /* nubes (se mueven despacio; solo se ven de día) */
           const R3 = mk(31);
           clouds = [];
           for (let i = 0; i < 7; i++)
             clouds.push({ x: R3() * (W + 40), y: 1 + Math.round(R3() * Math.max(1, facTop * 0.55)), w: 9 + ((R3() * 14) | 0), sp: 0.5 + R3() * 1.3 });
-          /* fachada con carteles */
-          f("#14102e", 0, facTop, W, facBot - facTop);
-          f("#2c2760", 0, facTop, W, 1);
-          f("#0a0820", 0, facBot - 1, W, 1);
-          for (let x = 6; x < W; x += 8) f("#1c1840", x, facTop + 1, 1, facBot - facTop - 2);
+          /* sin fachada ni cartel: solo cielo sobre las gradas */
           /* gradas */
           f("#1d1740", 0, facBot, W, wallTop - facBot);
           const tiers = [];
@@ -4793,7 +4836,6 @@
           for (let x = 0; x < W; x += 10) f(["#ff2e93", "#19f0ff", "#ffd23a"][(x / 10) % 3 | 0], x, wallTop + 1, 10, 1);
           f("#0d0a26", 0, wallTop + 2, W, 1);
           /* pista de tartán */
-          const tb = T + th / 2 - step / 2;
           const xe = Math.min(W, fx + fw); /* fin de la pista: la meta; a la derecha todo es césped */
           const grass = (x, y) => {
             const h = hs(x, y) & 15;
@@ -4845,7 +4887,28 @@
             if (Math.hypot(x - mx, y - my) < mr + 5) continue;
             stars.push({ x, y, c: SC[(R2() * 4) | 0], ph: R2() * 6.28, sp: 1 + R2() * 2, big: i % 12 === 0 && y > 1 });
           }
-          G = { W, H, s, signY, facTop, bh, wallTop, mx, my, mr };
+          /* sprite de luz de los focos (haces, charco de luz sobre la pista y las gradas, halo del foco); draw() lo mezcla con "screen" × intensidad */
+          lightImg = D.createElement("canvas");
+          lightImg.width = W; lightImg.height = H;
+          const lc = lightImg.getContext("2d");
+          const pool = (cx0, cy0, rx, ry, a) => {
+            lc.save(); lc.translate(cx0, cy0); lc.scale(1, ry / rx);
+            const g = lc.createRadialGradient(0, 0, 0, 0, 0, rx);
+            g.addColorStop(0, "rgba(255,244,190," + a + ")"); g.addColorStop(0.55, "rgba(255,236,170," + (a * 0.45).toFixed(3) + ")"); g.addColorStop(1, "rgba(255,230,160,0)");
+            lc.fillStyle = g; lc.fillRect(-rx, -rx, rx * 2, rx * 2); lc.restore();
+          };
+          lamps.forEach((l) => {
+            const gx = W * (l.dir > 0 ? 0.62 : 0.38), gy = T + (Bt - T) * 0.55;
+            const dx = gx - l.x, dy = gy - l.y, len = Math.hypot(dx, dy) || 1, half = Math.max(8, (Bt - T) * 0.7);
+            const px = (-dy / len) * half, py = (dx / len) * half;
+            const g = lc.createLinearGradient(l.x, l.y, gx, gy);
+            g.addColorStop(0, "rgba(255,246,205,0.42)"); g.addColorStop(1, "rgba(255,246,205,0.06)");
+            lc.fillStyle = g; lc.beginPath(); lc.moveTo(l.x, l.y); lc.lineTo(gx + px, gy + py); lc.lineTo(gx - px, gy - py); lc.closePath(); lc.fill();
+            pool(gx, gy, W * 0.3, (Bt - T) * 0.75, 0.5); /* charco de luz sobre la pista */
+            pool(l.x + l.dir * W * 0.14, facBot + (wallTop - facBot) * 0.55, W * 0.2, Math.max(6, (wallTop - facBot) * 0.9), 0.3); /* gradas iluminadas */
+            pool(l.x, l.y, Math.max(6, facTop * 0.4), Math.max(6, facTop * 0.4), 0.85); /* halo del foco */
+          });
+          G = { W, H, s, signY, facTop, bh, wallTop, mx, my, mr, T, Bt };
           window.__sign = { top: facTop * P, bottom: facBot * P, avail: Math.max(0, wallTop - facBot) * P }; /* para el podio (1.º, 2.º, 3.º) que va debajo del cartel */
         };
 
@@ -4962,26 +5025,6 @@
           cx.globalAlpha = 1;
         };
 
-        const sign = (word, cxm, col, shade, ga, offI) => {
-          const { s, signY } = G, wpx = (word.length * 6 - 1) * s, x0 = Math.round(cxm - wpx / 2);
-          cx.globalAlpha = 1;
-          cx.fillStyle = "#07041a";
-          cx.fillRect(x0 - 4, signY - 3, wpx + 8, 7 * s + 6);
-          cx.fillStyle = col;
-          cx.fillRect(x0 - 4, signY - 3, wpx + 8, 1);
-          cx.fillRect(x0 - 4, signY + 7 * s + 2, wpx + 8, 1);
-          cx.fillRect(x0 - 4, signY - 3, 1, 7 * s + 6);
-          cx.fillRect(x0 + wpx + 3, signY - 3, 1, 7 * s + 6);
-          const cells = (fn) =>
-            [...word].forEach((ch, i) => {
-              const g = GL[ch];
-              for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++) if (g[r][c] === "X") fn(x0 + (i * 6 + c) * s, signY + r * s, i);
-            });
-          cx.fillStyle = shade;
-          cells((px, py, i) => { if (i !== offI) cx.fillRect(px + 1, py + 1, s, s); });
-          cells((px, py, i) => { cx.fillStyle = i === offI ? shade : col; cx.fillRect(px, py, s, s); });
-        };
-
         const draw = () => {
           if (!G) return;
           const t = performance.now() / 1000;
@@ -5018,11 +5061,7 @@
           }
           if (fl.i >= 0 && t > fl.u) fl.i = -1;
           else if (fl.i < 0 && Math.random() < 0.03) fl = { i: (Math.random() * 6) | 0, u: t + 0.15 + Math.random() * 0.2 };
-          /* dos letreros juntos y centrados: CARRERA + PAÍSES */
-          const [a1, a2] = LANG === "en" ? ["COUNTRIES", "RACE"] : ["CARRERA", "PAÍSES"];
-          const w1 = (a1.length * 6 - 1) * G.s + 8, w2 = (a2.length * 6 - 1) * G.s + 8, x1 = (G.W - (w1 + w2 + 2)) / 2;
-          sign(a1, x1 + w1 / 2, "#ff5fae", "#8a1250", 1, -1);
-          sign(a2, x1 + w1 + 2 + w2 / 2, "#3ff3ff", "#0a6b78", 1, fl.i < 0 ? -1 : fl.i % a2.length);
+          /* título borrado: solo cielo (sin letreros) */
           people.forEach((p) => {
             const up = Math.sin(p.x * 0.11 - t * 3.2 + p.t * 0.6) > 0.6 || Math.sin(t * 5 + p.ph) > 0.97 ? 1 : 0, y = p.y - up;
             cx.fillStyle = p.sk;
@@ -5034,6 +5073,30 @@
             cx.fillRect(p.x, y + 2, 2, 1);
             cx.fillStyle = p.sh[1];
             cx.fillRect(p.x, y + 3, 2, 1);
+          });
+          /* NOCHE/DÍA: al ponerse el sol (sc.n ↑) todo lo que está bajo el cielo se oscurece; al salir (sc.n ↓) vuelve la luz.
+             Los focos se encienden cuando oscurece (L: 0 de día → 1 de noche) y lo iluminan con haces, halos y charcos de luz. */
+          if (sc.n > 0.01) {
+            cx.globalCompositeOperation = "multiply";
+            cx.fillStyle = rgb(mixv([255, 255, 255], NIGHT_TINT, sc.n));
+            cx.fillRect(0, G.facTop, G.W, G.H - G.facTop);
+            cx.globalCompositeOperation = "source-over";
+          }
+          let L = Math.min(1, Math.max(0, (sc.n - 0.12) / 0.55));
+          L = L * L * (3 - 2 * L);
+          const fk = 0.95 + 0.05 * Math.sin(t * 9) * Math.sin(t * 2.3); /* parpadeo leve de los focos */
+          if (L > 0.01 && lightImg) {
+            cx.globalCompositeOperation = "screen";
+            cx.globalAlpha = Math.min(1, L * fk);
+            cx.drawImage(lightImg, 0, 0);
+            cx.globalAlpha = 1;
+            cx.globalCompositeOperation = "source-over";
+          }
+          lamps.forEach((l) => {
+            [0, 1, 2].forEach((k) => {
+              cx.fillStyle = L > 0.5 ? "#ffffff" : rgb(mixv([107, 102, 143], [255, 251, 208], L * 2));
+              cx.fillRect(l.tx + k, l.y, 1, 1);
+            });
           });
         };
 
@@ -5048,94 +5111,5 @@
       })();
     </script>
 
-    <script>
-      /* ===== PODIO EN VIVO: 1.º, 2.º y 3.º puesto justo DEBAJO del cartel. Se actualiza en cada cuadro (al instante) con el país
-         que va en esa posición ahora mismo: bandera, nombre (según idioma) y % de pista. Al cambiar de ocupante la tarjeta "salta".
-         Tocar una tarjeta hace brillar a esa tortuga. ?podium=0 lo oculta. ===== */
-      (() => {
-        if (new URLSearchParams(location.search).get("podium") === "0") return;
-        const st = document.createElement("style");
-        st.textContent = `
-          #podium{position:fixed;left:50%;transform:translateX(-50%);top:3rem;z-index:6;display:flex;gap:.45rem;width:98vw;max-width:98vw;pointer-events:none;--ph:34px}
-          #podium .pd{pointer-events:auto;cursor:pointer;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;gap:.45rem;height:var(--ph);
-            padding:0 .65rem 0 .3rem;border-radius:999px;background:rgba(7,4,26,.8);border:2px solid var(--c);color:#fff;--c:#FFD23A;
-            font:800 clamp(14px,calc(var(--ph)*.46),44px)/1 system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.55),0 0 10px -2px var(--c);
-            transition:transform .15s,box-shadow .3s;user-select:none;-webkit-tap-highlight-color:transparent}
-          #podium .pd:hover{transform:translateY(-2px) scale(1.04)}
-          #podium .pd.p2{--c:#D9E2E5}
-          #podium .pd.p3{--c:#E3A46B}
-          #podium .md{font-size:1.25em;line-height:1}
-          #podium .fl{height:calc(var(--ph)*.62);width:calc(var(--ph)*.62);border-radius:50%;object-fit:cover;border:2px solid #fff;flex:none;background:#223}
-          #podium .nm{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-          #podium .pc{opacity:.85;font-weight:700;font-size:.82em;min-width:2.4em;text-align:right}
-          #podium .bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.14)}
-          #podium .bar u{display:block;height:100%;width:0;background:var(--c);transition:width .25s linear}
-          #podium .pd.pop{animation:pdPop .55s cubic-bezier(.2,1.6,.4,1)}
-          @keyframes pdPop{0%{transform:scale(1.35) rotate(-3deg);filter:brightness(2)}100%{transform:none;filter:none}}
-          #podium .pd.tap{animation:pdPop .45s}
-          /* solo el 1.er puesto: una sola tarjeta centrada con la bandera del país que va primero */
-          #podium{justify-content:center}
-          #podium .pd.p2,#podium .pd.p3{display:none}
-          #podium .pd.p1{flex:0 1 auto;min-width:min(62%,22rem);padding:0 .9rem 0 .35rem}
-          #podium .pd.p1 .fl{height:calc(var(--ph)*.78);width:calc(var(--ph)*.78)}
-        `;
-        document.head.append(st);
-        const box = document.createElement("div");
-        box.id = "podium";
-        box.innerHTML = ["🥇", "🥈", "🥉"]
-          .map((m, i) => `<div class="pd p${i + 1}"><b class="md">${m}</b><img class="fl" alt=""><span class="nm"></span><span class="pc"></span><i class="bar"><u></u></i></div>`)
-          .join("");
-        document.body.append(box);
-        const cards = [...box.querySelectorAll(".pd")];
-        const key = ["", "", ""], pcs = [-1, -1, -1], codes = ["", "", ""];
-        let lastTop = -1, lastAv = -1;
-        const retrigger = restartAnim;
-        cards.forEach((card, i) =>
-          card.addEventListener("click", () => {
-            retrigger(card, "tap");
-            const t = T[codes[i]];
-            if (t) { t.tur.classList.add("turbo"); setTimeout(() => t.tur.classList.remove("turbo"), 1500); }
-          }),
-        );
-        function tick() {
-          requestAnimationFrame(tick);
-          const g = window.__sign;
-          if (g && (Math.round(g.bottom) !== lastTop || Math.round(g.avail) !== lastAv)) {
-            lastTop = Math.round(g.bottom);
-            lastAv = Math.round(g.avail);
-            box.style.top = lastTop + 4 + "px";
-            box.style.setProperty("--ph", Math.max(28, Math.min(96, lastAv - 6)) /* nunca más alto que la franja libre bajo el cartel: no tapa la pista ni las tortugas */ + "px");
-          }
-          /* VERTICAL (TikTok): el 1.er puesto va GRANDE en el cielo, justo debajo de la zona que tapa TikTok (~12 %) y encima del cartel */
-          if (g && g.top && matchMedia("(orientation: portrait)").matches) {
-            const tp = Math.round(innerHeight * 0.125);
-            box.style.top = tp + "px";
-            box.style.setProperty("--ph", Math.max(44, Math.min(innerHeight * 0.14, g.top - tp - 8)) + "px");
-          }
-          const ord = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]).slice(0, 3);
-          ord.forEach((c, i) => {
-            const idx = C.indexOf(c), n = NATIONS[idx], card = cards[i];
-            if (!n) return;
-            const k = c.c + "|" + n.n;
-            if (key[i] !== k) {
-              const im = card.querySelector(".fl");
-              const changed = codes[i] !== c.c || im.getAttribute("src") !== n.u; /* otra tortuga o país nuevo en este puesto */
-              key[i] = k;
-              codes[i] = c.c;
-              card.querySelector(".nm").textContent = n.n;
-              if (im.getAttribute("src") !== n.u) im.src = n.u;
-              if (changed) retrigger(card, "pop");
-            }
-            const pc = Math.max(0, Math.min(100, Math.round(S.pos[c.c])));
-            if (pcs[i] !== pc) {
-              pcs[i] = pc;
-              card.querySelector(".pc").textContent = pc + "%";
-              card.querySelector(".bar u").style.width = pc + "%";
-            }
-          });
-        }
-        requestAnimationFrame(tick);
-      })();
-    </script>
   </body>
 </html>

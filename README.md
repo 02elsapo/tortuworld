@@ -13,7 +13,7 @@ $env:TIKTOK_USERNAME = "nombre_de_usuario"
 npm start
 ```
 
-El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. La prioridad de cuenta es `TIKTOK_USERNAME`, luego la cuenta guardada; si ninguna existe, se conecta a `@doraramoshuerta`.
+El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. La prioridad de cuenta es `TIKTOK_USERNAME`, luego la cuenta guardada; si ninguna existe, se usa `@labettydetemu`. TikTok solo se conecta cuando se carga el overlay en un navegador.
 
 La aplicación también es instalable en Chrome como **tortu** y abre en pantalla completa. Entra al sitio por HTTPS (o por `http://localhost` durante desarrollo) y elige **Instalar tortu** en el menú de Chrome o en el icono de instalación de la barra de direcciones. El modo de pantalla completa se aplica al abrir la aplicación instalada; el overlay sigue disponible en `/` para TikTok LIVE Studio.
 
@@ -23,7 +23,7 @@ El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra 
 |---|---|---|
 | `PORT` | `80` | Puerto HTTP. |
 | `HOST` | `0.0.0.0` | Interfaz de red de escucha. |
-| `TIKTOK_USERNAME` | `doraramoshuerta` | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
+| `TIKTOK_USERNAME` | `labettydetemu` | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
 | `TIKTOK_CONFIG_PATH` | `data/tiktok/config.json` | Ruta del archivo JSON con el usuario configurado desde el backend. |
 | `TIKTOK_COMMENT_STATS_PATH` | Junto a `TIKTOK_CONFIG_PATH` | Archivo JSON persistente con comentarios y copas por país. |
 
@@ -37,13 +37,13 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /`, `/overlay` o `/v45.html` | Overlay activo de la versión 45. | HTML |
+| `GET /`, `/overlay` o `/v60.html` | Overlay activo de la versión 60. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
 | `GET /api/config` | Usuario configurado. | `{ "username": "usuario" }` |
-| `PUT /api/config` | Guarda el usuario y comienza la conexión. | Envío: `{ "username": "@usuario" }`; respuesta: `{ "ok": true, "username": "usuario" }` |
-| `POST /api/reconnect` | Reintenta la conexión configurada. | JSON; `409` si falta cuenta o ya se está conectando. |
+| `PUT /api/config` | Guarda el usuario sin iniciar la conexión. | Envío: `{ "username": "@usuario" }`; respuesta: `{ "ok": true, "username": "usuario" }` |
+| `POST /api/reconnect` | Inicia o reinicia los reintentos; lo llama el overlay al cargar y su botón de estado. | JSON; `409` si falta cuenta o ya está conectado. |
 | `GET /api/comment-stats` | Conteo persistente de comentarios mencionando cada país y comentarios sin país. | JSON |
 | `GET /api/cup-stats` | Copas ganadas acumuladas por país. | JSON |
 | `POST /api/cup-stats` | Registra una copa al terminar una ronda. | Envío: `{ "code": "PY" }`; respuesta: estadísticas actualizadas. |
@@ -68,9 +68,9 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `v45.html` es la versión activa del juego y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El backend conserva su contrato de eventos y se adapta a este overlay. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
+El overlay `v60.html` es la versión activa del juego y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El conector entrega eventos `chat`, `gift`, `like`, `follow`, `share` y `member`; el overlay interpreta `member` como ingreso a la carrera. El payload incluye `username`, `content`, `avatar` y, cuando aplica, `activityCount` y `diamondCount`. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
 
-El botón de estado del overlay muestra la cuenta conectada en verde y el estado de conexión en rojo. El conector reintenta cada 5 segundos durante un máximo de 5 minutos; si el overlay se abre después de agotarse ese plazo, inicia una nueva ventana de reintentos. También se puede iniciar manualmente desde el botón rojo.
+El overlay muestra abajo a la derecha un botón verde con la cuenta conectada o rojo si no hay conexión. Al cargarlo inicia los reintentos cada 5 segundos durante un máximo de 5 minutos; después se detienen y el botón permite iniciarlos de nuevo. La conexión no se inicia por cargar el backend ni por arrancar el servidor.
 
 ## Estructura
 
@@ -88,14 +88,14 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-v45.html                           # Juego y overlay transparente activo
+v60.html                           # Juego y overlay transparente activo
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
   tiktok/                         # Pruebas del conector y reconexión
 ```
 
-`server.js` compone los módulos. `modules/tiktok` es dueño de la conexión y de la forma de los eventos; `modules/realtime` solo transporta mensajes; el juego adapta los eventos normalizados al contrato de su lógica. El servicio del conector usa `tiktok-live-connector` y carga su export ESM de forma dinámica. La conexión no requiere que haya un overlay abierto.
+`server.js` compone los módulos. `modules/tiktok` es dueño de la conexión y de la forma de los eventos; `modules/realtime` solo transporta mensajes; el juego adapta los eventos normalizados al contrato de su lógica. El servicio del conector usa `tiktok-live-connector` y carga su export ESM de forma dinámica. La conexión solo se inicia cuando un navegador carga el overlay.
 
 ## Operación y seguridad
 

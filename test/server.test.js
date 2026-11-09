@@ -60,12 +60,12 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves version 45 as the only overlay version', async () => {
+test('serves version 60 as the only overlay version', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY v45\.html \.\//);
-  assert.doesNotMatch(dockerfile, /v17\.html/);
-  assert.equal(fs.existsSync(path.join(root, 'v17.html')), false);
+  assert.match(dockerfile, /COPY v60\.html \.\//);
+  assert.doesNotMatch(dockerfile, /v45\.html/);
+  assert.equal(fs.existsSync(path.join(root, 'v45.html')), false);
 
   const { server } = createWebserver({
     configurationPath: path.join(os.tmpdir(), `tortu-test-${process.pid}.json`),
@@ -78,23 +78,21 @@ test('serves version 45 as the only overlay version', async () => {
     assert.equal(rootResponse.status, 200);
     assert.match(rootResponse.headers.get('cache-control'), /no-store/);
     const html = await rootResponse.text();
-    assert.match(html, /Country Race/);
+    assert.match(html, /<title>Country Race<\/title>/);
     assert.match(html, /id="connectorStatus"/);
-    assert.match(html, /#connectorStatus\s*\{\s*position:\s*fixed;\s*bottom:\s*0\.6rem;\s*right:\s*0\.6rem;/);
-    assert.match(html, /Connected to @\$\{username\}/);
+    assert.match(html, /fetch\("\/api\/reconnect"/);
     assert.match(html, /new EventSource\("\/api\/events"\)/);
     assert.match(html, /source\.addEventListener\("update"/);
-    assert.match(html, /source\.addEventListener\("status"/);
     assert.deepEqual(await fetch(`${baseUrl}/api/config`).then((response) => response.json()), {
-      username: 'doraramoshuerta',
+      username: 'labettydetemu',
     });
 
-    for (const route of ['/overlay', '/v45.html']) {
+    for (const route of ['/overlay', '/v60.html']) {
       const response = await fetch(`${baseUrl}${route}`);
       assert.equal(response.status, 200);
       assert.equal(await response.text(), html);
     }
-    assert.equal((await fetch(`${baseUrl}/v17.html`)).status, 404);
+    assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
     assert.equal((await fetch(`${baseUrl}/backend`)).status, 200);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
@@ -107,7 +105,7 @@ test('serves version 45 as the only overlay version', async () => {
   }
 });
 
-test('forwards normalized TikTok updates in the shape consumed by version 45', async () => {
+test('forwards normalized TikTok updates in the shape consumed by version 60', async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'tortu-test-'));
   const monitorService = createMonitorService();
   const { server } = createWebserver({
@@ -132,6 +130,10 @@ test('forwards normalized TikTok updates in the shape consumed by version 45', a
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory, 'config.json'), 'utf8')), {
       username: 'race-host',
     });
+    assert.equal(monitorService.state.status, 'idle', 'saving configuration must not connect TikTok');
+    const reconnectResponse = await fetch(`${baseUrl}/api/reconnect`, { method: 'POST' });
+    assert.deepEqual(await reconnectResponse.json(), { ok: true, username: 'race-host' });
+    assert.equal(monitorService.state.isConnected, true);
 
     const entry = {
       type: 'chat',
