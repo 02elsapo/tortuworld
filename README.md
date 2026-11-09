@@ -13,7 +13,7 @@ $env:TIKTOK_USERNAME = "nombre_de_usuario"
 npm start
 ```
 
-El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. La prioridad de cuenta es `TIKTOK_USERNAME`, luego la cuenta guardada; si ninguna existe, se usa `@labettydetemu`. TikTok solo se conecta cuando se carga el overlay en un navegador.
+El servidor escucha en el puerto `80` por defecto (`http://localhost/`). En EasyPanel, configura el puerto interno de la aplicación como `80` y expón ese mismo puerto en el dominio para publicar el overlay. Abre `/backend` para configurar la cuenta y `/` para ver el overlay. La prioridad de cuenta es `TIKTOK_USERNAME`, luego la cuenta guardada; si ninguna existe, se usa `@d4n1el325`. TikTok solo se conecta cuando se carga el overlay en un navegador.
 
 La aplicación también es instalable en Chrome como **tortu** y abre en pantalla completa. Entra al sitio por HTTPS (o por `http://localhost` durante desarrollo) y elige **Instalar tortu** en el menú de Chrome o en el icono de instalación de la barra de direcciones. El modo de pantalla completa se aplica al abrir la aplicación instalada; el overlay sigue disponible en `/` para TikTok LIVE Studio.
 
@@ -23,7 +23,7 @@ El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra 
 |---|---|---|
 | `PORT` | `80` | Puerto HTTP. |
 | `HOST` | `0.0.0.0` | Interfaz de red de escucha. |
-| `TIKTOK_USERNAME` | `labettydetemu` | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
+| `TIKTOK_USERNAME` | `d4n1el325` | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
 | `TIKTOK_CONFIG_PATH` | `data/tiktok/config.json` | Ruta del archivo JSON con el usuario configurado desde el backend. |
 | `TIKTOK_COMMENT_STATS_PATH` | Junto a `TIKTOK_CONFIG_PATH` | Archivo JSON persistente con comentarios y copas por país. |
 

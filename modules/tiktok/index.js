@@ -41,7 +41,7 @@ function createTikTokModule({
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
-  if (!username) username = 'labettydetemu';
+  if (!username) username = 'd4n1el325';
   state.username = username;
 
   function publish(event, payload) {

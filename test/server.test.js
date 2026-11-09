@@ -91,7 +91,7 @@ test('serves version 68 and leaves connection startup to the browser overlay', a
     assert.match(html, /source\.addEventListener\("update"/);
     assert.match(html, /fetch\("\/api\/reconnect"/);
     assert.deepEqual(await fetch(`${baseUrl}/api/config`).then((response) => response.json()), {
-      username: 'labettydetemu',
+      username: 'd4n1el325',
     });
 
     for (const route of ['/overlay', '/v68.html']) {

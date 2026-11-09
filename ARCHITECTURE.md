@@ -17,7 +17,7 @@ modules/tiktok/index.js -----> modules/realtime/sseHub.js
 server.js composes the modules and owns the HTTP server lifecycle.
 ```
 
-The connector starts with the environment or persisted username, defaulting to `labettydetemu` when neither is set. It only starts connecting when an overlay browser requests it. Connection retries, stale-connection handling, provider event subscriptions, and normalization belong to the TikTok monitor. The module facade loads persisted configuration, subscribes to monitor updates, keeps a bounded 100-event snapshot, and publishes `status`, `snapshot`, and `update` SSE messages. The SSE hub knows nothing about TikTok or app behavior.
+The connector starts with the environment or persisted username, defaulting to `d4n1el325` when neither is set. It only starts connecting when an overlay browser requests it. Connection retries, stale-connection handling, provider event subscriptions, and normalization belong to the TikTok monitor. The module facade loads persisted configuration, subscribes to monitor updates, keeps a bounded 100-event snapshot, and publishes `status`, `snapshot`, and `update` SSE messages. The SSE hub knows nothing about TikTok or app behavior.
 
 ## Module responsibilities
 
@@ -44,7 +44,7 @@ Add a mini app as a new module with its own routes and event subscription. Keep 
 - If `TIKTOK_CONFIG_PATH` is unset, the account is stored at `data/tiktok/config.json`.
 - If `TIKTOK_COMMENT_STATS_PATH` is unset, statistics are stored beside the TikTok configuration as `comment-stats.json`.
 - A configured environment username overrides the persisted username and is not written by the backend.
-- If neither environment nor persisted configuration has a username, the connector defaults to `labettydetemu`.
+- If neither environment nor persisted configuration has a username, the connector defaults to `d4n1el325`.
 - Configuration writes create the containing directory. Runtime `data/` is ignored by Git and should be mounted persistently when needed.
 - `.env.example` is documentation only; this project does not load dotenv files.
 
