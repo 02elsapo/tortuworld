@@ -3372,11 +3372,6 @@
           setTimeout(() => t.tur.classList.remove("turbo"), 1800);
         }
         if (realUser) SFX.userEvent(ty);
-        else if (points >= 15) SFX.sprint();
-        else if (ty === "gift") SFX.coin(0);
-        else if (ty === "like") SFX.like();
-        else if (ty === "chat") SFX.join();
-        else if (ty !== "join") SFX.follow();
         /* efectos visuales */
         emojiFx(
           code,
@@ -3402,7 +3397,7 @@
           setTimeout(
             () => {
               burstAt(...turPos(code), 40, true);
-              SFX.goal();
+              if (realUser) SFX.goal();
             },
             points >= 15 ? 1200 : 0,
           );
