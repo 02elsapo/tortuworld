@@ -88,6 +88,7 @@ test('serves the v1.6 overlay and leaves connection startup to the browser', asy
     assert.match(rootResponse.headers.get('cache-control'), /no-store/);
     const html = await rootResponse.text();
     assert.match(html, /id="versionBadge" aria-label="Versión 1\.6">v1\.6/);
+    assert.doesNotMatch(html, /Países Bajos|Netherlands|code:\s*"NL"/);
     assert.match(html, /<title>Country Race<\/title>/);
     assert.match(html, /id="connectorStatus"/);
     assert.match(html, /new EventSource\("\/api\/events"\)/);

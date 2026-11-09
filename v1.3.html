@@ -2576,12 +2576,6 @@
             ),
           },
           {
-            n: "Países Bajos",
-            code: "NL",
-            c: "#AE1C28",
-            u: sv(H3("#AE1C28", "#fff", "#21468B")),
-          },
-          {
             n: "México",
             code: "MX",
             c: "#006847",
@@ -2663,7 +2657,7 @@
           },
         ];
       })();
-      const EN_NAMES = { BR: "Brazil", PY: "Paraguay", AR: "Argentina", DE: "Germany", FR: "France", IT: "Italy", UY: "Uruguay", ES: "Spain", ENG: "England", PT: "Portugal", NL: "Netherlands", MX: "Mexico", CO: "Colombia", CL: "Chile", JP: "Japan", KR: "South Korea", US: "United States", MA: "Morocco", HR: "Croatia", NG: "Nigeria", SN: "Senegal", BE: "Belgium" };
+      const EN_NAMES = { BR: "Brazil", PY: "Paraguay", AR: "Argentina", DE: "Germany", FR: "France", IT: "Italy", UY: "Uruguay", ES: "Spain", ENG: "England", PT: "Portugal", MX: "Mexico", CO: "Colombia", CL: "Chile", JP: "Japan", KR: "South Korea", US: "United States", MA: "Morocco", HR: "Croatia", NG: "Nigeria", SN: "Senegal", BE: "Belgium" };
       NATIONS.forEach((team) => {
         const es = team.n, en = EN_NAMES[team.code] || es;
         team.es = es;
@@ -2679,7 +2673,6 @@
       );
       const POPULAR_COUNTRIES = [
         "PT",
-        "NL",
         "MX",
         "CO",
         "CL",
@@ -3602,17 +3595,33 @@
       }
       window.addEventListener("resize", () => { hintKey = ""; });
       const VOICE_ON = Q.get("voice") !== "0";
+      const FEMALE_VOICE_NAME =
+        /(?:^|[\s_-])(?:female|woman|mujer|helena|sabina|dalia|mon[ií]ca|paulina|luciana|laura|elena|sof[ií]a|carolina|camila|marisol|luc[ií]a|irene|noelia|catalina|valentina|fernanda|isabella)(?:$|[\s_( -])/i;
+      function femaleSpanishVoice(voices) {
+        const spanish = voices.filter((item) => /^es(?:[-_]|$)/i.test(item.lang));
+        return (
+          spanish.find(
+            (item) =>
+              String(item.gender || "").toLowerCase() === "female" ||
+              FEMALE_VOICE_NAME.test(item.name),
+          ) ||
+          spanish.find((item) => /google/i.test(item.name)) ||
+          null
+        );
+      }
       let voiceCommentAt = 0,
         voicePhrase = 0;
       /* Narradora: el avatar #cast mueve la boca y muestra la frase mientras suena la voz (o ~3 s si no hay voz). */
       let castTimer = 0,
         castPend = 0,
         castSeq = 0,
-        castLen = 0;
+        castLen = 0,
+        speechVoiceTimer = 0;
       /* Fin: se apaga boca/clip de "hablando" y el globo. */
       function castEnd() {
         clearTimeout(castTimer);
         clearTimeout(castPend);
+        clearTimeout(speechVoiceTimer);
         const c = $("cast");
         if (c) c.classList.remove("talk", "say");
       }
@@ -3857,21 +3866,29 @@
         if (force) castMood("happy", 2500);
         if (!hasVoice) return;
         engine.cancel();
-        const utterance = new SpeechSynthesisUtterance(text),
-          voices = engine.getVoices(),
-          voice =
-            voices.find((item) => /^es/i.test(item.lang) && /google/i.test(item.name)) ||
-            voices.find((item) => /^es/i.test(item.lang));
-        if (voice) {
+        clearTimeout(speechVoiceTimer);
+        let attempts = 0;
+        const speak = () => {
+          if (seq !== castSeq) return;
+          const voices = engine.getVoices();
+          const voice = femaleSpanishVoice(voices);
+          if (!voice) {
+            if (!voices.length && attempts++ < 8) {
+              speechVoiceTimer = setTimeout(speak, 250);
+            } else castEnd();
+            return;
+          }
+          const utterance = new SpeechSynthesisUtterance(text);
           utterance.voice = voice;
           utterance.lang = voice.lang;
-        } else utterance.lang = "es-ES";
-        utterance.rate = 1.08;
-        utterance.pitch = 1.12;
-        utterance.onstart = () => { if (seq === castSeq) castBegin(); };
-        utterance.onend = () => { if (seq === castSeq) castEnd(); };
-        utterance.onerror = () => { if (seq === castSeq) castEnd(); };
-        engine.speak(utterance);
+          utterance.rate = 1.08;
+          utterance.pitch = 1.16;
+          utterance.onstart = () => { if (seq === castSeq) castBegin(); };
+          utterance.onend = () => { if (seq === castSeq) castEnd(); };
+          utterance.onerror = () => { if (seq === castSeq) castEnd(); };
+          engine.speak(utterance);
+        };
+        speak();
       }
       function cheerCountry(code, leader = false) {
         const index = C.findIndex((team) => team.c === code),

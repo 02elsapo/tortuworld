@@ -12,7 +12,6 @@ const teams = [
   { code: 'ES', name: 'España', type: 'country' },
   { code: 'ENG', name: 'Inglaterra', type: 'country' },
   { code: 'PT', name: 'Portugal', type: 'country' },
-  { code: 'NL', name: 'Países Bajos', type: 'country' },
   { code: 'MX', name: 'México', type: 'country' },
   { code: 'CO', name: 'Colombia', type: 'country' },
   { code: 'CL', name: 'Chile', type: 'country' },
