@@ -1636,7 +1636,7 @@
       <div id="lanes"></div>
     </div>
     <div id="vig"></div>
-    <span id="versionBadge" aria-label="Versión 1">v1</span>
+    <span id="versionBadge" aria-label="Versión 1.1">v1.1</span>
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
@@ -2772,11 +2772,11 @@
          Si el espectador no tiene carril, su energía va a la tortuga del país que apoya. Añade efectos visuales y sonido. */
       const LEVELS = [10, 25, 50, 100, 200, 400];
       const INTERACTIONS_TO_WIN = 10;
-      /* Cada acción deja el avatar anclado en el punto donde ocurrió; se limpia al iniciar la siguiente ronda. */
+      /* Cada acción de usuario deja el avatar anclado; los bots no generan avatares en la pista. */
       const ANCHOR_MAX = 120; /* tope de seguridad por carril: los avatares NO se borran hasta que termina la ronda */
       function avatarPop(code, p, mult) {
         const t = T[code];
-        if (!t || !p || p.tortubot) return;
+        if (!t || !p || p.isBot || p.tortubot) return;
         const all = t.trk.querySelectorAll(".anchav");
         if (all.length >= ANCHOR_MAX) all[0].remove();
         const nn = NATIONS[C.findIndex((x) => x.c === code)],
