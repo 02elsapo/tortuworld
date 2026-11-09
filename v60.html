@@ -913,6 +913,9 @@
       #lanes .evb{
         position: absolute;
         z-index: 12;
+        max-width: min(44vw, 12rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
         pointer-events: none;
         padding: 0.16em 0.7em 0.2em;
@@ -924,9 +927,9 @@
         text-shadow: 0 0.08em 0 rgba(7, 38, 43, 0.7);
         box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.6);
         top: calc(var(--rt) - var(--th) * 0.15 - var(--o, 0) * var(--th) * 0.12);
-        left: calc(
+        left: clamp(30%, calc(
           var(--tw) * 0 + (100% - var(--tw) * 1 - 0.8rem) * var(--p, 0) / 100 + var(--tw) * 0.5
-        );
+        ), 70%);
         animation: evup 2.2s ease-out forwards;
       }
       @keyframes evup{
@@ -970,9 +973,6 @@
         background: #7b4dff;
       }
       #lanes .evb.e-ch{
-        max-width: min(44vw, 12rem);
-        overflow: hidden;
-        text-overflow: ellipsis;
         font-size: calc(var(--th) * 0.16);
         padding: 0.12em 0.45em 0.14em;
         background: #fff;
