@@ -3926,7 +3926,7 @@
                 S.cp[m] = k;
                 t.tur.classList.add("turbo");
                 setTimeout(() => t.tur.classList.remove("turbo"), 1500);
-                SFX.cp();
+                if (!isBotT) SFX.cp();
               }
           /* animación */
           const sp = Math.min(t.vs, VMAX),
