@@ -3578,10 +3578,16 @@
         const helpers = topHelpers(p.key);
         setHelper(2, helpers[0]);
         setHelper(3, helpers[1]);
-        /* la "foto de ganador" es la bandera del PAÍS ganador (no el avatar del usuario) */
+        /* Prioriza el avatar del ganador y conserva la bandera como respaldo. */
         av.classList.remove("noimg");
         img.onerror = () => av.classList.add("noimg");
-        img.src = nn.u;
+        img.alt = p.username ? "@" + p.username : "Ganador";
+        img.src =
+          !p.tortubot &&
+          typeof p.avatar === "string" &&
+          /^https?:\/\//i.test(p.avatar)
+            ? p.avatar
+            : nn.u;
         el.classList.remove("out");
         el.classList.add("show");
         winnerT2 = setTimeout(() => el.classList.add("out"), WINNER_MS - 350);
@@ -3771,8 +3777,7 @@
           t.mult = 1;
           t.zy = 0;
           t.trk.querySelectorAll(".anchav").forEach((x) => x.remove());
-          t.cryT = 0;
-          t.tur.classList.remove("cry", "ouch", "angry");
+          t.tur.classList.remove("ouch", "angry");
           t.ouchT = 0; t.immT = 0; t.angryT = 0; t.dodgeT = 0; t.dodgeDir = 0; t.back = 0; t.hits = 0; t.ramTo = null; t.jl = 0; t.jv = 0; t.sprint = false;
           t.ve = 0;
           t.eventTarget = 0;
@@ -3837,7 +3842,6 @@
       const MOOD_HOLD = 4 /* s mínimos que dura una expresión antes de poder cambiar */,
         MOOD_STABLE = 1.5; /* s que debe sostenerse la condición de la nueva expresión */
       const TIRED_MS = 10000; /* una tortuga sin interacción durante 10 s pone cara de agotado */
-      const CRY_LEFT = 30; /* % de pista que le falta a la líder para que los últimos 3 puestos lloren */
       /* ===== CHOQUES ENTRE CAPARAZONES =====
          Cada tortuga pasea por su carril; cada RAM_MIN..RAM_MAX s dos tortugas vecinas que van lado a lado hacen que una embista
          a la otra (angryT, brillo rojo). Si sus caparazones se tocan (RX × ancho, RY × alto; RY_NAT si ninguna embiste) hay UN solo impacto por contacto:
@@ -3945,12 +3949,7 @@
           geo();
         }
         const R = remPx();
-        /* LLANTO: cuando la líder ya está a 30 % de la meta (pos ≥ 70), las tortugas de los últimos 3 puestos lloran */
-        const lastSet = new Set();
-        {
-          const rk = C.map((c) => c.c).sort((a, b) => S.pos[b] - S.pos[a]);
-          if (S.go && S.pos[rk[0]] >= CFG.win - CRY_LEFT) rk.slice(-3).forEach((k) => lastSet.add(k));
-        }
+        /* Líder actual de la carrera. */
         let firstK = null,
           firstP = 1;
         for (const c of C)
@@ -4106,10 +4105,6 @@
             Math.max(-2, Math.min(2, acl * 0.9)) +
             0.9 * Math.sin(4 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv;
           t.lean += (leanT - t.lean) * Math.min(1, dt * 10);
-          /* llora mientras esté entre los últimos 3; si sube de puesto, sigue llorando 3 s más (sin cambios bruscos) */
-          if (lastSet.has(k)) t.cryT = 3;
-          else if (t.cryT > 0) t.cryT = Math.max(0, t.cryT - dt);
-          t.tur.classList.toggle("cry", t.cryT > 0);
           t.tur.classList.toggle("charge", !!t.sprint && !(S.over || S.winner));
           const lean = Math.max(-9, Math.min(9, t.lean + t.jl)),
             roll = 1.2 * Math.sin(2 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv, /* leve balanceo al apoyar cada par de patas */
