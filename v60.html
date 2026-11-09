@@ -3342,13 +3342,18 @@
         if (!code) return;
         const t = T[code],
           ty = entry.type;
+        const realUser = !p.isBot && !p.tortubot;
+        if (realUser)
+          t.eventTarget = Math.max(
+            t.eventTarget || 0,
+            Math.min(CFG.win, (p.interactions / 6) * CFG.win),
+          );
         if (entry.type !== "support") setMain(code, p); /* el último evento manda: su avatar es el principal */
         if (ty === "join" && !p.isBot && !p.tortubot) restartAnim(t.tur, "join-pop");
         const bst = addBoost(code, ty, entry, p); /* ×2 / ×5 / ×10 / ×20 según la relevancia del evento */
         avatarPop(code, p, bst.m); /* avatar anclado en el centro del caparazón, en el punto donde se generó */
         if (ty === "gift") putGiftAhead(code, entry);
         evBadge(code, ty, entry);
-        const realUser = !p.isBot && !p.tortubot;
         if (points >= 15) {
           t.tur.classList.add("turbo");
           setTimeout(() => t.tur.classList.remove("turbo"), 1800);
@@ -3467,6 +3472,7 @@
             username,
             avatar: "",
             points: 0,
+            interactions: 0,
             sequence: contestantSequence++,
             isBot,
           };
@@ -3478,6 +3484,7 @@
           player.lastChat = n;
         }
         player.points += points;
+        if (!isBot && !player.tortubot) player.interactions++;
         if (
           typeof entry.avatar === "string" &&
           /^https?:\/\//i.test(entry.avatar)
@@ -3729,6 +3736,7 @@
           w: Math.random() * 10,
           vs: 0,
           ve: 0,
+          eventTarget: 0,
           cr: 0,
           pend: 0,
           boosts: [] /* [{m: multiplicador, until: segundo en que acaba}] */,
@@ -3767,6 +3775,7 @@
           t.tur.classList.remove("cry", "ouch", "angry");
           t.ouchT = 0; t.immT = 0; t.angryT = 0; t.dodgeT = 0; t.dodgeDir = 0; t.back = 0; t.hits = 0; t.ramTo = null; t.jl = 0; t.jv = 0; t.sprint = false;
           t.ve = 0;
+          t.eventTarget = 0;
           t.cr = 0;
           t.vs = 0;
           t.pend = 0;
@@ -3968,6 +3977,9 @@
               t.mult = mult;
               const wob = 1 + 0.12 * Math.sin(tNow * 0.7 + t.w) + 0.06 * Math.sin(tNow * 1.9 + t.w * 2.3);
               tgtV = BASE_V * t.base * wob * mult;
+              const eventGap = Math.max(0, t.eventTarget - S.pos[k]);
+              if (eventGap > 0)
+                tgtV = Math.max(tgtV, Math.min(24, Math.max(12, eventGap * 2)));
             }
           } else t.mult = 1;
           if (!isBotT && tgtV > 0) {
