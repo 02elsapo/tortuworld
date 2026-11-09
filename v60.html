@@ -3226,13 +3226,12 @@
             1,
             Number(entry.activityCount || entry.count) || 1,
           );
-          t.lk = t.lk || { n: 0, p: 0, h: 0 };
+          t.lk = t.lk || { n: 0, h: 0 };
           t.lk.n += n;
-          t.lk.p += points;
           if (!t.lk.h)
             t.lk.h = setTimeout(() => {
               const l = t.lk;
-              t.lk = { n: 0, p: 0, h: 0 };
+              t.lk = { n: 0, h: 0 };
               show("e-lk", "👍", `${l.n} Me gusta`);
             }, 450);
           return;
