@@ -1376,8 +1376,8 @@
         z-index: 13;
         pointer-events: none;
         left: calc((100% - var(--tw) - 0.8rem) * var(--ap, 0) / 100 + var(--tw) * 0.41);
-        width: calc(var(--th) * 1.08);
-        height: calc(var(--th) * 1.08);
+        width: calc(var(--th) * 0.5);
+        height: calc(var(--th) * 0.5);
         transform: translate(-50%, -50%);
         animation: anchIn 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both;
       }
@@ -1387,11 +1387,11 @@
         border-radius: 50%;
         overflow: hidden;
         background: var(--nc, #0d3a41);
-        border: 0.14rem solid #fff;
+        border: 0.1rem solid #fff;
         color: #fff;
         display: grid;
         place-items: center;
-        font: calc(var(--th) * 0.56) / 1 "Bowlby One", "Arial Black", sans-serif;
+        font: calc(var(--th) * 0.26) / 1 "Bowlby One", "Arial Black", sans-serif;
         box-shadow: 0 0 0.6rem rgba(255, 201, 60, 0.9), 0 0.2rem 0.45rem rgba(0, 0, 0, 0.55);
       }
       #lanes .anchav .ai img{
@@ -1404,14 +1404,14 @@
       #lanes .anchav small{
         position: absolute;
         left: 50%;
-        bottom: -0.55em;
+        bottom: -0.45em;
         transform: translateX(-50%);
-        padding: 0.05em 0.4em;
+        padding: 0.1em 0.45em;
         border-radius: 999px;
         background: #ffc93c;
         color: #07262b;
         border: 0.08rem solid #07262b;
-        font: 800 calc(var(--th) * 0.14) / 1.1 system-ui, sans-serif;
+        font: 800 max(9px, calc(var(--th) * 0.15)) / 1.1 system-ui, sans-serif;
         white-space: nowrap;
       }
       /* ===== LLAMADAS DE ACCIÓN (#cta): 3 casillas distribuidas por el ancho. Centro = 🌹 Rosita (principal, fija);
@@ -1437,7 +1437,7 @@
       @media (orientation: portrait){
         #cta{ bottom: var(--bot, 27%); }
       }
-      #cta .sl{
+      #cta .cs{
         position: relative;
         flex: 1 1 0;
         min-width: 0;
@@ -1445,7 +1445,7 @@
         height: 3.2em;
         perspective: 40em;
       }
-      #cta .sl.main{
+      #cta .cs.main{
         font-size: 1.25em;
         max-width: 9em;
       }
@@ -1500,8 +1500,8 @@
         50%{ transform: scale(1.06); box-shadow: 0 0 1.6em rgba(255, 95, 174, 1), 0 0 0.5em #fff; }
       }
       /* cambio en su sitio: el viejo gira hacia dentro y el nuevo gira hacia fuera, sin mover nada alrededor */
-      #cta .sl:not(.main) .cb.out{ animation: ctaFlipOut 0.28s ease-in forwards; }
-      #cta .sl:not(.main) .cb.in{ animation: ctaFlipIn 0.28s ease-out 0.26s both; }
+      #cta .cs:not(.main) .cb.out{ animation: ctaFlipOut 0.28s ease-in forwards; }
+      #cta .cs:not(.main) .cb.in{ animation: ctaFlipIn 0.28s ease-out 0.26s both; }
       @keyframes ctaFlipOut{
         from{ transform: rotateX(0deg); opacity: 1; }
         to{ transform: rotateX(90deg); opacity: 0; }
@@ -1511,8 +1511,8 @@
         to{ transform: rotateX(0deg); opacity: 1; }
       }
       /* la casilla central (regalos) también gira al cambiar de regalo y retoma el latido */
-      #cta .sl.main .cb.out{ animation: ctaFlipOut 0.28s ease-in forwards; }
-      #cta .sl.main .cb.in{ animation: ctaFlipIn 0.28s ease-out 0.26s both, ctaBeat 1.1s ease-in-out 0.54s infinite; }
+      #cta .cs.main .cb.out{ animation: ctaFlipOut 0.28s ease-in forwards; }
+      #cta .cs.main .cb.in{ animation: ctaFlipIn 0.28s ease-out 0.26s both, ctaBeat 1.1s ease-in-out 0.54s infinite; }
       /* Líneas que delimitan cada carril: SOLO visibles mientras hay bots activos (html.hasbots). */
       #laneLines{
         position: absolute;
@@ -1613,6 +1613,20 @@
       }
       #connectorStatus.connected{background:#168a50}
       #connectorStatus.disconnected{background:#c6283d}
+      #versionBadge{
+        position:fixed;
+        left:.75rem;
+        bottom:.75rem;
+        z-index:9999;
+        padding:.3rem .5rem;
+        border:.1rem solid rgba(255,255,255,.55);
+        border-radius:999px;
+        background:rgba(7,38,43,.78);
+        color:#fff;
+        font:800 .6rem/1 system-ui,sans-serif;
+        box-shadow:0 .15rem .5rem rgba(0,0,0,.4);
+        pointer-events:none;
+      }
     </style>
   </head>
   <body>
@@ -1622,6 +1636,7 @@
       <div id="lanes"></div>
     </div>
     <div id="vig"></div>
+    <span id="versionBadge" aria-label="Versión 1">v1</span>
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
@@ -2356,7 +2371,7 @@
           };
           const slot = (cls) => {
             const el = document.createElement("div");
-            el.className = "sl " + cls;
+            el.className = "cs " + cls;
             ct.append(el);
             return el;
           };
