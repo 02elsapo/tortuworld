@@ -1875,6 +1875,20 @@
         45%{ transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
         100%{ transform: translate(-50%, -50%) scale(1); opacity: 1; }
       }
+
+      /* Mitad superior: pista y guía; mitad inferior: césped y controles. */
+      :root{
+        --guide-height: clamp(2.5rem, 7vh, 5rem);
+      }
+      html body #app{
+        top: 0;
+        bottom: calc(50% + var(--guide-height));
+      }
+      #howto{
+        top: auto;
+        bottom: 50%;
+        height: var(--guide-height);
+      }
     </style>
   </head>
   <body>
@@ -2524,16 +2538,17 @@
           const a = ac();
           if (!a) return;
           const t = a.currentTime;
-          noise(0.08, 0.4, t, 700);
+          noise(0.04, 0.1, t, 1100);
           tone(
-            105 + speed * 20,
-            0.1,
+            145 + speed * 12,
+            0.075,
             "triangle",
-            0.8,
+            0.18,
             t,
             undefined,
-            55 + speed * 10,
+            62 + speed * 8,
           );
+          tone(420 + speed * 20, 0.025, "triangle", 0.035, t + 0.008);
         }, 75),
         /* choque entre tortugas: golpe grave + crujido + toc de caparazón; s = fuerza 0..1 */
         crash: th((s = 1) => {
@@ -4819,11 +4834,8 @@
           const sx = Math.round(L.left / P), fw = Math.max(3, Math.round((0.8 * rem) / P)), fx = Math.round(L.right / P) - fw;
           const s = Math.max(1, Math.min(3, Math.floor((Hv * 0.3) / 7), Math.floor((W - 20) / 80)));
           /* el estadio ocupa lo justo (fachada + gradas) y TODO el resto es cielo */
-          const wallTop = T - 3, standRows = Math.max(6, Math.round(Hv * 0.14)) + (D.getElementById("howto") ? Math.round(((vw > vh ? 0.065 : 0.05) * vh) / P) : 0); /* gradas más altas: dejan sitio a la guía visual bajo el cartel */
+          const wallTop = T - 3, standRows = Math.max(6, Math.round(Hv * 0.14));
           const facTop0 = Math.max(6, wallTop - standRows - (7 * s + 6)), signY = facTop0 + 3, facBot = signY + 7 * s + 3, facTop = facBot; /* sin cartel ni fachada: el cielo llega hasta las gradas */
-          /* franja libre bajo el cartel grande (sobre las gradas): ahí va la guía visual #howto, de ancho completo */
-          root.style.setProperty("--how-top", (facBot + 1) * P + "px");
-          root.style.setProperty("--how-h", Math.max(36, (T - 2 - (facBot + 1)) * P) + "px");
           const f = (c, x, y, w, h) => { o.fillStyle = c; o.fillRect(Math.round(x), Math.round(y), w, h); };
 
           /* el cielo, el sol, la luna, las nubes y el brillo de los focos se dibujan en draw() según el escenario */
