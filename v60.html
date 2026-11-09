@@ -6,7 +6,7 @@
 
   DINÁMICA DEL JUEGO (cómo funciona hoy)
     • 3 tortugas, cada una con SU PROPIO CARRIL: Brasil, Paraguay y Argentina en orden cambiante.
-      NO HAY CHOQUES: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril.
+      Avanzan en línea recta por su carril y no chocan.
     • La TORTUBOT marca el tope de la carrera: va de 0 a 100 a velocidad constante en CFG.botSec (120 s = 2 minutos).
       Si nadie la supera, llega ella. Las tortugas de los espectadores caminan a BASE_V (40 % de la velocidad de la bot).
     • Cada interacción acelera la tortuga de su usuario mientras dura el efecto (EV_BOOST, addBoost):
@@ -441,14 +441,19 @@
       .tur.swap svg{
         animation: pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
       }
+      .tur .av{
+        transform-box: fill-box;
+        transform-origin: center;
+        transform: scale(1.35);
+      }
       .tur.join-pop .av{
         transform-box: fill-box;
         transform-origin: center;
         animation: shellAvatarJoin 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) both;
       }
       @keyframes shellAvatarJoin{
-        0%, 100%{ transform: scale(1); }
-        40%{ transform: scale(2); }
+        0%, 100%{ transform: scale(1.35); }
+        40%{ transform: scale(2.7); }
       }
       /* FIJA: esquina superior izquierda de la pista (al inicio); */
       .tag{
@@ -1108,7 +1113,7 @@
         100%{ transform: translateY(4px); opacity: 0; }
       }
     
-      /* ===== física de marcha: la tortuga gira sobre sus patas y los choques muestran 💥 ===== */
+      /* ===== física de marcha: la tortuga avanza en línea recta por su carril ===== */
       #lanes .trk .tur{
         transform-origin: 35% 90%;
         will-change: transform;
@@ -2327,7 +2332,6 @@
         combo: new Map(),
         cp: { 25: 0, 50: 0, 75: 0 },
         pf: false,
-        ramT: 12 /* s hasta la próxima embestida */,
         streak: 0,
         lastWin: null,
       };
@@ -2910,14 +2914,13 @@
         }
       }
 
-      /* Tamaño de las tortugas: cada una tiene su carril (alto de pista / nº de carriles) y ocupa un poco más que el carril
-         (1.1×), sin chocar con nadie. Más grandes que antes; nunca más del 34 % del ancho. */
+      /* Mantiene cada tortuga dentro de su carril, dejando espacio respecto a las vecinas. */
       function fitTurtles() {
         const H = lanes.clientHeight,
           W = lanes.clientWidth;
         if (!H || !W) return;
         const bh = H / C.length,
-          th = bh * 1.1,
+          th = bh * 0.85,
           tw = Math.min((th * 66) / 46, W * 0.34, 24 * remPx());
         lanes.style.setProperty("--tw", tw.toFixed(1) + "px");
       }
@@ -3188,10 +3191,21 @@
           }
         }
         if (lo) {
-          T[code].pend = 0;
-          T[code].ve = 0;
-          T[code].cr = 0;
-          T[code].vs = 0;
+          const lane = T[code];
+          lane.pend = 0;
+          lane.ve = 0;
+          lane.cr = 0;
+          lane.vs = 0;
+          if (lo.o.isBot) {
+            S.pos[code] = 0;
+            lane.eventTarget = 0;
+            lane.boosts = [];
+            lane.mult = 1;
+            lane.giftTarget = null;
+            if (lane.giftEl) lane.giftEl.remove();
+            lane.giftEl = null;
+            lane.trk.querySelectorAll(".evb, .dust").forEach((el) => el.remove());
+          }
         }
         S.slotUser[code] = p.key;
         S.slotOf.set(p.key, code);
@@ -3519,8 +3533,8 @@
       /* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win.
          Guarda la victoria del dueño del carril, suma una copa al país ganador, calcula su racha,
          lanza los efectos de festejo y programa la siguiente ronda (CFG.restartMs). */
-      /* al llegar a la meta: avatar del ganador en pantalla durante WINNER_MS (5 s) */
-      const WINNER_MS = 5000;
+      /* al llegar a la meta: avatar del ganador en pantalla durante WINNER_MS (10 s) */
+      const WINNER_MS = 10000;
       let winnerT = null, winnerT2 = null;
       function hideWinner() {
         clearTimeout(winnerT);
@@ -3647,7 +3661,6 @@
         S.combo.clear();
         S.cp = { 25: 0, 50: 0, 75: 0 };
         S.pf = false;
-        S.ramT = 12;
         S.recAt = null; /* la cuenta de los 3 s empieza cuando arranca la carrera */
         contestants.clear();
         contestantSequence = 0;
@@ -3754,18 +3767,11 @@
           am: 0,
           hl: 0,
           du: 0,
-          /* física de marcha y choques */
+          /* física de marcha */
           va: 0 /* velocidad real del caparazón (u/s), medida del avance */,
           vaPrev: 0,
           fa: 0 /* pasos por segundo (ciclos de marcha) */,
           lean: 0 /* inclinación sobre las patas (grados) */,
-          zy: 0, zvy: 0 /* zigzag lateral (px) */,
-          psi: 0 /* rumbo (grados) */,
-          zT: 0, zTimer: 1 + Math.random() * 3 /* desvío lateral objetivo (px) y tiempo al próximo cambio */,
-          /* choques */
-          ouchT: 0 /* s con cara de golpe */, immT: 0 /* s de inmunidad tras un impacto */, angryT: 0 /* s embistiendo */,
-          dodgeT: 0, dodgeDir: 0 /* esquive vertical tras el impacto */, back: 0 /* retroceso pendiente (unidades de pista) */,
-          hits: 0, ramTo: null, ramDir: 0, jl: 0, jv: 0 /* sacudida del caparazón */,
         };
       });
       function reseed() {
@@ -3774,10 +3780,7 @@
           t.base = 0.92 + Math.random() * 0.16;
           t.boosts = [];
           t.mult = 1;
-          t.zy = 0;
           t.trk.querySelectorAll(".anchav").forEach((x) => x.remove());
-          t.tur.classList.remove("ouch", "angry");
-          t.ouchT = 0; t.immT = 0; t.angryT = 0; t.dodgeT = 0; t.dodgeDir = 0; t.back = 0; t.hits = 0; t.ramTo = null; t.jl = 0; t.jv = 0; t.sprint = false;
           t.ve = 0;
           t.eventTarget = 0;
           t.cr = 0;
@@ -3789,7 +3792,7 @@
           t.pause = 0;
           t.step = Math.floor(t.ph / Math.PI);
           t.va = 0; t.vaPrev = 0; t.fa = 0; t.lean = 0;
-          t.zy = 0; t.zvy = 0; t.psi = 0; t.lastEv = performance.now(); t.zT = 0; t.zTimer = 1 + Math.random() * 3;
+          t.lastEv = performance.now();
           t.w = Math.random() * 10;
         });
       }
@@ -3837,101 +3840,23 @@
         GEO.H = H;
       }
       /* Cada tortuga = 3 círculos para el caparazón + 1 para la cabeza (coordenadas del SVG de 66×46). */
-      /* AJUSTE DE CHOQUES (para que el juego avance): inmunidad tras un golpe, tope de retroceso y frecuencia de embestidas */
       const MOOD_HOLD = 4 /* s mínimos que dura una expresión antes de poder cambiar */,
         MOOD_STABLE = 1.5; /* s que debe sostenerse la condición de la nueva expresión */
       const TIRED_MS = 10000; /* una tortuga sin interacción durante 10 s pone cara de agotado */
-      /* ===== CHOQUES ENTRE CAPARAZONES =====
-         Cada tortuga pasea por su carril; cada RAM_MIN..RAM_MAX s dos tortugas vecinas que van lado a lado hacen que una embista
-         a la otra (angryT, brillo rojo). Si sus caparazones se tocan (RX × ancho, RY × alto; RY_NAT si ninguna embiste) hay UN solo impacto por contacto:
-         las dos ponen cara de golpe HIT_FACE_S s, retroceden RECOIL unidades (a RECOIL_RATE u/s), se sacuden, una esquiva hacia
-         arriba y la otra hacia abajo, y quedan inmunes IMMUNE_S s. Después se recuperan solas. Máx. HIT_MAX choques por tortuga. */
-      const HIT = { RECOIL: 6, RECOIL_RATE: 7, FACE_S: 4.5, IMMUNE_S: 7, MAX: 3, RAM_MIN: 14, RAM_MAX: 26, RAM_S: 5, RX: 0.55, RY: 0.75, RY_NAT: 0.55, NEAR: 1.2, START: 5, END: 85 };
-      const inFight = (t) => t.angryT > 0 || t.dodgeT > 0;
-      function hitPair(a, b) {
-        /* a = la de arriba (carril menor), b = la de abajo */
-        [[a, -1, b], [b, 1, a]].forEach(([k, dir, other]) => {
-          const t = T[k], isBot = !!(slotPlayer(k) && slotPlayer(k).isBot);
-          t.ouchT = HIT.FACE_S;
-          t.immT = HIT.IMMUNE_S;
-          t.hits++;
-          t.angryT = 0;
-          t.ramTo = null;
-          t.dodgeT = 1.6;
-          t.dodgeDir = dir; /* la de arriba sale hacia arriba y la de abajo hacia abajo */
-          t.jv = 70 * dir; /* sacudida del caparazón */
-          if (!isBot) { t.back += HIT.RECOIL; t.vs *= 0.3; } /* el bot de prueba conserva su ritmo exacto */
-          emojiFx(k, "hit", 3);
-          ringFx(k, false);
-        });
-        SFX.crash(0.6);
-        burstAt(...turPos(a), 16, true);
-      }
-      function collisions(dt) {
-        if (!GEO.k) return;
-        const bh = GEO.H / C.length, live = S.go && !S.over;
-        C.forEach((c) => {
-          const t = T[c.c];
-          t.ouchT = Math.max(0, t.ouchT - dt);
-          t.immT = Math.max(0, t.immT - dt);
-          t.angryT = Math.max(0, t.angryT - dt);
-          t.dodgeT = Math.max(0, t.dodgeT - dt);
-          if (t.angryT <= 0) t.ramTo = null;
-          t.jv += (-70 * t.jl - 8 * t.jv) * dt; /* vaivén amortiguado tras el golpe */
-          t.jl += t.jv * dt;
-          t.sprint = t.angryT > 0;
-          t.tur.classList.toggle("ouch", t.ouchT > 0);
-          t.tur.classList.toggle("angry", t.angryT > 0 && live);
-        });
-        if (!live) return;
-        /* 1) cada tanto, una tortuga embiste a su vecina */
-        S.ramT -= dt;
-        if (S.ramT <= 0) {
-          S.ramT = HIT.RAM_MIN + Math.random() * (HIT.RAM_MAX - HIT.RAM_MIN);
-          const cand = [];
-          for (let i = 0; i < C.length - 1; i++) {
-            const a = T[C[i].c], b = T[C[i + 1].c], pa = S.pos[C[i].c], pb = S.pos[C[i + 1].c];
-            if (a.immT > 0 || b.immT > 0 || a.hits >= HIT.MAX || b.hits >= HIT.MAX || inFight(a) || inFight(b)) continue;
-            if (pa > HIT.END || pb > HIT.END || pa < HIT.START || pb < HIT.START || Math.abs(pa - pb) * GEO.ppu > HIT.NEAR * GEO.tw) continue;
-            cand.push(i);
-          }
-          if (cand.length) {
-            const i = rnd(cand), up = Math.random() < 0.5, ag = T[C[up ? i : i + 1].c];
-            ag.angryT = HIT.RAM_S;
-            ag.ramTo = C[up ? i + 1 : i].c;
-            ag.ramDir = up ? 1 : -1;
-          }
-        }
-        /* 2) la embestidora apunta su altura hacia la vecina (el caparazón queda a 0.4 de alto de distancia) */
-        C.forEach((c) => {
-          const t = T[c.c];
-          if (t.angryT > 0 && t.ramTo) t.zT = T[t.ramTo].zy + t.ramDir * (bh - 0.4 * GEO.th);
-        });
-        /* 3) impacto entre caparazones vecinos */
-        for (let i = 0; i < C.length - 1; i++) {
-          const ka = C[i].c, kb = C[i + 1].c, a = T[ka], b = T[kb];
-          if (a.immT > 0 || b.immT > 0 || a.hits >= HIT.MAX || b.hits >= HIT.MAX) continue;
-          if (S.pos[ka] < HIT.START || S.pos[kb] < HIT.START) continue; /* en la salida van todas lado a lado: aún no chocan */
-          const dx = Math.abs(S.pos[kb] - S.pos[ka]) * GEO.ppu, dy = Math.abs(b.rtPx - a.rtPx);
-          const ry = a.angryT > 0 || b.angryT > 0 ? HIT.RY : HIT.RY_NAT; /* embistiendo alcanza más; al azar solo si de verdad se montan */
-          if (dx < HIT.RX * GEO.tw && dy < ry * GEO.th) hitPair(ka, kb);
-        }
-      }
-      function physics(dt) {
+      function physics() {
         const g = GEO;
         if (!g.k) return;
         const bh = g.H / C.length;
         C.forEach((c, i) => {
           const t = T[c.c];
-          t.rtPx = i * bh + (bh - g.th) / 2 + t.zy;
+          t.rtPx = i * bh + (bh - g.th) / 2;
           /* --rt = altura real de la tortuga en la pista: con ella se mueven también 🎁, polvo y etiquetas */
           t.trk.style.setProperty("--rt", t.rtPx.toFixed(1) + "px");
-          t.tur.style.transform = "rotate(" + t.psi.toFixed(2) + "deg)";
+          t.tur.style.transform = "rotate(0deg)";
         });
-        collisions(dt);
       }
       /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio
-   (y pueden chocar con su vecina) sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
+   sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
    Después: si alguien llegó, queda como campeón y finish() termina la carrera en ese momento.
@@ -3961,7 +3886,7 @@
             t = T[k],
             isW = k === S.winner;
           /* VELOCIDAD: la TORTUBOT va a ritmo constante (0 → 100 en CFG.botSec s). Las demás caminan a BASE_V y cada
-             interacción las multiplica ×2 / ×5 / ×10 / ×20 mientras dura su efecto (t.boosts). Los choques entre caparazones vecinos los resuelve collisions(). */
+             interacción las multiplica ×2 / ×5 / ×10 / ×20 mientras dura su efecto (t.boosts). */
           const p0 = S.pos[k],
             own = slotPlayer(k),
             isBotT = !!(own && own.isBot); /* la tortuga que corre el bot de prueba marca el ritmo: 0 → 100 en CFG.botSec */
@@ -3980,18 +3905,9 @@
                 tgtV = Math.max(tgtV, Math.min(24, Math.max(12, eventGap * 2)));
             }
           } else t.mult = 1;
-          if (!isBotT && tgtV > 0) {
-            if (t.angryT > 0) tgtV *= 1.4; /* la embestidora acelera */
-            if (t.ouchT > 0) tgtV *= 0.4 + 0.6 * (1 - t.ouchT / HIT.FACE_S); /* aturdida: arranca despacio y se recupera */
-          }
           if (isBotT) t.vs = tgtV; /* exacta: llega a 100 justo a los CFG.botSec s */
           else t.vs += (tgtV - t.vs) * Math.min(1, dt * (tgtV > t.vs ? 2.5 : 1.2)); /* acelera y frena con suavidad */
           S.pos[k] = Math.min(CFG.win, S.pos[k] + (S.go && !S.over && !isW ? t.vs * dt : 0));
-          if (t.back > 0) { /* retroceso por impacto: se gasta suave y nunca baja de 0 */
-            const d = Math.min(t.back, HIT.RECOIL_RATE * dt, S.pos[k]);
-            S.pos[k] -= d;
-            t.back -= d;
-          }
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
             const collected = t.giftEl;
             t.giftTarget = null;
@@ -4049,7 +3965,7 @@
                 Por eso el ritmo del paso sale de vb: fq = vb · duty / (2 · amplitud). Si no avanza, las patas quedan plantadas.
              3) Dos pares diagonales (trote) alternan; con duty > 0.5 siempre hay al menos un par en el suelo.
              4) El caparazón NO sube ni baja: se inclina sobre las patas (skewX con pivote en el suelo = sin altura),
-                con inercia al acelerar y un vaivén en cada paso. Zigzaguea de lado a lado y gira hacia donde va. */
+                con inercia al acelerar y un vaivén en cada paso. */
           const dp = S.pos[k] - p0;
           t.va += (dp / dt - t.va) * Math.min(1, dt * 10);
           const vb = Math.max(0, t.va) * GEO.ppu * GEO.u;
@@ -4104,8 +4020,7 @@
             Math.max(-2, Math.min(2, acl * 0.9)) +
             0.9 * Math.sin(4 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv;
           t.lean += (leanT - t.lean) * Math.min(1, dt * 10);
-          t.tur.classList.toggle("charge", !!t.sprint && !(S.over || S.winner));
-          const lean = Math.max(-9, Math.min(9, t.lean + t.jl)),
+          const lean = Math.max(-9, Math.min(9, t.lean)),
             roll = 1.2 * Math.sin(2 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv, /* leve balanceo al apoyar cada par de patas */
             sk = " translate(0 42) skewX(" + lean.toFixed(2) + ") translate(0 -42)",
             skB = " rotate(" + roll.toFixed(2) + " 27 40)" + sk,
@@ -4130,34 +4045,6 @@
               (Math.sin(t.ph + 1) * 10 * Math.min(1, a / 2) * mv).toFixed(2) +
               " 6.8 35)",
           );
-          /* CARRIL PROPIO: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril (±20 % del alto del carril).
-             Cada 2-6 s elige una altura nueva y se desplaza suave hacia ella mientras camina; gira hacia donde va. */
-          {
-            const li = C.indexOf(c),
-              bh = GEO.k ? GEO.H / C.length : 0,
-              over = Math.max(0, (GEO.th - bh) / 2), /* cuánto sobresale la tortuga de su carril por arriba y por abajo */
-              fight = inFight(t),
-              rng = bh * (fight ? 0.7 : 0.2), /* al embestir o esquivar puede salirse del carril */
-              lo = li === 0 ? over : -rng, /* la 1.ª y la última no se salen de la pista */
-              hi = li === C.length - 1 ? -over : rng,
-              vxp = Math.max(t.va * GEO.ppu, 6);
-            t.zTimer -= dt;
-            if (t.zTimer <= 0) {
-              t.zTimer = 2 + Math.random() * 4;
-              t.zT = lo + Math.random() * Math.max(0, hi - lo);
-            }
-            if (t.dodgeT > 0) t.zT = t.dodgeDir * rng; /* tras el impacto: una sale hacia arriba y la otra hacia abajo */
-            t.zT = Math.max(lo, Math.min(hi, t.zT));
-            const zt = t.zy + (t.zT - t.zy) * (fight ? 1 : mv);
-            t.zvy += ((zt - t.zy) * 3 - t.zvy * 4) * dt;
-            const vyMax = (3 + 0.45 * vxp) * (fight ? 8 : 0.3 + 0.7 * mv); /* en embestida/esquive se mueve rápido aunque esté frenada */
-            t.zvy = Math.max(-vyMax, Math.min(vyMax, t.zvy));
-            t.zy += t.zvy * dt;
-            if (t.zy < lo) { t.zy = lo; t.zvy = Math.max(0, t.zvy); }
-            if (t.zy > hi) { t.zy = hi; t.zvy = Math.min(0, t.zvy); }
-            const psiT = (Math.max(-0.18, Math.min(0.18, Math.atan2(t.zvy, vxp))) * 180) / Math.PI * mv;
-            t.psi += (psiT - t.psi) * Math.min(1, dt * 3);
-          }
           if (t.vs > 1.3 / TIME_X) {
             t.du -= dt;
             if (t.du <= 0) {
@@ -4171,7 +4058,7 @@
             t.trk.style.setProperty("--p", _pv);
           }
         }
-        physics(dt); /* choques entre tortugas + transform final */
+        physics(); /* mantiene cada tortuga en su carril y aplica la transformación final */
         if (!S.over && S.winner) finish(S.winner);
         acc += dt;
         if (acc > 0.25) {
