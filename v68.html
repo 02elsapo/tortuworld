@@ -18,6 +18,7 @@
     • Un espectador elige país escribiendo su nombre, sigla o bandera en el chat (S.pick); claimSlot le asigna carril.
     • La primera tortuga en pasar el 25 %, 50 % y 75 % recibe un efecto de lechuga (S.cp); foto finish si llegan casi empatadas.
     • Tras CFG.restartMs (7 s) empieza otra ronda con nuevos países. La música cambia de tema en cada ronda (THEMES).
+    • Pista #hint compacta, con banderas en una sola fila para no tapar la carrera.
     • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres. La tarjeta de ganador muestra victorias guardadas, racha, MVP de la ronda y tiempo.
 
   PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0
@@ -1558,11 +1559,14 @@
       html.nohype #hype{display:none}
       @keyframes hypeHot{to{transform:scale(1.04);box-shadow:0 0 1.2rem rgba(255,201,60,.9)}}
       @keyframes hypeFlow{to{background-position:-200% 0}}
-      #hint{position:fixed;left:0;right:0;top:calc(var(--hype-top,12%) + 3.5rem);z-index:44;display:none;justify-content:center;pointer-events:none}
+      #hint{position:fixed;left:0;right:0;top:calc(var(--hype-top,12%) + 3.2rem);z-index:44;display:none;justify-content:center;pointer-events:none}
       #hint.show{display:flex}
-      #hint .hc{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:center;max-width:92vw;padding:.5rem 1.1rem;border-radius:1.4rem;background:rgba(7,38,43,.82);border:.16rem solid var(--mint);font-size:1.5rem;animation:hintBob 1.4s ease-in-out infinite alternate}
-      #hint img{height:2.1rem;border-radius:.2rem;border:.08rem solid var(--ink)}
-      #hint span{display:inline-flex;align-items:center;gap:.25rem}
+      /* Pista compacta: título pequeño y banderas en una fila para no tapar la carrera. */
+      #hint .hc{display:flex;flex-direction:column;align-items:center;gap:.1rem;max-width:94vw;padding:.3rem .8rem .4rem;border-radius:1rem;background:rgba(7,38,43,.82);border:.12rem solid var(--mint);font-size:1.1rem;line-height:1.15;animation:hintBob 1.4s ease-in-out infinite alternate}
+      #hint .ht{font-size:.8em;opacity:.9;white-space:nowrap}
+      #hint .hr{display:flex;align-items:center;justify-content:center;gap:.7em;flex-wrap:nowrap;white-space:nowrap}
+      #hint img{height:1.3em;border-radius:.15em;border:.06rem solid var(--ink)}
+      #hint span{display:inline-flex;align-items:center;gap:.3em}
       @keyframes hintBob{to{transform:translateY(.25rem)}}
       #winner .wxtra{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;max-width:80vw}
       #winner .wxtra span{padding:.2rem .65rem;border-radius:1rem;background:rgba(255,201,60,.16);border:.1rem solid var(--sun);font-size:.95rem;color:#fff}
@@ -2856,18 +2860,38 @@
         const key = "es" + free.map(nm).join("|");
         if (key === hintKey) return;
         hintKey = key;
-        const hc = document.createElement("div");
+        const hc = document.createElement("div"), ht = document.createElement("div"), hr = document.createElement("div");
         hc.className = "hc";
-        hc.append("💬 Escribe tu país: ");
+        ht.className = "ht";
+        hr.className = "hr";
+        ht.textContent = "💬 Escribe tu país:";
         free.forEach((n) => {
           const s = document.createElement("span"), im = document.createElement("img");
           im.alt = "";
           im.src = n.u;
           s.append(im, nm(n));
-          hc.append(s);
+          hr.append(s);
         });
+        hc.append(ht, hr);
         el.replaceChildren(hc);
+        hintFit(hc, hr);
       }
+      /* Reduce la letra de la pista hasta que las banderas quepan en una sola fila. */
+      function hintFit(hc, hr) {
+        const fit = () => {
+          hc.style.fontSize = "";
+          const avail = window.innerWidth * 0.94 - 24;
+          const w = hr.scrollWidth;
+          if (w > avail) {
+            const base = parseFloat(getComputedStyle(hc).fontSize);
+            hc.style.fontSize = Math.max(8, base * avail / w) + "px";
+          }
+        };
+        fit();
+        requestAnimationFrame(fit);
+        setTimeout(fit, 400); /* tras cargar banderas/fuente */
+      }
+      window.addEventListener("resize", () => { hintKey = ""; });
       /* Extras de la tarjeta de ganador: victorias guardadas, racha, MVP de la ronda y tiempo. */
       function winnerExtras(p) {
         const box = $("wXtra");
