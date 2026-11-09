@@ -1269,13 +1269,15 @@
         flex-direction: column;
         align-items: center;
         gap: 0.6rem;
+        box-sizing: border-box;
+        width: min(94vw, 42rem);
         padding: 1.1rem 1.8rem 1.2rem;
         border: 0.22rem solid var(--sun, #ffc93c);
         border-radius: 1.4rem;
         background: linear-gradient(160deg, rgba(13, 58, 65, 0.96), rgba(20, 91, 80, 0.96));
         box-shadow: 0 0 2.6rem rgba(255, 201, 60, 0.55), 0 0.5rem 1.4rem rgba(0, 0, 0, 0.55);
         text-align: center;
-        max-width: 88vw;
+        max-width: 94vw;
         max-height: 92vh;
         overflow-y: auto;
         animation: winpop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
@@ -1577,21 +1579,21 @@
       @keyframes hintBob{to{transform:translateY(.25rem)}}
       #winner .wxtra{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;max-width:80vw}
       #winner .wxtra span{padding:.2rem .65rem;border-radius:1rem;background:rgba(255,201,60,.16);border:.1rem solid var(--sun);font-size:.95rem;color:#fff}
-      #winner .wtop{display:flex;flex-direction:column;align-items:center;gap:.3rem;color:#fff}
+      #winner .wtop{display:flex;flex-direction:column;align-items:center;gap:.5rem;width:100%;color:#fff}
       #winner .wtop[hidden]{display:none!important}
       #winner .wtop-title{font:1rem/1 "Bowlby One","Arial Black",sans-serif;color:var(--sun)}
-      #winner .wtop-first{display:flex;justify-content:center}
-      #winner .wtop-pair{display:flex;justify-content:center;align-items:flex-start;gap:1rem}
-      #winner .wtop-card{display:flex;flex-direction:column;align-items:center;gap:.16rem;max-width:38vw;font:700 .75rem/1.1 system-ui,sans-serif}
-      #winner .wtop-card.first{font-size:.9rem}
+      #winner .wtop-first{display:flex;justify-content:center;width:100%}
+      #winner .wtop-pair{display:flex;justify-content:center;align-items:stretch;gap:.75rem;width:100%}
+      #winner .wtop-card{display:flex;flex:0 1 43%;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;min-width:0;max-width:none;padding:.45rem .35rem;border:.1rem solid rgba(217,226,229,.6);border-radius:.8rem;background:rgba(7,38,43,.55);font:700 .85rem/1.15 system-ui,sans-serif}
+      #winner .wtop-card.first{flex-basis:68%;padding:.55rem;border-color:var(--sun);background:rgba(255,201,60,.13);font-size:1rem}
       #winner .wtop-avatar{position:relative;display:grid;place-items:center;width:min(9vmin,4.5rem);height:min(9vmin,4.5rem);overflow:hidden;border:.16rem solid #d9e2e5;border-radius:50%;background:#0d3a41;box-shadow:0 0 .45rem rgba(255,255,255,.35)}
       #winner .wtop-card.first .wtop-avatar{width:min(14vmin,6.5rem);height:min(14vmin,6.5rem);border:.22rem solid var(--sun);box-shadow:0 0 .8rem rgba(255,201,60,.8)}
       #winner .wtop-avatar img{width:100%;height:100%;object-fit:cover}
       #winner .wtop-avatar b{display:none;color:#fff;font:1.3rem/1 "Bowlby One","Arial Black",sans-serif}
       #winner .wtop-avatar.noimg img{display:none}
       #winner .wtop-avatar.noimg b{display:block}
-      #winner .wtop-place{color:var(--sun);font:1rem/1 "Bowlby One","Arial Black",sans-serif}
-      #winner .wtop-name{max-width:38vw;overflow-wrap:anywhere}
+      #winner .wtop-place{padding:.2em .5em;border-radius:999px;background:var(--sun);color:var(--ink);font:1rem/1.1 "Bowlby One","Arial Black",sans-serif}
+      #winner .wtop-name{max-width:100%;overflow-wrap:anywhere}
       #connectorStatus{
         position:fixed;
         right:.75rem;
@@ -3149,9 +3151,9 @@
           card.append(rank, avatar, name);
           return card;
         };
-        first.append(makeCard(top[0], "1.º", true));
-        if (top[1]) pair.append(makeCard(top[1], "2.º", false));
-        if (top[2]) pair.append(makeCard(top[2], "3.º", false));
+        first.append(makeCard(top[0], "🥇 PRIMER PUESTO", true));
+        if (top[1]) pair.append(makeCard(top[1], "🥈 SEGUNDO PUESTO", false));
+        if (top[2]) pair.append(makeCard(top[2], "🥉 TERCER PUESTO", false));
       }
       function showWinner(p) {
         const el = $("winner");
