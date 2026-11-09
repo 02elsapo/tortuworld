@@ -68,7 +68,7 @@
         --grass: #5fb35a;
         --grass2: #4a9a4c;
         --padr: 3%;
-        --stats-size: min(2.6vh, 4.4vw);
+        --stats-size: min(1.8vh, 3vw);
       }
       *{
         box-sizing: border-box;
@@ -389,12 +389,14 @@
       }
       #bots button{
         flex: 1 1 45%;
-        padding: 7px 4px;
+        padding: 5px 3px;
         border: 0;
         border-radius: 6px;
         background: #1d4f57;
         color: #fff;
         font: inherit;
+        font-size: 0.9em;
+        line-height: 1.1;
         cursor: pointer;
       }
       #bots button.act{
@@ -959,9 +961,11 @@
         background: #7b4dff;
       }
       #lanes .evb.e-ch{
-        max-width: min(72vw, 22rem);
+        max-width: min(44vw, 12rem);
         overflow: hidden;
         text-overflow: ellipsis;
+        font-size: calc(var(--th) * 0.16);
+        padding: 0.12em 0.45em 0.14em;
         background: #fff;
         color: #07262b;
         text-shadow: none;
@@ -1282,7 +1286,7 @@
         z-index: 44;
         display: flex;
         justify-content: center;
-        gap: 0.5em;
+        gap: 0.35em;
         padding: 0 0.6em;
         font-size: var(--stats-size);
         line-height: 1;
@@ -1294,13 +1298,13 @@
         bottom: calc(1.2% + var(--stats-size) + var(--stats-size) + 0.75rem);
         z-index: 9999;
         max-width: min(80vw, 22rem);
-        min-height: 2.5rem;
-        padding: 0.65rem 1rem;
+        min-height: 1.7rem;
+        padding: 0.35rem 0.65rem;
         overflow: hidden;
         border: 0.12rem solid rgba(255,255,255,0.8);
         border-radius: 999px;
         color: #fff;
-        font: 800 0.85rem/1.2 system-ui, sans-serif;
+        font: 800 0.65rem/1.2 system-ui, sans-serif;
         text-overflow: ellipsis;
         white-space: nowrap;
         box-shadow: 0 0.15rem 0.5rem rgba(0,0,0,0.5);
@@ -1312,8 +1316,8 @@
       #stats .st2{
         display: flex;
         align-items: center;
-        gap: 0.35em;
-        padding: 0.3em 0.7em 0.3em 0.45em;
+        gap: 0.25em;
+        padding: 0.18em 0.45em 0.18em 0.35em;
         border-radius: 999px;
         border: 0.14em solid #fff;
         background: rgba(7, 38, 43, 0.88);
@@ -1322,12 +1326,15 @@
       }
       #stats .st2 i{
         font-style: normal;
-        font-size: 1.35em;
+        font-size: 1.1em;
       }
       #stats .st2 b{
-        font: 1.15em/1 "Bowlby One", "Arial Black", sans-serif;
-        min-width: 1.2em;
+        font: 1.05em/1 "Bowlby One", "Arial Black", sans-serif;
+        min-width: 1em;
         text-align: left;
+      }
+      #stats .st-label{
+        font: 700 0.65em/1 system-ui, sans-serif;
       }
       #stats .st2.k-ch{ border-color: #1fb58a; }
       #stats .st2.k-lk{ border-color: #ff3d7f; }
@@ -1871,7 +1878,7 @@
     </button>
     <div id="stats" aria-hidden="true">
       <div class="st2 k-ch" data-k="ch"><i>💬</i><b>0</b></div>
-      <div class="st2 k-lk" data-k="lk"><i>👍</i><b>0</b></div>
+      <div class="st2 k-lk" data-k="lk" title="Me gusta"><i>👍</i><span class="st-label" id="likesLabel">Me gusta</span><b>0</b></div>
       <div class="st2 k-jn" data-k="jn"><i>👋</i><b>0</b></div>
       <div class="st2 k-sh" data-k="sh"><i>🔁</i><b>0</b></div>
       <div class="st2 k-gf" data-k="gf"><i>🎁</i><b>0</b></div>
@@ -3206,7 +3213,7 @@
           );
         } else if (ty === "chat") {
           const comment = String(entry.content || "").replace(/\s+/g, " ").trim();
-          const message = comment.length > 42 ? comment.slice(0, 41) + "…" : comment;
+          const message = comment.length > 24 ? comment.slice(0, 23) + "…" : comment;
           show("e-ch", message ? "💬 “" + message + "”" : tr("💬 Comentó", "💬 Commented"));
         }
         else if (ty === "share") show("e-sh", tr("🔁 Compartió +", "🔁 Shared +") + pts);
@@ -4704,6 +4711,7 @@
         set("#winner .wttl", "🏆 1.º PUESTO", "🏆 1ST PLACE");
         set("#helper2Title", "2.º · más apoyo", "2ND · TOP SUPPORTER");
         set("#helper3Title", "3.º · más apoyo", "3RD · TOP SUPPORTER");
+        set("#likesLabel", "Me gusta", "Likes");
         set("#snd", "🔇 Toca la pantalla para activar el sonido", "🔇 Tap the screen to enable sound");
         set("#botsTitle", "Pruebas de interacción (P)", "Interaction tests (P)");
         const tt = (id, es, en) => {

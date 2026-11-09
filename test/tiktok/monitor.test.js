@@ -179,6 +179,7 @@ test('monitor normalizes every webcast event and event payload shape', async () 
     [WebcastEvent.GIFT, { giftDetails: { giftName: 'Whale Diving', diamondCount: 5 } }],
     [WebcastEvent.GIFT, { giftName: 'unknown', repeatCount: 0, diamonds: 0 }],
     [WebcastEvent.LIKE, { user: { uniqueId: 'liker' }, likeCount: 5, incrementalLikeCount: 2 }],
+    [WebcastEvent.LIKE, { user: { uniqueId: 'string-liker' }, incrementalLikeCount: '6' }],
     [WebcastEvent.LIKE, { totalLikeCount: 10 }],
     [WebcastEvent.LIKE, {}],
     [WebcastEvent.FOLLOW, { user: { nickname: 'follower' }, followCount: 1 }],
@@ -205,8 +206,9 @@ test('monitor normalizes every webcast event and event payload shape', async () 
   assert.equal(received[5].diamondCount, 3);
   assert.match(received[5].content, /Rose x2/);
   assert.equal(received[6].diamondCount, 7);
-  assert.equal(received[14].avatar, 'member.png');
-  assert.equal(received[15].username, 'Sistema');
+  assert.equal(received.find((entry) => entry.username === 'string-liker').activityCount, 6);
+  assert.equal(received.find((entry) => entry.username === 'joiner').avatar, 'member.png');
+  assert.equal(received.filter((entry) => entry.type === 'member')[1].username, 'Sistema');
   assert.equal(received.at(-2).avatar, 'https://example.test/a.webp');
   assert.equal(received.at(-1).avatar, 'https://example.test/b.webp');
   assert.equal(monitor.state.recentJoiners.length, 1);

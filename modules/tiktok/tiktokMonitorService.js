@@ -138,7 +138,8 @@ function createTikTokMonitorService({
       : eventName === webcastEvents.LIKE
         ? data.incrementalLikeCount || data.count || data.likeCount
         : undefined;
-    return Number.isFinite(rawCount) && rawCount > 0 ? Math.min(100, Math.floor(rawCount)) : undefined;
+    const count = Number(rawCount);
+    return Number.isFinite(count) && count > 0 ? Math.floor(count) : undefined;
   }
 
   function getGiftActivityCount(data) {
