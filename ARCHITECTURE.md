@@ -33,7 +33,7 @@ The connector starts with the environment or persisted username, defaulting to `
 | `modules/realtime/sseHub.js` | Attaches SSE responses, sends initial messages, broadcasts named events and heartbeats, and removes closed clients. |
 | `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game, `/backend` to configuration, and serves the `tortu` PWA assets. |
 | `modules/overlay/public/` | Provides the `tortu` install manifest, full-screen service worker, and app icons. |
-| `v60.html` | Runs the country race, consumes normalized SSE updates, and maps TikTok events to game actions. |
+| `v68.html` | Runs the country race, consumes normalized SSE updates, and maps TikTok events to game actions. |
 | `modules/overlay/backend.html` | Reads status/configuration and displays live comment and cup statistics by country. |
 
 Add a mini app as a new module with its own routes and event subscription. Keep the provider connection reusable and app-agnostic.

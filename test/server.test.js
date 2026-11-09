@@ -60,40 +60,47 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves version 60 as the only overlay version', async () => {
+test('serves version 68 and leaves connection startup to the browser overlay', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY v60\.html \.\//);
+  assert.match(dockerfile, /COPY v68\.html \.\//);
   assert.doesNotMatch(dockerfile, /v45\.html/);
   assert.equal(fs.existsSync(path.join(root, 'v45.html')), false);
 
+  const monitorService = createMonitorService();
   const { server } = createWebserver({
     configurationPath: path.join(os.tmpdir(), `tortu-test-${process.pid}.json`),
-    monitorService: createMonitorService(),
+    monitorService,
   });
   const baseUrl = await listen(server);
 
   try {
+    const backendResponse = await fetch(`${baseUrl}/backend`);
+    assert.equal(backendResponse.status, 200);
+    assert.match(await backendResponse.text(), /fetch\('\/api\/reconnect', \{ method: 'POST' \}\)/);
+    assert.equal(monitorService.state.isConnected, false, 'opening the backend must not connect TikTok');
+
     const rootResponse = await fetch(baseUrl);
     assert.equal(rootResponse.status, 200);
+    assert.equal(monitorService.state.isConnected, false, 'serving the overlay must not connect TikTok');
     assert.match(rootResponse.headers.get('cache-control'), /no-store/);
     const html = await rootResponse.text();
     assert.match(html, /<title>Country Race<\/title>/);
     assert.match(html, /id="connectorStatus"/);
-    assert.match(html, /fetch\("\/api\/reconnect"/);
     assert.match(html, /new EventSource\("\/api\/events"\)/);
     assert.match(html, /source\.addEventListener\("update"/);
+    assert.match(html, /fetch\("\/api\/reconnect"/);
     assert.deepEqual(await fetch(`${baseUrl}/api/config`).then((response) => response.json()), {
       username: 'labettydetemu',
     });
 
-    for (const route of ['/overlay', '/v60.html']) {
+    for (const route of ['/overlay', '/v68.html']) {
       const response = await fetch(`${baseUrl}${route}`);
       assert.equal(response.status, 200);
       assert.equal(await response.text(), html);
     }
+    assert.equal((await fetch(`${baseUrl}/v60.html`)).status, 404);
     assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
-    assert.equal((await fetch(`${baseUrl}/backend`)).status, 200);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
     assert.match(await serviceWorker.text(), /tortu-shell-v4/);
@@ -105,7 +112,7 @@ test('serves version 60 as the only overlay version', async () => {
   }
 });
 
-test('forwards normalized TikTok updates in the shape consumed by version 60', async () => {
+test('forwards normalized TikTok updates in the shape consumed by version 68', async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'tortu-test-'));
   const monitorService = createMonitorService();
   const { server } = createWebserver({

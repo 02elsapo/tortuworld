@@ -282,6 +282,11 @@
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || 'No se pudo guardar la cuenta.');
+        const reconnectResponse = await fetch('/api/reconnect', { method: 'POST' });
+        const reconnectResult = await reconnectResponse.json();
+        if (!reconnectResponse.ok) {
+          throw new Error(reconnectResult.message || 'No se pudo iniciar la conexión.');
+        }
         message.textContent = `Conectando con @${result.username}…`;
       } catch (error) {
         message.textContent = error.message;

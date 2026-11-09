@@ -5,19 +5,20 @@
   ═══════════════════════════════════════════════════════════════════════════
 
   DINÁMICA DEL JUEGO (cómo funciona hoy)
-    • 3 tortugas, cada una con SU PROPIO CARRIL: Brasil, Paraguay y Argentina en orden cambiante.
-      Avanzan en línea recta por su carril y no chocan.
+    • 6 tortugas, cada una con SU PROPIO CARRIL: 5 países (Brasil, Paraguay y Argentina fijos en orden cambiante + 2 sorteados)
+      y la TORTUBOT en el 6.º carril. NO HAY CHOQUES: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril.
     • La TORTUBOT marca el tope de la carrera: va de 0 a 100 a velocidad constante en CFG.botSec (120 s = 2 minutos).
       Si nadie la supera, llega ella. Las tortugas de los espectadores caminan a BASE_V (40 % de la velocidad de la bot).
     • Cada interacción acelera la tortuga de su usuario mientras dura el efecto (EV_BOOST, addBoost):
-      like / entrar ×2 · comentario ×5 · compartir / seguir ×10 · regalo ×20. Gana quien llega primero a CFG.win (100).
+      like ×5 · entrar ×2 · comentario ×5 · compartir / seguir ×10 · regalo ×20 (rosa) a ×30 (galaxia) según su valor (GIFT_TIERS). Gana quien llega primero a CFG.win (100).
     • Ningún avatar queda ANCLADO en la pista: el avatar del usuario solo se ve sobre su tortuga (avatarPop está desactivado).
-    • Al final de cada carril hay una copa 🏆 (.prize) que la tortuga persigue; la ganadora se la lleva.
-    • Guía visual SIN TEXTO abajo (#howto): acciones con rayos ⚡ (de la mano 👋 a la copa) → eventos que hacen avanzar a la tortuga hasta llevarse la copa (?howto=0 la oculta).
+    • Sin copas al final de los carriles (se quitaron).
+    • Guía de uso eliminada (el espacio queda en blanco). Abajo: 3 llamadas de acción (#cta): 🌹 al centro alternan los regalos (Rosita ×20 · Dona ×25 · Galaxia ×30), ❤️ Dale like a la derecha (fija), izquierda alterna ➕ Seguir / ↪️ Compartir (?cta=0 las oculta). Las llamadas van FUERA de la pista (franja --cta-h bajo los carriles). Cada botón lleva una insignia ⚡×N con el multiplicador de velocidad que da esa acción (sale de EV_BOOST).
     • Mientras haya bots activos (🤖), cada carril se delimita con líneas sólidas (html.hasbots, #laneLines; ?lines=1 las muestra siempre).
     • Un espectador elige país escribiendo su nombre, sigla o bandera en el chat (S.pick); claimSlot le asigna carril.
     • La primera tortuga en pasar el 25 %, 50 % y 75 % recibe un efecto de lechuga (S.cp); foto finish si llegan casi empatadas.
     • Tras CFG.restartMs (7 s) empieza otra ronda con nuevos países. La música cambia de tema en cada ronda (THEMES).
+    • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres. La tarjeta de ganador muestra victorias guardadas, racha, MVP de la ronda y tiempo.
 
   PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0
                      ?music=0  ?theme=1-5  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
@@ -68,7 +69,8 @@
         --grass: #5fb35a;
         --grass2: #4a9a4c;
         --padr: 3%;
-        --stats-size: min(1.8vh, 3vw);
+        --cta-fs: min(2.2vh, 3vw); /* tamaño de las llamadas de acción */
+        --cta-h: calc(var(--cta-fs) * 5.2); /* franja que se reserva bajo la pista para ellas (0 con ?cta=0) */
       }
       *{
         box-sizing: border-box;
@@ -112,7 +114,7 @@
 
       /* Cabecera */
 
-      /* Pista: 3 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
+      /* Pista: 5 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
    Los anchos de .tur / .mk / .sl / .pl usan el mismo desplazamiento (.8rem de margen + pista de 100% - 7rem) para que
    la nariz de la tortuga coincida con las líneas de 25/50/75 % y con la meta. Si cambias el tamaño de .tur, ajusta los cuatro. */
       #lanes{
@@ -389,14 +391,12 @@
       }
       #bots button{
         flex: 1 1 45%;
-        padding: 5px 3px;
+        padding: 7px 4px;
         border: 0;
         border-radius: 6px;
         background: #1d4f57;
         color: #fff;
         font: inherit;
-        font-size: 0.9em;
-        line-height: 1.1;
         cursor: pointer;
       }
       #bots button.act{
@@ -440,20 +440,6 @@
       }
       .tur.swap svg{
         animation: pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
-      }
-      .tur .av{
-        transform-box: fill-box;
-        transform-origin: center;
-        transform: scale(1.35);
-      }
-      .tur.join-pop .av{
-        transform-box: fill-box;
-        transform-origin: center;
-        animation: shellAvatarJoin 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) both;
-      }
-      @keyframes shellAvatarJoin{
-        0%, 100%{ transform: scale(1.35); }
-        40%{ transform: scale(2.7); }
       }
       /* FIJA: esquina superior izquierda de la pista (al inicio); */
       .tag{
@@ -501,7 +487,7 @@
       .lane.empty .tag{
         display: none;
       }
-      /* Pantalla horizontal: se reduce el rem para que quepan los 3 carriles grandes sin tapar el panel inferior */
+      /* Pantalla horizontal: se reduce el rem para que quepan los 5 carriles grandes sin tapar el panel inferior */
       @media (orientation: landscape){
         html{
           font-size: min(3.8vw, 1.45vh);
@@ -676,7 +662,7 @@
         top: 50%;
         width: auto;
         height: 100%;
-        aspect-ratio: 66 / 46;
+        aspect-ratio: 70 / 46;
         margin-top: 0;
         transform: translateY(-50%);
       }
@@ -778,7 +764,7 @@
             /* ===== UNA SOLA PISTA para todas las tortugas (grandes), copas mini, mensajes en el pie ===== */
       #lanes{
         --tw: min(11rem, 28vh);
-        --th: calc(var(--tw) * 46/66);
+        --th: calc(var(--tw) * 46/70);
         --g: 3rem;
         position: relative;
         display: block;
@@ -918,23 +904,20 @@
       #lanes .evb{
         position: absolute;
         z-index: 12;
-        display: grid;
-        width: 1.8em;
-        height: 1.8em;
-        place-items: center;
+        white-space: nowrap;
         pointer-events: none;
-        padding: 0;
+        padding: 0.16em 0.7em 0.2em;
         border-radius: 999px;
         border: 0.16rem solid #fff;
         color: #fff;
         font-size: calc(var(--th) * 0.24);
-        line-height: 1;
+        line-height: 1.15;
         text-shadow: 0 0.08em 0 rgba(7, 38, 43, 0.7);
         box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.6);
         top: calc(var(--rt) - var(--th) * 0.15 - var(--o, 0) * var(--th) * 0.12);
-        left: clamp(30%, calc(
+        left: calc(
           var(--tw) * 0 + (100% - var(--tw) * 1 - 0.8rem) * var(--p, 0) / 100 + var(--tw) * 0.5
-        ), 70%);
+        );
         animation: evup 2.2s ease-out forwards;
       }
       @keyframes evup{
@@ -978,9 +961,23 @@
         background: #7b4dff;
       }
       #lanes .evb.e-ch{
+        max-width: min(72vw, 22rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
         background: #fff;
         color: #07262b;
         text-shadow: none;
+        white-space: nowrap;
+      }
+      #lanes .evb.e-ch::after{
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -0.34em;
+        border-top: 0.4em solid #fff;
+        border-right: 0.35em solid transparent;
+        border-left: 0.35em solid transparent;
+        transform: translateX(-50%);
       }
       #lanes .gift-bait{
         position: absolute;
@@ -1019,32 +1016,6 @@
         filter: none;
       }
 
-      /* ===== fondo de estadio pixel-art (canvas #bg) y pista transparente ===== */
-      #bg{
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        pointer-events: none;
-        image-rendering: crisp-edges;
-        image-rendering: pixelated;
-      }
-      html:not(.pbg) #bg{
-        display: none;
-      }
-      html.pbg #lanes{
-        background: none !important;
-        border: 0 !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-      }
-      html.pbg #lanes::after,
-      html.pbg #lanes .sl,
-      html.pbg #lanes .fin{
-        display: none !important;
-      }
-    
       /* ===== tortugas al 100 % de opacidad (también tras terminar la carrera) ===== */
       #lanes .tur,
       #lanes .lane.empty .tur,
@@ -1113,7 +1084,7 @@
         100%{ transform: translateY(4px); opacity: 0; }
       }
     
-      /* ===== física de marcha: la tortuga avanza en línea recta por su carril ===== */
+      /* ===== física de marcha: la tortuga gira sobre sus patas y los choques muestran 💥 ===== */
       #lanes .trk .tur{
         transform-origin: 35% 90%;
         will-change: transform;
@@ -1278,95 +1249,6 @@
         100%{ transform: scale(0.6); opacity: 0; }
       }
 
-      /* ===== BARRA INFERIOR: contador de eventos por tipo (comentario, like, unión, compartir, regalo) ===== */
-      #stats{
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 1.2%;
-        z-index: 44;
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        align-items: center;
-        gap: clamp(2px, 0.35em, 8px);
-        padding: 0 0.6em;
-        font-size: var(--stats-size);
-        line-height: 1;
-        pointer-events: none;
-      }
-      @media (max-width: 520px){
-        #stats .st-label{ display: none; }
-      }
-      #connectorStatus{
-        position: fixed;
-        right: 0.75rem;
-        bottom: calc(1.2% + var(--stats-size) + var(--stats-size) + 0.75rem);
-        z-index: 9999;
-        width: max-content;
-        max-width: min(70vw, 18rem);
-        min-width: 0;
-        min-height: 1.7rem;
-        padding: 0.35rem 0.65rem;
-        overflow: hidden;
-        border: 0.12rem solid rgba(255,255,255,0.8);
-        border-radius: 999px;
-        color: #fff;
-        font: 800 0.65rem/1.2 system-ui, sans-serif;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        box-shadow: 0 0.15rem 0.5rem rgba(0,0,0,0.5);
-        cursor: pointer;
-        pointer-events: auto;
-      }
-      #connectorStatus.connected{ background: #168a50; }
-      #connectorStatus.disconnected{ background: #c6283d; }
-      #stats .st2{
-        display: flex;
-        min-width: 0;
-        align-items: center;
-        justify-content: center;
-        gap: 0.2em;
-        padding: 0.16em 0.25em;
-        overflow: hidden;
-        white-space: nowrap;
-        border-radius: 999px;
-        border: 0.14em solid #fff;
-        background: rgba(7, 38, 43, 0.88);
-        box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.55);
-        color: #fff;
-      }
-      #stats .st2 i{
-        font-style: normal;
-        font-size: 1.1em;
-      }
-      #stats .st2 b{
-        font: 1.05em/1 "Bowlby One", "Arial Black", sans-serif;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-      }
-      #stats .st-label{
-        min-width: 0;
-        overflow: hidden;
-        font: 700 0.65em/1 system-ui, sans-serif;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      #stats .st2.k-ch{ border-color: #1fb58a; }
-      #stats .st2.k-lk{ border-color: #ff3d7f; }
-      #stats .st2.k-jn{ border-color: #7b4dff; }
-      #stats .st2.k-sh{ border-color: #2e7bff; }
-      #stats .st2.k-gf{ border-color: #ffc93c; }
-      #stats .st2.bump{
-        animation: statbump 0.35s ease-out;
-      }
-      @keyframes statbump{
-        0%{ transform: scale(1); }
-        40%{ transform: scale(1.22); }
-        100%{ transform: scale(1); }
-      }
-
       /* ===== al llegar a la meta se muestra el avatar del ganador durante 5 s ===== */
       #winner{
         position: fixed;
@@ -1453,57 +1335,6 @@
         border-radius: 0.2rem;
         border: 0.08rem solid var(--ink, #07262b);
       }
-      #winner .helpers{
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        width: min(78vw, 28rem);
-      }
-      #winner .helper{
-        display: flex;
-        flex: 1;
-        min-width: 0;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.25rem;
-        color: #fff;
-      }
-      #winner .helper strong{
-        color: var(--sun, #ffc93c);
-        font-size: 0.72rem;
-        text-transform: uppercase;
-      }
-      #winner .helper-avatar{
-        position: relative;
-        width: min(15vmin, 5rem);
-        height: min(15vmin, 5rem);
-        overflow: hidden;
-        border: 0.15rem solid #fff;
-        border-radius: 50%;
-        background: #0d3a41;
-      }
-      #winner .helper-avatar img{
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      #winner .helper-avatar b{
-        position: absolute;
-        inset: 0;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-      }
-      #winner .helper-avatar.noimg img{ display: none; }
-      #winner .helper-avatar.noimg b{ display: flex; }
-      #winner .helper-name{
-        max-width: 35vw;
-        overflow: hidden;
-        font-size: 0.78rem;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
       @keyframes winpop{
         from{ transform: scale(0.4); opacity: 0; }
         to{ transform: scale(1); opacity: 1; }
@@ -1522,18 +1353,18 @@
         }
       }
 
-      /* ===== 3 carriles propios, avatares anclados y pista sin cartel de podio ===== */
+      /* ===== 6 carriles propios, avatares anclados y pista sin cartel de podio ===== */
       #lanes{
         --lane-step: calc(100% / (var(--n) + 1));
       }
       html body #app{
         top: var(--top, 24%);
-        bottom: var(--bot, 7%);
+        bottom: calc(var(--bot, 7%) + var(--cta-h)); /* deja libre la franja de las llamadas de acción */
       }
       @media (orientation: portrait){
         html body #app{
           top: var(--top, 22%);
-          bottom: var(--bot, 27%);
+          bottom: calc(var(--bot, 27%) + var(--cta-h));
         }
       }
       #lanes .anchav{
@@ -1579,279 +1410,101 @@
         font: 800 calc(var(--th) * 0.14) / 1.1 system-ui, sans-serif;
         white-space: nowrap;
       }
-      /* PREMIO EN LA META: una copa 🏆 al final de cada carril, a la altura de la tortuga, para que la persiga. */
-      #lanes .prize{
-        position: absolute;
-        z-index: 3;
-        pointer-events: none;
-        right: calc(var(--th) * 0.04);
-        top: calc(var(--rt) + var(--th) * 0.5);
-        width: calc(var(--th) * 0.62);
-        height: calc(var(--th) * 0.62);
-        margin-top: calc(var(--th) * -0.31);
-        display: grid;
-        place-items: center;
-        font-size: calc(var(--th) * 0.5);
-        line-height: 1;
-        filter: drop-shadow(0 0 0.5rem rgba(255, 201, 60, 0.95)) drop-shadow(0 0.15rem 0.2rem rgba(0, 0, 0, 0.5));
-        animation: prizeBob 1.1s ease-in-out infinite;
-      }
-      @keyframes prizeBob{
-        0%, 100%{ transform: translateY(-6%) scale(1) rotate(-6deg); }
-        50%{ transform: translateY(6%) scale(1.12) rotate(6deg); }
-      }
-      /* la tortuga ganadora se lleva la copa: crece y rebota */
-      #lanes .lane.win .prize{
-        animation: prizeWin 0.9s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
-      }
-      @keyframes prizeWin{
-        0%{ transform: scale(1) rotate(0deg); }
-        60%{ transform: scale(1.9) rotate(-12deg); }
-        100%{ transform: scale(1.6) rotate(0deg); }
-      }
-      /* ===== GUÍA VISUAL SIN TEXTO (#howto): cómo se juega, en 3 pasos animados con íconos ===== */
-      #howto{
+      /* ===== LLAMADAS DE ACCIÓN (#cta): 3 casillas FIJAS (la plantilla nunca se mueve). Centro = 🌹 Rosita (principal, fija);
+         derecha = ❤️ Dale like (fija); izquierda alterna EN SU MISMO LUGAR (giro) entre ➕ Seguir · ↪️ Compartir.
+         ?cta=0 la oculta. ===== */
+      #cta{
         position: fixed;
         left: 0;
         right: 0;
-        top: var(--how-top, 17%);
-        height: var(--how-h, 4rem);
-        font-size: min(calc(var(--how-h, 4rem) / 3.1), 3.7vw);
+        bottom: var(--bot, 7%); /* debajo de la pista: la pista termina var(--cta-h) más arriba */
+        font-size: var(--cta-fs);
         z-index: 45;
         display: flex;
         align-items: center;
-        justify-content: space-evenly;
-        gap: 0.4em;
-        padding: 0 0.6em;
-        box-sizing: border-box;
-        background: linear-gradient(180deg, #0a2a33, #0d1838);
-        border-top: 0.12em solid #ff5fae;
-        border-bottom: 0.12em solid #3ff3ff;
-        pointer-events: none;
+        justify-content: center;
+        gap: 0.6em;
         line-height: 1;
-        overflow: hidden;
+        pointer-events: none;
       }
-      #howto .st{
-        display: flex;
-        align-items: center;
-        gap: 0.3em;
-        height: 2.7em;
+      @media (orientation: portrait){
+        #cta{ bottom: var(--bot, 27%); }
+      }
+      #cta .sl{
         position: relative;
+        flex: none;
+        width: 9.4em;
+        height: 3.2em;
+        perspective: 40em;
       }
-      #howto .ar{
-        color: var(--sun);
-        font-size: 1em;
-        animation: htArrow 1.2s ease-in-out infinite;
+      #cta .sl.main{
+        font-size: 1.25em;
+        width: 9em;
       }
-      @keyframes htArrow{
-        0%, 100%{ transform: translateX(-0.12em); opacity: 0.6; }
-        50%{ transform: translateX(0.12em); opacity: 1; }
-      }
-      #howto .em{
-        font-size: 1.35em;
-      }
-      /* paso 1: persona -> mensaje -> bandera de su país (rota por todas las banderas de la carrera) */
-      #howto .fl{
-        position: relative;
-        width: 2.1em;
-        height: 2.1em;
-        border-radius: 50%;
-        border: 0.12em solid #fff;
-        overflow: hidden;
-        background: #0d3a41;
-      }
-      #howto .fl img{
+      #cta .cb{
         position: absolute;
         inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0;
-        animation: htFlag 4s steps(1, end) infinite;
-      }
-      @keyframes htFlag{
-        0%{ opacity: 1; }
-        20%, 100%{ opacity: 0; }
-      }
-      /* paso 2: cada acción da más rayos = más velocidad */
-      #howto .bz{
+        box-sizing: border-box;
         display: flex;
-        gap: 0.45em;
-      }
-      #howto .bt{
-        display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 0.15em;
-        animation: htPulse 3.2s ease-in-out infinite;
-      }
-      #howto .bt .em{
-        font-size: 1.2em;
-      }
-      #howto .bt .bo{
-        font-size: 0.62em;
-        letter-spacing: -0.1em;
-        filter: drop-shadow(0 0 0.2em rgba(255, 201, 60, 0.9));
-        min-height: 0.7em;
-      }
-      @keyframes htPulse{
-        0%, 22%, 100%{ transform: scale(1); filter: none; }
-        8%, 14%{ transform: scale(1.28); filter: drop-shadow(0 0 0.35em #ffc93c); }
-      }
-      /* paso 3 (ciclo de 6 s): cada EVENTO (❤️ 💬 ➕ 🎁 con sus rayos ⚡) hace saltar a la tortuga hacia adelante;
-         al llegar a la meta se lleva la copa 🏆 (rebota con destellos) y se repite */
-      #howto .rc{
-        position: relative;
-        width: 10em;
-        height: 2.7em;
-      }
-      #howto .rc .ln{
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0.45em;
-        border-top: 0.16em dashed rgba(255, 246, 214, 0.8);
-      }
-      #howto .rc .tu{
-        position: absolute;
-        left: 0;
-        bottom: 0.5em;
-        font-size: 1.25em;
-        transform: scaleX(-1);
-        opacity: 0;
-        animation: htRun 6s ease-in-out infinite;
-      }
-      @keyframes htRun{
-        0%{ left: 0; opacity: 0; }
-        3%, 6%{ left: 0; opacity: 1; }
-        18%, 26%{ left: calc((100% - 3.1em) * 0.25); opacity: 1; }
-        40%, 48%{ left: calc((100% - 3.1em) * 0.5); opacity: 1; }
-        62%, 70%{ left: calc((100% - 3.1em) * 0.75); opacity: 1; }
-        84%, 95%{ left: calc(100% - 3.1em); opacity: 1; }
-        100%{ left: calc(100% - 3.1em); opacity: 0; }
-      }
-      /* evento: aparece sobre la tortuga justo antes de cada salto */
-      #howto .rc .ev{
-        position: absolute;
-        bottom: 1.85em;
-        font-size: 0.8em;
+        justify-content: center;
+        gap: 0.3em;
+        border-radius: 999px;
+        border: 0.14em solid #fff;
+        background: #07262b;
+        color: #fff;
+        font: 1em/1 "Bowlby One", "Arial Black", sans-serif;
         white-space: nowrap;
-        letter-spacing: -0.12em;
-        opacity: 0;
-        transform: translate(-50%, 0.4em) scale(0.5);
-        filter: drop-shadow(0 0 0.25em rgba(255, 201, 60, 0.9));
-        animation: htEv 6s ease-out infinite;
+        box-shadow: 0 0.2em 0.5em rgba(0, 0, 0, 0.55);
+        backface-visibility: hidden;
+        opacity: 1;
       }
-      @keyframes htEv{
-        0%{ opacity: 0; transform: translate(-50%, 0.4em) scale(0.5); }
-        2%{ opacity: 1; transform: translate(-50%, 0) scale(1.35); }
-        5%, 9%{ opacity: 1; transform: translate(-50%, 0) scale(1); }
-        13%{ opacity: 0; transform: translate(-50%, -0.4em) scale(1); }
-        100%{ opacity: 0; transform: translate(-50%, -0.4em) scale(1); }
-      }
-      /* la copa de la meta: se agita cuando llega la tortuga y pasa a ser suya */
-      #howto .rc .tr{
+      #cta .cb i{ font-style: normal; font-size: 1.4em; }
+      /* insignia de velocidad: cada acción multiplica la velocidad de la tortuga (valores salen de EV_BOOST) */
+      #cta .cb .x{
         position: absolute;
-        right: 0;
-        bottom: 0.3em;
-        font-size: 1.75em;
-        filter: drop-shadow(0 0 0.3em rgba(255, 201, 60, 0.95));
-        animation: htTrophy 6s ease-out infinite;
+        top: -0.85em;
+        right: -0.35em;
+        padding: 0.28em 0.55em 0.2em;
+        border-radius: 999px;
+        background: var(--sun);
+        color: var(--ink);
+        font: 0.85em/1 "Bowlby One", "Arial Black", sans-serif;
+        letter-spacing: 0.02em;
+        border: 0.14em solid var(--ink);
+        box-shadow: 0 0.15em 0.4em rgba(0, 0, 0, 0.55);
+        animation: ctaX 0.9s ease-in-out infinite;
       }
-      @keyframes htTrophy{
-        0%, 78%{ opacity: 1; transform: scale(1) rotate(0deg); }
-        82%{ opacity: 1; transform: scale(1.5) rotate(-10deg); }
-        85%, 97%{ opacity: 0; transform: scale(0.6); }
-        100%{ opacity: 1; transform: scale(1) rotate(0deg); }
+      @keyframes ctaX{
+        0%, 100%{ transform: scale(1) rotate(-4deg); }
+        50%{ transform: scale(1.14) rotate(4deg); }
       }
-      /* la copa ya en poder de la tortuga ganadora */
-      #howto .rc .tw{
-        position: absolute;
-        left: calc(100% - 3.1em);
-        bottom: 1.25em;
-        font-size: 1.05em;
-        opacity: 0;
-        filter: drop-shadow(0 0 0.3em rgba(255, 201, 60, 0.95));
-        animation: htWin 6s ease-out infinite;
+      #cta .cb.k-lk{ border-color: #ff3d7f; box-shadow: 0 0 0.9em rgba(255, 61, 127, 0.7); }
+      #cta .cb.k-fo{ border-color: #7b4dff; box-shadow: 0 0 0.9em rgba(123, 77, 255, 0.7); }
+      #cta .cb.k-sh{ border-color: #2e7bff; box-shadow: 0 0 0.9em rgba(46, 123, 255, 0.7); }
+      #cta .cb.k-gf{ border-color: #ff5fae; box-shadow: 0 0 0.9em rgba(255, 95, 174, 0.75); }
+      #cta .main .cb{
+        background: linear-gradient(180deg, #8a1f55, #3b1259);
+        animation: ctaBeat 1.1s ease-in-out infinite;
       }
-      @keyframes htWin{
-        0%, 83%{ opacity: 0; transform: translateY(0.6em) scale(0.4); }
-        87%{ opacity: 1; transform: translateY(-0.15em) scale(1.5) rotate(-8deg); }
-        91%{ opacity: 1; transform: translateY(0) scale(1.15) rotate(6deg); }
-        95%{ opacity: 1; transform: translateY(0) scale(1.3) rotate(-4deg); }
-        98%, 100%{ opacity: 0; transform: translateY(0) scale(1.3); }
+      @keyframes ctaBeat{
+        0%, 100%{ transform: scale(1); box-shadow: 0 0 0.8em rgba(255, 95, 174, 0.7); }
+        50%{ transform: scale(1.06); box-shadow: 0 0 1.6em rgba(255, 95, 174, 1), 0 0 0.5em #fff; }
       }
-      #howto .rc .sp{
-        position: absolute;
-        bottom: 1.6em;
-        font-size: 0.7em;
-        opacity: 0;
-        animation: htSpark 6s ease-out infinite;
+      /* cambio en su sitio: el viejo gira hacia dentro y el nuevo gira hacia fuera, sin mover nada alrededor */
+      #cta .sl:not(.main) .cb.out{ animation: ctaFlipOut 0.28s ease-in forwards; }
+      #cta .sl:not(.main) .cb.in{ animation: ctaFlipIn 0.28s ease-out 0.26s both; }
+      @keyframes ctaFlipOut{
+        from{ transform: rotateX(0deg); opacity: 1; }
+        to{ transform: rotateX(90deg); opacity: 0; }
       }
-      @keyframes htSpark{
-        0%, 84%{ opacity: 0; transform: scale(0); }
-        88%{ opacity: 1; transform: scale(1.3); }
-        93%{ opacity: 1; transform: scale(0.8); }
-        97%, 100%{ opacity: 0; transform: scale(0); }
+      @keyframes ctaFlipIn{
+        from{ transform: rotateX(-90deg); opacity: 0; }
+        to{ transform: rotateX(0deg); opacity: 1; }
       }
-      /* ===== LLAMAR LA ATENCIÓN: borde de neón que late, destello que cruza la guía, íconos que saltan y flechas brillantes ===== */
-      #howto{
-        background: linear-gradient(180deg, #0f3a47, #1a1250);
-        border-top-width: 0.16em;
-        border-bottom-width: 0.16em;
-        animation: htGlow 2.4s ease-in-out infinite;
-      }
-      @keyframes htGlow{
-        0%, 100%{
-          box-shadow: 0 0 0.6em rgba(255, 95, 174, 0.55), inset 0 0 0.8em rgba(63, 243, 255, 0.18);
-          border-top-color: #ff5fae;
-          border-bottom-color: #3ff3ff;
-        }
-        50%{
-          box-shadow: 0 0 1.6em rgba(63, 243, 255, 0.95), inset 0 0 1.4em rgba(255, 95, 174, 0.35);
-          border-top-color: #3ff3ff;
-          border-bottom-color: #ff5fae;
-        }
-      }
-      #howto::after{
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: -35%;
-        width: 25%;
-        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.32), transparent);
-        transform: skewX(-18deg);
-        animation: htShine 3.6s ease-in-out infinite;
-        pointer-events: none;
-      }
-      @keyframes htShine{
-        0%{ left: -35%; }
-        60%, 100%{ left: 120%; }
-      }
-      #howto .ar{
-        font-size: 1.6em;
-        color: #ffd84a;
-        text-shadow: 0 0 0.45em #ffc93c;
-        animation: htArrow 0.8s ease-in-out infinite;
-      }
-      @keyframes htPulse{
-        0%, 24%, 100%{ transform: scale(1) rotate(0deg); filter: none; }
-        6%{ transform: scale(1.4) rotate(-8deg); filter: drop-shadow(0 0 0.45em #ffc93c) drop-shadow(0 0 0.2em #fff); }
-        12%{ transform: scale(1.3) rotate(7deg); filter: drop-shadow(0 0 0.45em #ffc93c) drop-shadow(0 0 0.2em #fff); }
-        18%{ transform: scale(1.15) rotate(0deg); filter: drop-shadow(0 0 0.3em #ffc93c); }
-      }
-      #howto .rc .tu{
-        filter: drop-shadow(0 0 0.3em #7dff7d);
-        animation: htRun 6s ease-in-out infinite, htHop 0.45s ease-in-out infinite;
-      }
-      @keyframes htHop{
-        0%, 100%{ bottom: 0.5em; }
-        50%{ bottom: 0.72em; }
-      }
-      #howto .rc .tr{
-        filter: drop-shadow(0 0 0.4em #ffc93c) drop-shadow(0 0 0.8em rgba(255, 201, 60, 0.8));
-      }
+      /* la casilla central (regalos) también gira al cambiar de regalo y retoma el latido */
+      #cta .sl.main .cb.out{ animation: ctaFlipOut 0.28s ease-in forwards; }
+      #cta .sl.main .cb.in{ animation: ctaFlipIn 0.28s ease-out 0.26s both, ctaBeat 1.1s ease-in-out 0.54s infinite; }
       /* Líneas que delimitan cada carril: SOLO visibles mientras hay bots activos (html.hasbots). */
       #laneLines{
         position: absolute;
@@ -1881,23 +1534,62 @@
         100%{ transform: translate(-50%, -50%) scale(1); opacity: 1; }
       }
 
-      /* Mitad superior: pista y guía; mitad inferior: césped y controles. */
-      :root{
-        --guide-height: clamp(2.5rem, 7vh, 5rem);
+      /* ===== ESCENA v5: pista de arena con carriles alternados, bordes de césped, salida y meta a cuadros ===== */
+      #lanes{
+        background-color: var(--sand);
+        background-image:
+          linear-gradient(to bottom, transparent 50%, rgba(232, 206, 140, 0.95) 50%),
+          radial-gradient(rgba(120, 85, 30, 0.25) 0.07rem, transparent 0.1rem),
+          radial-gradient(rgba(255, 255, 255, 0.28) 0.06rem, transparent 0.09rem);
+        background-size:
+          100% calc(200% / (var(--n) + 1)),
+          1.1rem 1rem,
+          1.7rem 1.3rem;
+        background-position: 0 0, 0 0, 0.5rem 0.4rem;
       }
-      html body #app{
-        top: var(--top, 12%);
-        bottom: calc(50% + var(--guide-height));
+      /* ===== v67: FIEBRE (meta colectiva), pista de "escribe tu país" y extras de la tarjeta ganadora ===== */
+      #hype{position:fixed;left:7%;right:7%;top:var(--hype-top,12%);z-index:44;pointer-events:none}
+      #hype .hb{position:relative;height:2.6rem;border-radius:1rem;background:rgba(7,38,43,.78);border:.14rem solid var(--cream);overflow:hidden;box-shadow:0 .2rem .6rem rgba(0,0,0,.45)}
+      #hype u{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--mint),var(--sun),var(--pink));transition:width .35s ease-out;text-decoration:none}
+      #hype b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.35rem;line-height:1;color:#fff;text-shadow:0 .1rem 0 var(--ink);white-space:nowrap}
+      #hype.hot .hb{animation:hypeHot .6s ease-in-out infinite alternate}
+      #hype.fever .hb{border-color:var(--sun);animation:hypeHot .3s ease-in-out infinite alternate}
+      #hype.fever u{width:100%!important;background:linear-gradient(90deg,#ff3d7f,#ffc93c,#5cf2c0,#ffc93c,#ff3d7f);background-size:200% 100%;animation:hypeFlow 1s linear infinite}
+      html.nohype #hype{display:none}
+      @keyframes hypeHot{to{transform:scale(1.04);box-shadow:0 0 1.2rem rgba(255,201,60,.9)}}
+      @keyframes hypeFlow{to{background-position:-200% 0}}
+      #hint{position:fixed;left:0;right:0;top:calc(var(--hype-top,12%) + 3.5rem);z-index:44;display:none;justify-content:center;pointer-events:none}
+      #hint.show{display:flex}
+      #hint .hc{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:center;max-width:92vw;padding:.5rem 1.1rem;border-radius:1.4rem;background:rgba(7,38,43,.82);border:.16rem solid var(--mint);font-size:1.5rem;animation:hintBob 1.4s ease-in-out infinite alternate}
+      #hint img{height:2.1rem;border-radius:.2rem;border:.08rem solid var(--ink)}
+      #hint span{display:inline-flex;align-items:center;gap:.25rem}
+      @keyframes hintBob{to{transform:translateY(.25rem)}}
+      #winner .wxtra{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;max-width:80vw}
+      #winner .wxtra span{padding:.2rem .65rem;border-radius:1rem;background:rgba(255,201,60,.16);border:.1rem solid var(--sun);font-size:.95rem;color:#fff}
+      #connectorStatus{
+        position:fixed;
+        right:.75rem;
+        bottom:.75rem;
+        z-index:9999;
+        max-width:min(70vw,16rem);
+        min-height:1.7rem;
+        padding:.35rem .65rem;
+        overflow:hidden;
+        border:.12rem solid rgba(255,255,255,.8);
+        border-radius:999px;
+        color:#fff;
+        font:800 .65rem/1.2 system-ui,sans-serif;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        box-shadow:0 .15rem .5rem rgba(0,0,0,.5);
+        cursor:pointer;
+        pointer-events:auto;
       }
-      #howto{
-        top: auto;
-        bottom: 50%;
-        height: var(--guide-height);
-      }
+      #connectorStatus.connected{background:#168a50}
+      #connectorStatus.disconnected{background:#c6283d}
     </style>
   </head>
   <body>
-    <canvas id="bg"></canvas>
     <canvas id="fx"></canvas>
 
     <div id="app">
@@ -1907,42 +1599,20 @@
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
-    <div id="stats" aria-hidden="true">
-      <div class="st2 k-ch" data-k="ch"><i>💬</i><b>0</b></div>
-      <div class="st2 k-lk" data-k="lk" title="Me gusta"><i>👍</i><span class="st-label" id="likesLabel">Me gusta</span><b>0</b></div>
-      <div class="st2 k-jn" data-k="jn"><i>👋</i><b>0</b></div>
-      <div class="st2 k-sh" data-k="sh"><i>🔁</i><b>0</b></div>
-      <div class="st2 k-gf" data-k="gf"><i>🎁</i><b>0</b></div>
-    </div>
     <div id="cd" aria-live="assertive"><div class="cdn" id="cdn"></div></div>
     <div id="winner"aria-live="polite">
       <div class="wbox">
-        <div class="wttl">🏆 1.º PUESTO</div>
+        <div class="wttl">🏆 ¡GANADOR!</div>
         <div class="wav"><img id="wImg" alt="" referrerpolicy="no-referrer" /><b id="wIni"></b></div>
         <div class="wnm" id="wNm"></div>
         <div class="wfl"><img id="wFl" alt="" /><span id="wCt"></span></div>
-        <div class="helpers" aria-label="Usuarios que más aportaron">
-          <div class="helper">
-            <strong id="helper2Title">2.º · más apoyo</strong>
-            <div class="helper-avatar noimg" id="helper2Avatar">
-              <img id="helper2Img" alt="" referrerpolicy="no-referrer" />
-              <b id="helper2Initial">—</b>
-            </div>
-            <span class="helper-name" id="helper2Name">Sin participante</span>
-          </div>
-          <div class="helper">
-            <strong id="helper3Title">3.º · más apoyo</strong>
-            <div class="helper-avatar noimg" id="helper3Avatar">
-              <img id="helper3Img" alt="" referrerpolicy="no-referrer" />
-              <b id="helper3Initial">—</b>
-            </div>
-            <span class="helper-name" id="helper3Name">Sin participante</span>
-          </div>
-        </div>
+        <div class="wxtra" id="wXtra"></div>
       </div>
     </div>
     <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
-    <div id="howto" aria-hidden="true"></div>
+    <div id="cta" aria-hidden="true"></div>
+    <div id="hype" aria-hidden="true"><div class="hb"><u id="hypeF"></u><b id="hypeT"></b></div></div>
+    <div id="hint" aria-hidden="true"></div>
     <div id="bots">
       <b id="botsTitle">Pruebas de interacción (P)</b>
       <button data-a="rose">1 Rosa</button
@@ -2007,26 +1677,33 @@
         restartMs: 7000,
         botSec: Math.max(20, +Q.get("bot") || 120) /* la TORTUBOT va de 0 a win en estos segundos (2 min): es el tope de la carrera */,
         join: Q.has("join") ? +Q.get("join") : 0.5,
-        countries: [0, 1, 2].map((i) => ({
+        countries: [0, 1, 2, 3, 4].map((i) => ({
           c: "s" + i,
           n: "",
           f: "",
           b: [],
         })),
       };
-      /* VELOCIDADES (unidades de pista por segundo). La TORTUBOT avanza a BOT_V constante: 0 → 100 en CFG.botSec.
-         Las demás caminan a BASE_V (40 % de la bot; ?base=0.4) y cada interacción las multiplica ×2 / ×5 / ×10 / ×20 un rato
+      /* VELOCIDADES (unidades de pista por segundo). La TORTUBOT (6.º carril) va a BOT_V constante: 0 → 100 en CFG.botSec.
+         Las demás caminan a BASE_V (40 % de la bot; ?base=0.4) y cada interacción las multiplica ×2 / ×5 / ×10 / ×20+ un rato (like ×5)
          (EV_BOOST = [multiplicador, segundos]). Gana quien llega primero a CFG.win. */
       const BOT_V = CFG.win / CFG.botSec,
         BASE_V = BOT_V * (Q.has("base") ? +Q.get("base") : 0.4);
       const EV_BOOST = {
         join: [2, 3],
-        like: [2, 3],
+        like: [5, 3],
         support: [2, 2],
         chat: [5, 4],
         share: [10, 5],
         follow: [10, 5],
         gift: [20, 6],
+      };
+      /* Los regalos escalan con su valor en diamantes (por unidad): 🌹 rosa ×20 · 💗 ×22 (≥5) · 🍩 dona ×25 (≥30) · 🌌 galaxia ×30 (≥500). */
+      const GIFT_TIERS = [[500, 30], [30, 25], [5, 22], [0, 20]];
+      const giftMult = (diamonds) => {
+        const d = Number(diamonds) || 0;
+        for (const [min, m] of GIFT_TIERS) if (d >= min) return m;
+        return EV_BOOST.gift[0];
       };
       const $ = (id) => document.getElementById(id);
       const rnd = (a) => a[(Math.random() * a.length) | 0];
@@ -2043,7 +1720,8 @@
       const contestants = new Map();
       let contestantSequence = 0;
       /* ===== PAÍSES en lugar de usuarios =====
-   Brasil, Paraguay y Argentina compiten en orden aleatorio en cada ronda. */
+   Los cuatro primeros países son fijos; los seis restantes se sortean al comenzar cada ronda.
+   El sorteo combina campeones del Mundial masculino y selecciones populares, sin clubes. */
       const NATIONS = (() => {
         const sv = (b) =>
           "data:image/svg+xml;utf8," +
@@ -2254,6 +1932,7 @@
       const FIXED_TEAMS = NATIONS.filter((team) =>
         ["BR", "PY", "AR"].includes(team.code),
       );
+      const FIXED_CODES = FIXED_TEAMS.map((team) => team.code);
       const WORLD_CUP_WINNERS = NATIONS.filter((team) =>
         ["BR", "AR", "DE", "FR", "IT", "UY", "ES", "ENG"].includes(team.code),
       );
@@ -2284,9 +1963,13 @@
         }
         return result;
       }
-      /* 3 tortugas: BR, PY y AR en orden aleatorio. */
+      /* 5 tortugas: BR, PY y AR son fijos (en orden aleatorio) y 2 países más se sortean. */
       function chooseRoundTeams() {
-        return shuffled(FIXED_TEAMS);
+        const fixed = shuffled(FIXED_TEAMS);
+        const candidates = ROUND_POOL.filter(
+          (team) => !FIXED_CODES.includes(team.code),
+        );
+        return [...fixed, ...shuffled(candidates).slice(0, 2)];
       }
       NATIONS.splice(0, NATIONS.length, ...chooseRoundTeams());
       let CODES = NATIONS.map((team) => team.code);
@@ -2332,6 +2015,7 @@
         combo: new Map(),
         cp: { 25: 0, 50: 0, 75: 0 },
         pf: false,
+        ramT: 12 /* s hasta la próxima embestida */,
         streak: 0,
         lastWin: null,
       };
@@ -2341,6 +2025,9 @@
       if (Q.get("safe"))
         document.documentElement.style.setProperty("--padr", "14%");
       /* Victorias guardadas: no se pierden si recargas la página */
+      const HY = { v: 0, until: 0, on: Q.get("hype") !== "0" }; /* FIEBRE: v = 0..100, until = ms hasta que termina la fiebre */
+      if (!HY.on) document.documentElement.classList.add("nohype");
+      if (Q.get("hypetop")) document.documentElement.style.setProperty("--hype-top", +Q.get("hypetop") + "%");
       const LS = "tortugas.wins2",
         winsBy = new Map();
       try {
@@ -2462,308 +2149,45 @@
           }
         };
       };
+      /* v68: efectos MINIMALES: tonos suaves de onda seno, pocos y breves. Se mantienen los mismos nombres para no tocar el resto del código. */
+      const nop = () => {};
+      const soft = (f, d = 0.12, v = 0.04, slide) => tone(f, d, "sine", v, undefined, undefined, slide);
       const SFX = {
-        tick: () => tone(440, 0.12, "square", 0.09) /* 3, 2, 1 */,
+        tick: () => soft(660, 0.08, 0.04) /* 3, 2, 1 */,
         go: () => {
-          tone(880, 0.5, "square", 0.1);
-          tone(1320, 0.5, "p25", 0.05);
-        } /* ¡YA! */,
-        coin: th((n = 0) => {
-          ac();
-          if (!AC) return;
-          const k = Math.pow(2, Math.min(n, 7) / 12),
-            t = AC.currentTime; /* moneda: sube de tono con el combo */
-          tone(988 * k, 0.06, "square", 0.09, t);
-          tone(1319 * k, 0.3, "square", 0.09, t + 0.06);
-        }, 70),
-        like: th(() => tone(1568, 0.035, "square", 0.04), 120),
-        userEvent: th((type) => {
-          if (!SND) return;
-          const audio = ac();
-          if (!audio) return;
-          const pitch = {
-            like: 988,
-            chat: 784,
-            follow: 1175,
-            share: 1047,
-            gift: 1568,
-            join: 659,
-          }[type] || 880;
-          const start = audio.currentTime;
-          tone(pitch, 0.045, "square", 0.055, start);
-          tone(pitch * 1.5, 0.06, "square", 0.05, start + 0.05);
-        }, 100),
-        join: th(
-          () =>
-            seq(
-              [
-                [523, 0.05],
-                [784, 0.09],
-              ],
-              "square",
-              0.06,
-            ),
-          150,
-        ),
-        follow: () =>
-          seq(
-            [
-              [659, 0.07],
-              [880, 0.07],
-              [1175, 0.14],
-            ],
-            "p25",
-            0.08,
-          ),
-        sprint: () => {
-          seq(
-            [
-              [523, 0.05],
-              [659, 0.05],
-              [784, 0.05],
-              [1047, 0.05],
-              [1319, 0.05],
-              [1568, 0.05],
-              [2093, 0.22],
-            ],
-            "p25",
-            0.1,
-          );
-          noise(0.25, 0.05, null, 4000);
-        } /* power-up */,
-        step: th((speed = 0) => {
-          if (!SND) return;
-          const a = ac();
-          if (!a) return;
-          const t = a.currentTime;
-          noise(0.04, 0.1, t, 1100);
-          tone(
-            145 + speed * 12,
-            0.075,
-            "triangle",
-            0.18,
-            t,
-            undefined,
-            62 + speed * 8,
-          );
-          tone(420 + speed * 20, 0.025, "triangle", 0.035, t + 0.008);
-        }, 75),
-        /* choque entre tortugas: golpe grave + crujido + toc de caparazón; s = fuerza 0..1 */
-        crash: th((s = 1) => {
-          if (!SND) return;
-          const a = ac();
-          if (!a) return;
-          const t = a.currentTime;
-          noise(0.1 + 0.12 * s, 0.12 + 0.35 * s, t, 400);
-          tone(190, 0.18, "triangle", 0.25 + 0.6 * s, t, undefined, 45);
-          tone(1250, 0.04, "square", 0.04 + 0.1 * s, t);
-          tone(820, 0.07, "square", 0.03 + 0.08 * s, t + 0.025, undefined, 400);
-          /* MÚSICA DE COLISIÓN: acorde seco y disonante (tritono) y una melodía cómica que cae ("wah, wah, wah, wahhh");
-             mientras suena, la música de fondo baja de volumen y vuelve sola a los ~2,5 s */
-          const mv = 0.05 + 0.04 * s;
-          tone(131, 0.4, "square", mv, t + 0.02);
-          tone(262, 0.34, "p25", mv, t + 0.02);
-          tone(370, 0.34, "p25", mv, t + 0.02);
-          [[392, 0.15], [370, 0.15], [349, 0.15]].forEach(([f, d], i) => tone(f, d * 1.1, "p25", mv * 1.1, t + 0.4 + i * 0.17));
-          tone(330, 0.75, "p25", mv * 1.1, t + 0.91, undefined, 233);
-          if (GG && MUS.timer) {
-            GG.gain.cancelScheduledValues(t);
-            GG.gain.setTargetAtTime(0.22, t, 0.04);
-            GG.gain.setTargetAtTime(0.9, t + 2.3, 0.35);
-          }
-        }, 70),
-        cp: () =>
-          seq(
-            [
-              [784, 0.07],
-              [988, 0.07],
-              [1175, 0.07],
-              [1568, 0.2],
-            ],
-            "square",
-            0.08,
-          ) /* bono de lechuga */,
-        goal: () =>
-          seq(
-            [
-              [659, 0.09],
-              [784, 0.09],
-              [1319, 0.09],
-              [1047, 0.09],
-              [1175, 0.09],
-              [1568, 0.28],
-            ],
-            "square",
-            0.09,
-          ) /* vida extra */,
-        photo: () =>
-          seq(
-            [
-              [880, 0.12],
-              [660, 0.12],
-              [880, 0.12],
-              [660, 0.12],
-            ],
-            "square",
-            0.08,
-          ) /* alarma */,
-        flag: () => {
-          noise(0.5, 0.08, null, 2500);
-          seq(
-            [
-              [1047, 0.1],
-              [784, 0.1],
-              [1047, 0.1],
-              [1568, 0.4],
-            ],
-            "p25",
-            0.09,
-          );
+          soft(880, 0.18, 0.05);
         },
-        /* MÚSICA DE VICTORIA (~4 s): fanfarria con melodía, acordes de bajo y brillo final */
+        coin: th(() => {
+          soft(784, 0.1);
+          setTimeout(() => soft(1047, 0.14), 90);
+        }, 250),
+        like: nop,
+        join: th(() => soft(587, 0.07, 0.03), 500),
+        follow: th(() => {
+          soft(659, 0.1);
+          setTimeout(() => soft(880, 0.12), 90);
+        }, 300),
+        sprint: th(() => soft(784, 0.14, 0.045, 1047), 400),
+        step: nop,
+        crash: th(() => soft(140, 0.16, 0.05, 70), 400),
+        cp: th(() => soft(988, 0.16, 0.04), 600),
+        goal: th(() => {
+          soft(784, 0.1);
+          setTimeout(() => soft(988, 0.1), 100);
+          setTimeout(() => soft(1319, 0.18), 200);
+        }, 600),
+        photo: th(() => soft(880, 0.12, 0.04), 600),
+        flag: () => soft(1047, 0.2, 0.045),
         victory: () => {
-          if (!SND || !ac()) return;
-          const t0 = AC.currentTime + 0.15,
-            mel = [
-              [523, 0.13], [659, 0.13], [784, 0.13], [1047, 0.26],
-              [784, 0.13], [1047, 0.52],
-              [988, 0.2], [880, 0.2], [988, 0.2], [1175, 0.2],
-              [1319, 0.45], [1175, 0.2], [1319, 0.2], [1568, 1.1],
-            ];
-          let t = t0;
-          for (const [f, d] of mel) {
-            tone(f, d * 1.15, "p25", 0.07, t);
-            tone(f / 2, d * 1.1, "square", 0.03, t);
-            t += d;
-          }
-          /* bajo y acordes: C - G - F - C */
-          [[131, 0], [98, 0.78], [87, 1.58], [131, 2.4]].forEach(([f, o]) => {
-            tone(f, 0.7, "triangle", 0.12, t0 + o);
-            tone(f * 2, 0.7, "triangle", 0.06, t0 + o + 0.02);
-          });
-          /* cierre brillante */
-          [523, 659, 784, 1047].forEach((f) => tone(f, 1.3, "square", 0.04, t0 + 2.4));
-          noise(0.6, 0.05, t0 + 2.4, 3000);
+          [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => soft(f, 0.35, 0.05), i * 140));
         },
         win: () => {
-          ac();
-          if (!AC) return;
-          const m = [
-            [392, 0.1],
-            [523, 0.1],
-            [659, 0.1],
-            [784, 0.1],
-            [1047, 0.14],
-            [784, 0.08],
-            [1047, 0.7],
-          ];
-          seq(m, "p25", 0.09);
-          seq(
-            m.map(([f, d]) => [f / 2, d]),
-            "triangle",
-            0.12,
-          );
-          noise(0.6, 0.06, AC.currentTime + 0.7, 3000);
+          [523, 659, 784].forEach((f, i) => setTimeout(() => soft(f, 0.3, 0.05), i * 120));
         },
       };
       /* Música: Am – F – C – G, bajo triangular, arpegio de pulso, bombo, caja y hi-hat */
-      /* ===== Temas musicales =====
-   Cinco temas ORIGINALES, compuestos para este juego con la estética de las carreras arcade de 16 bits
-   (bajo marcado, arpegios, melodía de lead y batería de ruido). No copian ninguna pista existente.
-   Cada ronda (vuelta de la carrera) usa el siguiente tema: ronda 1 → tema 1, … ronda 6 → tema 1 otra vez.
-   ?theme=N (1-5) fija un tema. Cada tema dura 4 compases de 16 pasos (semicorcheas):
-     bpm    tempo base (la música arranca al 50 % y sube hasta el 150 % según el avance de la tortuga puntera, ver musicSpeed())
-     bass   nota MIDI de la fundamental de cada compás      bassPat  16 pasos: null = silencio, número = semitonos sobre la fundamental
-     chords acorde (3 notas MIDI) de cada compás            arp      16 pasos: índice del acorde (-1 = silencio)
-     lead   melodía: 4 compases × 16 pasos (0 = silencio)  kick/snare  pasos del compás donde suenan bombo y caja
-     waves  forma de onda de [bajo, arpegio, lead] */
-      const THEMES = [
-        {
-          name: "Neón",
-          bpm: 126,
-          bass: [45, 41, 48, 43],
-          chords: [[69, 72, 76], [65, 69, 72], [72, 76, 79], [67, 71, 74]],
-          bassPat: [0, null, 0, null, 0, null, 12, null, 0, null, 0, null, 0, null, 12, null],
-          arp: [0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1],
-          lead: [
-            [81, 0, 0, 81, 0, 79, 0, 76, 0, 0, 79, 0, 81, 0, 0, 0],
-            [77, 0, 0, 77, 0, 76, 0, 72, 0, 0, 76, 0, 77, 0, 0, 0],
-            [79, 0, 0, 79, 0, 76, 0, 72, 0, 0, 76, 0, 79, 0, 84, 0],
-            [79, 0, 0, 76, 0, 74, 0, 71, 0, 0, 74, 0, 76, 0, 0, 0],
-          ],
-          kick: [0, 4, 8, 12],
-          snare: [4, 12],
-          waves: ["triangle", "p25", "square"],
-        },
-        {
-          name: "Autopista",
-          bpm: 134,
-          bass: [40, 36, 43, 38],
-          chords: [[64, 67, 71], [60, 64, 67], [67, 71, 74], [62, 66, 69]],
-          bassPat: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 12, 0, 12],
-          arp: [0, 2, 1, 2, 0, 2, 1, 2, 0, 2, 1, 2, 1, 2, 0, 2],
-          lead: [
-            [83, 0, 83, 0, 79, 0, 76, 0, 79, 0, 83, 0, 86, 0, 0, 0],
-            [84, 0, 84, 0, 79, 0, 76, 0, 72, 0, 76, 0, 79, 0, 0, 0],
-            [83, 0, 83, 0, 86, 0, 83, 0, 79, 0, 74, 0, 79, 0, 0, 0],
-            [78, 0, 81, 0, 78, 0, 74, 0, 78, 0, 81, 0, 86, 0, 0, 0],
-          ],
-          kick: [0, 4, 8, 10, 12],
-          snare: [4, 12],
-          waves: ["triangle", "p25", "p25"],
-        },
-        {
-          name: "Atardecer",
-          bpm: 118,
-          bass: [47, 43, 50, 45],
-          chords: [[71, 74, 78], [67, 71, 74], [74, 78, 81], [69, 73, 76]],
-          bassPat: [0, null, null, null, 0, null, 12, null, 0, null, null, null, 7, null, 12, null],
-          arp: [0, -1, 1, -1, 2, -1, 1, -1, 0, -1, 1, -1, 2, -1, 1, -1],
-          lead: [
-            [86, 0, 0, 0, 85, 0, 0, 0, 81, 0, 0, 83, 0, 0, 81, 0],
-            [79, 0, 0, 0, 83, 0, 0, 0, 86, 0, 0, 83, 0, 0, 79, 0],
-            [78, 0, 0, 0, 81, 0, 0, 0, 86, 0, 0, 85, 0, 0, 81, 0],
-            [76, 0, 0, 0, 81, 0, 0, 0, 85, 0, 0, 81, 0, 0, 76, 0],
-          ],
-          kick: [0, 6, 8, 14],
-          snare: [4, 12],
-          waves: ["triangle", "p25", "triangle"],
-        },
-        {
-          name: "Nocturno",
-          bpm: 140,
-          bass: [36, 32, 39, 34],
-          chords: [[72, 75, 79], [68, 72, 75], [75, 79, 82], [70, 74, 77]],
-          bassPat: [0, null, 12, null, 0, null, 12, null, 0, null, 12, null, 7, null, 12, null],
-          arp: [0, 1, 2, 1, 2, 1, 0, 1, 0, 1, 2, 1, 2, 1, 0, 1],
-          lead: [
-            [84, 0, 87, 0, 84, 0, 79, 0, 80, 0, 84, 0, 87, 0, 91, 0],
-            [84, 0, 80, 0, 84, 0, 87, 0, 84, 0, 80, 0, 75, 0, 0, 0],
-            [87, 0, 86, 0, 87, 0, 91, 0, 87, 0, 82, 0, 79, 0, 0, 0],
-            [86, 0, 82, 0, 86, 0, 89, 0, 86, 0, 82, 0, 77, 0, 0, 0],
-          ],
-          kick: [0, 3, 4, 8, 12, 14],
-          snare: [4, 12],
-          waves: ["triangle", "p25", "sawtooth"],
-        },
-        {
-          name: "Meta",
-          bpm: 130,
-          bass: [43, 40, 36, 38],
-          chords: [[67, 71, 74], [64, 67, 71], [72, 76, 79], [74, 78, 81]],
-          bassPat: [0, null, 0, 12, null, 0, null, 12, 0, null, 0, 12, null, 0, 12, null],
-          arp: [0, 1, 2, 2, 1, 0, 1, 2, 0, 1, 2, 2, 1, 0, 1, 2],
-          lead: [
-            [86, 0, 83, 0, 79, 0, 83, 0, 86, 0, 0, 88, 0, 86, 0, 0],
-            [83, 0, 79, 0, 76, 0, 79, 0, 83, 0, 0, 84, 0, 83, 0, 0],
-            [88, 0, 84, 0, 79, 0, 84, 0, 88, 0, 0, 91, 0, 88, 0, 0],
-            [90, 0, 86, 0, 81, 0, 86, 0, 90, 0, 0, 88, 0, 86, 0, 0],
-          ],
-          kick: [0, 4, 8, 12],
-          snare: [4, 12],
-          waves: ["triangle", "p25", "square"],
-        },
-      ];
+      /* ===== Música MINIMALISTA (v68): un solo tema calmado; acorde suave de seno por compás y dos notas sueltas. Sigue acelerando con el avance de la líder (musicSpeed). ===== */
+      const THEMES = [{ name: "Calma", bpm: 84 }];
       const MUS = { timer: null, step: 0, next: 0, theme: THEMES[0], bpm: THEMES[0].bpm };
       const mf = (m) => 440 * Math.pow(2, (m - 69) / 12);
       /* Elige el tema de la ronda actual (se llama desde newRound). */
@@ -2776,30 +2200,11 @@
         MUS.bpm = MUS.theme.bpm * musicSpeed(0); /* cada ronda arranca al 50 % */
       }
       function musStep(st, t, sd) {
-        const th = MUS.theme,
-          bar = (st >> 4) & 3,
-          s = st & 15;
-        if (th.kick.includes(s)) {
-          const o = AC.createOscillator(),
-            g = AC.createGain();
-          o.type = "sine";
-          o.frequency.setValueAtTime(150, t);
-          o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
-          g.gain.setValueAtTime(0.3, t);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
-          o.connect(g);
-          g.connect(GG);
-          o.start(t);
-          o.stop(t + 0.16);
-        }
-        if (th.snare.includes(s)) noise(0.1, 0.1, t, 1500, GG);
-        if (s % 2) noise(0.03, 0.04, t, 7000, GG);
-        const b = th.bassPat[s];
-        if (b !== null) tone(mf(th.bass[bar] + b), sd * 1.8, th.waves[0], 0.13, t, GG);
-        const a = th.arp[s];
-        if (a >= 0) tone(mf(th.chords[bar][a]), sd * 0.9, th.waves[1], 0.045, t, GG);
-        const l = th.lead[bar][s];
-        if (l) tone(mf(l), sd * 1.7, th.waves[2], 0.05, t, GG);
+        const bar = (st >> 4) & 3,
+          k = st & 15,
+          ROOT = [57, 53, 48, 55]; /* La · Fa · Do · Sol */
+        if (k === 0) for (const iv of [0, 7, 12]) tone(mf(ROOT[bar] + iv), sd * 14, "sine", 0.045, t, GG);
+        if (k === 4 || k === 12) tone(mf(ROOT[bar] + 12 + (k === 4 ? 7 : 4)), sd * 5, "sine", 0.04, t, GG);
       }
       function musSched() {
         if (!AC) return;
@@ -2860,21 +2265,21 @@
         const i = c.c,
           K = 'stroke="#07262B" stroke-width="1.5" stroke-linejoin="round"',
           F = `fill="url(#sk${i})"`;
-        return `<svg viewBox="0 0 66 46"><defs><radialGradient id="sk${i}" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#B3B873"/><stop offset="1" stop-color="#66703F"/></radialGradient><radialGradient id="sh${i}" cx=".38" cy=".22" r=".95"><stop offset="0" stop-color="#C09A52"/><stop offset=".55" stop-color="#8B6B34"/><stop offset="1" stop-color="#46341A"/></radialGradient><clipPath id="cp${i}"><path d="M3.5 36 C3.5 17 13 5 27 5 C41 5 50.5 17 50.5 36 Z"/></clipPath><clipPath id="ca${i}"><circle cx="27" cy="20.5" r="10.5"/></clipPath><clipPath id="cb${i}" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>
-<g><ellipse cx="27" cy="44.2" rx="23" ry="2.2" fill="#000" opacity=".22"/>
-<g class="lfB"><ellipse cx="18" cy="38.6" rx="4.6" ry="4.4" fill="#4F5A35" ${K}/></g><g class="lfF"><ellipse cx="36" cy="38.6" rx="4.6" ry="4.6" fill="#4F5A35" ${K}/></g>
-<path class="tl" d="M6.8 33.8 L0.8 37.8 L8 39Z" ${F} ${K}/>
-<g class="lnB"><ellipse cx="11.5" cy="38.8" rx="5.6" ry="4.6" ${F} ${K}/><path d="M7.8 37.6 q1.8 1.1 3.6 0 M9.2 40.4 q1.8 1.1 3.6 0" stroke="#07262B" stroke-opacity=".35" stroke-width=".8" fill="none" stroke-linecap="round"/></g>
-<g class="lnF"><ellipse cx="41.5" cy="38.8" rx="5.6" ry="4.9" ${F} ${K}/><path d="M37.8 37.4 q1.8 1.1 3.6 0 M39.4 40.4 q1.8 1.1 3.6 0 M44 41.6 l.4 1.6 M46.2 40.8 l.9 1.5" stroke="#07262B" stroke-opacity=".4" stroke-width=".8" fill="none" stroke-linecap="round"/></g>
-</g>
-<g transform="translate(-3.7 4) scale(1)"><g class="hd"><path class="nk" d="M42 22.5 C49 22 54 21 60 19.5 L62.5 28.5 C56 30 49 33 42 35 Z" ${F} ${K}/><path d="M47.5 24.2 q1.6 3.6 0 7.4 M52 23.4 q1.6 3.8 0 8" stroke="#07262B" stroke-opacity=".35" stroke-width=".9" fill="none" stroke-linecap="round"/><g class="rage"><g class="rg2"><path d="M42 22.5 C49 22 54 21 60 19.5 L62.5 28.5 C56 30 49 33 42 35 Z" fill="#FF2200"/></g></g><g transform="translate(3 -3)"><ellipse cx="59" cy="22" rx="10" ry="9.5" ${F} ${K}/><circle cx="67.3" cy="22" r=".5" fill="#07262B"/>
-<g class="rage"><g class="rg2"><ellipse cx="59" cy="22" rx="10" ry="9.5" fill="#FF2200"/><ellipse cx="58" cy="17" rx="6" ry="3.2" fill="#FF7A3D" opacity=".55"/><path class="stm" d="M55 10 q-2 -2.6 0 -4.6 q2 -2 0 -4.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none"/><path class="stm stm2" d="M62 9.6 q-2 -2.6 0 -4.6 q2 -2 0 -4.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none"/></g></g><g class="eyes" transform="translate(-12.0 -4.40) scale(1.20)"><circle cx="54.6" cy="24.2" r="1.7" fill="#FF8FB3" opacity=".35"/><circle cx="68.4" cy="24.2" r="1.7" fill="#FF8FB3" opacity=".35"/><g class="blk"><ellipse cx="56.5" cy="19.2" rx="2.7" ry="3" fill="#fff" stroke="#07262B" stroke-width="1"/><ellipse cx="63.5" cy="19.2" rx="2.7" ry="3" fill="#fff" stroke="#07262B" stroke-width="1"/><circle cx="57.2" cy="19.7" r="1.7" fill="#3A2A12"/><circle cx="64.2" cy="19.7" r="1.7" fill="#3A2A12"/><circle cx="57.2" cy="19.7" r=".95" fill="#07262B"/><circle cx="64.2" cy="19.7" r=".95" fill="#07262B"/><circle cx="57.8" cy="18.9" r=".6" fill="#fff"/><circle cx="64.8" cy="18.9" r=".6" fill="#fff"/><circle cx="56.6" cy="20.7" r=".3" fill="#fff" opacity=".8"/><circle cx="63.6" cy="20.7" r=".3" fill="#fff" opacity=".8"/><path d="M53.9 17.6 Q56.5 15.9 59 17.4 M61 17.4 Q63.5 15.9 66.1 17.6" stroke="#07262B" stroke-width=".9" stroke-linecap="round" fill="none"/></g><path d="M53.6 14.6 Q56.2 13.2 58.8 14.4 M61.2 14.4 Q63.8 13.2 66.4 14.6" stroke="#07262B" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M60.4 21.6 q.5 1.3 1.5 1.1" stroke="#07262B" stroke-opacity=".45" stroke-width=".7" stroke-linecap="round" fill="none"/></g>
+        return `<svg viewBox="0 0 70 46"><defs><radialGradient id="sk${i}" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#A6D26F"/><stop offset="1" stop-color="#5E8F3E"/></radialGradient><radialGradient id="sh${i}" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#9A7A38"/><stop offset=".6" stop-color="#5E4722"/><stop offset="1" stop-color="#34270F"/></radialGradient><clipPath id="cp${i}"><ellipse cx="32" cy="22" rx="24" ry="17"/></clipPath><clipPath id="ca${i}"><circle cx="32" cy="21" r="12.5"/></clipPath><clipPath id="cb${i}" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>
+<ellipse cx="33" cy="44" rx="27" ry="2.6" fill="#000" opacity=".22"/>
+<ellipse class="lfB" cx="26" cy="38" rx="6" ry="4" fill="#4E7F36" ${K}/><ellipse class="lfF" cx="44" cy="38" rx="6" ry="4" fill="#4E7F36" ${K}/>
+<path class="tl" d="M9 25 L0 29 L10 31Z" ${F} ${K}/>
+<ellipse class="lnB" cx="18" cy="39" rx="7" ry="4.5" ${F} ${K}/><ellipse class="lnF" cx="47" cy="39" rx="7" ry="4.5" ${F} ${K}/>
+<g class="hd"><ellipse cx="53" cy="25" rx="8" ry="5" ${F} ${K}/><ellipse cx="60" cy="21" rx="8" ry="6.5" ${F} ${K}/><circle cx="67" cy="21" r=".6" fill="#07262B"/>
+<g class="rage"><g class="rg2"><ellipse cx="53" cy="25" rx="8" ry="5" fill="#FF2200"/><ellipse cx="60" cy="21" rx="8" ry="6.5" fill="#FF2200"/><ellipse cx="59" cy="17.5" rx="4.6" ry="2.4" fill="#FF7A3D" opacity=".55"/><path class="stm" d="M57 11 q-2 -2.6 0 -4.6 q2 -2 0 -4.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none"/><path class="stm stm2" d="M63 10.6 q-2 -2.6 0 -4.6 q2 -2 0 -4.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none"/></g></g>
+<g transform="translate(60 21.5) scale(.72) translate(-60 -23)"><g class="eyes" transform="translate(-12.0 -4.40) scale(1.20)"><circle cx="54.6" cy="24.2" r="1.7" fill="#FF8FB3" opacity=".35"/><circle cx="68.4" cy="24.2" r="1.7" fill="#FF8FB3" opacity=".35"/><g class="blk"><ellipse cx="56.5" cy="19.2" rx="2.7" ry="3" fill="#fff" stroke="#07262B" stroke-width="1"/><ellipse cx="63.5" cy="19.2" rx="2.7" ry="3" fill="#fff" stroke="#07262B" stroke-width="1"/><circle cx="57.2" cy="19.7" r="1.7" fill="#3A2A12"/><circle cx="64.2" cy="19.7" r="1.7" fill="#3A2A12"/><circle cx="57.2" cy="19.7" r=".95" fill="#07262B"/><circle cx="64.2" cy="19.7" r=".95" fill="#07262B"/><circle cx="57.8" cy="18.9" r=".6" fill="#fff"/><circle cx="64.8" cy="18.9" r=".6" fill="#fff"/><circle cx="56.6" cy="20.7" r=".3" fill="#fff" opacity=".8"/><circle cx="63.6" cy="20.7" r=".3" fill="#fff" opacity=".8"/><path d="M53.9 17.6 Q56.5 15.9 59 17.4 M61 17.4 Q63.5 15.9 66.1 17.6" stroke="#07262B" stroke-width=".9" stroke-linecap="round" fill="none"/></g><path d="M53.6 14.6 Q56.2 13.2 58.8 14.4 M61.2 14.4 Q63.8 13.2 66.4 14.6" stroke="#07262B" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M60.4 21.6 q.5 1.3 1.5 1.1" stroke="#07262B" stroke-opacity=".45" stroke-width=".7" stroke-linecap="round" fill="none"/></g>
 <g class="mo mo-sad" transform="translate(-12.0 -4.40) scale(1.20)"><path d="M54 15.6 L59 13.6 M61 13.6 L66.5 15.6" stroke="#07262B" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M56.5 28.3 Q61.5 24.3 66.5 28.3" stroke="#07262B" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M53.8 22.5 q-1.5 2.3 0 3.1 q1.5 -.8 0 -3.1z" fill="#6EC6FF" stroke="#07262B" stroke-width=".5"/></g>
 <g class="mo mo-tired" transform="translate(-12.0 -4.40) scale(1.20)"><path d="M53.2 16.2 L58.8 17.6 M67 16.2 L61.2 17.6" stroke="#07262B" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M53.9 19.2 H59.1 A2.6 2.6 0 0 1 53.9 19.2Z M60.9 19.2 H66.1 A2.6 2.6 0 0 1 60.9 19.2Z" fill="#fff" stroke="#07262B" stroke-width="1" stroke-linejoin="round"/><circle cx="56.5" cy="20.4" r="1" fill="#07262B"/><circle cx="63.5" cy="20.4" r="1" fill="#07262B"/><path d="M53.3 19.2 H59.7 M60.3 19.2 H66.7" stroke="#07262B" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M54.1 23.4 Q56.5 24.8 58.9 23.4 M61.1 23.4 Q63.5 24.8 65.9 23.4" stroke="#07262B" stroke-opacity=".5" stroke-width=".9" stroke-linecap="round" fill="none"/><ellipse cx="61.5" cy="28" rx="3" ry="2.2" fill="#07262B" stroke="#07262B" stroke-width="1"/><ellipse cx="61.5" cy="29.2" rx="1.9" ry="1" fill="#FF6F91"/><path class="sw" d="M69.4 14 q-1.8 2.8 0 3.8 q1.8 -1 0 -3.8z" fill="#6EC6FF" stroke="#07262B" stroke-width=".5"/><path class="sw sw2" d="M52.4 21 q-1.4 2.2 0 3 q1.4 -.8 0 -3z" fill="#6EC6FF" stroke="#07262B" stroke-width=".5"/></g>
 <g class="mo mo-happy" transform="translate(-12.0 -4.40) scale(1.20)"><circle cx="55" cy="24.5" r="1.6" fill="#FF8FB3" opacity=".6"/><circle cx="67.5" cy="24.5" r="1.6" fill="#FF8FB3" opacity=".6"/><path d="M56.5 25.2 Q61.5 30.5 66.5 25.2" stroke="#07262B" stroke-width="1.5" stroke-linecap="round" fill="none"/></g>
-<g class="mo mo-turbo" transform="translate(-12.0 -4.40) scale(1.20)"><circle cx="54.6" cy="25" r="2.1" fill="#FF8FB3" opacity=".75"/><circle cx="68.4" cy="25" r="2.1" fill="#FF8FB3" opacity=".75"/><path d="M54 20.4 Q56.5 15.4 59 20.4 M61 20.4 Q63.5 15.4 66 20.4" stroke="#07262B" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M55.6 24.8 Q61.5 25.8 67.4 24.8 Q66 31.2 61.5 31.2 Q57 31.2 55.6 24.8Z" fill="#07262B" stroke="#07262B" stroke-width="1" stroke-linejoin="round"/><ellipse cx="61.5" cy="29.5" rx="3" ry="1.5" fill="#FF6F91"/><path d="M64 8 l.8 2 2 .8 -2 .8 -.8 2 -.8 -2 -2 -.8 2 -.8z M52 9 l.6 1.5 1.5 .6 -1.5 .6 -.6 1.5 -.6 -1.5 -1.5 -.6 1.5 -.6z" fill="#FFC93C"/></g><g class="mo mo-cry" transform="translate(-12.0 -4.40) scale(1.20)"><ellipse cx="56.5" cy="19.8" rx="3" ry="2.9" fill="#fff" stroke="#07262B" stroke-width="1"/><ellipse cx="63.5" cy="19.8" rx="3" ry="2.9" fill="#fff" stroke="#07262B" stroke-width="1"/><path d="M53.8 21.2 Q56.5 23.2 59.2 21.2 M60.8 21.2 Q63.5 23.2 66.2 21.2" stroke="#6EC6FF" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".9"/><circle cx="57" cy="20.8" r="1.7" fill="#07262B"/><circle cx="64" cy="20.8" r="1.7" fill="#07262B"/><circle cx="57.6" cy="20" r=".8" fill="#fff"/><circle cx="64.6" cy="20" r=".8" fill="#fff"/><path d="M52.6 17.6 L59.2 13.6 M67.4 17.6 L60.8 13.6" stroke="#07262B" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="54.4" cy="25.4" r="2.1" fill="#FF8FB3" opacity=".55"/><circle cx="68.6" cy="25.4" r="2.1" fill="#FF8FB3" opacity=".55"/><path d="M54 22.4 Q52.8 26 54.4 30 M69 22.4 Q70.2 26 68.6 30" stroke="#6EC6FF" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".85"/><path class="tear" d="M55 23 q-2.4 3.8 0 5.4 q2.4 -1.6 0 -5.4z" fill="#6EC6FF" stroke="#07262B" stroke-width=".6"/><path class="tear tear2" d="M68.4 23 q-2.4 3.8 0 5.4 q2.4 -1.6 0 -5.4z" fill="#6EC6FF" stroke="#07262B" stroke-width=".6"/><path class="tear tear3" d="M58.4 24 q-1.8 3 0 4.2 q1.8 -1.2 0 -4.2z" fill="#A9DCFF" stroke="#07262B" stroke-width=".5"/><path class="tear tear4" d="M64.6 24 q-1.8 3 0 4.2 q1.8 -1.2 0 -4.2z" fill="#A9DCFF" stroke="#07262B" stroke-width=".5"/><g class="wail"><path d="M55.6 31.6 Q61.5 23.6 67.4 31.6 Q61.5 29 55.6 31.6Z" fill="#07262B" stroke="#07262B" stroke-width="1.2" stroke-linejoin="round"/><path d="M58 28.2 H65" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/><ellipse cx="61.5" cy="30.6" rx="2.8" ry="1.1" fill="#FF6F91"/></g></g><g class="mo mo-angry" transform="translate(-12.0 -4.40) scale(1.20)"><ellipse cx="56.5" cy="19.6" rx="2.6" ry="2.3" fill="#fff" stroke="#07262B" stroke-width="1"/><ellipse cx="63.5" cy="19.6" rx="2.6" ry="2.3" fill="#fff" stroke="#07262B" stroke-width="1"/><circle cx="57.6" cy="20.2" r="1.3" fill="#07262B"/><circle cx="64.6" cy="20.2" r="1.3" fill="#07262B"/><path d="M53 15.6 L59.6 19 M67 15.6 L60.4 19" stroke="#07262B" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="54.6" cy="24.8" r="2" fill="#FF5A5A" opacity=".6"/><circle cx="68.4" cy="24.8" r="2" fill="#FF5A5A" opacity=".6"/><path d="M56.6 28.6 Q61.5 24.6 66.4 28.6" stroke="#07262B" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M59 27.4 H64 M60.5 26.8 V28 M62.5 26.8 V28" stroke="#fff" stroke-width=".8" stroke-linecap="round" fill="none"/><path d="M65.6 8 q1.6 .2 2 1.8 M71 8 q-1.6 .2 -2 1.8 M65.6 13.6 q1.6 -.2 2 -1.8 M71 13.6 q-1.6 -.2 -2 -1.8" stroke="#FF3B3B" stroke-width="1.2" stroke-linecap="round" fill="none"/></g><g class="mo mo-ouch" transform="translate(-12.0 -4.40) scale(1.20)"><path d="M53.6 15.8 L58.6 19 L53.6 22.2 M66.4 15.8 L61.4 19 L66.4 22.2" stroke="#07262B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M53.2 13.4 L58 14.6 M65.8 13.4 L61 14.6" stroke="#07262B" stroke-width="1.4" stroke-linecap="round" fill="none"/><ellipse cx="61.5" cy="27.4" rx="3.4" ry="2.7" fill="#07262B" stroke="#07262B" stroke-width="1"/><ellipse cx="61.5" cy="28.6" rx="2" ry="1.1" fill="#FF6F91"/><circle cx="54.6" cy="24.6" r="2" fill="#FF5A5A" opacity=".75"/><circle cx="68.4" cy="24.6" r="2" fill="#FF5A5A" opacity=".75"/><circle cx="60.6" cy="12.6" r="2.6" fill="#FF5A5A" stroke="#07262B" stroke-width=".8"/><path d="M52 8 l.7 1.7 1.7 .7 -1.7 .7 -.7 1.7 -.7 -1.7 -1.7 -.7 1.7 -.7z M67.5 6.5 l.7 1.7 1.7 .7 -1.7 .7 -.7 1.7 -.7 -1.7 -1.7 -.7 1.7 -.7z" fill="#FFC93C"/><path d="M70 14.5 q-1.8 2.8 0 3.8 q1.8 -1 0 -3.8z" fill="#6EC6FF" stroke="#07262B" stroke-width=".5"/></g><g class="mo mo-lead" transform="translate(-12.0 -4.40) scale(1.20)"><path d="M52.6 16.6 H60 V20.4 Q60 22.4 58 22.4 H54.8 Q52.6 22.4 52.6 20.4Z M61.4 16.6 H68.2 V20.4 Q68.2 22.4 66 22.4 H63.4 Q61.4 22.4 61.4 20.4Z" fill="#07262B"/><path d="M60 17.8 H61.4" stroke="#07262B" stroke-width="1.2"/><path d="M54 17.6 l2 0 M62.8 17.6 l2 0" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".8"/><path d="M56 25.8 Q62 29.6 67.6 24.2" stroke="#07262B" stroke-width="1.5" stroke-linecap="round" fill="none"/></g><g class="crw"><path d="M51.5 13 L52.6 3.6 L56.4 8.2 L59 2.4 L61.6 8.2 L65.4 3.6 L66.5 13Z" fill="#FFC93C" stroke="#07262B" stroke-width="1.2" stroke-linejoin="round"/><path d="M51.7 11 H66.3" stroke="#B8860B" stroke-width="1.2"/><circle cx="52.6" cy="3.6" r="1" fill="#FF3D7F"/><circle cx="59" cy="2.4" r="1.1" fill="#5CF2C0"/><circle cx="65.4" cy="3.6" r="1" fill="#FF3D7F"/></g></g></g></g>
-<g class="bd"><ellipse cx="27" cy="37.4" rx="22" ry="2.7" fill="#D9C48A" ${K}/><g clip-path="url(#cp${i})"><path d="M3.5 36 C3.5 17 13 5 27 5 C41 5 50.5 17 50.5 36 Z" fill="url(#sh${i})"/><path d="M13 9.5 C9 16 7 23 6.5 30.5 M20.5 6 C16.5 15 13.5 24 12 31.5 M27 5 C27 14 27 23 27 31 M33.5 6 C37.5 15 40.5 24 42 31.5 M41 9.5 C45 16 47 23 47.5 30.5" fill="none" stroke="#1F1608" stroke-opacity=".55" stroke-width="1.2"/><path d="M15 28 Q17 21 21.4 15.6 M31 27 Q31 19 31.5 12 M39 28 Q38 22 34.8 15.6 M10.5 28 Q11.5 22 14.5 17 M43.5 28 Q42.5 22 39.5 17" fill="none" stroke="#F0D08A" stroke-opacity=".28" stroke-width=".7"/><path d="M3.5 30.5 Q27 25.5 50.5 30.5 M9 29.6 L8.2 36 M15.5 28.4 L15 36 M21.5 27.6 L21.3 36 M27 27.3 V36 M32.5 27.6 L32.7 36 M38.5 28.4 L39 36 M45 29.6 L45.8 36" fill="none" stroke="#1F1608" stroke-opacity=".6" stroke-width="1"/><ellipse cx="19" cy="11.5" rx="8" ry="2.8" fill="#fff" opacity=".16" transform="rotate(-24 19 11.5)"/></g><path d="M3.5 36 C3.5 17 13 5 27 5 C41 5 50.5 17 50.5 36 Z" fill="none" stroke="#07262B" stroke-width="2.2"/>
-<g class="av"><circle class="avbg" cx="27" cy="20.5" r="11" fill="#0D3A41"/><text class="avtx" x="27" y="26" text-anchor="middle" font-size="15" font-family="Bowlby One,Arial Black,sans-serif" fill="#fff"></text><image class="avim" x="16.5" y="10" width="21" height="21" preserveAspectRatio="xMidYMid slice" clip-path="url(#ca${i})"/><circle cx="27" cy="20.5" r="11" fill="none" stroke="#FFC93C" stroke-width="1.8"/></g><g class="crew"></g><g class="fgf"><rect x="18" y="-8" width="18" height="12" rx="1.5" fill="#fff" stroke="#07262B" stroke-width="1.2"/><image class="fgi" x="18.8" y="-7.2" width="16.4" height="10.4" preserveAspectRatio="xMidYMid slice"/></g></g></svg>`;
+<g class="mo mo-turbo" transform="translate(-12.0 -4.40) scale(1.20)"><circle cx="54.6" cy="25" r="2.1" fill="#FF8FB3" opacity=".75"/><circle cx="68.4" cy="25" r="2.1" fill="#FF8FB3" opacity=".75"/><path d="M54 20.4 Q56.5 15.4 59 20.4 M61 20.4 Q63.5 15.4 66 20.4" stroke="#07262B" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M55.6 24.8 Q61.5 25.8 67.4 24.8 Q66 31.2 61.5 31.2 Q57 31.2 55.6 24.8Z" fill="#07262B" stroke="#07262B" stroke-width="1" stroke-linejoin="round"/><ellipse cx="61.5" cy="29.5" rx="3" ry="1.5" fill="#FF6F91"/><path d="M64 8 l.8 2 2 .8 -2 .8 -.8 2 -.8 -2 -2 -.8 2 -.8z M52 9 l.6 1.5 1.5 .6 -1.5 .6 -.6 1.5 -.6 -1.5 -1.5 -.6 1.5 -.6z" fill="#FFC93C"/></g><g class="mo mo-cry" transform="translate(-12.0 -4.40) scale(1.20)"><ellipse cx="56.5" cy="19.8" rx="3" ry="2.9" fill="#fff" stroke="#07262B" stroke-width="1"/><ellipse cx="63.5" cy="19.8" rx="3" ry="2.9" fill="#fff" stroke="#07262B" stroke-width="1"/><path d="M53.8 21.2 Q56.5 23.2 59.2 21.2 M60.8 21.2 Q63.5 23.2 66.2 21.2" stroke="#6EC6FF" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".9"/><circle cx="57" cy="20.8" r="1.7" fill="#07262B"/><circle cx="64" cy="20.8" r="1.7" fill="#07262B"/><circle cx="57.6" cy="20" r=".8" fill="#fff"/><circle cx="64.6" cy="20" r=".8" fill="#fff"/><path d="M52.6 17.6 L59.2 13.6 M67.4 17.6 L60.8 13.6" stroke="#07262B" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="54.4" cy="25.4" r="2.1" fill="#FF8FB3" opacity=".55"/><circle cx="68.6" cy="25.4" r="2.1" fill="#FF8FB3" opacity=".55"/><path d="M54 22.4 Q52.8 26 54.4 30 M69 22.4 Q70.2 26 68.6 30" stroke="#6EC6FF" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".85"/><path class="tear" d="M55 23 q-2.4 3.8 0 5.4 q2.4 -1.6 0 -5.4z" fill="#6EC6FF" stroke="#07262B" stroke-width=".6"/><path class="tear tear2" d="M68.4 23 q-2.4 3.8 0 5.4 q2.4 -1.6 0 -5.4z" fill="#6EC6FF" stroke="#07262B" stroke-width=".6"/><path class="tear tear3" d="M58.4 24 q-1.8 3 0 4.2 q1.8 -1.2 0 -4.2z" fill="#A9DCFF" stroke="#07262B" stroke-width=".5"/><path class="tear tear4" d="M64.6 24 q-1.8 3 0 4.2 q1.8 -1.2 0 -4.2z" fill="#A9DCFF" stroke="#07262B" stroke-width=".5"/><g class="wail"><path d="M55.6 31.6 Q61.5 23.6 67.4 31.6 Q61.5 29 55.6 31.6Z" fill="#07262B" stroke="#07262B" stroke-width="1.2" stroke-linejoin="round"/><path d="M58 28.2 H65" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/><ellipse cx="61.5" cy="30.6" rx="2.8" ry="1.1" fill="#FF6F91"/></g></g><g class="mo mo-angry" transform="translate(-12.0 -4.40) scale(1.20)"><ellipse cx="56.5" cy="19.6" rx="2.6" ry="2.3" fill="#fff" stroke="#07262B" stroke-width="1"/><ellipse cx="63.5" cy="19.6" rx="2.6" ry="2.3" fill="#fff" stroke="#07262B" stroke-width="1"/><circle cx="57.6" cy="20.2" r="1.3" fill="#07262B"/><circle cx="64.6" cy="20.2" r="1.3" fill="#07262B"/><path d="M53 15.6 L59.6 19 M67 15.6 L60.4 19" stroke="#07262B" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="54.6" cy="24.8" r="2" fill="#FF5A5A" opacity=".6"/><circle cx="68.4" cy="24.8" r="2" fill="#FF5A5A" opacity=".6"/><path d="M56.6 28.6 Q61.5 24.6 66.4 28.6" stroke="#07262B" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M59 27.4 H64 M60.5 26.8 V28 M62.5 26.8 V28" stroke="#fff" stroke-width=".8" stroke-linecap="round" fill="none"/><path d="M65.6 8 q1.6 .2 2 1.8 M71 8 q-1.6 .2 -2 1.8 M65.6 13.6 q1.6 -.2 2 -1.8 M71 13.6 q-1.6 -.2 -2 -1.8" stroke="#FF3B3B" stroke-width="1.2" stroke-linecap="round" fill="none"/></g><g class="mo mo-ouch" transform="translate(-12.0 -4.40) scale(1.20)"><path d="M53.6 15.8 L58.6 19 L53.6 22.2 M66.4 15.8 L61.4 19 L66.4 22.2" stroke="#07262B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M53.2 13.4 L58 14.6 M65.8 13.4 L61 14.6" stroke="#07262B" stroke-width="1.4" stroke-linecap="round" fill="none"/><ellipse cx="61.5" cy="27.4" rx="3.4" ry="2.7" fill="#07262B" stroke="#07262B" stroke-width="1"/><ellipse cx="61.5" cy="28.6" rx="2" ry="1.1" fill="#FF6F91"/><circle cx="54.6" cy="24.6" r="2" fill="#FF5A5A" opacity=".75"/><circle cx="68.4" cy="24.6" r="2" fill="#FF5A5A" opacity=".75"/><circle cx="60.6" cy="12.6" r="2.6" fill="#FF5A5A" stroke="#07262B" stroke-width=".8"/><path d="M52 8 l.7 1.7 1.7 .7 -1.7 .7 -.7 1.7 -.7 -1.7 -1.7 -.7 1.7 -.7z M67.5 6.5 l.7 1.7 1.7 .7 -1.7 .7 -.7 1.7 -.7 -1.7 -1.7 -.7 1.7 -.7z" fill="#FFC93C"/><path d="M70 14.5 q-1.8 2.8 0 3.8 q1.8 -1 0 -3.8z" fill="#6EC6FF" stroke="#07262B" stroke-width=".5"/></g><g class="mo mo-lead" transform="translate(-12.0 -4.40) scale(1.20)"><path d="M52.6 16.6 H60 V20.4 Q60 22.4 58 22.4 H54.8 Q52.6 22.4 52.6 20.4Z M61.4 16.6 H68.2 V20.4 Q68.2 22.4 66 22.4 H63.4 Q61.4 22.4 61.4 20.4Z" fill="#07262B"/><path d="M60 17.8 H61.4" stroke="#07262B" stroke-width="1.2"/><path d="M54 17.6 l2 0 M62.8 17.6 l2 0" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".8"/><path d="M56 25.8 Q62 29.6 67.6 24.2" stroke="#07262B" stroke-width="1.5" stroke-linecap="round" fill="none"/></g></g>
+<g transform="translate(1.9 0)"><g class="crw"><path d="M51.5 13 L52.6 3.6 L56.4 8.2 L59 2.4 L61.6 8.2 L65.4 3.6 L66.5 13Z" fill="#FFC93C" stroke="#07262B" stroke-width="1.2" stroke-linejoin="round"/><path d="M51.7 11 H66.3" stroke="#B8860B" stroke-width="1.2"/><circle cx="52.6" cy="3.6" r="1" fill="#FF3D7F"/><circle cx="59" cy="2.4" r="1.1" fill="#5CF2C0"/><circle cx="65.4" cy="3.6" r="1" fill="#FF3D7F"/></g></g></g>
+<g class="bd"><ellipse cx="32" cy="36" rx="23" ry="4" fill="#D9C48A" ${K}/><g clip-path="url(#cp${i})"><ellipse cx="32" cy="22" rx="24" ry="17" fill="url(#sh${i})"/><path d="M32 5V39M10 19Q32 12 54 19M10 27Q32 34 54 27M20 8L22 20L20 36M44 8L42 20L44 36M22 20Q32 17 42 20M22 27Q32 30 42 27" fill="none" stroke="#1F1608" stroke-opacity=".5" stroke-width="1.3"/><ellipse cx="22" cy="10" rx="9" ry="3" fill="#fff" opacity=".16"/></g><ellipse cx="32" cy="22" rx="24" ry="17" fill="none" stroke="#07262B" stroke-width="2.4"/>
+<g class="av"><circle class="avbg" cx="32" cy="21" r="12.5" fill="#0D3A41"/><text class="avtx" x="32" y="26.5" text-anchor="middle" font-size="16" font-family="Bowlby One,Arial Black,sans-serif" fill="#fff"></text><image class="avim" x="19.5" y="8.5" width="25" height="25" preserveAspectRatio="xMidYMid slice" clip-path="url(#ca${i})"/><circle cx="32" cy="21" r="12.5" fill="none" stroke="#FFC93C" stroke-width="2"/></g><g class="crew"></g><g class="fgf"><rect x="23" y="-8" width="18" height="12" rx="1.5" fill="#fff" stroke="#07262B" stroke-width="1.2"/><image class="fgi" x="23.8" y="-7.2" width="16.4" height="10.4" preserveAspectRatio="xMidYMid slice"/></g></g></svg>`;
       }
       const lanes = $("lanes");
       lanes.style.setProperty("--n", C.length - 1);
@@ -2883,7 +2288,7 @@
         l.className = "lane empty";
         l.id = "ln-" + c.c;
         l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
-  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="prize">🏆</div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
+  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
         lanes.append(l);
       });
 
@@ -2900,28 +2305,81 @@
         if (Q.get("lines") === "1") document.documentElement.classList.add("forcelines"); /* ?lines=1: siempre visibles, sin bots */
       }
 
-      /* ===== GUÍA VISUAL SIN TEXTO: 1) acciones con rayos (más rayos = más velocidad)
-         → 2) cada evento hace saltar a la tortuga y llega a la copa 🏆. Solo íconos y animación; ?howto=0 la oculta. ===== */
+      /* ===== LLAMADAS DE ACCIÓN: siempre 3 casillas fijas, siempre en español. Centro 🌹 Rosita (fija), derecha ❤️ Dale like (fija),
+         izquierda alterna en su mismo lugar (giro) entre ➕ Seguir y ↪️ Compartir. ?cta=0 la oculta. ===== */
       {
-        const ht = $("howto");
-        if (Q.get("howto") === "0") ht.remove();
+        const ct = $("cta");
+        if (Q.get("cta") === "0") {
+          ct.remove();
+          document.documentElement.style.setProperty("--cta-h", "0px"); /* sin llamadas no se reserva espacio */
+        }
         else {
-          const bolts = (n) => "⚡".repeat(n);
-          ht.innerHTML =
-            `<div class="st bz">${[["👋", 1], ["❤️", 1], ["💬", 2], ["➕", 3], ["↪️", 3], ["🎁", 4]].map(([e, n], i, arr) => `<span class="bt" style="animation-delay:${(i * 3.2) / arr.length}s"><span class="em">${e}</span><span class="bo">${bolts(n)}</span></span>`).join("")}</div>` +
-            `<span class="ar">▶</span>` +
-            `<div class="st rc"><i class="ln"></i><span class="tu">🐢</span>${[[0, "❤️", 1, 0.02], [0.25, "💬", 2, 0.22], [0.5, "➕", 3, 0.44], [0.75, "🎁", 4, 0.66]].map(([u, e, n, t]) => `<span class="ev" style="left:calc((100% - 3.1em) * ${u} + 0.9em);animation-delay:${(t * 6).toFixed(2)}s">${e}${bolts(n)}</span>`).join("")}<span class="tr">🏆</span><span class="tw">🏆</span><span class="sp" style="left:calc(100% - 3.5em)">✨</span><span class="sp" style="left:calc(100% - 1.2em)">✨</span></div>`;
+          const ALT = [
+            { c: "k-fo", e: "➕", t: "Seguir", x: EV_BOOST.follow[0] },
+            { c: "k-sh", e: "↪️", t: "Compartir", x: EV_BOOST.share[0] },
+          ];
+          const mk = (d) => {
+            const b = document.createElement("div");
+            b.className = "cb " + d.c;
+            b.innerHTML = "<i>" + d.e + "</i><span>" + d.t + "</span>" + (d.x ? '<b class="x">⚡×' + d.x + "</b>" : "");
+            return b;
+          };
+          const slot = (cls) => {
+            const el = document.createElement("div");
+            el.className = "sl " + cls;
+            ct.append(el);
+            return el;
+          };
+          const left = slot("s0"),
+            mid = slot("main"),
+            right = slot("s1");
+          /* el centro alterna entre regalos, cada uno con su multiplicador (valores en diamantes: rosa 1 · dona 30 · galaxia 1000) */
+          const GIFT_ALT = [
+            { c: "k-gf", e: "🌹", t: "Rosita", x: giftMult(1) },
+            { c: "k-gf", e: "🍩", t: "Dona", x: giftMult(30) },
+            { c: "k-gf", e: "🌌", t: "Galaxia", x: giftMult(1000) },
+          ];
+          mid.append(mk(GIFT_ALT[0]));
+          right.append(mk({ c: "k-lk", e: "❤️", t: "Dale like", x: EV_BOOST.like[0] }));
+          left.append(mk(ALT[0]));
+          let n = 1;
+          /* cada 3,5 s la casilla izquierda gira y muestra el otro botón */
+          setInterval(() => {
+            const old = left.querySelector(".cb:not(.out)");
+            const nb = mk(ALT[n % ALT.length]);
+            nb.classList.add("in");
+            if (old) {
+              old.classList.add("out");
+              setTimeout(() => old.remove(), 300);
+            }
+            left.append(nb);
+            n++;
+          }, 3500);
+          /* los regalos giran a su propio ritmo, desfasados de la casilla izquierda para que no cambien a la vez */
+          let g = 1;
+          setTimeout(() => setInterval(() => {
+            const old = mid.querySelector(".cb:not(.out)");
+            const nb = mk(GIFT_ALT[g % GIFT_ALT.length]);
+            nb.classList.add("in");
+            if (old) {
+              old.classList.add("out");
+              setTimeout(() => old.remove(), 300);
+            }
+            mid.append(nb);
+            g++;
+          }, 3500), 1750);
         }
       }
 
-      /* Mantiene cada tortuga dentro de su carril, dejando espacio respecto a las vecinas. */
+      /* Tamaño de las tortugas: cada una tiene su carril (alto de pista / nº de carriles) y ocupa un poco más que el carril
+         (1.1×), sin chocar con nadie. Más grandes que antes; nunca más del 34 % del ancho. */
       function fitTurtles() {
         const H = lanes.clientHeight,
           W = lanes.clientWidth;
         if (!H || !W) return;
         const bh = H / C.length,
-          th = bh * 0.85,
-          tw = Math.min((th * 66) / 46, W * 0.34, 24 * remPx());
+          th = bh * 1.1,
+          tw = Math.min((th * 70) / 46, W * 0.34, 24 * remPx());
         lanes.style.setProperty("--tw", tw.toFixed(1) + "px");
       }
       addEventListener("resize", fitTurtles);
@@ -2996,12 +2454,12 @@
       }
 
       /* ===== Pantalla ===== */
-      /* Jugador dueño de una tortuga (slot 's0'..'s2'), o null si el carril está libre */
+      /* Jugador dueño de una tortuga (slot 's0'..'s4'), o null si el carril está libre */
       function slotPlayer(code) {
         const k = S.slotUser[code];
         return k ? contestants.get(k) : null;
       }
-      /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 3 carriles. Se llama ~4 veces/seg. */
+      /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 6 carriles. Se llama ~4 veces/seg. */
       /* El espectador elige un país (nombre, sigla o bandera en el chat); sin carril propio, su energía va a esa tortuga. */
       function registerPick(user, code) {
         S.pick.set(user, code);
@@ -3028,6 +2486,7 @@
           l.classList.toggle("empty", !p);
           l.classList.toggle("win", c.c === S.winner);
         });
+        hintPaint();
         if (S.go && !S.over) {
           highlightOvertakes(ord);
           checkNearEnd();
@@ -3116,8 +2575,8 @@
         };
         t.crew.slice(0, CREW_MAX).forEach((p, k) => {
           const a = (CREW_ANG[k] * Math.PI) / 180,
-            x = 27 + 25.5 * Math.cos(a),
-            y = 34 - 29 * Math.sin(a),
+            x = 32 + 25 * Math.cos(a),
+            y = 22 - 18 * Math.sin(a),
             r = 5.2,
             item = mk("g", { transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})` });
           item.append(mk("circle", { r, fill: nn ? nn.c : "#0D3A41" }));
@@ -3155,7 +2614,7 @@
         t.mainP = null;
         renderCrew(code);
       }
-      /* Sin carriles libres, el participante nuevo reemplaza al dueño con mayor puntaje. */
+      /* Los participantes reales pueden ocupar carriles libres o reemplazar al de menor puntaje. */
       function claimSlot(p) {
         let code,
           lo = null;
@@ -3176,10 +2635,10 @@
           } else {
             for (const c of C) {
               const o = slotPlayer(c.c);
-              if (o && !o.tortubot && c.c !== S.winner && (!lo || o.points > lo.o.points))
+              if (o && !o.tortubot && c.c !== S.winner && (!lo || o.points < lo.o.points))
                 lo = { c, o };
             }
-            if (!lo) return null;
+            if (!lo || p.points <= lo.o.points) return null;
             code = lo.c.c;
           }
           S.slotOf.delete(lo.o.key);
@@ -3191,21 +2650,10 @@
           }
         }
         if (lo) {
-          const lane = T[code];
-          lane.pend = 0;
-          lane.ve = 0;
-          lane.cr = 0;
-          lane.vs = 0;
-          if (lo.o.isBot) {
-            S.pos[code] = 0;
-            lane.eventTarget = 0;
-            lane.boosts = [];
-            lane.mult = 1;
-            lane.giftTarget = null;
-            if (lane.giftEl) lane.giftEl.remove();
-            lane.giftEl = null;
-            lane.trk.querySelectorAll(".evb, .dust").forEach((el) => el.remove());
-          }
+          T[code].pend = 0;
+          T[code].ve = 0;
+          T[code].cr = 0;
+          T[code].vs = 0;
         }
         S.slotUser[code] = p.key;
         S.slotOf.set(p.key, code);
@@ -3216,17 +2664,16 @@
         return code;
       }
       /* Burbuja de evento SOBRE la tortuga (sigue a la tortuga mientras sube y se desvanece). Los likes se agrupan cada 0.45 s. */
-      function evBadge(code, ty, entry) {
+      function evBadge(code, ty, entry, points) {
         const t = T[code];
         if (!t) return;
         t.lastEv = performance.now(); /* hubo interacción: deja de estar agotada */
-        const show = (cls, icon, label) => {
+        const show = (cls, txt) => {
           const old = t.trk.querySelectorAll(".evb");
           if (old.length >= 5) old[0].remove();
           const e = document.createElement("div");
           e.className = "evb disp " + cls;
-          e.textContent = icon;
-          e.setAttribute("aria-label", label);
+          e.textContent = txt + (t.lastM > 1 ? " ⚡×" + t.lastM : "");
           e.style.setProperty("--o", (t.evo = ((t.evo || 0) + 1) % 3));
           e.style.setProperty(
             "--p",
@@ -3235,32 +2682,43 @@
           t.trk.append(e);
           setTimeout(() => e.remove(), 2300);
         };
+        const pts =
+          points < 10 ? String(+points.toFixed(1)) : String(Math.round(points));
         if (ty === "like") {
           const n = Math.max(
             1,
             Number(entry.activityCount || entry.count) || 1,
           );
-          t.lk = t.lk || { n: 0, h: 0 };
+          t.lk = t.lk || { n: 0, p: 0, h: 0 };
           t.lk.n += n;
+          t.lk.p += points;
           if (!t.lk.h)
             t.lk.h = setTimeout(() => {
               const l = t.lk;
-              t.lk = { n: 0, h: 0 };
-              show("e-lk", "👍", `${l.n} Me gusta`);
+              t.lk = { n: 0, p: 0, h: 0 };
+              show("e-lk", "👍 +" + l.n + " likes");
             }, 450);
           return;
         }
         if (ty === "gift") {
           const c = Math.max(1, Number(entry.activityCount) || 1);
-          const giftName = entry.content || tr("Regalo", "Gift");
-          show("e-gf", "🎁", `${giftName}${c > 1 ? " x" + c : ""}`);
+          show(
+            "e-gf",
+            "🎁 " +
+              (entry.content || tr("Regalo", "Gift")) +
+              (c > 1 ? " x" + c : "") +
+              " +" +
+              Math.round(points),
+          );
         } else if (ty === "chat") {
-          show("e-ch", "💬", tr("Comentario", "Comment"));
+          const comment = String(entry.content || "").replace(/\s+/g, " ").trim();
+          const message = comment.length > 42 ? comment.slice(0, 41) + "…" : comment;
+          show("e-ch", message ? "💬 “" + message + "”" : tr("💬 Comentó", "💬 Commented"));
         }
-        else if (ty === "share") show("e-sh", "🔁", tr("Compartió", "Shared"));
-        else if (ty === "follow") show("e-fo", "❤️", tr("Nuevo seguidor", "New follower"));
-        else if (ty === "join") show("e-jn", "👋", tr("Se unió", "Joined"));
-        else if (ty === "support") show("e-ch", "💬", tr("Comentario", "Comment"));
+        else if (ty === "share") show("e-sh", tr("🔁 Compartió +", "🔁 Shared +") + pts);
+        else if (ty === "follow") show("e-fo", tr("❤️ Siguió +", "❤️ Followed +") + pts);
+        else if (ty === "join") show("e-jn", tr("👋 Se unió", "👋 Joined"));
+        else if (ty === "support") show("e-ch", "💬 +1");
       }
       /* Al llegar un regalo aparece un 🎁 delante de la tortuga y ella corre a recogerlo. */
       function putGiftAhead(code, entry) {
@@ -3339,6 +2797,8 @@
           b = EV_BOOST[ty] || [2, 2];
         let sec = b[1],
           m = b[0];
+        if (ty === "gift") m = giftMult(entry.diamondCount);
+        if (Date.now() < HY.until) m = +(m * 1.5).toFixed(1); /* FIEBRE: ×1.5 para todos */
         /* Los bots de prueba (los que dan el ejemplo) valen 4-6 veces menos que un usuario normal: su empuje extra se divide entre 4 y 6. */
         if (p && p.isBot) m = Math.max(1, +(1 + (m - 1) / (4 + Math.random() * 2)).toFixed(1));
         if (ty === "gift")
@@ -3348,6 +2808,85 @@
         if (t.boosts.length > 40) t.boosts.splice(0, t.boosts.length - 40);
         return { m, sec };
       }
+      /* ===== v67: FIEBRE ===== */
+      const HYPE_GAIN = { chat: 4, join: 2, follow: 12, share: 10 };
+      function hypePaint() {
+        const box = $("hype");
+        if (!box) return;
+        const now = Date.now(), fev = now < HY.until;
+        box.classList.toggle("fever", fev);
+        box.classList.toggle("hot", !fev && HY.v >= 75);
+        $("hypeF").style.width = (fev ? 100 : HY.v) + "%";
+        $("hypeT").textContent = fev
+          ? "🔥 ¡FIEBRE! ×1.5 · " + Math.ceil((HY.until - now) / 1000) + "s"
+          : "🔥 Llena la FIEBRE: ¡comenta y da like!";
+      }
+      function hypeAdd(entry, points, isBot) {
+        if (!HY.on || S.over || !S.go || Date.now() < HY.until) return;
+        let g = HYPE_GAIN[entry.type];
+        if (entry.type === "like") g = Math.min(6, 0.6 * Math.max(1, Number(entry.activityCount) || 1));
+        else if (entry.type === "gift") g = Math.min(45, 10 + points * 0.4);
+        if (!g) return;
+        HY.v = Math.min(100, HY.v + g * (isBot ? 0.25 : 1)); /* los bots de prueba cuentan 4 veces menos */
+        if (HY.v >= 100) {
+          HY.v = 0;
+          HY.until = Date.now() + 10000;
+          screenFx(true);
+          SFX.goal();
+          burst(60, true);
+        }
+        hypePaint();
+      }
+      setInterval(() => {
+        if (!HY.on) return;
+        if (Date.now() >= HY.until && S.go && !S.over && HY.v > 0) HY.v = Math.max(0, HY.v - 0.8);
+        hypePaint();
+      }, 500);
+      /* Pista "escribe tu país": banderas de los carriles libres; se oculta cuando no quedan o termina la ronda. */
+      let hintKey = "";
+      function hintPaint() {
+        const el = $("hint");
+        if (!el) return;
+        const free = [];
+        C.forEach((c, i) => { if (NATIONS[i]) free.push(NATIONS[i]); }); /* todos los países de la ronda */
+        const on = !S.over && free.length > 0;
+        el.classList.toggle("show", on);
+        if (!on) return;
+        const nm = (n) => n.es;
+        const key = "es" + free.map(nm).join("|");
+        if (key === hintKey) return;
+        hintKey = key;
+        const hc = document.createElement("div");
+        hc.className = "hc";
+        hc.append("💬 Escribe tu país: ");
+        free.forEach((n) => {
+          const s = document.createElement("span"), im = document.createElement("img");
+          im.alt = "";
+          im.src = n.u;
+          s.append(im, nm(n));
+          hc.append(s);
+        });
+        el.replaceChildren(hc);
+      }
+      /* Extras de la tarjeta de ganador: victorias guardadas, racha, MVP de la ronda y tiempo. */
+      function winnerExtras(p) {
+        const box = $("wXtra");
+        if (!box) return;
+        box.replaceChildren();
+        const add = (t) => { const s = document.createElement("span"); s.textContent = t; box.append(s); };
+        if (!p.tortubot) {
+          const w = winsBy.get(p.key) || 0;
+          if (w > 0) add("🏅 " + w + " " + tr(w === 1 ? "victoria" : "victorias", w === 1 ? "win" : "wins"));
+          if (S.streak >= 2) add("🔥 " + tr("Racha ×", "Streak ×") + S.streak);
+        }
+        let mv = null;
+        for (const q of contestants.values()) if (!q.tortubot && q.points > 0 && (!mv || q.points > mv.points)) mv = q;
+        if (mv && mv !== p) add("⭐ MVP @" + shownName(mv.username));
+        if (S.goAt) {
+          const sec = Math.max(0, Math.round((performance.now() - S.goAt) / 1000));
+          add("⏱ " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"));
+        }
+      }
       function raceAdd(p, entry, points) {
         if (S.over) return;
         let code = S.slotOf.get(p.key) || claimSlot(p);
@@ -3355,23 +2894,19 @@
         if (!code) return;
         const t = T[code],
           ty = entry.type;
-        const realUser = !p.isBot && !p.tortubot;
-        if (realUser)
-          t.eventTarget = Math.max(
-            t.eventTarget || 0,
-            Math.min(CFG.win, (p.interactions / 6) * CFG.win),
-          );
         if (entry.type !== "support") setMain(code, p); /* el último evento manda: su avatar es el principal */
-        if (ty === "join" && !p.isBot && !p.tortubot) restartAnim(t.tur, "join-pop");
         const bst = addBoost(code, ty, entry, p); /* ×2 / ×5 / ×10 / ×20 según la relevancia del evento */
         avatarPop(code, p, bst.m); /* avatar anclado en el centro del caparazón, en el punto donde se generó */
         if (ty === "gift") putGiftAhead(code, entry);
-        evBadge(code, ty, entry);
+        evBadge(code, ty, entry, points);
         if (points >= 15) {
           t.tur.classList.add("turbo");
           setTimeout(() => t.tur.classList.remove("turbo"), 1800);
-        }
-        if (realUser) SFX.userEvent(ty);
+          SFX.sprint();
+        } else if (ty === "gift") SFX.coin(0);
+        else if (ty === "like") SFX.like();
+        else if (ty === "chat") SFX.join();
+        else if (ty !== "join") SFX.follow();
         /* efectos visuales */
         emojiFx(
           code,
@@ -3397,7 +2932,7 @@
           setTimeout(
             () => {
               burstAt(...turPos(code), 40, true);
-              if (realUser) SFX.goal();
+              SFX.goal();
             },
             points >= 15 ? 1200 : 0,
           );
@@ -3407,7 +2942,7 @@
    1) calcula puntos  2) aplica empuje doble y combo de regalos  3) limita comentarios a 1 cada 8 s por usuario
    4) suma al jugador  5) raceAdd() mueve su tortuga  6) avisa si entra/desplaza del Top 5 o toma el primer lugar.
    Se ignora todo mientras la ronda está terminada (S.over). */
-      /* Contador inferior acumulado entre rondas; ignora bots.
+      /* Contador inferior por clasificación (se reinicia en cada ronda; ignora bots).
          comentario = chat · like = suma de likes · unión = join + seguir · compartir = share · regalo = unidades de regalo */
       const EVC = { ch: 0, lk: 0, jn: 0, sh: 0, gf: 0 };
       const EVK = { chat: "ch", like: "lk", join: "jn", follow: "jn", share: "sh", gift: "gf" };
@@ -3430,6 +2965,10 @@
         const n = Number(entry.activityCount);
         EVC[k] += entry.type === "like" || entry.type === "gift" ? (Number.isFinite(n) && n > 0 ? n : 1) : 1;
         paintStats(k);
+      }
+      function resetStats() {
+        for (const k in EVC) EVC[k] = 0;
+        paintStats();
       }
       function scoreContestant(entry, isBot = false) {
         if (
@@ -3480,7 +3019,6 @@
             username,
             avatar: "",
             points: 0,
-            interactions: 0,
             sequence: contestantSequence++,
             isBot,
           };
@@ -3492,13 +3030,13 @@
           player.lastChat = n;
         }
         player.points += points;
-        if (!isBot && !player.tortubot) player.interactions++;
         if (
           typeof entry.avatar === "string" &&
           /^https?:\/\//i.test(entry.avatar)
         )
           player.avatar = entry.avatar;
 
+        hypeAdd(entry, points, isBot);
         raceAdd(player, entry, points);
       }
       function resetContestants() {
@@ -3528,47 +3066,14 @@
       /* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win.
          Guarda la victoria del dueño del carril, suma una copa al país ganador, calcula su racha,
          lanza los efectos de festejo y programa la siguiente ronda (CFG.restartMs). */
-      /* al llegar a la meta: avatar del ganador en pantalla durante WINNER_MS (10 s) */
-      const WINNER_MS = 10000;
+      /* al llegar a la meta: avatar del ganador en pantalla durante WINNER_MS (5 s) */
+      const WINNER_MS = 5000;
       let winnerT = null, winnerT2 = null;
       function hideWinner() {
         clearTimeout(winnerT);
         clearTimeout(winnerT2);
         const el = $("winner");
         if (el) el.classList.remove("show", "out");
-      }
-      function topHelpers(excludedUserKey) {
-        return [...contestants.values()]
-          .filter((player) =>
-            !player.isBot &&
-            !player.tortubot &&
-           player.key !== excludedUserKey &&
-            player.username &&
-            player.username.trim().toLocaleLowerCase() !== "alguien"
-          )
-          .sort((a, b) => b.points - a.points || a.sequence - b.sequence)
-          .slice(0, 2);
-      }
-      function setHelper(place, player) {
-        const avatar = $(`helper${place}Avatar`),
-          img = $(`helper${place}Img`),
-          initial = $(`helper${place}Initial`),
-          name = $(`helper${place}Name`);
-        avatar.classList.add("noimg");
-        img.removeAttribute("src");
-        img.onerror = () => avatar.classList.add("noimg");
-        if (!player) {
-          initial.textContent = "—";
-          name.textContent = tr("Sin participante", "No participant");
-          return;
-        }
-        const username = String(player.username || "Alguien").trim() || "Alguien";
-        initial.textContent = username.charAt(0).toUpperCase() || "?";
-        name.textContent = "@" + shownName(username.replace(/^@+/, ""));
-        if (typeof player.avatar === "string" && /^https?:\/\//i.test(player.avatar)) {
-          avatar.classList.remove("noimg");
-          img.src = player.avatar;
-        }
       }
       function showWinner(p) {
         const el = $("winner");
@@ -3582,20 +3087,12 @@
         $("wNm").textContent = p.tortubot ? "🤖 TORTUBOT" : "@" + shownName(p.username || "Alguien");
         $("wCt").textContent = nn.n;
         $("wFl").src = nn.u;
+        winnerExtras(p);
         $("wIni").textContent = ini;
-        const helpers = topHelpers(p.key);
-        setHelper(2, helpers[0]);
-        setHelper(3, helpers[1]);
-        /* Prioriza el avatar del ganador y conserva la bandera como respaldo. */
+        /* la "foto de ganador" es la bandera del PAÍS ganador (no el avatar del usuario) */
         av.classList.remove("noimg");
         img.onerror = () => av.classList.add("noimg");
-        img.alt = p.username ? "@" + p.username : "Ganador";
-        img.src =
-          !p.tortubot &&
-          typeof p.avatar === "string" &&
-          /^https?:\/\//i.test(p.avatar)
-            ? p.avatar
-            : nn.u;
+        img.src = nn.u;
         el.classList.remove("out");
         el.classList.add("show");
         winnerT2 = setTimeout(() => el.classList.add("out"), WINNER_MS - 350);
@@ -3648,6 +3145,9 @@
         clearTimeout(S.rt);
         lastRank = {};
         S.nearEnd = false;
+        HY.v = 0;
+        HY.until = 0;
+        hypePaint();
         $("app").classList.remove("finished");
         S.round++;
         setMusicTheme();
@@ -3656,7 +3156,9 @@
         S.combo.clear();
         S.cp = { 25: 0, 50: 0, 75: 0 };
         S.pf = false;
+        S.ramT = 12;
         S.recAt = null; /* la cuenta de los 3 s empieza cuando arranca la carrera */
+        resetStats();
         contestants.clear();
         contestantSequence = 0;
         S.slotUser = {};
@@ -3749,7 +3251,6 @@
           w: Math.random() * 10,
           vs: 0,
           ve: 0,
-          eventTarget: 0,
           cr: 0,
           pend: 0,
           boosts: [] /* [{m: multiplicador, until: segundo en que acaba}] */,
@@ -3762,11 +3263,18 @@
           am: 0,
           hl: 0,
           du: 0,
-          /* física de marcha */
+          /* física de marcha y choques */
           va: 0 /* velocidad real del caparazón (u/s), medida del avance */,
           vaPrev: 0,
           fa: 0 /* pasos por segundo (ciclos de marcha) */,
           lean: 0 /* inclinación sobre las patas (grados) */,
+          zy: 0, zvy: 0 /* zigzag lateral (px) */,
+          psi: 0 /* rumbo (grados) */,
+          zT: 0, zTimer: 1 + Math.random() * 3 /* desvío lateral objetivo (px) y tiempo al próximo cambio */,
+          /* choques */
+          ouchT: 0 /* s con cara de golpe */, immT: 0 /* s de inmunidad tras un impacto */, angryT: 0 /* s embistiendo */,
+          dodgeT: 0, dodgeDir: 0 /* esquive vertical tras el impacto */, back: 0 /* retroceso pendiente (unidades de pista) */,
+          hits: 0, ramTo: null, ramDir: 0, jl: 0, jv: 0 /* sacudida del caparazón */,
         };
       });
       function reseed() {
@@ -3775,9 +3283,12 @@
           t.base = 0.92 + Math.random() * 0.16;
           t.boosts = [];
           t.mult = 1;
+          t.zy = 0;
           t.trk.querySelectorAll(".anchav").forEach((x) => x.remove());
+          t.cryT = 0;
+          t.tur.classList.remove("cry", "ouch", "angry");
+          t.ouchT = 0; t.immT = 0; t.angryT = 0; t.dodgeT = 0; t.dodgeDir = 0; t.back = 0; t.hits = 0; t.ramTo = null; t.jl = 0; t.jv = 0; t.sprint = false;
           t.ve = 0;
-          t.eventTarget = 0;
           t.cr = 0;
           t.vs = 0;
           t.pend = 0;
@@ -3787,7 +3298,7 @@
           t.pause = 0;
           t.step = Math.floor(t.ph / Math.PI);
           t.va = 0; t.vaPrev = 0; t.fa = 0; t.lean = 0;
-          t.lastEv = performance.now();
+          t.zy = 0; t.zvy = 0; t.psi = 0; t.lastEv = performance.now(); t.zT = 0; t.zTimer = 1 + Math.random() * 3;
           t.w = Math.random() * 10;
         });
       }
@@ -3827,31 +3338,110 @@
           R = remPx();
         if (!tw || !W || !H) return;
         GEO.tw = tw;
-        GEO.th = (tw * 46) / 66;
-        GEO.k = tw / 66; /* px por unidad de SVG */
-        GEO.u = 66 / tw; /* unidades de SVG por px */
+        GEO.th = (tw * 46) / 70;
+        GEO.k = tw / 70; /* px por unidad de SVG */
+        GEO.u = 70 / tw; /* unidades de SVG por px */
         GEO.ppu = (W - tw * 1 - 0.8 * R) / 100; /* px por unidad de pista */
         GEO.W = W;
         GEO.H = H;
       }
-      /* Cada tortuga = 3 círculos para el caparazón + 1 para la cabeza (coordenadas del SVG de 66×46). */
+      /* Cada tortuga = 3 círculos para el caparazón + 1 para la cabeza (coordenadas del SVG de 70×46). */
+      /* AJUSTE DE CHOQUES (para que el juego avance): inmunidad tras un golpe, tope de retroceso y frecuencia de embestidas */
       const MOOD_HOLD = 4 /* s mínimos que dura una expresión antes de poder cambiar */,
         MOOD_STABLE = 1.5; /* s que debe sostenerse la condición de la nueva expresión */
       const TIRED_MS = 10000; /* una tortuga sin interacción durante 10 s pone cara de agotado */
-      function physics() {
+      const CRY_LEFT = 30; /* % de pista que le falta a la líder para que los últimos 3 puestos lloren */
+      /* ===== CHOQUES ENTRE CAPARAZONES =====
+         Cada tortuga pasea por su carril; cada RAM_MIN..RAM_MAX s dos tortugas vecinas que van lado a lado hacen que una embista
+         a la otra (angryT, brillo rojo). Si sus caparazones se tocan (RX × ancho, RY × alto; RY_NAT si ninguna embiste) hay UN solo impacto por contacto:
+         las dos ponen cara de golpe HIT_FACE_S s, retroceden RECOIL unidades (a RECOIL_RATE u/s), se sacuden, una esquiva hacia
+         arriba y la otra hacia abajo, y quedan inmunes IMMUNE_S s. Después se recuperan solas. Máx. HIT_MAX choques por tortuga. */
+      const HIT = { RECOIL: 6, RECOIL_RATE: 7, FACE_S: 4.5, IMMUNE_S: 7, MAX: 3, RAM_MIN: 14, RAM_MAX: 26, RAM_S: 5, RX: 0.55, RY: 0.75, RY_NAT: 0.55, NEAR: 1.2, START: 5, END: 85 };
+      const inFight = (t) => t.angryT > 0 || t.dodgeT > 0;
+      function hitPair(a, b) {
+        /* a = la de arriba (carril menor), b = la de abajo */
+        [[a, -1, b], [b, 1, a]].forEach(([k, dir, other]) => {
+          const t = T[k], isBot = !!(slotPlayer(k) && slotPlayer(k).isBot);
+          t.ouchT = HIT.FACE_S;
+          t.immT = HIT.IMMUNE_S;
+          t.hits++;
+          t.angryT = 0;
+          t.ramTo = null;
+          t.dodgeT = 1.6;
+          t.dodgeDir = dir; /* la de arriba sale hacia arriba y la de abajo hacia abajo */
+          t.jv = 70 * dir; /* sacudida del caparazón */
+          if (!isBot) { t.back += HIT.RECOIL; t.vs *= 0.3; } /* el bot de prueba conserva su ritmo exacto */
+          emojiFx(k, "hit", 3);
+          ringFx(k, false);
+        });
+        SFX.crash(0.6);
+        burstAt(...turPos(a), 16, true);
+      }
+      function collisions(dt) {
+        if (!GEO.k) return;
+        const bh = GEO.H / C.length, live = S.go && !S.over;
+        C.forEach((c) => {
+          const t = T[c.c];
+          t.ouchT = Math.max(0, t.ouchT - dt);
+          t.immT = Math.max(0, t.immT - dt);
+          t.angryT = Math.max(0, t.angryT - dt);
+          t.dodgeT = Math.max(0, t.dodgeT - dt);
+          if (t.angryT <= 0) t.ramTo = null;
+          t.jv += (-70 * t.jl - 8 * t.jv) * dt; /* vaivén amortiguado tras el golpe */
+          t.jl += t.jv * dt;
+          t.sprint = t.angryT > 0;
+          t.tur.classList.toggle("ouch", t.ouchT > 0);
+          t.tur.classList.toggle("angry", t.angryT > 0 && live);
+        });
+        if (!live) return;
+        /* 1) cada tanto, una tortuga embiste a su vecina */
+        S.ramT -= dt;
+        if (S.ramT <= 0) {
+          S.ramT = HIT.RAM_MIN + Math.random() * (HIT.RAM_MAX - HIT.RAM_MIN);
+          const cand = [];
+          for (let i = 0; i < C.length - 1; i++) {
+            const a = T[C[i].c], b = T[C[i + 1].c], pa = S.pos[C[i].c], pb = S.pos[C[i + 1].c];
+            if (a.immT > 0 || b.immT > 0 || a.hits >= HIT.MAX || b.hits >= HIT.MAX || inFight(a) || inFight(b)) continue;
+            if (pa > HIT.END || pb > HIT.END || pa < HIT.START || pb < HIT.START || Math.abs(pa - pb) * GEO.ppu > HIT.NEAR * GEO.tw) continue;
+            cand.push(i);
+          }
+          if (cand.length) {
+            const i = rnd(cand), up = Math.random() < 0.5, ag = T[C[up ? i : i + 1].c];
+            ag.angryT = HIT.RAM_S;
+            ag.ramTo = C[up ? i + 1 : i].c;
+            ag.ramDir = up ? 1 : -1;
+          }
+        }
+        /* 2) la embestidora apunta su altura hacia la vecina (el caparazón queda a 0.4 de alto de distancia) */
+        C.forEach((c) => {
+          const t = T[c.c];
+          if (t.angryT > 0 && t.ramTo) t.zT = T[t.ramTo].zy + t.ramDir * (bh - 0.4 * GEO.th);
+        });
+        /* 3) impacto entre caparazones vecinos */
+        for (let i = 0; i < C.length - 1; i++) {
+          const ka = C[i].c, kb = C[i + 1].c, a = T[ka], b = T[kb];
+          if (a.immT > 0 || b.immT > 0 || a.hits >= HIT.MAX || b.hits >= HIT.MAX) continue;
+          if (S.pos[ka] < HIT.START || S.pos[kb] < HIT.START) continue; /* en la salida van todas lado a lado: aún no chocan */
+          const dx = Math.abs(S.pos[kb] - S.pos[ka]) * GEO.ppu, dy = Math.abs(b.rtPx - a.rtPx);
+          const ry = a.angryT > 0 || b.angryT > 0 ? HIT.RY : HIT.RY_NAT; /* embistiendo alcanza más; al azar solo si de verdad se montan */
+          if (dx < HIT.RX * GEO.tw && dy < ry * GEO.th) hitPair(ka, kb);
+        }
+      }
+      function physics(dt) {
         const g = GEO;
         if (!g.k) return;
         const bh = g.H / C.length;
         C.forEach((c, i) => {
           const t = T[c.c];
-          t.rtPx = i * bh + (bh - g.th) / 2;
+          t.rtPx = i * bh + (bh - g.th) / 2 + t.zy;
           /* --rt = altura real de la tortuga en la pista: con ella se mueven también 🎁, polvo y etiquetas */
           t.trk.style.setProperty("--rt", t.rtPx.toFixed(1) + "px");
-          t.tur.style.transform = "rotate(0deg)";
+          t.tur.style.transform = "rotate(" + t.psi.toFixed(2) + "deg)";
         });
+        collisions(dt);
       }
       /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio
-   sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
+   (y pueden chocar con su vecina) sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
      1) decide pausas y velocidad de arrastre   2) gasta energía pendiente (acelera/frena)
      3) actualiza S.pos   4) revisa lechugas (25/50/75 %)   5) anima patas, caparazón, cabeza y polvo
    Después: si alguien llegó, queda como campeón y finish() termina la carrera en ese momento.
@@ -3868,7 +3458,12 @@
           geo();
         }
         const R = remPx();
-        /* Líder actual de la carrera. */
+        /* LLANTO: cuando la líder ya está a 30 % de la meta (pos ≥ 70), las tortugas de los últimos 3 puestos lloran */
+        const lastSet = new Set();
+        {
+          const rk = C.map((c) => c.c).sort((a, b) => S.pos[b] - S.pos[a]);
+          if (S.go && S.pos[rk[0]] >= CFG.win - CRY_LEFT) rk.slice(-3).forEach((k) => lastSet.add(k));
+        }
         let firstK = null,
           firstP = 1;
         for (const c of C)
@@ -3881,7 +3476,7 @@
             t = T[k],
             isW = k === S.winner;
           /* VELOCIDAD: la TORTUBOT va a ritmo constante (0 → 100 en CFG.botSec s). Las demás caminan a BASE_V y cada
-             interacción las multiplica ×2 / ×5 / ×10 / ×20 mientras dura su efecto (t.boosts). */
+             interacción las multiplica ×2 / ×5 / ×10 / ×20 mientras dura su efecto (t.boosts). Los choques entre caparazones vecinos los resuelve collisions(). */
           const p0 = S.pos[k],
             own = slotPlayer(k),
             isBotT = !!(own && own.isBot); /* la tortuga que corre el bot de prueba marca el ritmo: 0 → 100 en CFG.botSec */
@@ -3895,14 +3490,20 @@
               t.mult = mult;
               const wob = 1 + 0.12 * Math.sin(tNow * 0.7 + t.w) + 0.06 * Math.sin(tNow * 1.9 + t.w * 2.3);
               tgtV = BASE_V * t.base * wob * mult;
-              const eventGap = Math.max(0, t.eventTarget - S.pos[k]);
-              if (eventGap > 0)
-                tgtV = Math.max(tgtV, Math.min(24, Math.max(12, eventGap * 2)));
             }
           } else t.mult = 1;
+          if (!isBotT && tgtV > 0) {
+            if (t.angryT > 0) tgtV *= 1.4; /* la embestidora acelera */
+            if (t.ouchT > 0) tgtV *= 0.4 + 0.6 * (1 - t.ouchT / HIT.FACE_S); /* aturdida: arranca despacio y se recupera */
+          }
           if (isBotT) t.vs = tgtV; /* exacta: llega a 100 justo a los CFG.botSec s */
           else t.vs += (tgtV - t.vs) * Math.min(1, dt * (tgtV > t.vs ? 2.5 : 1.2)); /* acelera y frena con suavidad */
           S.pos[k] = Math.min(CFG.win, S.pos[k] + (S.go && !S.over && !isW ? t.vs * dt : 0));
+          if (t.back > 0) { /* retroceso por impacto: se gasta suave y nunca baja de 0 */
+            const d = Math.min(t.back, HIT.RECOIL_RATE * dt, S.pos[k]);
+            S.pos[k] -= d;
+            t.back -= d;
+          }
           if (t.giftTarget !== null && S.pos[k] >= t.giftTarget) {
             const collected = t.giftEl;
             t.giftTarget = null;
@@ -3926,7 +3527,7 @@
                 S.cp[m] = k;
                 t.tur.classList.add("turbo");
                 setTimeout(() => t.tur.classList.remove("turbo"), 1500);
-                if (!isBotT) SFX.cp();
+                SFX.cp();
               }
           /* animación */
           const sp = Math.min(t.vs, VMAX),
@@ -3960,7 +3561,7 @@
                 Por eso el ritmo del paso sale de vb: fq = vb · duty / (2 · amplitud). Si no avanza, las patas quedan plantadas.
              3) Dos pares diagonales (trote) alternan; con duty > 0.5 siempre hay al menos un par en el suelo.
              4) El caparazón NO sube ni baja: se inclina sobre las patas (skewX con pivote en el suelo = sin altura),
-                con inercia al acelerar y un vaivén en cada paso. */
+                con inercia al acelerar y un vaivén en cada paso. Zigzaguea de lado a lado y gira hacia donde va. */
           const dp = S.pos[k] - p0;
           t.va += (dp / dt - t.va) * Math.min(1, dt * 10);
           const vb = Math.max(0, t.va) * GEO.ppu * GEO.u;
@@ -4004,10 +3605,10 @@
             fB = foot(0.5);
           let legS = 1;
           const lg = (f, cx, cy) => (legS < 1 ? f + " translate(" + cx + " " + cy + ") scale(" + legS.toFixed(2) + ") translate(" + -cx + " " + -cy + ")" : f);
-          E.lnB.setAttribute("transform", lg(fA, 11.5, 38.8));
-          E.lfF.setAttribute("transform", lg(fA, 36, 38.6));
-          E.lnF.setAttribute("transform", lg(fB, 41.5, 38.8));
-          E.lfB.setAttribute("transform", lg(fB, 18, 38.6));
+          E.lnB.setAttribute("transform", lg(fA, 18, 39));
+          E.lfF.setAttribute("transform", lg(fA, 44, 38));
+          E.lnF.setAttribute("transform", lg(fB, 47, 39));
+          E.lfB.setAttribute("transform", lg(fB, 26, 38));
           /* inclinación: inercia (acelerar = el caparazón se queda atrás) + vaivén de cada paso */
           const acl = (t.va - t.vaPrev) / dt;
           t.vaPrev = t.va;
@@ -4015,11 +3616,16 @@
             Math.max(-2, Math.min(2, acl * 0.9)) +
             0.9 * Math.sin(4 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv;
           t.lean += (leanT - t.lean) * Math.min(1, dt * 10);
-          const lean = Math.max(-9, Math.min(9, t.lean)),
+          /* llora mientras esté entre los últimos 3; si sube de puesto, sigue llorando 3 s más (sin cambios bruscos) */
+          if (lastSet.has(k)) t.cryT = 3;
+          else if (t.cryT > 0) t.cryT = Math.max(0, t.cryT - dt);
+          t.tur.classList.toggle("cry", t.cryT > 0);
+          t.tur.classList.toggle("charge", !!t.sprint && !(S.over || S.winner));
+          const lean = Math.max(-9, Math.min(9, t.lean + t.jl)),
             roll = 1.2 * Math.sin(2 * Math.PI * phi) * Math.min(1, t.am / 2.5) * mv, /* leve balanceo al apoyar cada par de patas */
-            sk = " translate(0 42) skewX(" + lean.toFixed(2) + ") translate(0 -42)",
-            skB = " rotate(" + roll.toFixed(2) + " 27 40)" + sk,
-            skH = " rotate(" + roll.toFixed(2) + " 30.7 36)" + sk;
+            sk = " translate(0 43) skewX(" + lean.toFixed(2) + ") translate(0 -43)",
+            skB = " rotate(" + roll.toFixed(2) + " 32 40)" + sk,
+            skH = " rotate(" + roll.toFixed(2) + " 34 38)" + sk;
           E.bd.setAttribute("transform", skB);
           E.hd.setAttribute(
             "transform",
@@ -4038,8 +3644,36 @@
             "transform",
             "rotate(" +
               (Math.sin(t.ph + 1) * 10 * Math.min(1, a / 2) * mv).toFixed(2) +
-              " 6.8 35)",
+              " 10 28)",
           );
+          /* CARRIL PROPIO: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril (±20 % del alto del carril).
+             Cada 2-6 s elige una altura nueva y se desplaza suave hacia ella mientras camina; gira hacia donde va. */
+          {
+            const li = C.indexOf(c),
+              bh = GEO.k ? GEO.H / C.length : 0,
+              over = Math.max(0, (GEO.th - bh) / 2), /* cuánto sobresale la tortuga de su carril por arriba y por abajo */
+              fight = inFight(t),
+              rng = bh * (fight ? 0.7 : 0.2), /* al embestir o esquivar puede salirse del carril */
+              lo = li === 0 ? over : -rng, /* la 1.ª y la última no se salen de la pista */
+              hi = li === C.length - 1 ? -over : rng,
+              vxp = Math.max(t.va * GEO.ppu, 6);
+            t.zTimer -= dt;
+            if (t.zTimer <= 0) {
+              t.zTimer = 2 + Math.random() * 4;
+              t.zT = lo + Math.random() * Math.max(0, hi - lo);
+            }
+            if (t.dodgeT > 0) t.zT = t.dodgeDir * rng; /* tras el impacto: una sale hacia arriba y la otra hacia abajo */
+            t.zT = Math.max(lo, Math.min(hi, t.zT));
+            const zt = t.zy + (t.zT - t.zy) * (fight ? 1 : mv);
+            t.zvy += ((zt - t.zy) * 3 - t.zvy * 4) * dt;
+            const vyMax = (3 + 0.45 * vxp) * (fight ? 8 : 0.3 + 0.7 * mv); /* en embestida/esquive se mueve rápido aunque esté frenada */
+            t.zvy = Math.max(-vyMax, Math.min(vyMax, t.zvy));
+            t.zy += t.zvy * dt;
+            if (t.zy < lo) { t.zy = lo; t.zvy = Math.max(0, t.zvy); }
+            if (t.zy > hi) { t.zy = hi; t.zvy = Math.min(0, t.zvy); }
+            const psiT = (Math.max(-0.18, Math.min(0.18, Math.atan2(t.zvy, vxp))) * 180) / Math.PI * mv;
+            t.psi += (psiT - t.psi) * Math.min(1, dt * 3);
+          }
           if (t.vs > 1.3 / TIME_X) {
             t.du -= dt;
             if (t.du <= 0) {
@@ -4053,7 +3687,7 @@
             t.trk.style.setProperty("--p", _pv);
           }
         }
-        physics(); /* mantiene cada tortuga en su carril y aplica la transformación final */
+        physics(dt); /* choques entre tortugas + transform final */
         if (!S.over && S.winner) finish(S.winner);
         acc += dt;
         if (acc > 0.25) {
@@ -4181,8 +3815,9 @@
         } catch {}
       }
       function connect() {
+        const statusButton = document.getElementById("connectorStatus");
         if (Q.has("ws")) {
-          document.getElementById("connectorStatus").hidden = true;
+          statusButton.hidden = true;
           let ws;
           try {
             ws = new WebSocket(CFG.ws);
@@ -4220,24 +3855,26 @@
           return;
         }
         const source = new EventSource("/api/events");
-        const statusButton = document.getElementById("connectorStatus");
         let connectorState = { connected: false, username: "", status: "idle" };
         const renderConnectorStatus = (next) => {
           connectorState = { ...connectorState, ...next };
           const username = String(connectorState.username || "").trim();
+          const shortUsername = username.slice(0, 10);
           const connected = Boolean(connectorState.connected || connectorState.isConnected);
           statusButton.classList.toggle("connected", connected);
           statusButton.classList.toggle("disconnected", !connected);
           statusButton.textContent = connected
-            ? `Conectado · @${username}`
+            ? `Conectado · @${shortUsername}`
             : username
-              ? `Sin conexión · @${username}`
+              ? `Sin conexión · @${shortUsername}`
               : "Configura TikTok en /backend";
           statusButton.title = connected
-            ? `Conectado a @${username}. Haz clic para comprobar la conexión.`
+            ? `Conectado a @${username}.`
             : connectorState.status === "failed"
               ? `Se agotaron los reintentos para @${username}. Haz clic para intentarlo de nuevo.`
-              : `Conectando a @${username}. Haz clic para reiniciar los reintentos.`;
+              : username
+                ? `Conectando a @${username}; se reintenta cada 5 segundos durante 5 minutos.`
+                : "Configura TikTok en /backend.";
         };
         const requestConnection = async () => {
           try {
@@ -4628,10 +4265,7 @@
           const e = document.querySelector(sel);
           if (e) e.textContent = tr(es, en);
         };
-        set("#winner .wttl", "🏆 1.º PUESTO", "🏆 1ST PLACE");
-        set("#helper2Title", "2.º · más apoyo", "2ND · TOP SUPPORTER");
-        set("#helper3Title", "3.º · más apoyo", "3RD · TOP SUPPORTER");
-        set("#likesLabel", "Me gusta", "Likes");
+        set("#winner .wttl", "🏆 ¡GANADOR!", "🏆 WINNER!");
         set("#snd", "🔇 Toca la pantalla para activar el sonido", "🔇 Tap the screen to enable sound");
         set("#botsTitle", "Pruebas de interacción (P)", "Interaction tests (P)");
         const tt = (id, es, en) => {
@@ -4660,7 +4294,7 @@
           const wi = C.findIndex((x) => x.c === S.winner);
           if (wi >= 0) wc.textContent = NATIONS[wi].n;
           const wt = document.querySelector("#winner .wttl");
-          if (wt) wt.textContent = tr("🏆 1.º PUESTO", "🏆 1ST PLACE");
+          if (wt) wt.textContent = tr("🏆 ¡GANADOR!", "🏆 WINNER!");
         }
         if (window.__botCount) window.__botCount();
       }
@@ -4669,373 +4303,5 @@
       requestAnimationFrame(frame);
       connect();
     </script>
-      <script>
-      /* FONDO DE ESTADIO PIXEL-ART (canvas #bg, detrás de la pista). ?bg=0 lo desactiva y deja el fondo transparente. */
-      (() => {
-        if (new URLSearchParams(location.search).get("bg") === "0") return;
-        const D = document, root = D.documentElement;
-        const cv = D.getElementById("bg"), cx = cv.getContext("2d");
-        if (!cx) return;
-        root.classList.add("pbg");
-        const off = D.createElement("canvas"), o = off.getContext("2d");
-        const mk = (s) => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
-        const hs = (x, y) => {
-          let h = (x * 374761393 + y * 668265263) | 0;
-          h = Math.imul(h ^ (h >>> 13), 1274126177);
-          return (h ^ (h >>> 16)) >>> 0;
-        };
-        const sh = (h, f) =>
-          "#" + [1, 3, 5].map((i) => Math.round(parseInt(h.substr(i, 2), 16) * f).toString(16).padStart(2, "0")).join("");
-        const SKIN = ["#f2c09a", "#d9986c", "#a86b44", "#7a4a2c", "#ffd9b8"],
-          HAIR = ["#2b1b12", "#4a2c17", "#e8c14a", "#c24a1e", "#111111"],
-          SHIRT = ["#ff3b4e", "#2f7bff", "#35d36a", "#ffd23a", "#ff4fd8", "#22e0e0", "#ffffff", "#ff8a1e", "#9b5cff"].map((c) => [c, sh(c, 0.7)]);
-        let G = null, people = [], stars = [], glow = [], clouds = [], fl = { i: -1, u: 0 }, lamps = [], lightImg = null;
-
-        /* ILUMINACIÓN: cuando baja el sol (sc.n sube) el estadio se oscurece y se encienden los focos; de día quedan apagados.
-           LAMP_OFF = foco apagado; LAMP_ON = foco encendido. NIGHT_TINT = color por el que se multiplica la escena de noche. */
-        const LAMP_OFF = "#6b668f", NIGHT_TINT = [105, 118, 186];
-        const build = () => {
-          const vw = innerWidth, vh = innerHeight;
-          const P = Math.max(4, Math.round(Math.min(vw, vh) / 150));
-          const W = Math.ceil(vw / P), H = Math.ceil(vh / P);
-          cv.width = off.width = W;
-          cv.height = off.height = H;
-          const lanes = D.getElementById("lanes"), app = D.getElementById("app");
-          const L = lanes.getBoundingClientRect(), A = app.getBoundingClientRect();
-          const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
-          const pr = D.createElement("i");
-          pr.style.cssText = "position:absolute;visibility:hidden;height:0;width:var(--tw)";
-          lanes.appendChild(pr);
-          const tw = pr.getBoundingClientRect().width;
-          pr.remove();
-          const n = +getComputedStyle(lanes).getPropertyValue("--n") || 9;
-          let T = Math.round(L.top / P), Bt = Math.round(L.bottom / P);
-          if (Bt - T < 20) { T = Math.round(H * 0.25); Bt = Math.round(H * 0.93); }
-          const Hv = Math.max(24, Math.round(A.top / P));
-          const th = (tw * 46) / 66 / P, step = (Bt - T - th) / n;
-          const sx = Math.round(L.left / P), fw = Math.max(3, Math.round((0.8 * rem) / P)), fx = Math.round(L.right / P) - fw;
-          const s = Math.max(1, Math.min(3, Math.floor((Hv * 0.3) / 7), Math.floor((W - 20) / 80)));
-          /* el estadio ocupa lo justo (fachada + gradas) y TODO el resto es cielo */
-          const wallTop = T - 3, standRows = Math.max(6, Math.round(Hv * 0.14));
-          const facTop0 = Math.max(6, wallTop - standRows - (7 * s + 6)), signY = facTop0 + 3, facBot = signY + 7 * s + 3, facTop = facBot; /* sin cartel ni fachada: el cielo llega hasta las gradas */
-          const f = (c, x, y, w, h) => { o.fillStyle = c; o.fillRect(Math.round(x), Math.round(y), w, h); };
-
-          /* el cielo, el sol, la luna, las nubes y el brillo de los focos se dibujan en draw() según el escenario */
-          const bh = Math.ceil(facTop / 6);
-          const mx = Math.round(W * 0.82), mr = Math.max(3, Math.round(facTop * 0.26)), my = Math.max(mr + 3, Math.round(facTop * 0.46));
-          /* torres de focos (la estructura es fija; el halo se dibuja de noche) */
-          glow = [];
-          lamps = [];
-          [3, W - 6].forEach((tx, ti) => {
-            const top = Math.max(1, Math.round(facTop * 0.3));
-            for (let y = top - 2; y <= top + 4; y++) for (let x = tx - 3; x <= tx + 5; x++)
-              if (y < facTop && x >= 0 && x < W && ((x + y) & 1) === 0 && (y < top || y > top + 2 || x < tx - 1 || x > tx + 3)) glow.push([x, y]);
-            f("#1a1840", tx + 1, top + 3, 1, facTop - top - 3);
-            f("#232050", tx - 1, top, 5, 3);
-            [0, 1, 2].forEach((k) => f(LAMP_OFF, tx + k, top + 1, 1, 1)); /* apagadas: draw() las enciende según la luz del día */
-            lamps.push({ x: tx + 1, y: top + 1, tx, dir: ti === 0 ? 1 : -1 });
-          });
-          /* nubes (se mueven despacio; solo se ven de día) */
-          const R3 = mk(31);
-          clouds = [];
-          for (let i = 0; i < 7; i++)
-            clouds.push({ x: R3() * (W + 40), y: 1 + Math.round(R3() * Math.max(1, facTop * 0.55)), w: 9 + ((R3() * 14) | 0), sp: 0.5 + R3() * 1.3 });
-          /* sin fachada ni cartel: solo cielo sobre las gradas */
-          /* gradas */
-          f("#1d1740", 0, facBot, W, wallTop - facBot);
-          const tiers = [];
-          for (let y0 = facBot + 1; y0 + 6 <= wallTop; y0 += 6) {
-            tiers.push(y0);
-            f("#2a2360", 0, y0 + 1, W, 5);
-            f("#3a3470", 0, y0, W, 1);
-          }
-          const R = mk(7);
-          people = [];
-          tiers.forEach((y0, t) => {
-            for (let x = (t & 1) + 1; x < W - 2; x += 3) {
-              if (R() < 0.07) continue;
-              people.push({ x, y: y0 + 2, t, sk: SKIN[(R() * 5) | 0], hr: HAIR[(R() * 5) | 0], sh: SHIRT[(R() * SHIRT.length) | 0], ph: R() * 6.28 });
-            }
-          });
-          /* muro de publicidad LED */
-          f("#4a4390", 0, wallTop, W, 1);
-          for (let x = 0; x < W; x += 10) f(["#ff2e93", "#19f0ff", "#ffd23a"][(x / 10) % 3 | 0], x, wallTop + 1, 10, 1);
-          f("#0d0a26", 0, wallTop + 2, W, 1);
-          /* pista de tartán */
-          const xe = Math.min(W, fx + fw); /* fin de la pista: la meta; a la derecha todo es césped */
-          const grass = (x, y) => {
-            const h = hs(x, y) & 15;
-            return h < 2 ? "#58c05a" : ((y / 3) | 0) & 1 ? "#2f8f3a" : "#37a043";
-          };
-          for (let y = T; y < Bt; y++) {
-            const base = "#c44a33"; /* pista libre, sin franjas de carril */
-            for (let x = 0; x < xe; x++) {
-              const h = hs(x, y) & 15;
-              f(h < 2 ? "#a53826" : h < 4 ? "#d35d3d" : base, x, y, 1, 1);
-            }
-            for (let x = xe; x < W; x++) f(grass(x, y), x, y, 1, 1); /* césped a la derecha de la meta */
-          }
-          /* sin líneas blancas de carril (solo quedan los bordes de la pista) */
-          f("#f4ecd8", 0, T, xe, 1);
-          f("#f4ecd8", 0, Bt - 1, xe, 1);
-          for (let y = T; y < Bt; y++) for (let x = 0; x < sx; x++) f(((y >> 1) & 1 ? (x + 1) >> 1 : x >> 1) & 1 ? "#2a2360" : "#1d1740", x, y, 1, 1); /* muro de salida */
-          f("#0d0a26", sx - 1, T, 1, Bt - T);
-          f("#7a2a1c", sx, T, 1, Bt - T);
-          for (let y = T; y < Bt; y++) for (let x = fx; x < fx + fw; x++) f((((x - fx) >> 1) + ((y - T) >> 1)) & 1 ? "#fff6e0" : "#07262b", x, y, 1, 1); /* meta a cuadros */
-          /* césped inferior */
-          for (let y = Bt; y < H; y++) for (let x = 0; x < W; x++) f(grass(x, y), x, y, 1, 1);
-          f("#3a3470", 0, Bt, xe, 1);
-          f("#f4ecd8", 0, Bt + 1, xe, 1);
-          f("#1f6a2a", 0, Bt + 2, W, 1);
-          /* detalles del césped (fijos): matas, florcitas y piedras, para que el campo no se vea vacío ni plano */
-          {
-            const RG = mk(2024), FL = ["#ffffff", "#ffd23a", "#ff7fb0", "#b79cff"];
-            const inGrass = (x, y) => y > Bt + 3 || (y >= T && x >= xe);
-            const N = Math.round((W * H) / 220);
-            for (let i = 0; i < N; i++) {
-              const x = (RG() * W) | 0, y = (RG() * H) | 0, k = RG();
-              if (!inGrass(x, y) || y >= H - 1 || x >= W - 2) continue;
-              if (k < 0.55) { /* mata de pasto */
-                f("#1f6a2a", x, y, 1, 1); f("#1f6a2a", x + 1, y - 1, 1, 2); f("#2a7d33", x - 1, y - 1, 1, 2);
-              } else if (k < 0.85) { /* flor */
-                f("#2a7d33", x, y + 1, 1, 1); f(FL[(RG() * FL.length) | 0], x, y, 1, 1);
-                f("#ffd23a", x, y - 1 < 0 ? y : y, 1, 1);
-              } else if (k < 0.93) { /* piedrita */
-                f("#9aa0a6", x, y, 2, 1); f("#6b7076", x, y + 1, 2, 1);
-              }
-            }
-          }
-          /* estrellas */
-          const R2 = mk(99), SC = ["#ffffff", "#fff1b8", "#b8e6ff", "#ffb8e6"];
-          stars = [];
-          for (let i = 0, N = Math.round((W * facTop) / 40); i < N; i++) {
-            const x = (R2() * W) | 0, y = (R2() * (facTop - 2)) | 0;
-            if (Math.hypot(x - mx, y - my) < mr + 5) continue;
-            stars.push({ x, y, c: SC[(R2() * 4) | 0], ph: R2() * 6.28, sp: 1 + R2() * 2, big: i % 12 === 0 && y > 1 });
-          }
-          /* sprite de luz de los focos (haces, charco de luz sobre la pista y las gradas, halo del foco); draw() lo mezcla con "screen" × intensidad */
-          lightImg = D.createElement("canvas");
-          lightImg.width = W; lightImg.height = H;
-          const lc = lightImg.getContext("2d");
-          const pool = (cx0, cy0, rx, ry, a) => {
-            lc.save(); lc.translate(cx0, cy0); lc.scale(1, ry / rx);
-            const g = lc.createRadialGradient(0, 0, 0, 0, 0, rx);
-            g.addColorStop(0, "rgba(255,244,190," + a + ")"); g.addColorStop(0.55, "rgba(255,236,170," + (a * 0.45).toFixed(3) + ")"); g.addColorStop(1, "rgba(255,230,160,0)");
-            lc.fillStyle = g; lc.fillRect(-rx, -rx, rx * 2, rx * 2); lc.restore();
-          };
-          lamps.forEach((l) => {
-            const gx = W * (l.dir > 0 ? 0.62 : 0.38), gy = T + (Bt - T) * 0.55;
-            const dx = gx - l.x, dy = gy - l.y, len = Math.hypot(dx, dy) || 1, half = Math.max(8, (Bt - T) * 0.7);
-            const px = (-dy / len) * half, py = (dx / len) * half;
-            const g = lc.createLinearGradient(l.x, l.y, gx, gy);
-            g.addColorStop(0, "rgba(255,246,205,0.42)"); g.addColorStop(1, "rgba(255,246,205,0.06)");
-            lc.fillStyle = g; lc.beginPath(); lc.moveTo(l.x, l.y); lc.lineTo(gx + px, gy + py); lc.lineTo(gx - px, gy - py); lc.closePath(); lc.fill();
-            pool(gx, gy, W * 0.3, (Bt - T) * 0.75, 0.5); /* charco de luz sobre la pista */
-            pool(l.x + l.dir * W * 0.14, facBot + (wallTop - facBot) * 0.55, W * 0.2, Math.max(6, (wallTop - facBot) * 0.9), 0.3); /* gradas iluminadas */
-            pool(l.x, l.y, Math.max(6, facTop * 0.4), Math.max(6, facTop * 0.4), 0.85); /* halo del foco */
-          });
-          G = { W, H, s, signY, facTop, bh, wallTop, mx, my, mr, T, Bt };
-          window.__sign = { top: facTop * P, bottom: facBot * P, avail: Math.max(0, wallTop - facBot) * P }; /* para el podio (1.º, 2.º, 3.º) que va debajo del cartel */
-        };
-
-
-        /* ===== ESCENARIOS: 4 momentos del día. Cada ronda usa uno, en orden, y el cielo avanza con el progreso del líder.
-           1 madrugada (4:30 → 6:36, amanece) · 2 mañana (6:36 → 12:00) · 3 mediodía (12:00 → 16:30, va a la tarde) · 4 tarde (16:30 → 20:30, oscurece).
-           El final de cada escenario coincide con el principio del siguiente, así que el ciclo es continuo. ?escena=1-4 fuerza uno. ===== */
-        const hx = (c) => [1, 3, 5].map((i) => parseInt(c.substr(i, 2), 16));
-        const NIGHT = ["#080824", "#0f0c36", "#171046", "#22155a", "#301a6c", "#42207a"];
-        const KF = [
-          [4.5, NIGHT, 1, "#3a3a70", [0, 0, 0]],
-          [5.5, ["#0b1034", "#161a4e", "#26286a", "#43377f", "#7a4a88", "#c0638a"], 0.8, "#6a4a88", [14, 10, 22]],
-          [6.3, ["#2b3a7a", "#4d5ea0", "#8a7fb5", "#e8949a", "#ffb072", "#ffd27a"], 0.2, "#ffb9a0", [95, 60, 60]],
-          [7.5, ["#4f8fd8", "#6fa8e4", "#8fbdea", "#b0d0ee", "#f2d9b0", "#ffe6b0"], 0, "#ffffff", [80, 80, 95]],
-          [10, ["#3d8ee8", "#5aa2ee", "#78b6f2", "#98c8f4", "#b8d8f6", "#d4e6f8"], 0, "#ffffff", [75, 85, 110]],
-          [12.5, ["#2a7be0", "#3f90ea", "#58a4ef", "#74b6f3", "#92c8f6", "#b0daf8"], 0, "#ffffff", [70, 82, 110]],
-          [15.5, ["#3a7fd0", "#5a98d8", "#7eb0de", "#a4c4e0", "#e0cfa8", "#f6dca0"], 0, "#fff4e0", [75, 80, 100]],
-          [17.5, ["#4a6cb8", "#7a82c0", "#b098b8", "#e0a0a0", "#ffb070", "#ffcf70"], 0, "#ffd0b0", [95, 70, 60]],
-          [18.7, ["#2a2a6a", "#4a3a80", "#8a4a88", "#d05a7a", "#ff7a5a", "#ffb060"], 0.15, "#ff9a8a", [70, 40, 50]],
-          [19.5, ["#14143e", "#22205a", "#3a2a6e", "#5c3a7e", "#7a4a86", "#9a5a88"], 0.6, "#6a4a88", [25, 18, 35]],
-          [20.5, NIGHT, 1, "#3a3a70", [0, 0, 0]],
-        ].map(([h, sk, n, cl, gr]) => ({ h, sk: sk.map(hx), n, cl: hx(cl), gr }));
-        const SCN = [[4.5, 6.6], [6.6, 12], [12, 16.5], [16.5, 20.5]];
-        const mixv = (a, b, k) => a.map((v, i) => v + (b[i] - v) * k);
-        const rgb = (c) => "rgb(" + c.map(Math.round).join(",") + ")";
-        const sample = (h) => {
-          let i = 0;
-          while (i < KF.length - 2 && h > KF[i + 1].h) i++;
-          const A = KF[i], B = KF[i + 1];
-          let k = Math.min(1, Math.max(0, (h - A.h) / (B.h - A.h)));
-          k = k * k * (3 - 2 * k);
-          return {
-            sk: A.sk.map((c, j) => rgb(mixv(c, B.sk[j], k))),
-            n: A.n + (B.n - A.n) * k,
-            cl: rgb(mixv(A.cl, B.cl, k)),
-            gr: mixv(A.gr, B.gr, k),
-          };
-        };
-        const forcedScn = +new URLSearchParams(location.search).get("escena");
-        let lastRound = -1, hp = 0;
-        const sceneHour = () => {
-          let round = 1, tgt = 0;
-          try {
-            round = S.round || 1;
-            tgt = Math.min(1, Math.max(0, Math.max(0, ...Object.values(S.pos)) / CFG.win));
-          } catch {}
-          const idx = forcedScn >= 1 && forcedScn <= 4 ? forcedScn - 1 : (round - 1) % 4;
-          if (round !== lastRound) { lastRound = round; hp = tgt; } /* ronda nueva: el escenario nuevo empieza desde su comienzo */
-          else hp += (tgt - hp) * 0.2;
-          const [h0, h1] = SCN[idx];
-          return h0 + (h1 - h0) * hp;
-        };
-        const drawSky = (c) => {
-          const { W, bh } = G;
-          c.forEach((col, i) => { cx.fillStyle = col; cx.fillRect(0, i * bh, W, bh); });
-          for (let i = 0; i < 5; i++) {
-            cx.fillStyle = c[i + 1];
-            for (let y = (i + 1) * bh - 2; y < (i + 1) * bh; y++) for (let x = y & 1; x < W; x += 2) cx.fillRect(x, y, 1, 1);
-          }
-        };
-        const drawSun = (h) => {
-          const u = (h - 6) / 12.9;
-          if (u <= 0 || u >= 1) return;
-          const { W, facTop } = G, sr = Math.max(3, Math.round(facTop * 0.3));
-          const yBot = facTop + sr + 1, yTop = Math.max(sr + 1, Math.round(facTop * 0.35));
-          const sx = Math.round(W * (0.1 + 0.62 * u)), sy = Math.round(yBot - (yBot - yTop) * Math.sin(Math.PI * u));
-          const e = Math.min(1, Math.sin(Math.PI * u) * 3);
-          const col = rgb(mixv([255, 150, 70], [255, 243, 176], e)), halo = rgb(mixv([255, 190, 120], [255, 233, 168], e));
-          for (let dy = -sr - 4; dy <= sr + 4; dy++)
-            for (let dx = -sr - 4; dx <= sr + 4; dx++) {
-              const d = Math.hypot(dx, dy), px = sx + dx, py = sy + dy;
-              if (py < 0 || py >= facTop || px < 0 || px >= W) continue;
-              if (d <= sr) { cx.fillStyle = col; cx.fillRect(px, py, 1, 1); }
-              else if (d <= sr + 1.6) { if (((px + py) & 1) === 0) { cx.fillStyle = halo; cx.fillRect(px, py, 1, 1); } }
-              else if (d <= sr + 4 && px % 2 === 0 && py % 2 === 0) { cx.fillStyle = halo; cx.globalAlpha = 0.45; cx.fillRect(px, py, 1, 1); cx.globalAlpha = 1; }
-            }
-        };
-        const drawMoon = (h, n) => {
-          const { W, facTop, mx, my, mr } = G;
-          let drop = 0;
-          if (h > 5 && h < 6.6) drop = (h - 5) / 1.6;
-          else if (h >= 6.6 && h <= 18.6) drop = 1;
-          else if (h > 18.6 && h < 20.5) drop = 1 - (h - 18.6) / 1.9;
-          if (drop >= 1) return;
-          const my2 = Math.round(my + drop * (facTop + mr + 2 - my));
-          for (let dy = -mr - 4; dy <= mr + 4; dy++)
-            for (let dx = -mr - 4; dx <= mr + 4; dx++) {
-              const d = Math.hypot(dx, dy), px = mx + dx, py = my2 + dy;
-              if (py < 0 || py >= facTop || px < 0 || px >= W) continue;
-              if (d <= mr) { cx.fillStyle = dx + dy > mr * 0.7 ? "#e6d58e" : "#fff1b8"; cx.fillRect(px, py, 1, 1); }
-              else if (n > 0.35 && d <= mr + 1.6) { if (((px + py) & 1) === 0) { cx.fillStyle = "#7a68b8"; cx.fillRect(px, py, 1, 1); } }
-              else if (n > 0.35 && d <= mr + 4 && px % 2 === 0 && py % 2 === 0) { cx.fillStyle = "#3a2f78"; cx.fillRect(px, py, 1, 1); }
-            }
-          [[-0.35, -0.25], [0.3, 0.2], [-0.05, 0.55]].forEach(([a, b]) => {
-            const px = mx + Math.round(a * mr), py = my2 + Math.round(b * mr);
-            if (py >= 0 && py < facTop) { cx.fillStyle = "#cdbb78"; cx.fillRect(px, py, 1, 1); }
-          });
-        };
-        const drawClouds = (t, col, a) => {
-          if (a < 0.03) return;
-          const { W } = G;
-          cx.globalAlpha = a;
-          clouds.forEach((c) => {
-            const x = Math.round(((c.x + t * c.sp) % (W + 40)) - 20), y = c.y, w = c.w;
-            cx.fillStyle = col;
-            cx.fillRect(x, y + 2, w, 2);
-            cx.fillRect(x + 3, y + 1, Math.max(2, w - 7), 1);
-            cx.fillRect(x + Math.round(w * 0.3), y, Math.max(2, Math.round(w * 0.35)), 1);
-            cx.globalAlpha = a * 0.35;
-            cx.fillStyle = "#6a7aa8";
-            cx.fillRect(x + 1, y + 4, Math.max(2, w - 2), 1);
-            cx.globalAlpha = a;
-          });
-          cx.globalAlpha = 1;
-        };
-
-        const draw = () => {
-          if (!G) return;
-          const t = performance.now() / 1000;
-          const h = sceneHour(), sc = sample(h);
-          cx.globalAlpha = 1;
-          drawSky(sc.sk);
-          if (sc.n > 0.02) {
-            cx.globalAlpha = sc.n;
-            stars.forEach((q) => {
-              const w = Math.sin(t * q.sp + q.ph);
-              cx.fillStyle = w > 0.55 ? "#ffffff" : w > -0.35 ? q.c : "#4c4c8c";
-              cx.fillRect(q.x, q.y, 1, 1);
-              if (q.big && w > 0.55) { cx.fillRect(q.x - 1, q.y, 3, 1); cx.fillRect(q.x, q.y - 1, 1, 3); }
-            });
-            cx.globalAlpha = 1;
-          }
-          drawSun(h);
-          drawMoon(h, sc.n);
-          if (sc.n > 0.05) {
-            cx.globalAlpha = sc.n;
-            cx.fillStyle = "#4a4290";
-            glow.forEach(([x, y]) => cx.fillRect(x, y, 1, 1));
-            cx.globalAlpha = 1;
-          }
-          drawClouds(t, sc.cl, (1 - sc.n) * 0.92);
-          cx.globalAlpha = 1;
-          cx.drawImage(off, 0, 0);
-          /* luz ambiente sobre fachada, gradas y muro (la pista y el césped quedan como estaban) */
-          if (sc.gr[0] + sc.gr[1] + sc.gr[2] > 3) {
-            cx.globalCompositeOperation = "screen";
-            cx.fillStyle = rgb(sc.gr);
-            cx.fillRect(0, G.facTop, G.W, G.wallTop + 2 - G.facTop);
-            cx.globalCompositeOperation = "source-over";
-          }
-          if (fl.i >= 0 && t > fl.u) fl.i = -1;
-          else if (fl.i < 0 && Math.random() < 0.03) fl = { i: (Math.random() * 6) | 0, u: t + 0.15 + Math.random() * 0.2 };
-          /* título borrado: solo cielo (sin letreros) */
-          people.forEach((p) => {
-            const up = Math.sin(p.x * 0.11 - t * 3.2 + p.t * 0.6) > 0.6 || Math.sin(t * 5 + p.ph) > 0.97 ? 1 : 0, y = p.y - up;
-            cx.fillStyle = p.sk;
-            if (up) { cx.fillRect(p.x - 1, y - 1, 1, 2); cx.fillRect(p.x + 2, y - 1, 1, 2); }
-            cx.fillRect(p.x, y + 1, 2, 1);
-            cx.fillStyle = p.hr;
-            cx.fillRect(p.x, y, 2, 1);
-            cx.fillStyle = p.sh[0];
-            cx.fillRect(p.x, y + 2, 2, 1);
-            cx.fillStyle = p.sh[1];
-            cx.fillRect(p.x, y + 3, 2, 1);
-          });
-          /* NOCHE/DÍA: al ponerse el sol (sc.n ↑) todo lo que está bajo el cielo se oscurece; al salir (sc.n ↓) vuelve la luz.
-             Los focos se encienden cuando oscurece (L: 0 de día → 1 de noche) y lo iluminan con haces, halos y charcos de luz. */
-          if (sc.n > 0.01) {
-            cx.globalCompositeOperation = "multiply";
-            cx.fillStyle = rgb(mixv([255, 255, 255], NIGHT_TINT, sc.n));
-            cx.fillRect(0, G.facTop, G.W, G.H - G.facTop);
-            cx.globalCompositeOperation = "source-over";
-          }
-          let L = Math.min(1, Math.max(0, (sc.n - 0.12) / 0.55));
-          L = L * L * (3 - 2 * L);
-          const fk = 0.95 + 0.05 * Math.sin(t * 9) * Math.sin(t * 2.3); /* parpadeo leve de los focos */
-          if (L > 0.01 && lightImg) {
-            cx.globalCompositeOperation = "screen";
-            cx.globalAlpha = Math.min(1, L * fk);
-            cx.drawImage(lightImg, 0, 0);
-            cx.globalAlpha = 1;
-            cx.globalCompositeOperation = "source-over";
-          }
-          lamps.forEach((l) => {
-            [0, 1, 2].forEach((k) => {
-              cx.fillStyle = L > 0.5 ? "#ffffff" : rgb(mixv([107, 102, 143], [255, 251, 208], L * 2));
-              cx.fillRect(l.tx + k, l.y, 1, 1);
-            });
-          });
-        };
-
-        let rt = 0;
-        const rebuild = () => { clearTimeout(rt); rt = setTimeout(() => { build(); draw(); }, 150); };
-        addEventListener("resize", rebuild);
-        addEventListener("load", rebuild);
-        if (window.ResizeObserver) new ResizeObserver(rebuild).observe(D.getElementById("lanes"));
-        build();
-        draw();
-        setInterval(draw, 110);
-      })();
-    </script>
-
   </body>
 </html>

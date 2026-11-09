@@ -37,13 +37,13 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /`, `/overlay` o `/v60.html` | Overlay activo de la versión 60. | HTML |
+| `GET /`, `/overlay` o `/v68.html` | Overlay activo de la versión 68; su JavaScript inicia la conexión en el navegador. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
 | `GET /api/config` | Usuario configurado. | `{ "username": "usuario" }` |
 | `PUT /api/config` | Guarda el usuario sin iniciar la conexión. | Envío: `{ "username": "@usuario" }`; respuesta: `{ "ok": true, "username": "usuario" }` |
-| `POST /api/reconnect` | Inicia o reinicia los reintentos; lo llama el overlay al cargar y su botón de estado. | JSON; `409` si falta cuenta o ya está conectado. |
+| `POST /api/reconnect` | Inicia o reinicia los reintentos; lo llama el navegador al cargar el overlay y su botón de estado. | JSON; `409` si falta cuenta o ya está conectado. |
 | `GET /api/comment-stats` | Conteo persistente de comentarios mencionando cada país y comentarios sin país. | JSON |
 | `GET /api/cup-stats` | Copas ganadas acumuladas por país. | JSON |
 | `POST /api/cup-stats` | Registra una copa al terminar una ronda. | Envío: `{ "code": "PY" }`; respuesta: estadísticas actualizadas. |
@@ -68,9 +68,9 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay `v60.html` es la versión activa del juego y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El conector entrega eventos `chat`, `gift`, `like`, `follow`, `share` y `member`; el overlay interpreta `member` como ingreso a la carrera. El payload incluye `username`, `content`, `avatar` y, cuando aplica, `activityCount` y `diamondCount`. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
+El overlay `v68.html` es la versión activa del juego y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El JavaScript del navegador inicia la conexión de TikTok al cargar el overlay; muestra un botón pequeño verde al conectar y rojo mientras no haya conexión, con el usuario limitado a 10 caracteres. El conector entrega eventos `chat`, `gift`, `like`, `follow`, `share` y `member`; el overlay adapta `member` a `join` para la carrera. El payload incluye `username`, `content`, `avatar` y, cuando aplica, `activityCount` y `diamondCount`. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
 
-El overlay muestra abajo a la derecha un botón verde con la cuenta conectada o rojo si no hay conexión. Al cargarlo inicia los reintentos cada 5 segundos durante un máximo de 5 minutos; después se detienen y el botón permite iniciarlos de nuevo. La conexión no se inicia por cargar el backend ni por arrancar el servidor.
+El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 
 ## Estructura
 
@@ -88,7 +88,7 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-v60.html                           # Juego y overlay transparente activo
+v68.html                           # Juego y overlay transparente activo
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
