@@ -441,6 +441,15 @@
       .tur.swap svg{
         animation: pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
       }
+      .tur.join-pop .av{
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: shellAvatarJoin 0.75s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+      }
+      @keyframes shellAvatarJoin{
+        0%, 100%{ transform: scale(1); }
+        40%{ transform: scale(2); }
+      }
       /* FIJA: esquina superior izquierda de la pista (al inicio); */
       .tag{
         position: absolute;
@@ -3315,6 +3324,7 @@
         const t = T[code],
           ty = entry.type;
         if (entry.type !== "support") setMain(code, p); /* el último evento manda: su avatar es el principal */
+        if (ty === "join" && !p.isBot && !p.tortubot) restartAnim(t.tur, "join-pop");
         const bst = addBoost(code, ty, entry, p); /* ×2 / ×5 / ×10 / ×20 según la relevancia del evento */
         avatarPop(code, p, bst.m); /* avatar anclado en el centro del caparazón, en el punto donde se generó */
         if (ty === "gift") putGiftAhead(code, entry);
