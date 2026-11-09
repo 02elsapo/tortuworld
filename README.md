@@ -37,7 +37,7 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /`, `/overlay` o `/v1.3.html` | Overlay activo v1.4; el archivo conserva el nombre `v1.3.html`. `/v68.html` sigue disponible como alias. | HTML |
+| `GET /`, `/overlay` o `/v1.3.html` | Overlay activo v1.5; el archivo conserva el nombre `v1.3.html`. `/v68.html` sigue disponible como alias. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -68,7 +68,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay activo v1.4 está en `v1.3.html` y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El JavaScript del navegador inicia la conexión de TikTok al cargar el overlay; muestra un botón pequeño verde al conectar y rojo mientras no haya conexión, con el usuario limitado a 10 caracteres. El conector entrega eventos `chat`, `gift`, `like`, `follow`, `share` y `member`; el overlay adapta `member` a `join` para la carrera. El payload incluye `username`, `content`, `avatar` y, cuando aplica, `activityCount` y `diamondCount`. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
+El overlay activo v1.5 está en `v1.3.html` y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El JavaScript del navegador inicia la conexión de TikTok al cargar el overlay; muestra un botón pequeño verde al conectar y rojo mientras no haya conexión, con el usuario limitado a 10 caracteres. El conector entrega eventos `chat`, `gift`, `like`, `follow`, `share` y `member`; el overlay adapta `member` a `join` para la carrera. El payload incluye `username`, `content`, `avatar` y, cuando aplica, `activityCount` y `diamondCount`. La voz en off usa la síntesis del navegador y prefiere una voz Google en español si está instalada (`?voice=0` la desactiva). Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 

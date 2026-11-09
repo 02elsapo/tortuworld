@@ -60,7 +60,7 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves the v1.4 overlay and leaves connection startup to the browser', async () => {
+test('serves the v1.5 overlay and leaves connection startup to the browser', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
   assert.match(dockerfile, /COPY v1\.3\.html \.\//);
@@ -87,7 +87,7 @@ test('serves the v1.4 overlay and leaves connection startup to the browser', asy
     assert.equal(monitorService.state.isConnected, false, 'serving the overlay must not connect TikTok');
     assert.match(rootResponse.headers.get('cache-control'), /no-store/);
     const html = await rootResponse.text();
-    assert.match(html, /id="versionBadge" aria-label="Versión 1\.4">v1\.4/);
+    assert.match(html, /id="versionBadge" aria-label="Versión 1\.5">v1\.5/);
     assert.match(html, /<title>Country Race<\/title>/);
     assert.match(html, /id="connectorStatus"/);
     assert.match(html, /new EventSource\("\/api\/events"\)/);

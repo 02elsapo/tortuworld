@@ -7,22 +7,23 @@
   DINÁMICA DEL JUEGO (cómo funciona hoy)
     • 5 tortugas, cada una con su propio carril y país. El bot de prueba solo se activa en el último país.
       Cada tortuga pasea de arriba a abajo dentro de su carril.
-    • El bot de prueba marca el ritmo: avanza de 0 a 100 en CFG.botSec (120 s por defecto). Las tortugas de usuarios avanzan
-      con sus acciones y pueden llegar a la meta en un máximo de 10 interacciones.
-    • Cada interacción válida suma progreso: en 10 acciones del usuario su tortuga llega a la meta; likes y regalos agrupados cuentan sus unidades.
-      Los efectos de velocidad (EV_BOOST, addBoost) se mantienen:
+    • El bot de prueba marca el ritmo: avanza de 0 a 100 en CFG.botSec (120 s por defecto). Las tortugas avanzan con el apoyo
+      de cada país: hacen falta 50 eventos válidos para que el equipo llegue a la meta.
+    • Cada evento válido desbloquea 1/50 del recorrido; likes y regalos agrupados cuentan como un evento, no como sus unidades.
+      La tortuga no puede avanzar más allá del progreso desbloqueado. Los efectos de velocidad (EV_BOOST, addBoost) solo afectan
+      cuánto tarda en recorrer ese tramo:
       like ×5 · entrar ×2 · comentario ×5 · compartir / seguir ×10 · regalo ×20 (rosa) a ×30 (galaxia) según su valor (GIFT_TIERS). Gana quien llega primero a CFG.win (100).
     • El avatar de cada acción queda fijo en el lugar de la pista donde ocurrió; no sigue ni rodea al caparazón.
     • Sin copas al final de los carriles (se quitaron).
     • Guía de uso eliminada (el espacio queda en blanco). Abajo: 3 llamadas de acción (#cta): 🌹 al centro alternan los regalos (Rosita ×20 · Dona ×25 · Galaxia ×30), ❤️ Dale like a la derecha (fija), izquierda alterna ➕ Seguir / ↪️ Compartir (?cta=0 las oculta). Las llamadas van FUERA de la pista (franja --cta-h bajo los carriles). Cada botón lleva una insignia ⚡×N con el multiplicador de velocidad que da esa acción (sale de EV_BOOST).
     • Mientras haya bots activos (🤖), cada carril se delimita con líneas sólidas (html.hasbots, #laneLines; ?lines=1 las muestra siempre).
-    • Un espectador elige país escribiendo su nombre, sigla o bandera en el chat (S.pick); claimSlot le asigna carril.
+    • Un espectador elige o cambia de país escribiendo su nombre, sigla o bandera en el chat.
     • La primera tortuga en pasar el 25 %, 50 % y 75 % recibe un efecto de lechuga (S.cp); foto finish si llegan casi empatadas.
-    • Tras CFG.restartMs (7 s) empieza otra ronda con nuevos países. La música alegre de carrera acelera con la líder.
+    • Al llegar a la meta, tras CFG.restartMs (2,5 s) empieza otra ronda con nuevos países, sin podio ni cuenta regresiva.
     • Pista #hint compacta, con banderas en una sola fila para no tapar la carrera.
-    • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres. El resultado muestra solo el podio de los tres usuarios reales con más interacciones.
+    • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres.
 
-  PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0
+  PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0  ?voice=0 (sin voz)
                      ?music=0  ?theme=1  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
   ESCENARIOS DEL FONDO: cada ronda usa uno, en orden: 1 madrugada (va amaneciendo) · 2 mañana (hacia el mediodía) ·
     3 mediodía (hacia la tarde) · 4 tarde (va oscureciendo). El cielo avanza con el progreso del líder de la carrera.
@@ -71,6 +72,7 @@
         --grass: #5fb35a;
         --grass2: #4a9a4c;
         --padr: 3%;
+        --overlay-lift: 5vh;
         --cta-fs: min(2.2vh, 3vw); /* tamaño de las llamadas de acción */
         --cta-h: calc(var(--cta-fs) * 5.2); /* franja que se reserva bajo la pista para ellas (0 con ?cta=0) */
       }
@@ -333,7 +335,7 @@
       #snd{
         position: fixed;
         left: 1.8rem;
-        bottom: 0.3rem;
+        bottom: calc(0.3rem + var(--overlay-lift));
         z-index: 30;
         font-size: 0.8rem;
         background: rgba(0, 0, 0, 0.65);
@@ -1227,7 +1229,7 @@
         100%{ transform: scale(0.6); opacity: 0; }
       }
 
-      /* ===== al terminar la carrera se muestra el podio de los 3 usuarios con más interacciones ===== */
+      /* Tarjeta de resultado conservada en el HTML, pero desactivada: la ronda se reinicia automáticamente. */
       #winner{
         position: fixed;
         inset: 0;
@@ -1344,13 +1346,13 @@
         --lane-step: calc(100% / (var(--n) + 1));
       }
       html body #app{
-        top: var(--top, 24%);
-        bottom: calc(var(--bot, 7%) + var(--cta-h)); /* deja libre la franja de las llamadas de acción */
+        top: calc(var(--top, 24%) - var(--overlay-lift));
+        bottom: calc(var(--bot, 7%) + var(--cta-h) + var(--overlay-lift)); /* eleva la pista para despejar los controles de TikTok Live */
       }
       @media (orientation: portrait){
         html body #app{
-          top: var(--top, 22%);
-          bottom: calc(var(--bot, 27%) + var(--cta-h));
+          top: calc(var(--top, 22%) - var(--overlay-lift));
+          bottom: calc(var(--bot, 27%) + var(--cta-h) + var(--overlay-lift));
         }
       }
       #lanes .anchav{
@@ -1404,7 +1406,7 @@
         left: 0;
         right: 0;
         width: 100%;
-        bottom: var(--bot, 7%); /* debajo de la pista: la pista termina var(--cta-h) más arriba */
+        bottom: calc(var(--bot, 7%) + var(--overlay-lift)); /* elevado para dejar despejados los textos de TikTok Live */
         box-sizing: border-box;
         padding: 0 2vw;
         font-size: var(--cta-fs);
@@ -1417,7 +1419,7 @@
         pointer-events: none;
       }
       @media (orientation: portrait){
-        #cta{ bottom: var(--bot, 27%); }
+        #cta{ bottom: calc(var(--bot, 27%) + var(--overlay-lift)); }
       }
       #cta .cs{
         position: relative;
@@ -1577,7 +1579,7 @@
       #connectorStatus{
         position:fixed;
         right:.75rem;
-        bottom:.75rem;
+        bottom:calc(.75rem + var(--overlay-lift));
         z-index:9999;
         max-width:min(70vw,16rem);
         min-height:1.7rem;
@@ -1598,7 +1600,7 @@
       #versionBadge{
         position:fixed;
         left:.75rem;
-        bottom:.75rem;
+        bottom:calc(.75rem + var(--overlay-lift));
         z-index:9999;
         padding:.3rem .5rem;
         border:.1rem solid rgba(255,255,255,.55);
@@ -1618,7 +1620,7 @@
       <div id="lanes"></div>
     </div>
     <div id="vig"></div>
-    <span id="versionBadge" aria-label="Versión 1.4">v1.4</span>
+    <span id="versionBadge" aria-label="Versión 1.5">v1.5</span>
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
@@ -1702,7 +1704,7 @@
         win: +Q.get("win") || 100,
         target: +Q.get("target") || 40,
         crawl: 0.15 / TIME_X,
-        restartMs: 7000,
+        restartMs: 2500,
         botSec: Math.max(20, +Q.get("bot") || 120) /* ritmo constante del bot de prueba (2 min por defecto) */,
         join: Q.has("join") ? +Q.get("join") : 0.5,
         countries: [0, 1, 2, 3, 4].map((i) => ({
@@ -2022,7 +2024,7 @@
      round    número de ronda actual            over     true cuando alguien ya cruzó la meta
      go       true entre el "¡YA!" y la meta    winner   código del país ganador (o null)
      boost    timestamp (ms) hasta el que dura el empuje doble (0 = sin empuje doble)
-     pos      posición de cada país 0..win      tot      puntos (diamantes) de cada país en la ronda
+     pos      posición de cada país 0..win      teamActions acciones válidas que recibió cada país en la ronda
      wins     victorias acumuladas              fans     cuántos usuarios eligieron cada país
      pick     Map usuario -> código de país     donors   Map usuario -> {name,code,pts,best} (ranking de la ronda)
      combo    Map usuario -> {n,t} (racha de regalos)
@@ -2037,6 +2039,7 @@
         winner: null,
         boost: 0,
         pos: {},
+        teamActions: {},
         pick: new Map(),
         combo: new Map(),
         cp: { 25: 0, 50: 0, 75: 0 },
@@ -2273,6 +2276,8 @@
         try {
           if (AC && AC.state !== "running") AC.resume();
         } catch {}
+        if (VOICE_ON && window.speechSynthesis)
+          window.speechSynthesis.resume();
       }
       ["pointerdown", "touchstart", "keydown"].forEach((e) =>
         addEventListener(e, unlock),
@@ -2283,7 +2288,10 @@
         if (SND) {
           unlock();
           musicSync();
-        } else musicStop();
+        } else {
+          musicStop();
+          if (window.speechSynthesis) window.speechSynthesis.cancel();
+        }
       }
       function toggleMusic() {
         MUSIC = !MUSIC;
@@ -2510,6 +2518,22 @@
       function registerPick(user, code) {
         S.pick.set(user, code);
       }
+      function switchPlayerCountry(user, code) {
+        const previous = S.slotOf.get(user);
+        if (previous === code) return;
+        const player = contestants.get(user);
+        if (previous && S.slotUser[previous] === user) {
+          delete S.slotUser[previous];
+          S.slotOf.delete(user);
+          setSlotAvatar(previous, null);
+        }
+        if (!S.slotUser[code] || S.slotUser[code] === user) {
+          S.slotUser[code] = user;
+          S.slotOf.set(user, code);
+          if (player) setMain(code, player);
+          restartAnim(T[code].tur, "swap");
+        }
+      }
       function render() {
         const ord = [...C].sort((a, b) => S.pos[b.c] - S.pos[a.c]);
         ord.forEach((c, i) => {
@@ -2555,6 +2579,7 @@
             restartAnim(l, "flash");
             emojiFx(c.c, "follow", 3);
             if (i === 0) {
+              cheerCountry(c.c, true);
               burstAt(...turPos(c.c), 45, true);
               SFX.cp();
             }
@@ -2710,7 +2735,7 @@
       /* Un evento de un espectador (p) vale `points`: la tortuga camina hasta (puntos del dueño / CFG.target) * CFG.win.
          Si el espectador no tiene carril, su energía va a la tortuga del país que apoya. Añade efectos visuales y sonido. */
       const LEVELS = [10, 25, 50, 100, 200, 400];
-      const INTERACTIONS_TO_WIN = 10;
+      const INTERACTIONS_TO_WIN = 50;
       /* Cada acción de usuario deja el avatar anclado; los bots no generan avatares en la pista. */
       const ANCHOR_MAX = 120; /* tope de seguridad por carril: los avatares NO se borran hasta que termina la ronda */
       function avatarPop(code, p, mult) {
@@ -2841,11 +2866,61 @@
         setTimeout(fit, 400); /* tras cargar banderas/fuente */
       }
       window.addEventListener("resize", () => { hintKey = ""; });
+      const VOICE_ON = Q.get("voice") !== "0";
+      let voiceCommentAt = 0,
+        voicePhrase = 0;
+      function sayRace(text, force = false) {
+        const engine = window.speechSynthesis;
+        if (
+          !VOICE_ON ||
+          !SND ||
+          !engine ||
+          typeof SpeechSynthesisUtterance === "undefined"
+        )
+          return;
+        const now = Date.now();
+        if (!force && (!S.go || S.over || now - voiceCommentAt < 8000)) return;
+        voiceCommentAt = now;
+        engine.cancel();
+        const utterance = new SpeechSynthesisUtterance(text),
+          voices = engine.getVoices(),
+          voice =
+            voices.find((item) => /^es/i.test(item.lang) && /google/i.test(item.name)) ||
+            voices.find((item) => /^es/i.test(item.lang));
+        if (voice) {
+          utterance.voice = voice;
+          utterance.lang = voice.lang;
+        } else utterance.lang = "es-ES";
+        utterance.rate = 1.08;
+        utterance.pitch = 1.12;
+        engine.speak(utterance);
+      }
+      function cheerCountry(code, leader = false) {
+        const index = C.findIndex((team) => team.c === code),
+          name = index >= 0 ? NATIONS[index].es : "";
+        if (!name) return;
+        if (leader) {
+          sayRace("¡" + name + " toma la delantera! ¡Vamos, equipo!");
+          return;
+        }
+        const cheers = [
+          "¡Vamos, " + name + "! Cada apoyo los acerca a la meta.",
+          "¡Fuerza, " + name + "! Su tortuga sigue avanzando.",
+          "¡No aflojen, " + name + "! ¡Sigan alentando a su equipo!",
+        ];
+        sayRace(cheers[voicePhrase++ % cheers.length]);
+      }
       function raceAdd(p, entry, points) {
         if (S.over) return;
-        let code = S.slotOf.get(p.key) || claimSlot(p);
+        let code = S.slotOf.get(p.key);
+        if (!code) {
+          const preferred = S.pick.get(p.key);
+          code = (preferred && slotPlayer(preferred) ? preferred : claimSlot(p)) || preferred;
+        }
         if (!code && !p.isBot) code = S.pick.get(p.key);
         if (!code) return;
+        if (!p.isBot && entry.type !== "support")
+          S.teamActions[code] = (S.teamActions[code] || 0) + 1;
         const t = T[code],
           ty = entry.type;
         if (!p.isBot) {
@@ -2865,6 +2940,7 @@
         else if (ty === "like") SFX.like();
         else if (ty === "chat") SFX.join();
         else if (ty !== "join") SFX.follow();
+        if (!p.isBot) cheerCountry(code);
         /* efectos visuales */
         emojiFx(
           code,
@@ -2994,10 +3070,7 @@
           if (n - (player.lastChat || 0) < 8000) return;
           player.lastChat = n;
         }
-        const interactionCount = entry.type === "like" || entry.type === "gift"
-          ? Math.max(1, Math.floor(counts))
-          : 1;
-        player.interactions = (player.interactions || 0) + interactionCount;
+        player.interactions = (player.interactions || 0) + 1;
         player.points += points;
         if (
           typeof entry.avatar === "string" &&
@@ -3032,74 +3105,20 @@
         S.combo.set(user, c);
         return { n: c.n, mult: 1 + Math.min(c.n - 1, 4) * 0.25 };
       }
-      /* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win.
-         Guarda la victoria del dueño del carril, suma una copa al país ganador, calcula su racha,
-         lanza los efectos de festejo y programa la siguiente ronda (CFG.restartMs). */
-      /* al terminar: podio de usuarios reales durante 10 s */
-      const WINNER_MS = 10000;
-      let winnerT = null, winnerT2 = null;
+      /* Fin de ronda: celebra brevemente y reinicia automáticamente sin mostrar resultado. */
       function hideWinner() {
-        clearTimeout(winnerT);
-        clearTimeout(winnerT2);
         const el = $("winner");
         if (el) el.classList.remove("show", "out", "podiumOnly");
-      }
-      function interactionLeaders() {
-        return [...contestants.values()]
-          .filter((p) => !p.isBot && !p.tortubot && p.interactions > 0)
-          .sort((a, b) => b.interactions - a.interactions || b.points - a.points || a.sequence - b.sequence);
-      }
-      function renderInteractionPodium() {
-        const box = $("wTop"),
-          first = $("wTopFirst"),
-          pair = $("wTopPair"),
-          top = interactionLeaders().slice(0, 3);
-        first.replaceChildren();
-        pair.replaceChildren();
-        box.hidden = top.length === 0;
-        if (!top.length) return;
-        const makeCard = (p, place, large) => {
-          const card = document.createElement("div"),
-            rank = document.createElement("span"),
-            avatar = document.createElement("span"),
-            img = document.createElement("img"),
-            initial = document.createElement("b"),
-            name = document.createElement("span");
-          card.className = "wtop-card" + (large ? " first" : "");
-          rank.className = "wtop-place";
-          rank.textContent = place;
-          avatar.className = "wtop-avatar";
-          img.alt = "";
-          img.referrerPolicy = "no-referrer";
-          img.onerror = () => avatar.classList.add("noimg");
-          initial.textContent = (p.username || "?").trim().charAt(0).toUpperCase() || "?";
-          if (/^https?:\/\//i.test(p.avatar || "")) img.src = p.avatar;
-          else avatar.classList.add("noimg");
-          name.className = "wtop-name";
-          name.textContent = "@" + shownName(p.username || "Alguien") + " · " + p.interactions + " acciones";
-          avatar.append(img, initial);
-          card.append(rank, avatar, name);
-          return card;
-        };
-        first.append(makeCard(top[0], "🥇 PRIMER PUESTO", true));
-        if (top[1]) pair.append(makeCard(top[1], "🥈 SEGUNDO PUESTO", false));
-        if (top[2]) pair.append(makeCard(top[2], "🥉 TERCER PUESTO", false));
-      }
-      function showWinner() {
-        const el = $("winner");
-        if (!el) return;
-        clearTimeout(winnerT);
-        clearTimeout(winnerT2);
-        renderInteractionPodium();
-        if ($("wTop").hidden) return;
-        el.classList.remove("out");
-        el.classList.add("show", "podiumOnly");
-        winnerT2 = setTimeout(() => el.classList.add("out"), WINNER_MS - 350);
-        winnerT = setTimeout(hideWinner, WINNER_MS);
       }
       function finish(code) {
         S.over = true;
         S.winner = code;
+        const winnerIndex = C.findIndex((team) => team.c === code);
+        sayRace(
+          "¡Meta! ¡" + (winnerIndex >= 0 ? NATIONS[winnerIndex].es : "Equipo") +
+            " gana la carrera! ¡Bravo!",
+          true,
+        );
         musicSync();
         const t = T[code],
           p = slotPlayer(code);
@@ -3133,14 +3152,12 @@
         ringFx(code, true);
         screenFx(true);
         clearTimeout(S.rt);
-        S.rt = setTimeout(newRound, Math.max(CFG.restartMs, WINNER_MS + 500));
-        showWinner();
+        S.rt = setTimeout(() => newRound(true), CFG.restartMs);
         burst(80, true);
         render();
       }
-      /* Nueva ronda: sortea los países (setRoundTeams), deja los carriles libres con la posición en cero,
-         conserva las victorias y lanza la cuenta regresiva. Se llama al cargar y al terminar cada ronda. */
-      function newRound() {
+      /* Nueva ronda: sortea los países y reinicia el estado; solo la primera ronda lleva cuenta regresiva. */
+      function newRound(immediate = false) {
         setRoundTeams();
         hideWinner();
         clearTimeout(S.rt);
@@ -3162,6 +3179,7 @@
         resetStats();
         contestants.clear();
         contestantSequence = 0;
+        S.teamActions = {};
         S.slotUser = {};
         S.slotOf.clear();
         C.forEach((c) => {
@@ -3171,7 +3189,14 @@
         seedRecentUsers();
         reseed();
         render();
-        countdown();
+        if (immediate) {
+          S.go = true;
+          S.goAt = performance.now();
+          showCd(null);
+          SFX.go();
+          musicSync();
+          sayRace("¡Comienza la carrera! ¡Vamos equipos, cada apoyo cuenta!", true);
+        } else countdown();
       }
       /* Cuenta regresiva 3-2-1-¡YA!: solo sonido; las tortugas esperan en la salida hasta S.go = true. */
       let cdT = [];
@@ -3204,6 +3229,7 @@
                 showCd(tr("¡YA!", "GO!"), true);
                 SFX.go();
                 musicSync();
+                sayRace("¡Comienza la carrera! ¡Vamos equipos, cada apoyo cuenta!", true);
               } else {
                 showCd(String(3 - i));
                 SFX.tick();
@@ -3472,12 +3498,10 @@
              las multiplica ×2 / ×5 / ×10 / ×20 mientras dura su efecto (t.boosts). */
           const p0 = S.pos[k],
             own = slotPlayer(k),
-            isBotT = !!(own && own.isBot); /* la tortuga que corre el bot de prueba marca el ritmo: 0 → 100 en CFG.botSec */
-          if (S.go && !S.over && own && !isBotT) {
-            const eventProgress =
-              CFG.win * Math.min(INTERACTIONS_TO_WIN, own.interactions) / INTERACTIONS_TO_WIN;
-            S.pos[k] = Math.max(S.pos[k], eventProgress);
-          }
+            isBotT = !!(own && own.isBot), /* la tortuga que corre el bot de prueba marca el ritmo: 0 → 100 en CFG.botSec */
+            progressCap = own && !isBotT
+              ? CFG.win * Math.min(INTERACTIONS_TO_WIN, S.teamActions[k] || 0) / INTERACTIONS_TO_WIN
+              : CFG.win;
           let tgtV = 0;
           if (S.go && !S.over) {
             if (isBotT) tgtV = BOT_V;
@@ -3496,7 +3520,7 @@
           }
           if (isBotT) t.vs = tgtV; /* exacta: llega a 100 justo a los CFG.botSec s */
           else t.vs += (tgtV - t.vs) * Math.min(1, dt * (tgtV > t.vs ? 2.5 : 1.2)); /* acelera y frena con suavidad */
-          S.pos[k] = Math.min(CFG.win, S.pos[k] + (S.go && !S.over && !isW ? t.vs * dt : 0));
+          S.pos[k] = Math.min(progressCap, S.pos[k] + (S.go && !S.over && !isW ? t.vs * dt : 0));
           if (t.back > 0) { /* retroceso por impacto: se gasta suave y nunca baja de 0 */
             const d = Math.min(t.back, HIT.RECOIL_RATE * dt, S.pos[k]);
             S.pos[k] -= d;
@@ -3746,6 +3770,7 @@
               S.pick.get(_u) ||
               S.slotOf.get(_u) ||
               rnd(C.slice(0, HUMAN_N)).c;
+            if (_i >= 0) switchPlayerCountry(_u, _code);
             registerPick(_u, _code);
             if (Date.now() - (lastSupportAt[_u] || 0) > 8000) {
               lastSupportAt[_u] = Date.now();
