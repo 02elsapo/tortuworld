@@ -1293,20 +1293,26 @@
         right: 0;
         bottom: 1.2%;
         z-index: 44;
-        display: flex;
-        justify-content: center;
-        gap: 0.35em;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: center;
+        gap: clamp(2px, 0.35em, 8px);
         padding: 0 0.6em;
         font-size: var(--stats-size);
         line-height: 1;
         pointer-events: none;
+      }
+      @media (max-width: 520px){
+        #stats .st-label{ display: none; }
       }
       #connectorStatus{
         position: fixed;
         right: 0.75rem;
         bottom: calc(1.2% + var(--stats-size) + var(--stats-size) + 0.75rem);
         z-index: 9999;
-        max-width: min(80vw, 22rem);
+        width: max-content;
+        max-width: min(70vw, 18rem);
+        min-width: 0;
         min-height: 1.7rem;
         padding: 0.35rem 0.65rem;
         overflow: hidden;
@@ -1324,9 +1330,13 @@
       #connectorStatus.disconnected{ background: #c6283d; }
       #stats .st2{
         display: flex;
+        min-width: 0;
         align-items: center;
-        gap: 0.25em;
-        padding: 0.18em 0.45em 0.18em 0.35em;
+        justify-content: center;
+        gap: 0.2em;
+        padding: 0.16em 0.25em;
+        overflow: hidden;
+        white-space: nowrap;
         border-radius: 999px;
         border: 0.14em solid #fff;
         background: rgba(7, 38, 43, 0.88);
@@ -1339,11 +1349,17 @@
       }
       #stats .st2 b{
         font: 1.05em/1 "Bowlby One", "Arial Black", sans-serif;
-        min-width: 1em;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
         text-align: left;
       }
       #stats .st-label{
+        min-width: 0;
+        overflow: hidden;
         font: 700 0.65em/1 system-ui, sans-serif;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       #stats .st2.k-ch{ border-color: #1fb58a; }
       #stats .st2.k-lk{ border-color: #ff3d7f; }
