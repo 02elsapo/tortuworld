@@ -60,10 +60,12 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves version 68 and leaves connection startup to the browser overlay', async () => {
+test('serves the v1.4 overlay and leaves connection startup to the browser', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY v68\.html \.\//);
+  assert.match(dockerfile, /COPY v1\.3\.html \.\//);
+  assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), true);
+  assert.equal(fs.existsSync(path.join(root, 'v68.html')), false);
   assert.doesNotMatch(dockerfile, /v45\.html/);
   assert.equal(fs.existsSync(path.join(root, 'v45.html')), false);
 
@@ -85,6 +87,7 @@ test('serves version 68 and leaves connection startup to the browser overlay', a
     assert.equal(monitorService.state.isConnected, false, 'serving the overlay must not connect TikTok');
     assert.match(rootResponse.headers.get('cache-control'), /no-store/);
     const html = await rootResponse.text();
+    assert.match(html, /id="versionBadge" aria-label="Versión 1\.4">v1\.4/);
     assert.match(html, /<title>Country Race<\/title>/);
     assert.match(html, /id="connectorStatus"/);
     assert.match(html, /new EventSource\("\/api\/events"\)/);
@@ -94,7 +97,7 @@ test('serves version 68 and leaves connection startup to the browser overlay', a
       username: 'd4n1el325',
     });
 
-    for (const route of ['/overlay', '/v68.html']) {
+    for (const route of ['/overlay', '/v1.3.html', '/v68.html']) {
       const response = await fetch(`${baseUrl}${route}`);
       assert.equal(response.status, 200);
       assert.equal(await response.text(), html);

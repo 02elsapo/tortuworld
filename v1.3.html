@@ -414,24 +414,6 @@
       }
       /* Avatar redondo, carril vacío atenuado, ganador resaltado,
    animación al cambiar de dueño (.swap) y etiqueta .tag con @usuario + puntos que viaja con la tortuga. */
-      .av{
-        flex: none;
-        width: 1.9rem;
-        height: 1.9rem;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-        border: 0.12rem solid var(--sun);
-        background: var(--ink2);
-        color: #fff;
-        font-size: 0.9rem;
-      }
-      .av img{
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
       .lane.empty .tur{
         opacity: 0.45;
         filter: grayscale(0.7);
@@ -1038,12 +1020,6 @@
       #lanes .lane.empty .tag {
         display: none !important;
       }
-      .tur .fgf{
-        display: none;
-      }
-      .tur.owned .fgf{
-        display: inline;
-      }
       /* CAMBIO DE EXPRESIÓN GRADUAL: las caras no saltan; se funden unas en otras (FACE_FADE) */
       .tur .mo{
         display: inline;
@@ -1382,8 +1358,8 @@
         z-index: 13;
         pointer-events: none;
         left: calc((100% - var(--tw) - 0.8rem) * var(--ap, 0) / 100 + var(--tw) * 0.41);
-        width: calc(var(--th) * 0.5);
-        height: calc(var(--th) * 0.5);
+        width: calc(var(--th) * 0.85);
+        height: calc(var(--th) * 0.85);
         transform: translate(-50%, -50%);
         animation: anchIn 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both;
       }
@@ -1397,7 +1373,7 @@
         color: #fff;
         display: grid;
         place-items: center;
-        font: calc(var(--th) * 0.26) / 1 "Bowlby One", "Arial Black", sans-serif;
+        font: calc(var(--th) * 0.42) / 1 "Bowlby One", "Arial Black", sans-serif;
         box-shadow: 0 0 0.6rem rgba(255, 201, 60, 0.9), 0 0.2rem 0.45rem rgba(0, 0, 0, 0.55);
       }
       #lanes .anchav .ai img{
@@ -1642,7 +1618,7 @@
       <div id="lanes"></div>
     </div>
     <div id="vig"></div>
-    <span id="versionBadge" aria-label="Versión 1.3">v1.3</span>
+    <span id="versionBadge" aria-label="Versión 1.4">v1.4</span>
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
@@ -2032,7 +2008,6 @@
           const image = $("rk-" + lane.c).querySelector("img");
           image.alt = teams[index].n;
           image.src = teams[index].u;
-          T[lane.c].avKey = null;
         });
       }
       function nat(p) {
@@ -2146,8 +2121,9 @@
         }
         return AC;
       }
+      let botEventMuted = false;
       function tone(f, d = 0.1, type = "square", v = 0.08, t0, bus, slide) {
-        if (!SND || !ac()) return;
+        if (!SND || botEventMuted || !ac()) return;
         const t = t0 == null ? AC.currentTime : t0,
           o = AC.createOscillator(),
           g = AC.createGain();
@@ -2164,7 +2140,7 @@
         o.stop(t + d + 0.02);
       }
       function noise(d, v, t0, hp, bus) {
-        if (!SND || !ac()) return;
+        if (!SND || botEventMuted || !ac()) return;
         const t = t0 == null ? AC.currentTime : t0,
           s = AC.createBufferSource(),
           f = AC.createBiquadFilter(),
@@ -2183,7 +2159,7 @@
       }
       /* seq: toca notas una detrás de otra [frecuencia, duración] */
       function seq(notes, type, v, bus) {
-        if (!SND || !ac()) return;
+        if (!SND || botEventMuted || !ac()) return;
         let t = AC.currentTime;
         for (const [f, d] of notes) {
           if (f) tone(f, d * 1.05, type, v, t, bus);
@@ -2193,6 +2169,7 @@
       const th = (fn, ms) => {
         let t = 0;
         return (...a) => {
+          if (botEventMuted) return;
           const n = performance.now();
           if (n - t >= ms) {
             t = n;
@@ -2200,14 +2177,12 @@
           }
         };
       };
-      /* v68: efectos MINIMALES: tonos suaves de onda seno, pocos y breves. Se mantienen los mismos nombres para no tocar el resto del código. */
+      /* Solo las interacciones reales tienen efectos de sonido; los demás avisos son silenciosos. */
       const nop = () => {};
       const soft = (f, d = 0.12, v = 0.04, slide) => tone(f, d, "sine", v, undefined, undefined, slide);
       const SFX = {
-        tick: () => soft(660, 0.08, 0.04) /* 3, 2, 1 */,
-        go: () => {
-          soft(880, 0.18, 0.05);
-        },
+        tick: nop,
+        go: nop,
         coin: th(() => {
           soft(784, 0.1);
           setTimeout(() => soft(1047, 0.14), 90);
@@ -2220,21 +2195,13 @@
         }, 300),
         sprint: th(() => soft(784, 0.14, 0.045, 1047), 400),
         step: nop,
-        crash: th(() => soft(140, 0.16, 0.05, 70), 400),
-        cp: th(() => soft(988, 0.16, 0.04), 600),
-        goal: th(() => {
-          soft(784, 0.1);
-          setTimeout(() => soft(988, 0.1), 100);
-          setTimeout(() => soft(1319, 0.18), 200);
-        }, 600),
-        photo: th(() => soft(880, 0.12, 0.04), 600),
-        flag: () => soft(1047, 0.2, 0.045),
-        victory: () => {
-          [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => soft(f, 0.35, 0.05), i * 140));
-        },
-        win: () => {
-          [523, 659, 784].forEach((f, i) => setTimeout(() => soft(f, 0.3, 0.05), i * 120));
-        },
+        crash: nop,
+        cp: nop,
+        goal: nop,
+        photo: nop,
+        flag: nop,
+        victory: nop,
+        win: nop,
       };
       /* Chiptune de carrera: progresión mayor, bajo pulsante, melodía de ocho bits y percusión ligera. */
       const THEMES = [{ name: "Carrera alegre", bpm: 132 }];
@@ -2316,7 +2283,6 @@
         if (SND) {
           unlock();
           musicSync();
-          SFX.join();
         } else musicStop();
       }
       function toggleMusic() {
@@ -2355,6 +2321,22 @@
         l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
   <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
         lanes.append(l);
+        const shellFlag = l.querySelector(".fgi"),
+          shellContent = l.querySelector(".bd g[clip-path]"),
+          shellBase = shellContent && shellContent.querySelector("ellipse");
+        if (shellFlag && shellContent && shellBase) {
+          shellFlag.setAttribute("x", "8");
+          shellFlag.setAttribute("y", "5");
+          shellFlag.setAttribute("width", "48");
+          shellFlag.setAttribute("height", "34");
+          shellFlag.setAttribute("preserveAspectRatio", "xMidYMid slice");
+          shellFlag.setAttribute("href", NATIONS[li].u);
+          shellContent.insertBefore(shellFlag, shellBase.nextSibling);
+        }
+        [".fgf", ".av", ".crew"].forEach((selector) => {
+          const element = l.querySelector(selector);
+          if (element) element.remove();
+        });
       });
 
       /* Líneas divisorias entre carriles (n-1 líneas para n carriles); solo se muestran con bots activos. */
@@ -2595,98 +2577,34 @@
           screenFx(false);
         }
       }
-      /* Pone (o quita) el avatar del dueño en el caparazón y en la etiqueta del carril. Sin foto: inicial con color propio. */
+      /* Mantiene la bandera del país dentro del caparazón; el dueño no tapa la bandera con su avatar. */
       function setSlotAvatar(code, p) {
         const t = T[code],
-          a = t.av,
-          key = p ? p.key + "|" + (p.avatar || "") + "|" + code + "|" + !!p.isBot : "-" + code;
-        if (t.avKey === key) return;
-        t.avKey = key;
-        const nn = NATIONS[C.findIndex((x) => x.c === code)],
-          initial = p ? (p.isBot || p.tortubot ? "🤖" : (p.username || "?").trim().charAt(0).toUpperCase() || "?") : "";
-        t.tur.classList.toggle("owned", !!p);
-        a.bg.setAttribute("fill", nn.c);
-        a.im.removeAttribute("href");
-        a.tx.textContent = "";
-        if (p && p.avatar) {
-          a.im.onerror = () => {
-            a.im.removeAttribute("href");
-            a.tx.textContent = initial;
-          };
-          a.im.setAttribute("referrerpolicy", "no-referrer");
-          a.im.setAttribute("href", p.avatar);
-        } else if (p) a.tx.textContent = initial;
-        else a.im.setAttribute("href", nn.u);
-        t.fg.setAttribute("href", nn.u);
-      }
-      /* ===== Avatares sobre el caparazón =====
-         El avatar principal (círculo grande del caparazón) es el del usuario que generó el ÚLTIMO evento de esa tortuga.
-         Cuando otro usuario genera un evento, el principal anterior pasa a un círculo pequeño alrededor del caparazón
-         (máx. CREW_MAX, los más recientes primero). La bandera queda fija arriba. */
-      const CREW_MAX = 5,
-        CREW_ANG = [162, 142, 122, 58, 38] /* grados sobre el borde del caparazón; el hueco de arriba es de la bandera */,
-        SVGNS = "http://www.w3.org/2000/svg";
-      function renderCrew(code) {
-        const t = T[code],
-          g = t.ring,
           nn = NATIONS[C.findIndex((x) => x.c === code)];
-        if (!g) return;
-        g.textContent = "";
-        const mk = (tag, at) => {
-          const el = document.createElementNS(SVGNS, tag);
-          for (const k in at) el.setAttribute(k, at[k]);
-          return el;
-        };
-        t.crew.slice(0, CREW_MAX).forEach((p, k) => {
-          const a = (CREW_ANG[k] * Math.PI) / 180,
-            x = 32 + 25 * Math.cos(a),
-            y = 22 - 18 * Math.sin(a),
-            r = 5.2,
-            item = mk("g", { transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})` });
-          item.append(mk("circle", { r, fill: nn ? nn.c : "#0D3A41" }));
-          const tx = mk("text", { y: p.isBot ? 2.4 : 3, "text-anchor": "middle", "font-size": p.isBot ? 6.5 : 8.5, fill: "#fff", "font-family": "Bowlby One,Arial Black,sans-serif" });
-          tx.textContent = p.isBot ? "🤖" : (p.username || "?").trim().charAt(0).toUpperCase() || "?";
-          item.append(tx);
-          if (p.avatar) {
-            const im = mk("image", { x: -r, y: -r, width: r * 2, height: r * 2, preserveAspectRatio: "xMidYMid slice", "clip-path": `url(#cb${code})`, referrerpolicy: "no-referrer" });
-            im.onerror = () => im.remove();
-            im.setAttribute("href", p.avatar);
-            item.append(im);
-          }
-          item.append(mk("circle", { r, fill: "none", stroke: "#fff", "stroke-width": 1.1 }));
-          g.append(item);
-        });
+        t.tur.classList.toggle("owned", !!p);
+        if (nn && t.fg) t.fg.setAttribute("href", nn.u);
       }
-      /* Pone al usuario del último evento como avatar principal y manda al anterior a los círculos del caparazón. */
+      /* Las acciones no colocan avatares en el caparazón. */
       function setMain(code, p) {
-        const t = T[code];
-        if (!t || !p) return;
-        if (t.mainP && t.mainKey !== p.key) {
-          t.crew = t.crew.filter((x) => x.key !== t.mainP.key);
-          t.crew.unshift(t.mainP);
-        }
-        t.crew = t.crew.filter((x) => x.key !== p.key).slice(0, CREW_MAX);
-        t.mainKey = p.key;
-        t.mainP = p;
+        if (!T[code] || !p) return;
         setSlotAvatar(code, p);
-        renderCrew(code);
-      }
-      function clearCrew(code) {
-        const t = T[code];
-        t.crew = [];
-        t.mainKey = null;
-        t.mainP = null;
-        renderCrew(code);
       }
       /* Los participantes reales pueden ocupar carriles libres o reemplazar al de menor puntaje. */
       function claimSlot(p) {
         let code,
           lo = null;
         const preferred = S.pick.get(p.key),
+          generated = !p.isBot && C.find((c) => {
+            const occupant = slotPlayer(c.c);
+            return occupant && occupant.isReplay;
+          }),
           free =
             C.find((c) => c.c === preferred && !S.slotUser[c.c]) ||
             (!p.isBot && C.find((c) => !S.slotUser[c.c]));
-        if (free) code = free.c;
+        if (generated) {
+          lo = { c: generated, o: slotPlayer(generated.c) };
+          code = generated.c;
+        } else if (free) code = free.c;
         else {
           if (p.isBot) return null;
           const bot = C.find((c) => {
@@ -2705,12 +2623,14 @@
             if (!lo || p.points <= lo.o.points) return null;
             code = lo.c.c;
           }
+        }
+        if (lo) {
           S.slotOf.delete(lo.o.key);
           if (lo.o.isBot) {
             contestants.delete(lo.o.key);
             if (window.botKicked) window.botKicked(lo.o.key); /* se da de baja el bot y se detienen sus eventos */
-            T[code].crew = T[code].crew.filter((x) => x.key !== lo.o.key);
-            if (T[code].mainKey === lo.o.key) { T[code].mainKey = null; T[code].mainP = null; }
+          } else if (lo.o.isReplay) {
+            contestants.delete(lo.o.key);
           }
         }
         if (lo) {
@@ -2724,7 +2644,7 @@
         setMain(code, p);
         const el = T[code].tur;
         restartAnim(el, "swap");
-        SFX.join();
+        if (!p.isBot) SFX.join();
         return code;
       }
       /* Burbuja de evento SOBRE la tortuga (sigue a la tortuga mientras sube y se desvanece). Los likes se agrupan cada 0.45 s. */
@@ -2928,6 +2848,10 @@
         if (!code) return;
         const t = T[code],
           ty = entry.type;
+        if (!p.isBot) {
+          t.zT = 0;
+          t.zTimer = 4;
+        }
         if (entry.type !== "support") setMain(code, p); /* el último evento manda: su avatar es el principal */
         const bst = addBoost(code, ty, entry, p); /* ×2 / ×5 / ×10 / ×20 según la relevancia del evento */
         avatarPop(code, p, bst.m); /* avatar anclado en el centro del caparazón, en el punto donde se generó */
@@ -3043,8 +2967,10 @@
 
         const key = username.toLocaleLowerCase();
         let player = contestants.get(key);
-        if (entry.type === "join" && player && !player.isBot)
+        if (entry.type === "join" && player && !player.isBot) {
+          player.isReplay = false;
           return; /* ya es participante: el segundo 'join' no suma */
+        }
         if (isBot && !S.slotOf.has(key) && !C.some((c) => !S.slotUser[c.c]))
           return;
         if (!player) {
@@ -3056,9 +2982,13 @@
             interactions: 0,
             sequence: contestantSequence++,
             isBot,
+            isReplay: false,
           };
           contestants.set(key, player);
-        } else if (!isBot) player.isBot = false;
+        } else if (!isBot) {
+          player.isBot = false;
+          player.isReplay = false;
+        }
         if (entry.type === "chat") {
           const n = Date.now();
           if (n - (player.lastChat || 0) < 8000) return;
@@ -3105,8 +3035,8 @@
       /* Fin de ronda: se llama desde frame() cuando la primera tortuga ocupada llega a CFG.win.
          Guarda la victoria del dueño del carril, suma una copa al país ganador, calcula su racha,
          lanza los efectos de festejo y programa la siguiente ronda (CFG.restartMs). */
-      /* al terminar: podio de usuarios reales durante WINNER_MS (5 s) */
-      const WINNER_MS = 5000;
+      /* al terminar: podio de usuarios reales durante 10 s */
+      const WINNER_MS = 10000;
       let winnerT = null, winnerT2 = null;
       function hideWinner() {
         clearTimeout(winnerT);
@@ -3171,7 +3101,6 @@
         S.over = true;
         S.winner = code;
         musicSync();
-        SFX.victory(); /* reemplaza al sonido corto SFX.flag() */
         const t = T[code],
           p = slotPlayer(code);
         S.pos[code] = CFG.win;
@@ -3238,7 +3167,6 @@
         C.forEach((c) => {
           S.pos[c.c] = 0;
           setSlotAvatar(c.c, null);
-          clearCrew(c.c);
         });
         seedRecentUsers();
         reseed();
@@ -3309,16 +3237,7 @@
             hd: e.querySelector(".hd"),
             bd: e.querySelector(".bd"),
           },
-          av: {
-            im: e.querySelector(".avim"),
-            tx: e.querySelector(".avtx"),
-            bg: e.querySelector(".avbg"),
-          },
           fg: e.querySelector(".fgi"),
-          ring: e.querySelector(".crew"),
-          crew: [] /* otros usuarios que apoyan a esta tortuga: círculos alrededor del caparazón */,
-          mainKey: null,
-          mainP: null /* usuario del ÚLTIMO evento: su avatar es el principal */,
           ph: Math.random() * 6,
           step: 0,
           w: Math.random() * 10,
@@ -3500,7 +3419,7 @@
           if (dx < HIT.RX * GEO.tw && dy < ry * GEO.th) hitPair(ka, kb);
         }
       }
-      function physics(dt) {
+      function physics() {
         const g = GEO;
         if (!g.k) return;
         const bh = g.H / C.length;
@@ -3511,7 +3430,6 @@
           t.trk.style.setProperty("--rt", t.rtPx.toFixed(1) + "px");
           t.tur.style.transform = "rotate(" + t.psi.toFixed(2) + "deg)";
         });
-        collisions(dt);
       }
       /* BUCLE PRINCIPAL (requestAnimationFrame, ~60 fps). Los países sin corredor avanzan despacio
    (y pueden chocar con su vecina) sin generar puntos ni decidir al ganador. En cada cuadro, para cada tortuga:
@@ -3533,8 +3451,10 @@
         const R = remPx();
         /* LLANTO: cuando la líder ya está a 30 % de la meta (pos ≥ 70), las tortugas de los últimos 3 puestos lloran */
         const lastSet = new Set();
+        let lastK = null;
         {
           const rk = C.map((c) => c.c).sort((a, b) => S.pos[b] - S.pos[a]);
+          lastK = rk[rk.length - 1] || null;
           if (S.go && S.pos[rk[0]] >= CFG.win - CRY_LEFT) rk.slice(-3).forEach((k) => lastSet.add(k));
         }
         let firstK = null,
@@ -3724,27 +3644,28 @@
               (Math.sin(t.ph + 1) * 10 * Math.min(1, a / 2) * mv).toFixed(2) +
               " 10 28)",
           );
-          /* CARRIL PROPIO: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril (±20 % del alto del carril).
-             Cada 2-6 s elige una altura nueva y se desplaza suave hacia ella mientras camina; gira hacia donde va. */
+          /* Solo la tortuga que va última zigzaguea dentro de su carril; las demás vuelven al centro. */
           {
             const li = C.indexOf(c),
               bh = GEO.k ? GEO.H / C.length : 0,
-              over = Math.max(0, (GEO.th - bh) / 2), /* cuánto sobresale la tortuga de su carril por arriba y por abajo */
-              fight = inFight(t),
-              rng = bh * (fight ? 0.7 : 0.2), /* al embestir o esquivar puede salirse del carril */
-              lo = li === 0 ? over : -rng, /* la 1.ª y la última no se salen de la pista */
-              hi = li === C.length - 1 ? -over : rng,
+              rng = Math.min(bh * 0.2, Math.max(0, (bh - GEO.th) / 2)),
+              lo = li === 0 ? 0 : -rng,
+              hi = li === C.length - 1 ? 0 : rng,
+              erratic = S.go && !S.over && k === lastK,
               vxp = Math.max(t.va * GEO.ppu, 6);
-            t.zTimer -= dt;
-            if (t.zTimer <= 0) {
-              t.zTimer = 2 + Math.random() * 4;
-              t.zT = lo + Math.random() * Math.max(0, hi - lo);
+            if (erratic) {
+              t.zTimer -= dt;
+              if (t.zTimer <= 0) {
+                t.zTimer = 2 + Math.random() * 4;
+                t.zT = lo + Math.random() * Math.max(0, hi - lo);
+              }
+            } else {
+              t.zT = 0;
             }
-            if (t.dodgeT > 0) t.zT = t.dodgeDir * rng; /* tras el impacto: una sale hacia arriba y la otra hacia abajo */
             t.zT = Math.max(lo, Math.min(hi, t.zT));
-            const zt = t.zy + (t.zT - t.zy) * (fight ? 1 : mv);
+            const zt = t.zy + (t.zT - t.zy) * Math.min(1, dt * (erratic ? 1 : 3));
             t.zvy += ((zt - t.zy) * 3 - t.zvy * 4) * dt;
-            const vyMax = (3 + 0.45 * vxp) * (fight ? 8 : 0.3 + 0.7 * mv); /* en embestida/esquive se mueve rápido aunque esté frenada */
+            const vyMax = (3 + 0.45 * vxp) * (0.3 + 0.7 * mv);
             t.zvy = Math.max(-vyMax, Math.min(vyMax, t.zvy));
             t.zy += t.zvy * dt;
             if (t.zy < lo) { t.zy = lo; t.zvy = Math.max(0, t.zvy); }
@@ -3765,7 +3686,7 @@
             t.trk.style.setProperty("--p", _pv);
           }
         }
-        physics(dt); /* choques entre tortugas + transform final */
+        physics(); /* rumbo por carril + transform final */
         if (!S.over && S.winner) finish(S.winner);
         acc += dt;
         if (acc > 0.25) {
@@ -3971,6 +3892,7 @@
               interactions: 0,
               sequence: contestantSequence++,
               isBot: false,
+              isReplay: true,
             };
           contestants.set(key, player);
           S.pick.set(key, lane.c);
@@ -4278,15 +4200,22 @@
         const humanEv = []; /* marcas de tiempo de eventos de personas reales */
         const baseHandle = handleTikTokEntry;
         handleTikTokEntry = function (entry, isBot) {
-          if (entry && !entry.sim) humanEv.push(Date.now());
-          if (entry && entry.sim) {
-            (window.SIMK = window.SIMK || new Set()).add(String(entry.username).trim().toLocaleLowerCase());
-            registerSupport(entry, true);
-            scoreContestant(entry, true);
-            render();
-            return;
+          const simulated = !!isBot || !!(entry && entry.sim),
+            wasMuted = botEventMuted;
+          if (entry && !simulated) humanEv.push(Date.now());
+          if (simulated) botEventMuted = true;
+          try {
+            if (entry && entry.sim) {
+              (window.SIMK = window.SIMK || new Set()).add(String(entry.username).trim().toLocaleLowerCase());
+              registerSupport(entry, true);
+              scoreContestant(entry, true);
+              render();
+              return;
+            }
+            return baseHandle(entry, isBot);
+          } finally {
+            botEventMuted = wasMuted;
           }
-          return baseHandle(entry, isBot);
         };
 
         /* ---- bots ---- */
@@ -4423,7 +4352,6 @@
           S.slotOf.delete(key);
           delete S.slotUser[code];
           contestants.delete(key);
-          clearCrew(code);
           setSlotAvatar(code, null);
           T[code].tur.classList.remove("owned");
         }
