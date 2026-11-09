@@ -22,8 +22,10 @@
     • Al llegar a la meta, tras CFG.restartMs (2,5 s) empieza otra ronda con nuevos países, sin podio ni cuenta regresiva.
     • Pista #hint compacta, con banderas en una sola fila para no tapar la carrera.
     • v67 (UX + gamificación): barra FIEBRE (#hype): cada evento la llena, se vacía sola; al llegar a 100 % hay 10 s de FIEBRE (×1.5 al empuje de todos). ?hype=0 la oculta · ?hypetop=12 (% desde arriba). Pista #hint "Escribe tu país" con las banderas de los carriles libres.
+    • v4 (zona segura TikTok Live 9:16): pista entre el 22 % superior y el 27 % inferior (--top/--bot), FIEBRE bajo la zona del creador (--hype-top), narradora SOBRE la esquina superior izquierda de la pista (siempre visible, z-index 60), CTA a todo el ancho, estado de conexión y versión en una franja fina sobre el chat. Un solo bloque CSS final ("v4 · ZONA SEGURA") manda sobre las reglas antiguas. ?top=22 ?bottom=27 ?hypetop=13.5.
+    • v3 (pulido visual): bandera física al inicio de cada carril (#lanes .fl, antes de la línea de salida) · la líder escupe fuego y destellos (leaderFx) · barra FIEBRE neón con % exacto y chispas en modo FIEBRE · letrero a cuadros ¡META! (#metaBanner) · botón de conexión verde brillante con punto pulsante · con la líder cerca de la meta (≥80 %, ≥92 %) pulsan los CTA y el letrero (#cta.near / .near2, html.lead-near).
 
-  PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0  ?voice=0 (sin voz)
+  PARÁMETROS DE URL: ?target=40  ?win=100  ?panel=1 (panel de pruebas, también tecla P)  ?sound=0 (efectos/música)  ?voice=0 (sin voz)
                      ?music=0  ?theme=1  ?vol=0.9  ?join=0.5  ?ws=URL (WebSocket en lugar de SSE)  ?safe=1  ?autobots=0 (sin bots automáticos)  ?escena=1-4 (fuerza un escenario)  ?lang=en|es (idioma)  ?top=30 (dónde empieza la pista, en % desde arriba; más alto = más cielo)
   ESCENARIOS DEL FONDO: cada ronda usa uno, en orden: 1 madrugada (va amaneciendo) · 2 mañana (hacia el mediodía) ·
     3 mediodía (hacia la tarde) · 4 tarde (va oscureciendo). El cielo avanza con el progreso del líder de la carrera.
@@ -32,7 +34,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#07262B" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -73,7 +75,7 @@
         --grass2: #4a9a4c;
         --padr: 3%;
         --overlay-lift: 5vh;
-        --cta-fs: min(2.2vh, 3vw); /* tamaño de las llamadas de acción */
+        --cta-fs: min(1.7vh, 2.4vw); /* tamaño de las llamadas de acción */
         --cta-h: calc(var(--cta-fs) * 5.2); /* franja que se reserva bajo la pista para ellas (0 con ?cta=0) */
       }
       *{
@@ -1516,7 +1518,7 @@
         height: 0.3rem;
         margin-top: -0.15rem;
         /* líneas de carril como en una pista de atletismo de arcilla: rayas blancas/crema de bloques duros, bien visibles */
-        background: repeating-linear-gradient(90deg, #fff6d6 0 1.2rem, transparent 1.2rem 2rem);
+        background: repeating-linear-gradient(90deg, #b8893f 0 1.2rem, transparent 1.2rem 2rem);
         opacity: 0.95;
         top: calc((100% - var(--th)) * (var(--k) - 0.5) / var(--n) + var(--th) / 2);
       }
@@ -1540,7 +1542,7 @@
         background-position: 0 0, 0 0, 0.5rem 0.4rem;
       }
       /* ===== v67: FIEBRE (meta colectiva), pista de "escribe tu país" y extras de la tarjeta ganadora ===== */
-      #hype{position:fixed;left:7%;right:7%;top:var(--hype-top,12%);z-index:44;pointer-events:none}
+      #hype{position:fixed;left:7%;right:7%;top:var(--hype-top,6%);z-index:44;pointer-events:none}
       #hype .hb{position:relative;height:2.6rem;border-radius:1rem;background:rgba(7,38,43,.78);border:.14rem solid var(--cream);overflow:hidden;box-shadow:0 .2rem .6rem rgba(0,0,0,.45)}
       #hype u{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--mint),var(--sun),var(--pink));transition:width .35s ease-out;text-decoration:none}
       #hype b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.35rem;line-height:1;color:#fff;text-shadow:0 .1rem 0 var(--ink);white-space:nowrap}
@@ -1550,7 +1552,7 @@
       html.nohype #hype{display:none}
       @keyframes hypeHot{to{transform:scale(1.04);box-shadow:0 0 1.2rem rgba(255,201,60,.9)}}
       @keyframes hypeFlow{to{background-position:-200% 0}}
-      #hint{position:fixed;left:0;right:0;top:calc(var(--hype-top,12%) + 3.2rem);z-index:44;display:none;justify-content:center;pointer-events:none}
+      #hint{position:fixed;left:0;right:0;top:calc(var(--hype-top,6%) + 3.2rem);z-index:44;display:none;justify-content:center;pointer-events:none}
       #hint.show{display:flex}
       /* Pista compacta: título pequeño y banderas en una fila para no tapar la carrera. */
       #hint .hc{display:flex;flex-direction:column;align-items:center;gap:.1rem;max-width:94vw;padding:.3rem .8rem .4rem;border-radius:1rem;background:rgba(7,38,43,.82);border:.12rem solid var(--mint);font-size:1.1rem;line-height:1.15;animation:hintBob 1.4s ease-in-out infinite alternate}
@@ -1611,16 +1613,651 @@
         box-shadow:0 .15rem .5rem rgba(0,0,0,.4);
         pointer-events:none;
       }
+
+      /* ===== FIX UX: respetar la zona inferior de TikTok Live (chat, caja de comentarios, regalos) =====
+         Todo lo propio queda POR ENCIMA de la zona de TikTok (--bot, 27 % por defecto en vertical; ?bottom=NN la ajusta).
+         El estado de conexión y la versión ya no viven dentro de esa zona: van en la franja libre bajo las llamadas de acción. */
+      @media (orientation: portrait){
+        #cta{
+          bottom: calc(var(--bot, 27%) + var(--overlay-lift) + env(safe-area-inset-bottom, 0px));
+        }
+        html body #app{
+          bottom: calc(var(--bot, 27%) + var(--cta-h) + var(--overlay-lift) + env(safe-area-inset-bottom, 0px));
+        }
+        #connectorStatus,
+        #versionBadge{
+          bottom: calc(var(--bot, 27%) + var(--overlay-lift) + env(safe-area-inset-bottom, 0px) - 2.3rem);
+        }
+        #connectorStatus{
+          min-height: 1.3rem;
+          padding: 0.2rem 0.55rem;
+          font-size: 0.55rem;
+          right: 0.5rem;
+        }
+        #versionBadge{
+          padding: 0.2rem 0.4rem;
+          font-size: 0.5rem;
+          left: 0.5rem;
+          opacity: 0.6;
+        }
+        /* conectado: se atenúa a los 5 s para no distraer; desconectado: se queda a plena opacidad */
+        #connectorStatus.connected{
+          animation: csFade 0.6s ease 5s forwards;
+        }
+      }
+      @keyframes csFade{ to{ opacity: 0.8; } }
+      #cd{ display: none !important; } /* cuenta regresiva desactivada */
+
+      /* ===== Narradora (avatar que "habla" cuando suena la voz): franja entre la pista y las llamadas de acción.
+         ?cast=0 la oculta. Sigue por encima de la zona inferior de TikTok. ===== */
+      :root{ --cast-h: 3.3rem; }
+      html body #app{
+        bottom: calc(var(--bot, 7%) + var(--cta-h) + var(--overlay-lift) + var(--cast-h));
+      }
+      @media (orientation: portrait){
+        html body #app{
+          bottom: calc(var(--bot, 27%) + var(--cta-h) + var(--overlay-lift) + var(--cast-h) + env(safe-area-inset-bottom, 0px));
+        }
+      }
+      #cast{
+        position: fixed;
+        left: 3%;
+        right: var(--padr, 3%);
+        height: var(--cast-h);
+        bottom: calc(var(--bot, 7%) + var(--overlay-lift));
+        z-index: 43;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        pointer-events: none;
+      }
+      @media (orientation: portrait){
+        #cast{ bottom: calc(var(--bot, 27%) + var(--overlay-lift) + env(safe-area-inset-bottom, 0px)); }
+      }
+      #cast .cav{
+        flex: 0 0 auto;
+        width: calc(var(--cast-h) - 0.3rem);
+        height: calc(var(--cast-h) - 0.3rem);
+        border-radius: 50%;
+        border: 0.14rem solid var(--sun);
+        background: var(--ink2);
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        animation: castIdle 3s ease-in-out infinite;
+      }
+      #cast.talk .cav{
+        animation: castTalk 0.45s ease-in-out infinite alternate;
+        box-shadow: 0 0 0.9rem rgba(255, 201, 60, 0.95), 0 0.15rem 0.5rem rgba(0, 0, 0, 0.5);
+      }
+      #cast svg{ display: block; width: 100%; height: 100%; }
+      #cast .eye{ transform-box: fill-box; transform-origin: center; animation: castBlink 4s infinite; }
+      #cast .mouth{ transform-box: fill-box; transform-origin: center; }
+      #cast.talk .mouth{ animation: castMouth 0.22s ease-in-out infinite alternate; }
+      #cast .bub{
+        position: relative;
+        max-width: 100%;
+        padding: 0.2rem 0.55rem;
+        border-radius: 0.8rem;
+        background: var(--cream);
+        color: var(--ink);
+        border: 0.12rem solid var(--ink);
+        font: 800 0.8rem/1.2 "Nunito", system-ui, sans-serif;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        transform: translateX(-0.4rem) scale(0.95);
+        transform-origin: left center;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      #cast .bub::before{
+        content: "";
+        position: absolute;
+        left: -0.42rem;
+        top: 50%;
+        width: 0.7rem;
+        height: 0.7rem;
+        background: var(--cream);
+        border-left: 0.12rem solid var(--ink);
+        border-bottom: 0.12rem solid var(--ink);
+        transform: translateY(-50%) rotate(45deg);
+      }
+      #cast.say .bub{ opacity: 1; transform: none; }
+      @keyframes castIdle{ 50%{ transform: translateY(-0.12rem); } }
+      @keyframes castTalk{ to{ transform: translateY(-0.2rem) scale(1.05); } }
+      @keyframes castBlink{ 0%, 94%, 100%{ transform: scaleY(1); } 97%{ transform: scaleY(0.1); } }
+      @keyframes castMouth{ from{ transform: scaleY(0.4); } to{ transform: scaleY(2.6) scaleX(0.9); } }
+      /* La narradora va DEBAJO de las llamadas de acción: las CTA suben el alto de la franja de la narradora. */
+      html body #cta{
+        bottom: calc(var(--bot, 7%) + var(--overlay-lift) + var(--cast-h));
+      }
+      @media (orientation: portrait){
+        html body #cta{
+          bottom: calc(var(--bot, 27%) + var(--overlay-lift) + var(--cast-h) + env(safe-area-inset-bottom, 0px));
+        }
+      }
+
+      /* ===== Narradora interactiva: expresiones según el evento (data-mood = idle · happy · excited · surprised · love · sad) ===== */
+      :root{ --cast-h: 9.8rem; }
+      #cast .e-happy, #cast .e-wide, #cast .e-heart,
+      #cast .mo-grin, #cast .mo-o, #cast .mo-frown, #cast .mo-talk,
+      #cast .spark, #cast .sweat{ display: none; }
+      #cast .blush{ opacity: 0.45; transition: opacity 0.2s; }
+      #cast .brow{ transform-box: fill-box; transform-origin: center; transition: transform 0.2s ease; }
+      /* happy */
+      #cast[data-mood="happy"] .e-norm, #cast[data-mood="happy"] .mo-smile{ display: none; }
+      #cast[data-mood="happy"] .e-happy, #cast[data-mood="happy"] .mo-grin{ display: inline; }
+      #cast[data-mood="happy"] .blush{ opacity: 0.8; }
+      /* excited */
+      #cast[data-mood="excited"] .e-norm, #cast[data-mood="excited"] .mo-smile{ display: none; }
+      #cast[data-mood="excited"] .e-wide, #cast[data-mood="excited"] .mo-grin, #cast[data-mood="excited"] .spark{ display: inline; }
+      #cast[data-mood="excited"] .brow{ transform: translateY(-3px); }
+      #cast[data-mood="excited"] .blush{ opacity: 0.85; }
+      /* surprised */
+      #cast[data-mood="surprised"] .e-norm, #cast[data-mood="surprised"] .mo-smile{ display: none; }
+      #cast[data-mood="surprised"] .e-wide, #cast[data-mood="surprised"] .mo-o{ display: inline; }
+      #cast[data-mood="surprised"] .brow{ transform: translateY(-4px); }
+      /* love */
+      #cast[data-mood="love"] .e-norm{ display: none; }
+      #cast[data-mood="love"] .e-heart{ display: inline; }
+      #cast[data-mood="love"] .blush{ opacity: 0.9; }
+      /* sad / ouch */
+      #cast[data-mood="sad"] .mo-smile{ display: none; }
+      #cast[data-mood="sad"] .mo-frown, #cast[data-mood="sad"] .sweat{ display: inline; }
+      #cast[data-mood="sad"] .brow.bl{ transform: rotate(-16deg) translateY(-1px); }
+      #cast[data-mood="sad"] .brow.br{ transform: rotate(16deg) translateY(-1px); }
+      /* hablando: la boca se mueve (salvo con cara de sorpresa) */
+      #cast.talk:not([data-mood="surprised"]) .mo-smile,
+      #cast.talk:not([data-mood="surprised"]) .mo-grin,
+      #cast.talk:not([data-mood="surprised"]) .mo-frown{ display: none; }
+      #cast.talk:not([data-mood="surprised"]) .mo-talk{ display: inline; }
+      #cast .spark{ transform-box: fill-box; transform-origin: center; animation: castTwinkle 0.5s ease-in-out infinite alternate; }
+      #cast .spark.s2{ animation-delay: 0.2s; }
+      #cast[data-mood="excited"] .cav{ animation: castHype 0.3s ease-in-out infinite alternate; box-shadow: 0 0 1rem rgba(255, 61, 127, 0.95), 0 0.15rem 0.5rem rgba(0, 0, 0, 0.5); }
+      #cast[data-mood="surprised"] .cav{ animation: castHype 0.5s ease-in-out infinite alternate; }
+      @keyframes castTwinkle{ from{ transform: scale(0.5) rotate(0deg); opacity: 0.6; } to{ transform: scale(1.15) rotate(20deg); opacity: 1; } }
+      @keyframes castHype{ from{ transform: translateY(0) rotate(-3deg); } to{ transform: translateY(-0.3rem) scale(1.07) rotate(3deg); } }
+
+      /* Narradora a la DERECHA: avatar pegado al borde derecho (dentro del margen de botones de TikTok) y el globo a su izquierda. */
+      #cast{ flex-direction: row-reverse; }
+      #cast .bub{
+        transform-origin: right center;
+        transform: translateX(0.4rem) scale(0.95);
+        margin-left: auto;
+      }
+      #cast.say .bub{ transform: none; }
+      #cast .bub::before{
+        left: auto;
+        right: -0.42rem;
+        border-left: 0;
+        border-bottom: 0;
+        border-right: 0.12rem solid var(--ink);
+        border-top: 0.12rem solid var(--ink);
+      }
+
+      /* Narradora pegada al suelo (esquina inferior derecha) y más grande. Ya no reserva espacio en la columna:
+         la pista y los botones recuperan su lugar. Tamaño: --cast-sz. */
+      :root{ --cast-h: 0px; --cast-sz: 12rem; }
+      #cast{
+        bottom: env(safe-area-inset-bottom, 0px);
+        height: var(--cast-sz);
+        right: 0.5rem;
+        left: 0.5rem;
+      }
+      @media (orientation: portrait){
+        #cast{ bottom: env(safe-area-inset-bottom, 0px); }
+      }
+      #cast .cav{
+        width: var(--cast-sz);
+        height: var(--cast-sz);
+        border-bottom-left-radius: 50%;
+      }
+      #cast .bub{ font-size: 0.85rem; }
+      /* Etiqueta de versión y botón de conexión: uno junto al otro, a la izquierda; el botón de conexión, más grande. */
+      #versionBadge{
+        left: 0.5rem;
+        min-height: 2rem;
+        display: flex;
+        align-items: center;
+        padding: 0.2rem 0.55rem;
+        font-size: 0.65rem;
+        opacity: 0.85;
+      }
+      #connectorStatus{
+        left: 3.9rem;
+        right: auto;
+        min-height: 2rem;
+        padding: 0.4rem 0.95rem;
+        font-size: 0.82rem;
+        max-width: calc(100vw - 3.9rem - var(--cast-sz) - 1.4rem);
+        display: flex;
+        align-items: center;
+      }
+      @media (orientation: portrait){
+        #connectorStatus,
+        #versionBadge{
+          bottom: calc(var(--bot, 27%) + var(--overlay-lift) + env(safe-area-inset-bottom, 0px) - 2.7rem);
+        }
+      }
+
+      /* ===== Narradora en VIDEO (opcional): clips en la carpeta avatar/ (idle, talk, happy, excited, surprised, love, sad).
+         Si no hay clips, se queda el avatar dibujado. ?castdir=ruta · ?chroma=1 (fondo verde) · ?castframe=0 (sin marco/círculo). ===== */
+      #cast .cav{ position: relative; }
+      #cast .cvid{ position: absolute; inset: 0; display: none; }
+      #cast.vid .cvid{ display: block; }
+      #cast.vid svg{ display: none; }
+      #cast .cvid video,
+      #cast .cvid canvas{
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      #cast .cvid video.on{ opacity: 1; }
+      #cast.chroma .cvid video{ opacity: 0 !important; }
+      #cast.chroma .cvid canvas{ opacity: 1; }
+      #cast.vid .cav,
+      #cast.vid[data-mood] .cav{ animation: none !important; box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.5); }
+      #cast.noframe .cav{ border: 0; background: none; box-shadow: none !important; border-radius: 0; overflow: visible; }
+      #cast.noframe .cvid video,
+      #cast.noframe .cvid canvas{ object-fit: contain; object-position: center bottom; }
+
+      /* (el pulso de los botones CTA con la líder cerca de la meta está en el bloque v3 al final de esta hoja de estilos) */
+      /* El avatar nunca sube más arriba de los botones: su alto máximo es la franja libre bajo ellos. */
+      :root{ --cast-sz: min(12rem, 27vh); }
+      @media (orientation: landscape){ :root{ --cast-sz: min(12rem, 10vh); } }
+
+      /* ═══════════════ v3 ═══════════════ */
+
+      /* 1) Bandera física al inicio de cada carril: clavada en la arena ANTES de la línea de salida (la tortuga pasa por delante) */
+      #lanes .fl{
+        position: absolute;
+        z-index: 1;
+        pointer-events: none;
+        left: calc(var(--tw) + 0.4rem);
+        top: calc(var(--fy, var(--rt)) + var(--th) * 0.88 - var(--fh, 2.6rem));
+        height: var(--fh, 2.6rem);
+        width: calc(var(--g) - 1rem);
+      }
+      #lanes .fl .pole{
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0.18rem;
+        border-radius: 0.1rem;
+        background: linear-gradient(90deg, #fff6e0, #b9a574);
+        box-shadow: 0 0 0 0.05rem var(--ink);
+      }
+      #lanes .fl .pole::before{
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -0.24rem;
+        width: 0.42rem;
+        height: 0.42rem;
+        margin-left: -0.21rem;
+        border-radius: 50%;
+        background: var(--sun);
+        border: 0.07rem solid var(--ink);
+      }
+      #lanes .fl .cloth{
+        position: absolute;
+        left: 0.18rem;
+        top: 0.08rem;
+        width: calc(100% - 0.18rem);
+        height: 58%;
+        overflow: hidden;
+        border: 0.1rem solid var(--ink);
+        border-left: 0;
+        border-radius: 0 0.25rem 0.25rem 0;
+        box-shadow: 0 0.12rem 0.3rem rgba(0, 0, 0, 0.45);
+        transform-origin: left center;
+        animation: flWave 1.5s ease-in-out infinite alternate;
+      }
+      #lanes .fl .cloth img{
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #lanes .fl .cloth::after{
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(100deg, rgba(255, 255, 255, 0.3), transparent 40%, rgba(0, 0, 0, 0.22));
+      }
+      #lanes .fl .base{
+        position: absolute;
+        left: -0.3rem;
+        bottom: -0.14rem;
+        width: 0.8rem;
+        height: 0.3rem;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.35);
+      }
+      @keyframes flWave{
+        from{ transform: skewY(-4deg) scaleX(1); }
+        to{ transform: skewY(4deg) scaleX(0.92); }
+      }
+
+      /* 2) Fuego y destellos de la líder (partículas que genera leaderFx(); van detrás de la tortuga) */
+      #lanes .trk .tur.burn::after{
+        content: "";
+        position: absolute;
+        z-index: -1;
+        right: 88%;
+        top: 46%;
+        width: calc(var(--th) * 0.85);
+        height: 30%;
+        border-radius: 999px 0 0 999px / 50%;
+        background: linear-gradient(90deg, rgba(255, 61, 31, 0), rgba(255, 122, 31, 0.8) 55%, rgba(255, 236, 130, 0.95));
+        filter: blur(1.5px);
+        transform-origin: right center;
+        animation: burnFlick 0.14s ease-in-out infinite alternate;
+        pointer-events: none;
+      }
+      @keyframes burnFlick{
+        from{ transform: scaleX(0.8) scaleY(0.9); opacity: 0.85; }
+        to{ transform: scaleX(1.1) scaleY(1.1); opacity: 1; }
+      }
+      #lanes .fx{
+        position: absolute;
+        z-index: 1;
+        pointer-events: none;
+      }
+      #lanes .fx-fire{
+        border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+        background: radial-gradient(circle at 50% 62%, #fff8b0 0, #ffd23c 32%, #ff7a1f 62%, rgba(255, 61, 31, 0) 100%);
+        box-shadow: 0 0 0.6rem rgba(255, 122, 31, 0.9);
+        animation: fxFire 0.7s ease-out forwards;
+      }
+      @keyframes fxFire{
+        from{ transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+        to{ transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15); opacity: 0; }
+      }
+      #lanes .fx-spd{
+        height: 0.16rem;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, #fff 55%, #ffe27a);
+        box-shadow: 0 0 0.35rem #ffc93c;
+        transform-origin: right center;
+        animation: fxSpd 0.52s ease-out forwards;
+      }
+      @keyframes fxSpd{
+        from{ transform: translate(0, -50%) scaleX(0.15); opacity: 0; }
+        25%{ opacity: 1; }
+        to{ transform: translate(var(--dx), -50%) scaleX(1); opacity: 0; }
+      }
+      #lanes .fx-spk{
+        font-style: normal;
+        line-height: 1;
+        color: #fff;
+        text-shadow: 0 0 0.35rem #ffc93c, 0 0 0.8rem #ff7a1f;
+        animation: fxSpk 0.8s ease-out forwards;
+      }
+      @keyframes fxSpk{
+        from{ transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 1; }
+        to{ transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.3) rotate(180deg); opacity: 0; }
+      }
+
+      /* 3) Barra FIEBRE neón: el degradado verde ➔ dorado ➔ rosa cubre toda la barra y el relleno lo descubre */
+      #hype .hb{
+        border-color: #c9fff0;
+        box-shadow: 0 0 0.8rem rgba(92, 242, 192, 0.6), inset 0 0 0.7rem rgba(0, 0, 0, 0.65), 0 0.2rem 0.6rem rgba(0, 0, 0, 0.45);
+      }
+      #hype u{
+        background: linear-gradient(90deg, #39ff88 0%, #ffd23c 55%, #ff3d9a 100%);
+        background-repeat: no-repeat;
+        box-shadow: 0 0 1rem rgba(255, 210, 60, 0.85), 0 0 0.35rem #fff inset;
+      }
+      #hype u::before{
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.26) 0 0.5rem, transparent 0.5rem 1rem);
+        animation: hypeStripes 1.1s linear infinite;
+      }
+      #hype u::after{
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 0.7rem;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95));
+        filter: blur(0.5px);
+      }
+      #hype b{
+        z-index: 1;
+        letter-spacing: 0.03em;
+        text-shadow: 0 0.1rem 0 var(--ink), 0 0 0.6rem rgba(0, 0, 0, 0.8);
+      }
+      @keyframes hypeStripes{ to{ background-position: 2rem 0; } }
+      #hype .hs{
+        position: absolute;
+        top: 50%;
+        display: none;
+        z-index: 0;
+        font-style: normal;
+        font-size: 1.2rem;
+        line-height: 1;
+        color: #fff;
+        text-shadow: 0 0 0.5rem #ffc93c, 0 0 1rem #ff3d9a;
+        pointer-events: none;
+      }
+      #hype.fever .hs{ display: block; animation: hsTw 0.7s ease-in-out infinite; }
+      #hype .hs1{ left: 6%; animation-delay: 0s !important; }
+      #hype .hs2{ left: 27%; animation-delay: 0.18s !important; }
+      #hype .hs3{ left: 49%; animation-delay: 0.36s !important; }
+      #hype .hs4{ left: 71%; animation-delay: 0.12s !important; }
+      #hype .hs5{ left: 92%; animation-delay: 0.3s !important; }
+      @keyframes hsTw{
+        0%, 100%{ transform: translateY(-50%) scale(0.3) rotate(0deg); opacity: 0; }
+        50%{ transform: translateY(-50%) scale(1.25) rotate(90deg); opacity: 1; }
+      }
+      #hype.fever .hb{
+        box-shadow: 0 0 1.4rem rgba(255, 61, 154, 0.95), 0 0 2.4rem rgba(255, 210, 60, 0.7), inset 0 0 0.7rem rgba(0, 0, 0, 0.4);
+      }
+
+      /* 4) Letrero a cuadros ¡META! sobre la línea de llegada (extremo derecho de la pista, arriba del todo).
+         z-index 0: las tortugas (.trk, z-index 1) pasan POR DELANTE del letrero al llegar. */
+      #metaBanner{
+        position: absolute;
+        z-index: 0;
+        right: -0.1rem;
+        top: -0.4rem;
+        padding: 0.24rem;
+        border: 0.14rem solid var(--ink);
+        border-radius: 0.55rem;
+        background: repeating-conic-gradient(var(--ink) 0 25%, #fff 0 50%) 0 0 / 0.46rem 0.46rem;
+        box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.55), 0 0 0.7rem rgba(255, 255, 255, 0.35);
+        transform-origin: 100% 50%;
+        pointer-events: none;
+        animation: metaSway 2.4s ease-in-out infinite alternate;
+      }
+      #metaBanner span{
+        display: block;
+        padding: 0.14rem 0.65rem 0.18rem;
+        border-radius: 0.35rem;
+        background: linear-gradient(180deg, #ff3d7f, #c1175a);
+        font: 1.05rem/1 "Bowlby One", "Arial Black", sans-serif;
+        letter-spacing: 0.04em;
+        color: #fff;
+        text-shadow: 0 0.1rem 0 var(--ink);
+        white-space: nowrap;
+      }
+      @keyframes metaSway{
+        from{ transform: rotate(-1.4deg); }
+        to{ transform: rotate(1.4deg); }
+      }
+      html.lead-near #metaBanner{ animation: metaHot 0.45s ease-in-out infinite alternate; }
+      @keyframes metaHot{
+        from{ transform: scale(1); box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.55), 0 0 0.7rem rgba(255, 201, 60, 0.6); }
+        to{ transform: scale(1.14); box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.55), 0 0 1.6rem rgba(255, 201, 60, 1), 0 0 0.6rem #fff; }
+      }
+
+      /* 5) Estado de conexión: verde brillante con punto pulsante */
+      #connectorStatus span{
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #connectorStatus .cdot{
+        flex: none;
+        width: 0.7em;
+        height: 0.7em;
+        margin-right: 0.55em;
+        border-radius: 50%;
+        background: #ffd3d9;
+        border: 0.1em solid rgba(0, 0, 0, 0.35);
+      }
+      #connectorStatus.connected{
+        background: linear-gradient(180deg, #34f08a, #10c25e);
+        border-color: #d6ffe6;
+        color: #02260f;
+        letter-spacing: 0.04em;
+        text-shadow: 0 0.05em 0 rgba(255, 255, 255, 0.35);
+        box-shadow: 0 0 0.9rem rgba(52, 240, 138, 0.95), 0 0.15rem 0.5rem rgba(0, 0, 0, 0.5);
+      }
+      #connectorStatus.connected .cdot{
+        background: #fff;
+        border-color: #05381b;
+        animation: cdotPulse 1.1s ease-out infinite;
+      }
+      @keyframes cdotPulse{
+        0%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.95), 0 0 0.45em #fff; }
+        60%{ transform: scale(1.15); box-shadow: 0 0 0 0.7em rgba(255, 255, 255, 0), 0 0 0.45em #fff; }
+        100%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 0 0.45em #fff; }
+      }
+
+      /* 6) CTA: con la líder cerca de la meta (≥80 %) el regalo central y los potenciadores pulsan; a partir del 92 % más fuerte y rápido */
+      #cta.near .cs{ animation: ctaNear 0.55s ease-in-out infinite alternate; }
+      #cta.near .cs.s0{ animation-delay: 0.1s; }
+      #cta.near .cs.s1{ animation-delay: 0.2s; }
+      #cta.near .cs.main{ animation: ctaNearMain 0.4s ease-in-out infinite alternate; }
+      #cta.near .cb .x{ animation: ctaXHot 0.35s ease-in-out infinite; }
+      #cta.near2 .cs{ animation-duration: 0.32s; }
+      #cta.near2 .cs.main{ animation-duration: 0.22s; }
+      #cta.near2 .cb .x{ animation-duration: 0.22s; }
+      @keyframes ctaNear{
+        from{ transform: scale(1); filter: drop-shadow(0 0 0.25em rgba(255, 61, 127, 0.55)); }
+        to{ transform: scale(1.1); filter: drop-shadow(0 0 0.8em rgba(255, 201, 60, 1)); }
+      }
+      @keyframes ctaNearMain{
+        from{ transform: scale(1); filter: drop-shadow(0 0 0.3em rgba(255, 61, 127, 0.7)); }
+        to{ transform: scale(1.2); filter: drop-shadow(0 0 1.1em rgba(255, 201, 60, 1)) drop-shadow(0 0 0.4em #fff); }
+      }
+      @keyframes ctaXHot{
+        0%, 100%{ transform: scale(1) rotate(-6deg); }
+        50%{ transform: scale(1.3) rotate(6deg); }
+      }
+
+      /* ═══════════════ v4 · ZONA SEGURA TIKTOK LIVE (9:16) ═══════════════
+         Este bloque va AL FINAL y manda sobre todas las reglas de posición anteriores (que se pisaban entre sí).
+         De arriba abajo, en vertical (% del alto de pantalla):
+            0 – 13 %   zona de TikTok: foto del creador, espectadores, ranking → vacío
+           13 – 21 %   barra FIEBRE (#hype) + pista "escribe tu país" (#hint)
+           22 – ~64 %  PISTA de carrera (#app / #lanes)  ← --top
+           ~64 – 73 %  llamadas de acción (#cta) a todo el ancho
+           22 %+  narradora (#cast) superpuesta en la esquina superior izquierda de la pista
+           franja fina estado de conexión (#connectorStatus) + versión (#versionBadge)
+           73 – 100 %  zona de TikTok: chat flotante, caja de comentarios, regalos → vacío  ← --bot
+         Ajustes por URL: ?top=22  ?bottom=27  ?hypetop=13.5  ?safe=1 (más margen derecho) */
+      @media (orientation: portrait){
+        :root{
+          --top: 22%;
+          --bot: 27%;
+          --padr: 5%;
+          --padl: 4%;
+          --overlay-lift: 0px;
+          --hype-top: 13.5%;
+          --strip-h: 1.9rem;
+          --safe-b: env(safe-area-inset-bottom, 0px);
+          --cast-sz: 5.2rem;
+        }
+        html body #app{
+          top: var(--top);
+          bottom: calc(var(--bot) + var(--safe-b) + var(--strip-h) + var(--cta-h) + 0.4rem);
+          left: var(--padl);
+          right: var(--padr);
+        }
+        /* Barra FIEBRE justo debajo de la zona de TikTok; la pista "escribe tu país" cuelga de ella */
+        html body #hype{ top: var(--hype-top); left: 6%; right: 6%; }
+        html body #hype .hb{ height: 2.3rem; }
+        html body #hype b{ font-size: 1.15rem; }
+        html body #hint{ top: calc(var(--hype-top) + 2.3rem + 0.35rem); left: 0; right: 0; }
+        html body #hint .hc{ font-size: 0.85rem; padding: 0.2rem 0.7rem 0.25rem; }
+        /* CTA: bajo la pista, a la izquierda; dejan libre la columna de la narradora */
+        html body #cta{
+          left: 0;
+          width: auto;
+          right: var(--padr);
+          bottom: calc(var(--bot) + var(--safe-b) + var(--strip-h));
+          padding: 0 0 0 var(--padl);
+        }
+        /* Narradora: esquina inferior derecha de la zona libre (encima de la caja de regalos, nunca encima) */
+        html body #cast{
+          left: calc(var(--padl) + 0.4rem);
+          right: auto;
+          top: calc(var(--top) + 0.5rem);
+          bottom: auto;
+          z-index: 60;
+          width: var(--cast-sz);
+          height: var(--cast-sz);
+          flex-direction: row;
+        }
+        html body #cast .cav{ width: 100%; height: 100%; border-radius: 50%; }
+        html body #cast .bub{
+          position: absolute;
+          left: calc(100% + 0.5rem);
+          right: auto;
+          top: 50%;
+          bottom: auto;
+          margin: 0;
+          width: max-content;
+          max-width: min(15rem, 64vw);
+          transform-origin: left center;
+          transform: translate(-0.3rem, -50%) scale(0.95);
+        }
+        html body #cast.say .bub{ transform: translateY(-50%); }
+        html body #cast .bub::before{ display: none; }
+        /* Franja de estado: versión + conexión, a la izquierda, sobre el chat de TikTok pero fuera de él */
+        html body #versionBadge,
+        html body #connectorStatus{
+          bottom: calc(var(--bot) + var(--safe-b) + 0.15rem);
+          min-height: 1.6rem;
+          display: flex;
+          align-items: center;
+        }
+        html body #versionBadge{ left: var(--padl); padding: 0.2rem 0.5rem; font-size: 0.55rem; opacity: 0.8; }
+        html body #connectorStatus{
+          left: calc(var(--padl) + 3rem);
+          right: auto;
+          padding: 0.2rem 0.8rem;
+          font-size: 0.72rem;
+          max-width: calc(100vw - var(--padl) - 3rem - var(--padr) - 0.8rem);
+        }
+      }
+      @media (prefers-reduced-motion: reduce){
+        #lanes .fl .cloth, #metaBanner, #hype u::before{ animation: none; }
+      }
     </style>
   </head>
   <body>
     <canvas id="fx"></canvas>
 
     <div id="app">
-      <div id="lanes"></div>
+      <div id="lanes"><div id="metaBanner" aria-hidden="true"><span>¡META!</span></div></div>
     </div>
     <div id="vig"></div>
-    <span id="versionBadge" aria-label="Versión 1.5">v1.5</span>
+    <span id="versionBadge" aria-label="Versión 1.6">v1.6</span>
     <button id="connectorStatus" class="disconnected" type="button" aria-live="polite">
       Conectando…
     </button>
@@ -1641,7 +2278,82 @@
     </div>
     <div id="snd">🔇 Toca la pantalla para activar el sonido</div>
     <div id="cta" aria-hidden="true"></div>
-    <div id="hype" aria-hidden="true"><div class="hb"><u id="hypeF"></u><b id="hypeT"></b></div></div>
+    <div id="cast" aria-live="polite" data-mood="idle">
+      <div class="cav">
+        <div class="cvid" id="cvid"></div>
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <linearGradient id="castBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b6f78"/><stop offset="1" stop-color="#0d3a41"/></linearGradient>
+            <radialGradient id="castFur" cx=".4" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eadfd2"/></radialGradient>
+          </defs>
+          <rect width="100" height="100" fill="url(#castBg)"/>
+          <!-- orejas largas (detrás de la cabeza) -->
+          <g transform="rotate(-9 38 44)"><ellipse cx="37" cy="25" rx="9" ry="21" fill="url(#castFur)" stroke="#c9b9a6" stroke-width="1"/><ellipse cx="37" cy="27" rx="4.4" ry="15.5" fill="#ffb3c7"/></g>
+          <g transform="rotate(9 62 44)"><ellipse cx="63" cy="25" rx="9" ry="21" fill="url(#castFur)" stroke="#c9b9a6" stroke-width="1"/><ellipse cx="63" cy="27" rx="4.4" ry="15.5" fill="#ffb3c7"/></g>
+          <!-- cuerpo: suéter rosa con cuello crema -->
+          <path d="M14 100 Q18 78 50 75 Q82 78 86 100 Z" fill="#ff3d7f"/>
+          <path d="M42 74 L50 88 L58 74 Z" fill="#fff6e0"/>
+          <!-- cabeza y hocico -->
+          <ellipse cx="50" cy="54" rx="26" ry="23.5" fill="url(#castFur)" stroke="#c9b9a6" stroke-width="1"/>
+          <ellipse cx="50" cy="64" rx="13.5" ry="10" fill="#fff"/>
+          <!-- bigotes -->
+          <g stroke="#b9a99a" stroke-width="1" stroke-linecap="round" fill="none"><path d="M36 61 L18 57"/><path d="M36 64 L17 65"/><path d="M36 67 L20 72"/><path d="M64 61 L82 57"/><path d="M64 64 L83 65"/><path d="M64 67 L80 72"/></g>
+          <!-- mejillas -->
+          <circle class="blush" cx="33" cy="58" r="4.2" fill="#ff8aa8"/>
+          <circle class="blush" cx="67" cy="58" r="4.2" fill="#ff8aa8"/>
+          <!-- cejas -->
+          <path class="brow bl" d="M34 41 Q41 37.5 47 41" fill="none" stroke="#9a8672" stroke-width="2.2" stroke-linecap="round"/>
+          <path class="brow br" d="M53 41 Q59 37.5 66 41" fill="none" stroke="#9a8672" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- ojos -->
+          <g class="e-norm">
+            <ellipse class="eye" cx="41" cy="50" rx="2.9" ry="3.8" fill="#1b1b1b"/>
+            <ellipse class="eye" cx="59" cy="50" rx="2.9" ry="3.8" fill="#1b1b1b"/>
+            <circle cx="42" cy="48.5" r="1" fill="#fff"/><circle cx="60" cy="48.5" r="1" fill="#fff"/>
+          </g>
+          <g class="e-happy" fill="none" stroke="#1b1b1b" stroke-width="2.8" stroke-linecap="round">
+            <path d="M35.5 52 Q41 44.5 46.5 52"/>
+            <path d="M53.5 52 Q59 44.5 64.5 52"/>
+          </g>
+          <g class="e-wide">
+            <ellipse cx="41" cy="50" rx="4" ry="5" fill="#fff" stroke="#1b1b1b" stroke-width="1"/>
+            <ellipse cx="59" cy="50" rx="4" ry="5" fill="#fff" stroke="#1b1b1b" stroke-width="1"/>
+            <circle cx="41" cy="50.5" r="2.4" fill="#1b1b1b"/>
+            <circle cx="59" cy="50.5" r="2.4" fill="#1b1b1b"/>
+            <circle cx="42" cy="49" r="0.9" fill="#fff"/>
+            <circle cx="60" cy="49" r="0.9" fill="#fff"/>
+          </g>
+          <g class="e-heart" fill="#ff3d7f">
+            <path d="M41 55 C35 50.5 36 45 39.5 45 C41 45 41 46.5 41 47 C41 46.5 41 45 42.5 45 C46 45 47 50.5 41 55 Z"/>
+            <path d="M59 55 C53 50.5 54 45 57.5 45 C59 45 59 46.5 59 47 C59 46.5 59 45 60.5 45 C64 45 65 50.5 59 55 Z"/>
+          </g>
+          <!-- nariz y dientes de conejo -->
+          <path d="M47 57 Q50 55 53 57 Q52 60.5 50 61 Q48 60.5 47 57 Z" fill="#ff7aa2" stroke="#d94f7c" stroke-width=".6"/>
+          <rect x="46.2" y="65.5" width="3.6" height="5.6" rx="1" fill="#fff" stroke="#c9b9a6" stroke-width=".7"/>
+          <rect x="50.2" y="65.5" width="3.6" height="5.6" rx="1" fill="#fff" stroke="#c9b9a6" stroke-width=".7"/>
+          <!-- bocas -->
+          <path class="mo-smile" d="M43 62 Q50 67 57 62" fill="none" stroke="#b3263e" stroke-width="2.2" stroke-linecap="round"/>
+          <g class="mo-grin">
+            <path d="M40.5 60.5 Q50 76 59.5 60.5 Z" fill="#b3263e"/>
+            <path d="M46.2 62 H53.8 V66.5 H46.2 Z" fill="#fff"/>
+          </g>
+          <ellipse class="mo-o" cx="50" cy="65" rx="4" ry="5.2" fill="#8c1f33"/>
+          <path class="mo-frown" d="M43 67 Q50 61 57 67" fill="none" stroke="#b3263e" stroke-width="2.2" stroke-linecap="round"/>
+          <ellipse class="mo-talk mouth" cx="50" cy="64.5" rx="6" ry="2.4" fill="#b3263e"/>
+          <!-- extras -->
+          <path class="spark s1" d="M14 24 L16.5 30 L22.5 32.5 L16.5 35 L14 41 L11.5 35 L5.5 32.5 L11.5 30 Z" fill="#ffc93c"/>
+          <path class="spark s2" d="M86 16 L88 21 L93 23 L88 25 L86 30 L84 25 L79 23 L84 21 Z" fill="#fff6e0"/>
+          <path class="sweat" d="M72 34 Q76 41 72 44 Q68 41 72 34 Z" fill="#7fd4ff" stroke="#2b87b3" stroke-width=".8"/>
+          <!-- diadema con micrófono (pasa por delante de las orejas) -->
+          <path d="M24 50 Q24 30 50 30 Q76 30 76 50" fill="none" stroke="#ffc93c" stroke-width="3.6" stroke-linecap="round"/>
+          <rect x="19" y="43" width="7" height="16" rx="3.5" fill="#ffc93c"/>
+          <rect x="74" y="43" width="7" height="16" rx="3.5" fill="#ffc93c"/>
+          <path d="M23 57 Q24 76 40 73" fill="none" stroke="#ffc93c" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="42" cy="73" r="3.3" fill="#ffc93c"/>
+        </svg>
+      </div>
+      <div class="bub" id="castBub"></div>
+    </div>
+    <div id="hype" aria-hidden="true"><div class="hb"><u id="hypeF"></u><b id="hypeT"></b><em class="hs hs1">✦</em><em class="hs hs2">✧</em><em class="hs hs3">✦</em><em class="hs hs4">✧</em><em class="hs hs5">✦</em></div></div>
     <div id="hint" aria-hidden="true"></div>
     <div id="bots">
       <b id="botsTitle">Pruebas de interacción (P)</b>
@@ -1704,7 +2416,7 @@
         win: +Q.get("win") || 100,
         target: +Q.get("target") || 40,
         crawl: 0.15 / TIME_X,
-        restartMs: 2500,
+        restartMs: 0,
         botSec: Math.max(20, +Q.get("bot") || 120) /* ritmo constante del bot de prueba (2 min por defecto) */,
         join: Q.has("join") ? +Q.get("join") : 0.5,
         countries: [0, 1, 2, 3, 4].map((i) => ({
@@ -2010,6 +2722,11 @@
           const image = $("rk-" + lane.c).querySelector("img");
           image.alt = teams[index].n;
           image.src = teams[index].u;
+          const flagImg = $("fl-" + lane.c) && $("fl-" + lane.c).querySelector("img");
+          if (flagImg) {
+            flagImg.alt = teams[index].n;
+            flagImg.src = teams[index].u;
+          }
         });
       }
       function nat(p) {
@@ -2271,11 +2988,12 @@
         SND && MUSIC && S.go && !S.over ? musicStart() : musicStop();
       }
       function unlock() {
-        if (!SND) return;
-        ac();
-        try {
-          if (AC && AC.state !== "running") AC.resume();
-        } catch {}
+        if (SND) {
+          ac();
+          try {
+            if (AC && AC.state !== "running") AC.resume();
+          } catch {}
+        }
         if (VOICE_ON && window.speechSynthesis)
           window.speechSynthesis.resume();
       }
@@ -2290,7 +3008,6 @@
           musicSync();
         } else {
           musicStop();
-          if (window.speechSynthesis) window.speechSynthesis.cancel();
         }
       }
       function toggleMusic() {
@@ -2327,7 +3044,7 @@
         l.className = "lane empty";
         l.id = "ln-" + c.c;
         l.innerHTML = `<div class="lab"><div class="rk disp" id="rk-${c.c}"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></div></div>
-  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
+  <div class="trk" id="tk-${c.c}" style="--i:${li}">${[25, 50, 75].map((m) => `<i class="mk" style="left:calc(var(--tw) * 1 + (100% - var(--tw) * 1 - .8rem)*${m / 100})"></i>`).join("")}<i class="sl"></i><div class="fin"></div><div class="fl" id="fl-${c.c}"><i class="pole"></i><span class="cloth"><img alt="${NATIONS[li].n}" src="${NATIONS[li].u}"></span><i class="base"></i></div><div class="tag"><b id="nm-${c.c}"></b><small id="tt-${c.c}"></small></div><div class="tur mood-sad" id="tu-${c.c}" style="--p:0">${turtle(c)}</div></div>`;
         lanes.append(l);
         const shellFlag = l.querySelector(".fgi"),
           shellContent = l.querySelector(".bd g[clip-path]"),
@@ -2586,6 +3303,18 @@
           }
         });
       }
+      /* Con el líder al 80 % o más (y carrera en curso) el botón de Rosita late. */
+      setInterval(() => {
+        const ct = $("cta");
+        let m = -1;
+        for (const c of C) if (S.slotUser[c.c] && S.pos[c.c] > m) m = S.pos[c.c];
+        const live = !S.over && S.go;
+        if (ct) {
+          ct.classList.toggle("near", m >= 80 && live); /* regalo central y potenciadores pulsan */
+          ct.classList.toggle("near2", m >= 92 && live); /* últimos metros: más rápido y más fuerte */
+        }
+        document.documentElement.classList.toggle("lead-near", m >= 80 && live); /* el letrero ¡META! también se enciende */
+      }, 400);
       /* Tensión final: la primera vez por ronda que el líder pasa el 88 % suena un aviso y destella la pantalla. */
       function checkNearEnd() {
         if (S.nearEnd) return;
@@ -2791,13 +3520,18 @@
       function hypePaint() {
         const box = $("hype");
         if (!box) return;
-        const now = Date.now(), fev = now < HY.until;
+        const now = Date.now(),
+          fev = now < HY.until,
+          pct = Math.max(0, Math.min(100, Math.round(HY.v)));
         box.classList.toggle("fever", fev);
         box.classList.toggle("hot", !fev && HY.v >= 75);
-        $("hypeF").style.width = (fev ? 100 : HY.v) + "%";
+        const f = $("hypeF");
+        f.style.width = (fev ? 100 : HY.v) + "%";
+        /* el degradado verde ➔ dorado ➔ rosa abarca TODA la barra: el relleno solo lo descubre (en FIEBRE lo anima el CSS) */
+        f.style.backgroundSize = fev ? "" : (HY.v > 1 ? (10000 / HY.v).toFixed(1) : 10000) + "% 100%";
         $("hypeT").textContent = fev
-          ? "🔥 ¡FIEBRE! ×1.5 · " + Math.ceil((HY.until - now) / 1000) + "s"
-          : "🔥 Llena la FIEBRE: ¡comenta y da like!";
+          ? "🔥 ¡FIEBRE! 100% · ×1.5 · " + Math.ceil((HY.until - now) / 1000) + "s"
+          : "🔥 FIEBRE " + pct + "%" + (pct < 15 ? " · ¡comenta y da like!" : "");
       }
       function hypeAdd(entry, points, isBot) {
         if (!HY.on || S.over || !S.go || Date.now() < HY.until) return;
@@ -2809,6 +3543,7 @@
         if (HY.v >= 100) {
           HY.v = 0;
           HY.until = Date.now() + 10000;
+          castMood("excited", 6000);
           screenFx(true);
           SFX.goal();
           burst(60, true);
@@ -2869,18 +3604,258 @@
       const VOICE_ON = Q.get("voice") !== "0";
       let voiceCommentAt = 0,
         voicePhrase = 0;
+      /* Narradora: el avatar #cast mueve la boca y muestra la frase mientras suena la voz (o ~3 s si no hay voz). */
+      let castTimer = 0,
+        castPend = 0,
+        castSeq = 0,
+        castLen = 0;
+      /* Fin: se apaga boca/clip de "hablando" y el globo. */
+      function castEnd() {
+        clearTimeout(castTimer);
+        clearTimeout(castPend);
+        const c = $("cast");
+        if (c) c.classList.remove("talk", "say");
+      }
+      /* Inicio real: boca/clip + globo arrancan JUSTO cuando empieza a sonar la voz (onstart). */
+      function castBegin() {
+        const c = $("cast");
+        if (!c) return;
+        clearTimeout(castPend);
+        c.classList.add("talk", "say");
+        clearTimeout(castTimer);
+        castTimer = setTimeout(castEnd, Math.max(3000, castLen * 110 + 2000)); /* seguro por si no llega onend */
+      }
+      /* Cuando hay voz, texto y boca esperan a los eventos reales de reproducción. */
+      function castSay(text, viaVoice = false) {
+        const b = $("castBub");
+        if (!$("cast") || !b) return;
+        b.textContent = text;
+        castLen = text.length;
+        clearTimeout(castPend);
+        clearTimeout(castTimer);
+        const c = $("cast");
+        c.classList.remove("talk", "say");
+        if (viaVoice) return;
+        castBegin();
+        clearTimeout(castTimer);
+        castTimer = setTimeout(castEnd, Math.max(2500, text.length * 85 + 800)); /* sin voz: ~3 s */
+      }
+      if (Q.get("cast") === "0") {
+        const c = $("cast");
+        if (c) c.remove();
+        document.documentElement.style.setProperty("--cast-h", "0px");
+      }
+      /* Expresiones de la narradora: cada evento cambia su cara un rato y luego vuelve a neutral. */
+      const MOOD_P = { idle: 0, happy: 1, sad: 1, love: 2, surprised: 3, excited: 3 };
+      let castMoodT = 0;
+      function castMood(m, ms = 1800) {
+        const c = $("cast");
+        if (!c) return;
+        const cur = c.dataset.mood || "idle";
+        if (castMoodT && MOOD_P[m] < MOOD_P[cur]) return; /* no pisa una emoción más fuerte */
+        c.dataset.mood = m;
+        clearTimeout(castMoodT);
+        castMoodT = setTimeout(() => {
+          c.dataset.mood = "idle";
+          castMoodT = 0;
+        }, ms);
+      }
+      function castReact(type, points) {
+        if (type === "gift") castMood(points >= 15 ? "excited" : "love", points >= 15 ? 2600 : 2000);
+        else if (type === "like") castMood("happy", 1200);
+        else if (type === "follow" || type === "share") castMood("happy", 1800);
+        else if (points >= 15) castMood("excited", 2000);
+      }
+      if (Q.get("casttest") === "1") {
+        const order = ["idle", "happy", "excited", "surprised", "love", "sad"];
+        let ci = 0;
+        setInterval(() => {
+          const m = order[ci++ % order.length];
+          castMood(m, 1900);
+          castSay("Prueba: " + m);
+        }, 2200);
+      }
+
+      /* ===== Narradora en video: detecta clips, cambia de clip según emoción / habla (el avatar dibujado queda de respaldo) ===== */
+      (function castVideo() {
+        const cast = $("cast"),
+          box = $("cvid");
+        if (!cast || !box || Q.get("castvideo") === "0") return;
+        const dir = (Q.get("castdir") || "avatar").replace(/\/+$/, "") + "/",
+          NAMES = ["idle", "talk", "happy", "excited", "surprised", "love", "sad"],
+          clips = {},
+          chroma = Q.get("chroma") === "1";
+        if (Q.get("castframe") === "0") cast.classList.add("noframe");
+        const probeFolder = (name) =>
+          new Promise((resolve) => {
+            const exts = ["webm", "mp4"];
+            const tryNext = (k) => {
+              if (k >= exts.length) return resolve(null);
+              const v = document.createElement("video");
+              v.muted = true;
+              v.loop = true;
+              v.playsInline = true;
+              v.preload = "auto";
+              v.setAttribute("muted", "");
+              const to = setTimeout(() => { v.onerror = v.onloadeddata = null; tryNext(k + 1); }, 4000);
+              v.onloadeddata = () => { clearTimeout(to); resolve(v); };
+              v.onerror = () => { clearTimeout(to); tryNext(k + 1); };
+              v.src = dir + name + "." + exts[k];
+            };
+            tryNext(0);
+          });
+        /* Un solo HTML: los clips se cargan desde la propia página (?castsetup=1) y se guardan en el navegador (IndexedDB).
+           Si no hay clips guardados, intenta la carpeta avatar/ (opcional). */
+        const idb = () =>
+          new Promise((res, rej) => {
+            try {
+              const r = indexedDB.open("castclips", 1);
+              r.onupgradeneeded = () => r.result.createObjectStore("clips");
+              r.onsuccess = () => res(r.result);
+              r.onerror = () => rej(r.error);
+            } catch (e) { rej(e); }
+          });
+        const idbRun = (mode, fn) =>
+          idb().then((db) => new Promise((res, rej) => {
+            const tx = db.transaction("clips", mode),
+              st = tx.objectStore("clips"),
+              rq = fn(st);
+            tx.oncomplete = () => res(rq && rq.result);
+            tx.onerror = () => rej(tx.error);
+          })).catch(() => null);
+        const idbGet = (k) => idbRun("readonly", (st) => st.get(k));
+        const idbPut = (k, v) => idbRun("readwrite", (st) => st.put(v, k));
+        const idbClear = () => idbRun("readwrite", (st) => st.clear());
+        const mkVideo = (src) =>
+          new Promise((resolve) => {
+            const v = document.createElement("video");
+            v.muted = true; v.loop = true; v.playsInline = true; v.preload = "auto";
+            v.setAttribute("muted", "");
+            const to = setTimeout(() => { v.onerror = v.onloadeddata = null; resolve(null); }, 6000);
+            v.onloadeddata = () => { clearTimeout(to); resolve(v); };
+            v.onerror = () => { clearTimeout(to); resolve(null); };
+            v.src = src;
+          });
+        const probe = async (name) => {
+          const blob = await idbGet(name);
+          if (blob instanceof Blob) {
+            const v = await mkVideo(URL.createObjectURL(blob));
+            if (v) return v;
+          }
+          return probeFolder(name);
+        };
+        if (Q.get("castsetup") === "1") {
+          const pn = document.createElement("div");
+          pn.style.cssText = "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99999;width:min(92vw,26rem);padding:1rem;border-radius:1rem;background:#07262b;color:#fff6e0;border:.15rem solid #ffc93c;font:800 14px/1.35 system-ui,sans-serif;box-shadow:0 .5rem 2rem rgba(0,0,0,.7)";
+          pn.innerHTML = '<div style="font-size:16px;margin-bottom:.5rem">🎬 Clips de la narradora</div>' +
+            '<div style="font-weight:700;opacity:.85;margin-bottom:.6rem">Elige los videos (varios a la vez). El nombre del archivo decide la emoción: idle, talk, happy, excited, surprised, love, sad (.webm o .mp4). Se guardan en este navegador.</div>' +
+            '<input id="csFiles" type="file" accept="video/*" multiple style="width:100%;margin-bottom:.6rem">' +
+            '<div id="csMsg" style="min-height:1.4em;margin-bottom:.6rem;color:#5cf2c0"></div>' +
+            '<div style="display:flex;gap:.5rem"><button id="csClear" style="flex:1;padding:.5rem;border-radius:.6rem;border:0;background:#c6283d;color:#fff;font:inherit">Borrar clips</button>' +
+            '<button id="csClose" style="flex:1;padding:.5rem;border-radius:.6rem;border:0;background:#ffc93c;color:#07262b;font:inherit">Cerrar</button></div>';
+          document.body.appendChild(pn);
+          const msg = pn.querySelector("#csMsg");
+          Promise.all(NAMES.map(idbGet)).then((a) => {
+            const have = NAMES.filter((n, i) => a[i] instanceof Blob);
+            msg.textContent = have.length ? "Guardados: " + have.join(", ") : "Aún no hay clips guardados.";
+          });
+          pn.querySelector("#csFiles").onchange = async (e) => {
+            let n = 0, skipped = [];
+            for (const f of e.target.files) {
+              const nm = f.name.replace(/\.[^.]+$/, "").toLowerCase();
+              if (NAMES.includes(nm)) { await idbPut(nm, f); n++; } else skipped.push(f.name);
+            }
+            msg.textContent = n + " clip(s) guardado(s)" + (skipped.length ? " · ignorados: " + skipped.join(", ") : "") + ". Recargando…";
+            if (n) setTimeout(() => location.reload(), 900);
+          };
+          pn.querySelector("#csClear").onclick = async () => { await idbClear(); msg.textContent = "Clips borrados. Recargando…"; setTimeout(() => location.reload(), 600); };
+          pn.querySelector("#csClose").onclick = () => pn.remove();
+        }
+        Promise.all(NAMES.map(probe)).then((vs) => {
+          NAMES.forEach((n, i) => { if (vs[i]) clips[n] = vs[i]; });
+          if (!Object.keys(clips).length) return; /* sin clips: se queda el avatar dibujado */
+          NAMES.forEach((n) => { if (clips[n]) box.appendChild(clips[n]); });
+          cast.classList.add("vid");
+          let cv = null, cx = null, chromaOk = chroma;
+          if (chroma) {
+            cv = document.createElement("canvas");
+            box.appendChild(cv);
+            cx = cv.getContext("2d", { willReadFrequently: true });
+            cast.classList.add("chroma");
+          }
+          let current = null;
+          const pick = () => {
+            const mood = cast.dataset.mood || "idle",
+              talking = cast.classList.contains("talk"),
+              has = (n) => !!clips[n];
+            if ((mood === "excited" || mood === "surprised") && has(mood)) return mood;
+            if (talking && has("talk")) return "talk";
+            if (has(mood)) return mood;
+            return has("idle") ? "idle" : Object.keys(clips)[0];
+          };
+          const update = () => {
+            const n = pick();
+            if (n === current) return;
+            current = n;
+            NAMES.forEach((k) => {
+              const v = clips[k];
+              if (!v) return;
+              if (k === n) {
+                v.classList.add("on");
+                if (k !== "idle") v.currentTime = 0;
+                v.play().catch(() => {});
+              } else {
+                v.classList.remove("on");
+                if (k !== "idle") v.pause();
+              }
+            });
+          };
+          new MutationObserver(update).observe(cast, { attributes: true, attributeFilter: ["class", "data-mood"] });
+          update();
+          if (chroma) {
+            const draw = () => {
+              const v = clips[current];
+              if (v && v.videoWidth) {
+                const sc = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight)),
+                  w = Math.round(v.videoWidth * sc),
+                  h = Math.round(v.videoHeight * sc);
+                if (cv.width !== w) { cv.width = w; cv.height = h; }
+                cx.drawImage(v, 0, 0, w, h);
+                if (chromaOk) {
+                  try {
+                    const im = cx.getImageData(0, 0, w, h),
+                      d = im.data;
+                    for (let i = 0; i < d.length; i += 4) {
+                      const r = d[i], g = d[i + 1], b = d[i + 2],
+                        k = g - Math.max(r, b); /* cuánto domina el verde */
+                      if (k > 40) d[i + 3] = 0;
+                      else if (k > 15) d[i + 3] = Math.round(255 * (40 - k) / 25);
+                      if (k > 15) d[i + 1] = Math.max(r, b); /* quita el reflejo verde en los bordes */
+                    }
+                    cx.putImageData(im, 0, 0);
+                  } catch (e) {
+                    chromaOk = false; /* canvas "contaminado" (file://): hace falta servir la página por http */
+                    cast.classList.remove("chroma");
+                    console.warn("chroma: sirve la página por http para quitar el fondo verde", e);
+                  }
+                }
+              }
+              requestAnimationFrame(draw);
+            };
+            requestAnimationFrame(draw);
+          }
+        });
+      })();
       function sayRace(text, force = false) {
         const engine = window.speechSynthesis;
-        if (
-          !VOICE_ON ||
-          !SND ||
-          !engine ||
-          typeof SpeechSynthesisUtterance === "undefined"
-        )
-          return;
         const now = Date.now();
         if (!force && (!S.go || S.over || now - voiceCommentAt < 8000)) return;
         voiceCommentAt = now;
+        const seq = ++castSeq,
+          hasVoice = VOICE_ON && engine && typeof SpeechSynthesisUtterance !== "undefined";
+        castSay(text, hasVoice);
+        if (force) castMood("happy", 2500);
+        if (!hasVoice) return;
         engine.cancel();
         const utterance = new SpeechSynthesisUtterance(text),
           voices = engine.getVoices(),
@@ -2893,6 +3868,9 @@
         } else utterance.lang = "es-ES";
         utterance.rate = 1.08;
         utterance.pitch = 1.12;
+        utterance.onstart = () => { if (seq === castSeq) castBegin(); };
+        utterance.onend = () => { if (seq === castSeq) castEnd(); };
+        utterance.onerror = () => { if (seq === castSeq) castEnd(); };
         engine.speak(utterance);
       }
       function cheerCountry(code, leader = false) {
@@ -2900,6 +3878,7 @@
           name = index >= 0 ? NATIONS[index].es : "";
         if (!name) return;
         if (leader) {
+          castMood("surprised", 1500);
           sayRace("¡" + name + " toma la delantera! ¡Vamos, equipo!");
           return;
         }
@@ -2932,6 +3911,7 @@
         avatarPop(code, p, bst.m); /* avatar anclado en el centro del caparazón, en el punto donde se generó */
         if (ty === "gift") putGiftAhead(code, entry);
         evBadge(code, ty, entry);
+        castReact(ty, points);
         if (points >= 15) {
           t.tur.classList.add("turbo");
           setTimeout(() => t.tur.classList.remove("turbo"), 1800);
@@ -3111,6 +4091,7 @@
         if (el) el.classList.remove("show", "out", "podiumOnly");
       }
       function finish(code) {
+        castMood("excited", 4000);
         S.over = true;
         S.winner = code;
         const winnerIndex = C.findIndex((team) => team.c === code);
@@ -3157,7 +4138,7 @@
         render();
       }
       /* Nueva ronda: sortea los países y reinicia el estado; solo la primera ronda lleva cuenta regresiva. */
-      function newRound(immediate = false) {
+      function newRound(immediate = true) { /* siempre arranca directo: sin cuenta regresiva 3·2·1 */
         setRoundTeams();
         hideWinner();
         clearTimeout(S.rt);
@@ -3334,6 +4315,45 @@
         t.trk.append(el);
         setTimeout(() => el.remove(), 900);
       }
+      /* ===== v3: la tortuga líder (la de la corona) escupe fuego y destellos de velocidad detrás del caparazón =====
+         Partículas DOM cortas (≈0,7 s) detrás de la tortuga (z-index menor que .tur); más velocidad = más partículas. */
+      function leaderFx(k, t, dt) {
+        if (!S.go || S.over || S.pos[k] < 2 || !GEO.k || t.vs < 0.05 || document.hidden) return;
+        t.fxT = (t.fxT || 0) - dt;
+        if (t.fxT > 0) return;
+        t.fxT = Math.max(0.022, 0.055 - Math.min(t.vs, 8) * 0.004);
+        if ((t.fxN || 0) > 40) return;
+        const x0 = Math.min(100, S.pos[k]) * GEO.ppu + GEO.tw * 0.12,
+          y0 = t.rtPx + GEO.th * 0.6,
+          r = Math.random(),
+          el = document.createElement("i"),
+          u = GEO.th;
+        let life = 700;
+        if (r < 0.68) {
+          /* llama */
+          const s = u * (0.2 + Math.random() * 0.2);
+          el.className = "fx fx-fire";
+          el.style.cssText = `left:${x0 + (Math.random() - 0.5) * u * 0.1}px;top:${y0 + (Math.random() - 0.5) * u * 0.32}px;width:${s}px;height:${s}px;--dx:${-(u * (0.6 + Math.random() * 1.1)).toFixed(0)}px;--dy:${((Math.random() - 0.7) * u * 0.5).toFixed(0)}px`;
+        } else if (r < 0.9) {
+          /* estela de velocidad */
+          const w = u * (0.5 + Math.random() * 0.5);
+          el.className = "fx fx-spd";
+          el.style.cssText = `left:${x0 - w * 0.2}px;top:${y0 + (Math.random() - 0.5) * u * 0.55}px;width:${w}px;--dx:${-(u * (0.6 + Math.random() * 0.8)).toFixed(0)}px`;
+          life = 520;
+        } else {
+          /* destello */
+          el.className = "fx fx-spk";
+          el.textContent = Math.random() < 0.5 ? "✦" : "✧";
+          el.style.cssText = `left:${x0}px;top:${y0 + (Math.random() - 0.5) * u * 0.5}px;font-size:${(u * (0.2 + Math.random() * 0.14)).toFixed(0)}px;--dx:${-(u * (0.3 + Math.random() * 0.7)).toFixed(0)}px;--dy:${((Math.random() - 0.5) * u * 0.7).toFixed(0)}px`;
+          life = 800;
+        }
+        t.trk.append(el);
+        t.fxN = (t.fxN || 0) + 1;
+        setTimeout(() => {
+          el.remove();
+          t.fxN--;
+        }, life);
+      }
       function photo() {
         if (S.over || !S.go || S.pf) return;
         const o = C.map((c) => S.pos[c.c]).sort((a, b) => b - a);
@@ -3380,7 +4400,7 @@
         /* a = la de arriba (carril menor), b = la de abajo */
         [[a, -1, b], [b, 1, a]].forEach(([k, dir, other]) => {
           const t = T[k], isBot = !!(slotPlayer(k) && slotPlayer(k).isBot);
-          t.ouchT = HIT.FACE_S;
+          t.ouchT = HIT.FACE_S; castMood("sad", 1500);
           t.immT = HIT.IMMUNE_S;
           t.hits++;
           t.angryT = 0;
@@ -3448,10 +4468,13 @@
       function physics() {
         const g = GEO;
         if (!g.k) return;
-        const bh = g.H / C.length;
+        const bh = g.H / C.length,
+          flagH = Math.min(bh * 0.9, 3.4 * remPx());
         C.forEach((c, i) => {
           const t = T[c.c];
           t.rtPx = i * bh + (bh - g.th) / 2 + t.zy;
+          t.trk.style.setProperty("--fy", (i * bh + (bh - g.th) / 2).toFixed(1) + "px"); /* altura fija del carril (la bandera no zigzaguea) */
+          t.trk.style.setProperty("--fh", flagH.toFixed(1) + "px");
           /* --rt = altura real de la tortuga en la pista: con ella se mueven también 🎁, polvo y etiquetas */
           t.trk.style.setProperty("--rt", t.rtPx.toFixed(1) + "px");
           t.tur.style.transform = "rotate(" + t.psi.toFixed(2) + "deg)";
@@ -3704,6 +4727,8 @@
               puff(k, R);
             }
           }
+          t.tur.classList.toggle("burn", k === firstK && S.go && !S.over && t.vs > 0.05); /* llama fija detrás de la líder */
+          if (k === firstK) leaderFx(k, t, dt);
           {
             const _pv = Math.min(100, S.pos[k]).toFixed(2);
             t.tur.style.setProperty("--p", _pv);
@@ -3990,11 +5015,17 @@
           const connected = Boolean(connectorState.connected || connectorState.isConnected);
           statusButton.classList.toggle("connected", connected);
           statusButton.classList.toggle("disconnected", !connected);
-          statusButton.textContent = connected
-            ? `Conectado · @${shortUsername}`
+          const label = connected
+            ? `CONECTADO${shortUsername ? " · @" + shortUsername : ""}`
             : username
               ? `Sin conexión · @${shortUsername}`
               : "Configura TikTok en /backend";
+          const dot = document.createElement("i"),
+            txt = document.createElement("span");
+          dot.className = "cdot"; /* punto pulsante (solo late en verde: .connected) */
+          txt.textContent = label;
+          statusButton.textContent = "";
+          statusButton.append(dot, txt);
           statusButton.title = connected
             ? `Conectado a @${username}.`
             : connectorState.status === "failed"
