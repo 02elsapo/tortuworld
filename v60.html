@@ -5,8 +5,8 @@
   ═══════════════════════════════════════════════════════════════════════════
 
   DINÁMICA DEL JUEGO (cómo funciona hoy)
-    • 6 tortugas, cada una con SU PROPIO CARRIL: 5 países (Brasil, Paraguay y Argentina fijos en orden cambiante + 2 sorteados)
-      y la TORTUBOT en el 6.º carril. NO HAY CHOQUES: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril.
+    • 3 tortugas, cada una con SU PROPIO CARRIL: Brasil, Paraguay y Argentina en orden cambiante.
+      NO HAY CHOQUES: cada tortuga pasea al azar de arriba a abajo SOLO dentro de su carril.
     • La TORTUBOT marca el tope de la carrera: va de 0 a 100 a velocidad constante en CFG.botSec (120 s = 2 minutos).
       Si nadie la supera, llega ella. Las tortugas de los espectadores caminan a BASE_V (40 % de la velocidad de la bot).
     • Cada interacción acelera la tortuga de su usuario mientras dura el efecto (EV_BOOST, addBoost):
@@ -112,7 +112,7 @@
 
       /* Cabecera */
 
-      /* Pista: 5 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
+      /* Pista: 3 carriles fijos (uno por tortuga). Etiqueta izquierda = solo el puesto; el nombre va en .tag sobre la tortuga.
    Los anchos de .tur / .mk / .sl / .pl usan el mismo desplazamiento (.8rem de margen + pista de 100% - 7rem) para que
    la nariz de la tortuga coincida con las líneas de 25/50/75 % y con la meta. Si cambias el tamaño de .tur, ajusta los cuatro. */
       #lanes{
@@ -496,7 +496,7 @@
       .lane.empty .tag{
         display: none;
       }
-      /* Pantalla horizontal: se reduce el rem para que quepan los 5 carriles grandes sin tapar el panel inferior */
+      /* Pantalla horizontal: se reduce el rem para que quepan los 3 carriles grandes sin tapar el panel inferior */
       @media (orientation: landscape){
         html{
           font-size: min(3.8vw, 1.45vh);
@@ -1517,7 +1517,7 @@
         }
       }
 
-      /* ===== 6 carriles propios, avatares anclados y pista sin cartel de podio ===== */
+      /* ===== 3 carriles propios, avatares anclados y pista sin cartel de podio ===== */
       #lanes{
         --lane-step: calc(100% / (var(--n) + 1));
       }
@@ -1881,7 +1881,7 @@
         --guide-height: clamp(2.5rem, 7vh, 5rem);
       }
       html body #app{
-        top: 0;
+        top: var(--top, 12%);
         bottom: calc(50% + var(--guide-height));
       }
       #howto{
@@ -2002,14 +2002,14 @@
         restartMs: 7000,
         botSec: Math.max(20, +Q.get("bot") || 120) /* la TORTUBOT va de 0 a win en estos segundos (2 min): es el tope de la carrera */,
         join: Q.has("join") ? +Q.get("join") : 0.5,
-        countries: [0, 1, 2, 3, 4].map((i) => ({
+        countries: [0, 1, 2].map((i) => ({
           c: "s" + i,
           n: "",
           f: "",
           b: [],
         })),
       };
-      /* VELOCIDADES (unidades de pista por segundo). La TORTUBOT (6.º carril) va a BOT_V constante: 0 → 100 en CFG.botSec.
+      /* VELOCIDADES (unidades de pista por segundo). La TORTUBOT avanza a BOT_V constante: 0 → 100 en CFG.botSec.
          Las demás caminan a BASE_V (40 % de la bot; ?base=0.4) y cada interacción las multiplica ×2 / ×5 / ×10 / ×20 un rato
          (EV_BOOST = [multiplicador, segundos]). Gana quien llega primero a CFG.win. */
       const BOT_V = CFG.win / CFG.botSec,
@@ -2038,8 +2038,7 @@
       const contestants = new Map();
       let contestantSequence = 0;
       /* ===== PAÍSES en lugar de usuarios =====
-   Los cuatro primeros países son fijos; los seis restantes se sortean al comenzar cada ronda.
-   El sorteo combina campeones del Mundial masculino y selecciones populares, sin clubes. */
+   Brasil, Paraguay y Argentina compiten en orden aleatorio en cada ronda. */
       const NATIONS = (() => {
         const sv = (b) =>
           "data:image/svg+xml;utf8," +
@@ -2250,7 +2249,6 @@
       const FIXED_TEAMS = NATIONS.filter((team) =>
         ["BR", "PY", "AR"].includes(team.code),
       );
-      const FIXED_CODES = FIXED_TEAMS.map((team) => team.code);
       const WORLD_CUP_WINNERS = NATIONS.filter((team) =>
         ["BR", "AR", "DE", "FR", "IT", "UY", "ES", "ENG"].includes(team.code),
       );
@@ -2281,13 +2279,9 @@
         }
         return result;
       }
-      /* 5 tortugas: BR, PY y AR son fijos (en orden aleatorio) y 2 países más se sortean. */
+      /* 3 tortugas: BR, PY y AR en orden aleatorio. */
       function chooseRoundTeams() {
-        const fixed = shuffled(FIXED_TEAMS);
-        const candidates = ROUND_POOL.filter(
-          (team) => !FIXED_CODES.includes(team.code),
-        );
-        return [...fixed, ...shuffled(candidates).slice(0, 2)];
+        return shuffled(FIXED_TEAMS);
       }
       NATIONS.splice(0, NATIONS.length, ...chooseRoundTeams());
       let CODES = NATIONS.map((team) => team.code);
@@ -2999,12 +2993,12 @@
       }
 
       /* ===== Pantalla ===== */
-      /* Jugador dueño de una tortuga (slot 's0'..'s4'), o null si el carril está libre */
+      /* Jugador dueño de una tortuga (slot 's0'..'s2'), o null si el carril está libre */
       function slotPlayer(code) {
         const k = S.slotUser[code];
         return k ? contestants.get(k) : null;
       }
-      /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 6 carriles. Se llama ~4 veces/seg. */
+      /* Redibuja puesto, nombre, puntos, corona y estados (libre / ganador) de los 3 carriles. Se llama ~4 veces/seg. */
       /* El espectador elige un país (nombre, sigla o bandera en el chat); sin carril propio, su energía va a esa tortuga. */
       function registerPick(user, code) {
         S.pick.set(user, code);
