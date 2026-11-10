@@ -63,8 +63,8 @@ async function readEvent(reader, eventName) {
 test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY tortugas\.html \.\//);
-  assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), true);
+  assert.match(dockerfile, /COPY tortugas_tiktok\.html \.\//);
+  assert.equal(fs.existsSync(path.join(root, 'tortugas_tiktok.html')), true);
   assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v68.html')), false);
   assert.doesNotMatch(dockerfile, /v1\.3\.html/);
@@ -92,6 +92,7 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
     assert.match(html, /new EventSource\('\/api\/events'\)/);
     assert.match(html, /source\.addEventListener\('update'/);
     assert.match(html, /fetch\('\/api\/reconnect'/);
+    assert.match(html, /const RACE_SECONDS=60/);
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
     assert.match(html, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
     assert.match(html, /function handleLiveEntry\(entry\)/);
@@ -100,7 +101,7 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
       username: 'd4n1el325',
     });
 
-    for (const route of ['/overlay', '/tortugas.html']) {
+    for (const route of ['/overlay', '/tortugas.html', '/tortugas_tiktok.html']) {
       const response = await fetch(`${baseUrl}${route}`);
       assert.equal(response.status, 200);
       assert.equal(await response.text(), html);

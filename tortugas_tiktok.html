@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07262B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>tortu madera — Gran Carrera de Tortugas</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap">
+<style>
+:root{--page:#d9c3a0;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#1b120a}}
+:root[data-theme="dark"]{--page:#1b120a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{margin:0;background:var(--page);font-family:Inter,system-ui,sans-serif;color:#fff}
+#app{width:360px;height:640px;position:absolute;left:0;top:0;transform-origin:0 0;position:absolute;overflow:hidden;padding:14px 12px 16px;display:flex;flex-direction:column;gap:8px;
+background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 6px),repeating-linear-gradient(90deg,#c39561 0 62px,#6f4a28 62px 64px)}
+.title{height:44px;background:linear-gradient(#faf3e2,#e2d6bb);border:2px solid #6b6f78;border-radius:9px;box-shadow:0 3px 6px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;gap:6px;color:#2a2018;font-size:13px;font-weight:800}
+.board{position:relative;display:flex;gap:8px;padding:6px;background:linear-gradient(#7a4e2a,#5a3a1e);border:3px solid #3f2713;border-radius:12px;box-shadow:inset 0 2px 5px rgba(0,0,0,.55),0 5px 10px rgba(0,0,0,.5)}
+.lanes{display:flex;gap:6px;flex:1;min-width:0}
+.lane{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;position:relative}
+.hd{height:32px;position:relative;border:2px solid #3f2713;border-radius:7px;background:linear-gradient(#a8743f,#6e4524);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 3px rgba(0,0,0,.4);color:#fff;font:800 10px Inter,sans-serif;text-shadow:0 1px 1px #000;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:0}
+.hd.sel{outline:2px solid #ffd566;outline-offset:1px}
+.hd i{position:absolute;left:12px;right:12px;bottom:2px;height:3px;border-radius:2px}
+.hd .crown{position:absolute;top:-11px;right:-2px;display:none}
+.lane.lead .crown{display:block}
+.sv{position:relative}
+.sv svg{width:100%;height:auto;display:block}
+.tt{transition:transform .5s linear}
+.in{transform-origin:50px 490px}
+.lg{transform-box:fill-box}.lg.l{transform-origin:100% 50%}.lg.r{transform-origin:0 50%}
+.sh{transform-origin:50px 490px}
+.walk .lg{animation:step .45s ease-in-out infinite alternate}
+.walk .lg.rv{animation-direction:alternate-reverse}
+.walk .sh{animation:sway .9s ease-in-out infinite alternate}
+@keyframes step{from{transform:rotate(-20deg)}to{transform:rotate(20deg)}}
+@keyframes sway{from{transform:rotate(-2.5deg)}to{transform:rotate(2.5deg)}}
+.hop{animation:hop .35s}
+@keyframes hop{40%{transform:translateY(-2px)}}
+.fl{position:absolute;left:55%;font-size:16px;font-weight:800;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;pointer-events:none;animation:up .9s forwards}
+@keyframes up{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-40px)}}
+.side{width:25%;min-width:84px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.live{background:#e11d48;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:800;box-shadow:0 0 8px #e11d48}
+.live.connected{background:#16a34a;box-shadow:0 0 8px #16a34a}
+.live.connecting{background:#d97706;box-shadow:0 0 8px #d97706}
+.bub{position:relative;background:#f1e8d6;color:#2a2018;border-radius:10px;padding:6px 7px;font-size:10.5px;font-weight:800;text-align:center;line-height:1.25;box-shadow:0 2px 4px rgba(0,0,0,.4);width:100%;min-height:52px;display:flex;align-items:center;justify-content:center}
+.bub:after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-7px;border:7px solid transparent;border-top-color:#f1e8d6;border-bottom:0}
+.plate{background:linear-gradient(#faf3e2,#e2d6bb);color:#2a2018;border:2px solid #6b6f78;border-radius:9px;box-shadow:0 2px 5px rgba(0,0,0,.4);font-weight:800}
+.chips{display:flex;gap:8px}
+.chip{flex:1;height:40px;background:linear-gradient(#5a3a1e,#3f2713);border:2px solid #2a190b;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.chip span{font-size:9px;font-weight:700;color:#f1e8d6}.chip b{font-size:15px}
+.acts{display:flex;gap:8px}
+.act{flex:1;height:54px;min-width:0;border:2px solid #3f2713;border-radius:11px;background:linear-gradient(#a8743f,#6e4524);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 0 #3f2713;color:#fff;text-shadow:0 1px 1px #000;font:800 12px Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;touch-action:manipulation}
+.act:active{transform:translateY(3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.act:disabled{opacity:.5;cursor:default}
+.rail{width:100%;display:flex;flex-direction:column;gap:10px}
+.combo{width:100%;min-height:30px;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;font-size:11px;font-weight:800;text-align:center;opacity:0;transition:opacity .15s}
+.combo.on{opacity:1}.combo span{color:#ffd566;text-shadow:0 1px 2px #000}
+.combo i{display:block;height:4px;border-radius:2px;background:#ffd566;transform-origin:left;animation:drain 2s linear forwards}
+@keyframes drain{to{transform:scaleX(0)}}
+.cta{position:relative;width:100%;height:64px;border:2px solid #3f2713;border-radius:16px;background:linear-gradient(#a8743f,#6e4524);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 0 #3f2713;color:#fff;font:800 10px Inter,sans-serif;text-shadow:0 1px 1px #000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;touch-action:manipulation;padding:0;transition:transform .08s}
+.cta:active{transform:translateY(4px) scale(.96);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.cta:focus-visible{outline:3px solid #ffd566;outline-offset:2px}
+.cta .pt{position:absolute;top:-8px;right:-6px;min-width:28px;padding:1px 5px;border-radius:9px;background:#ffd566;color:#2a2018;border:2px solid #3f2713;font-size:10px;text-shadow:none}
+.cta.gift{height:78px;background:linear-gradient(#e8444f,#a3122a);animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 0 #3f2713,0 0 14px #ffd566}}
+.cta.cool{pointer-events:none;animation:none}
+.cta.cool:after{content:"";position:absolute;inset:0;border-radius:13px;background:rgba(20,10,4,.6);transform-origin:bottom;animation:cool var(--cdt) linear forwards}
+@keyframes cool{to{transform:scaleY(0)}}
+.cta:disabled{opacity:.5;cursor:default;animation:none}
+@media (prefers-reduced-motion:reduce){.cta.gift,.combo i,.cta.cool:after{animation:none}}
+.foot{margin-top:auto;display:flex;align-items:center;gap:8px}
+.live{white-space:nowrap}
+.bar{min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;font-size:11px}
+.sm{height:28px;border:2px solid #3f2713;border-radius:7px;background:linear-gradient(#a8743f,#6e4524);color:#fff;font:800 10px Inter,sans-serif;padding:0 8px;cursor:pointer}
+.sm.on{background:linear-gradient(#3ddc5a,#1f8a38)}
+.win{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(20,10,4,.72);border-radius:10px;z-index:5;text-align:center}
+.win.show{display:flex}
+.win h2{margin:0;font-size:26px;font-weight:800;text-shadow:0 2px 6px #000;line-height:1.1}
+.cf{position:absolute;top:-10px;width:8px;height:12px;animation:fall 2.6s linear forwards}
+@keyframes fall{to{transform:translateY(520px) rotate(540deg);opacity:.8}}
+@media (prefers-reduced-motion:reduce){.walk .lg,.walk .sh{animation:none}.tt{transition:none}.hop,.cf,.fl{animation:none}}
+</style>
+</head>
+<body>
+<main id="app">
+<div class="title"><span>GRAN CARRERA DE TORTUGAS (3 NOMÁS)</span>
+<svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true"><path d="M7 1 C9 5 13 7 13 12 A6 6 0 0 1 1 12 C1 9 3 8 4 6 C5 8 6 7 7 1Z" fill="#f0701a"/><path d="M7 8 C8 10 10 11 10 13 A3 3 0 0 1 4 13 C4 11 6 10 7 8Z" fill="#ffd34d"/></svg></div>
+<section class="board">
+<div class="lanes" id="lanes"></div>
+<div class="side">
+<div class="combo" id="combo" aria-live="polite"><span id="cmt"></span><i id="cmb"></i></div>
+<nav class="rail" aria-label="Acciones">
+<button class="cta" data-t="follow" data-cd="2000"><b class="pt">+3</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5a7a" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M12 21 C4 15 2 11 2 8 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8 C22 11 20 15 12 21Z"/></svg>SEGUIR</button>
+<button class="cta gift" data-t="gift" data-cd="4000"><b class="pt">+10</b><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="1" fill="#7a0f22"/><path d="M12 9 V21 M3 13 H21 M12 9 C9 9 7 7 8 5 C10 4 12 7 12 9 C12 7 14 4 16 5 C17 7 15 9 12 9Z"/></svg>REGALAR</button>
+<button class="cta" data-t="like"><b class="pt">+1</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ffd566" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M7 11 V21 H3 V11Z M7 11 L11 3 C14 3 14 7 13 9 H20 A2 2 0 0 1 22 11 L20 19 A2 2 0 0 1 18 21 H7"/></svg>APOYAR</button>
+</nav>
+<div class="bub" id="bub" aria-live="polite">¡Y ARRANCAN LAS TORTUGAS!</div>
+<svg width="64" height="64" viewBox="0 0 84 84" role="img" aria-label="Avatar del relator">
+<defs><radialGradient id="sp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#3f2713"/></radialGradient></defs>
+<circle cx="42" cy="42" r="40" fill="url(#sp)" stroke="#f1e8d6" stroke-width="3"/>
+<circle cx="42" cy="44" r="19" fill="#f2c39b"/>
+<path d="M22 42 Q22 18 42 18 Q62 18 62 42 Q54 30 42 30 Q30 30 22 42Z" fill="#2a1d14"/>
+<path d="M20 44 Q20 14 42 14 Q64 14 64 44" fill="none" stroke="#e11d48" stroke-width="4"/>
+<rect x="15" y="40" width="8" height="14" rx="4" fill="#e11d48"/><rect x="61" y="40" width="8" height="14" rx="4" fill="#e11d48"/>
+<path d="M19 54 Q22 66 36 66" fill="none" stroke="#e11d48" stroke-width="3"/><circle cx="36" cy="66" r="3" fill="#fff"/>
+<circle cx="35" cy="44" r="2.4" fill="#2a1d14"/><circle cx="49" cy="44" r="2.4" fill="#2a1d14"/>
+<circle cx="29" cy="50" r="3" fill="#f08a7a" opacity=".6"/><circle cx="55" cy="50" r="3" fill="#f08a7a" opacity=".6"/>
+<path d="M36 54 Q42 60 48 54" fill="none" stroke="#2a1d14" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
+<span class="plate" style="padding:4px 10px;font-size:12px">RELATOR</span>
+</div>
+<div class="win" id="win" role="alertdialog" aria-label="Ganador"></div>
+</section>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">jsantosdev</span></div>
+</main>
+<script>
+const T=[{id:'br',n:'BRASIL',c:'#3ddc5a'},{id:'py',n:'PARAGUAY',c:'#f2b33a'},{id:'ar',n:'ARGENTINA',c:'#5ec3f2'}];
+const S=T.map(()=>({p:0,g:0,l:0}));
+let sel=0,over=false,auto=false,tmr=null,lead=-1,viewers=1450,rs=null;
+const picks=new Map(),lastChat=new Map();
+let streak=0,cmbT=null;
+const wt=[];
+const RACE_SECONDS=60;
+let sp=[1,1,1],lastTick=performance.now();
+const newSpeeds=()=>{sp=T.map(()=>0.985+Math.random()*0.03)};newSpeeds();
+const USER='jsantosdev'.slice(0,10);
+const $=s=>document.querySelector(s);
+function flag(k,x,y,w,h){
+ if(k==='br')return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#2e9b4a"/><polygon points="${x+w/2},${y+h/8} ${x+w*7/8},${y+h/2} ${x+w/2},${y+h*7/8} ${x+w/8},${y+h/2}" fill="#f6d94a"/><circle cx="${x+w/2}" cy="${y+h/2}" r="${h/5}" fill="#2a4fa3"/>`;
+ if(k==='py')return `<rect x="${x}" y="${y}" width="${w}" height="${h/3+.5}" fill="#d52b1e"/><rect x="${x}" y="${y+h/3}" width="${w}" height="${h/3+.5}" fill="#fff"/><rect x="${x}" y="${y+h*2/3}" width="${w}" height="${h/3+.5}" fill="#1f4aa8"/>`;
+ return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#74acdf"/><rect x="${x}" y="${y+h/3}" width="${w}" height="${h/3+.5}" fill="#fff"/><circle cx="${x+w/2}" cy="${y+h/2}" r="${h/8+1}" fill="#f6b40e"/>`;
+}
+function laneSVG(i,t){return `<svg viewBox="0 0 120 540" role="img" aria-label="Ruta ${t.n} con relieve"><defs>
+<filter id="m${i}" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".018 .05" numOctaves="4" seed="${i+1}"/><feColorMatrix values="0 0 0 0 .52 0 0 0 0 .46 0 0 0 0 .4 2.4 0 0 0 -.95"/></filter>
+<linearGradient id="h${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf8"/><stop offset="1" stop-color="#cdbc9f"/></linearGradient>
+<linearGradient id="ga${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd566"/><stop offset="1" stop-color="#d9871b"/></linearGradient>
+<radialGradient id="s${i}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>
+<linearGradient id="go${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d49a1a"/></linearGradient>
+<linearGradient id="gv${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d0602"/><stop offset=".2" stop-color="#3d2512"/><stop offset=".8" stop-color="#3d2512"/><stop offset="1" stop-color="#0d0602"/></linearGradient><linearGradient id="gt${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".8"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient><clipPath id="hx${i}"><polygon points="50,477 62,483.5 62,496.5 50,503 38,496.5 38,483.5"/></clipPath><clipPath id="c${i}"><ellipse cx="50" cy="490" rx="21" ry="25"/></clipPath></defs>
+<rect width="120" height="540" rx="9" fill="#b07a45"/><rect width="120" height="540" rx="9" filter="url(#m${i})" opacity=".3"/>
+<g stroke="#7d5129" stroke-width=".7" fill="none" opacity=".55"><path d="M2 0 V540 M117 0 V540 M3.6 0 Q2 270 3.6 540 M116 0 Q117.6 270 116 540"/></g>
+<rect x="7" y="3" width="106" height="534" rx="14" fill="#e3b87d" opacity=".7"/>
+<rect x="7.5" y="5" width="105" height="530" rx="13" fill="url(#gv${i})"/>
+<g fill="none" stroke="#2b1708" stroke-width="1" opacity=".45"><path d="M8 70 Q60 60 112 72 M8 120 Q60 112 112 124 M8 200 Q60 190 112 204 M8 290 Q60 282 112 292 M8 380 Q60 370 112 384 M8 470 Q60 462 112 474 M8 520 Q60 514 112 522"/></g>
+<rect x="7.5" y="5" width="105" height="130" rx="13" fill="url(#gt${i})"/>
+<g stroke="#1a0e05" stroke-width="1.6" opacity=".7"><path d="M36 159H110 M36 259H110 M36 359H110"/></g><g stroke="#e3b87d" stroke-width=".8" opacity=".35"><path d="M36 160.5H110 M36 260.5H110 M36 360.5H110"/></g>
+<line x1="10" y1="16" x2="110" y2="16" stroke="#f1e8d6" stroke-width="7" stroke-dasharray="7 7"/>
+<text x="60" y="36" fill="#f1e8d6" font-size="9" font-weight="800" text-anchor="middle" font-family="Inter,sans-serif">META</text>
+<rect x="9" y="56" width="7" height="400" rx="3.5" fill="#150a03" stroke="#e3b87d" stroke-opacity=".4" stroke-width=".6"/><rect id="gf${i}" x="10" y="456" width="5" height="0" rx="2.5" fill="url(#ga${i})"/><circle id="gk${i}" cx="12.5" cy="456" r="5" fill="#ffd566" stroke="#fff" stroke-width="1.5"/>
+<g font-size="8" font-weight="700" fill="#f1e8d6" opacity=".85" font-family="Inter,sans-serif"><text x="19" y="59">100</text><text x="19" y="159">75</text><text x="19" y="259">50</text><text x="19" y="359">25</text><text x="19" y="459">0</text></g>
+<g transform="translate(16 0)"><g class="tt" id="tt${i}"><g class="in" id="in${i}">
+<ellipse cx="50" cy="528" rx="26" ry="5" fill="#000" opacity=".22"/>
+<g fill="#a8e32c" stroke="#1f3a6b" stroke-width="1.4" stroke-linejoin="round"><path d="M45 514 Q50 531 55 514Z"/><ellipse class="lg l" cx="28" cy="470" rx="7" ry="9"/><ellipse class="lg r" cx="72" cy="470" rx="7" ry="9"/><ellipse class="lg l rv" cx="31" cy="512" rx="7" ry="9"/><ellipse class="lg r rv" cx="69" cy="512" rx="7" ry="9"/><circle cx="50" cy="456" r="10.5"/></g>
+<g fill="none" stroke="#1f3a6b" stroke-width="1.3" stroke-linecap="round"><path d="M43.5 455 Q46 458 48.5 455 M51.5 455 Q54 458 56.5 455"/></g><circle cx="42.5" cy="460" r="2" fill="#f08a7a" opacity=".55"/><circle cx="57.5" cy="460" r="2" fill="#f08a7a" opacity=".55"/>
+<g class="sh">
+<ellipse cx="50" cy="491" rx="23" ry="27" fill="#1f7a24" stroke="#1f3a6b" stroke-width="2"/>
+<ellipse cx="50" cy="489" rx="20.5" ry="24.5" fill="#2f9a2a" stroke="#1f3a6b" stroke-width="1.6"/>
+<g clip-path="url(#c${i})"><path d="M50 477V465 M62 483.5L71 478 M62 496.5L71 502 M50 503V515 M38 496.5L29 502 M38 483.5L29 478" stroke="#1f3a6b" stroke-width="1.5" fill="none"/><g clip-path="url(#hx${i})">${flag(t.id,38,477,24,26)}</g><polygon points="50,477 62,483.5 62,496.5 50,503 38,496.5 38,483.5" fill="none" stroke="#1f3a6b" stroke-width="1.6" stroke-linejoin="round"/></g>
+<ellipse cx="50" cy="489" rx="20.5" ry="24.5" fill="url(#s${i})"/>
+<ellipse cx="60" cy="473" rx="6" ry="3" transform="rotate(-35 60 473)" fill="#fff" opacity=".4"/>
+</g>
+<path id="cw${i}" display="none" d="M36 410 L38 394 L44 401 L50 390 L56 401 L62 394 L64 410Z" fill="url(#go${i})" stroke="#8a6410" stroke-width="1.5"/>
+</g></g></g><path d="M0 8Q0 0 8 0H8V540H8Q0 540 0 532Z M112 0H112Q120 0 120 8V532Q120 540 112 540H112Z" fill="#b07a45"/><path d="M8 10V530 M112 10V530" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V528 M117.5 12V528" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="538" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
+$('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false"><svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true" style="border:1px solid rgba(255,255,255,.6);border-radius:2px">${flag(t.id,0,0,20,14)}</svg><span>${t.n}</span><i style="background:${t.c};box-shadow:0 0 6px ${t.c}"></i><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
+function say(m){$('#bub').textContent=m}
+function update(){
+ let best=-1,mx=0;
+ S.forEach((s,i)=>{const p=Math.min(100,s.p),h=p*4;
+  $('#tt'+i).style.transform=`translateY(${-p*4}px)`;
+  $('#gf'+i).setAttribute('y',456-h);$('#gf'+i).setAttribute('height',h);$('#gk'+i).setAttribute('cy',456-h);
+  if(s.p>mx){mx=s.p;best=i}
+ });
+ T.forEach((t,i)=>{$('#ln'+i).classList.toggle('lead',i===best);const b=document.querySelector(`.hd[data-i="${i}"]`);b.classList.toggle('sel',i===sel);b.setAttribute('aria-pressed',i===sel)});
+ return best;
+}
+function float(i,txt){const el=document.createElement('b');el.className='fl';el.textContent=txt;el.style.top=((490-Math.min(100,S[i].p)*4)/540*100)+'%';$('#sv'+i).appendChild(el);setTimeout(()=>el.remove(),900)}
+function walk(i){const l=$('#ln'+i);l.classList.add('walk');clearTimeout(wt[i]);wt[i]=setTimeout(()=>l.classList.remove('walk'),1000)}
+function hop(i){const g=$('#in'+i);g.classList.remove('hop');void g.getBBox();g.classList.add('hop')}
+function push(i,type,n=1,mult=1){
+ if(over||i<0||!S[i])return;
+ const pts={chat:1,like:1,follow:3,gift:10}[type]*n*mult,s=S[i];
+ s.p+=pts;if(type==='like')s.l+=n;if(type==='gift')s.g+=n;
+ const prev=lead;lead=update();float(i,'+'+pts);hop(i);walk(i);
+ if(s.p>=100){return win(i)}
+ if(type==='gift')say(`¡Regalo para ${T[i].n}! +${pts}`);
+ else if(lead!==prev&&lead>=0)say(`¡${T[lead].n} toma la delantera!`);
+ else if(!auto||Math.random()<.08)say(['¡Todo se decide en la recta!','¡Vamos, tortugas!','¡Qué carrera, gente!'][Math.floor(Math.random()*3)]);
+}
+function win(i){
+ over=true;update();$('#cw'+i).setAttribute('display','');
+ document.querySelectorAll('.act,.cta').forEach(b=>b.disabled=true);
+ say(`¡${T[i].n} GANA LA CARRERA!`);
+ const w=$('#win'),cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
+ w.innerHTML=`<svg width="64" height="44" viewBox="0 0 20 14" aria-hidden="true" style="border:2px solid #fff;border-radius:3px">${flag(T[i].id,0,0,20,14)}</svg><h2>¡GANÓ<br>${T[i].n}!</h2><button class="act" style="flex:none;width:180px" id="again">NUEVA CARRERA</button>`+
+ Array.from({length:28},()=>`<span class="cf" style="left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*5)]};animation-delay:${Math.random()*1.2}s"></span>`).join('');
+ w.classList.add('show');$('#again').onclick=reset;$('#again').focus();
+ rs=setTimeout(reset,9000);
+}
+function reset(){
+ clearTimeout(rs);sel=0;over=false;lead=-1;S.forEach(s=>{s.p=0;s.g=0;s.l=0});
+ picks.clear();lastChat.clear();newSpeeds();lastTick=performance.now();
+ T.forEach((t,i)=>$('#cw'+i).setAttribute('display','none'));
+ $('#win').classList.remove('show');document.querySelectorAll('.cta').forEach(b=>{b.disabled=false;b.classList.remove('cool')});streak=0;clearTimeout(cmbT);showCombo();
+ update();say('¡Y ARRANCAN LAS TORTUGAS!');
+}
+$('#lanes').addEventListener('click',e=>{const b=e.target.closest('.hd');if(!b)return;sel=+b.dataset.i;update();say(`Tu equipo: ${T[sel].n}`)});
+const mult=()=>streak>=10?3:streak>=5?2:1;
+function showCombo(){const c=$('#combo'),m=mult();
+ $('#cmt').textContent=m===3?'COMBO x3 · ¡MÁXIMO!':`RACHA ${streak} · x${m} (${streak}/${m===1?5:10})`;
+ c.classList.remove('on');if(streak>=2){void c.offsetWidth;c.classList.add('on')}}
+document.querySelectorAll('.cta').forEach(b=>b.addEventListener('click',()=>{
+ if(over||b.classList.contains('cool'))return;
+ const before=mult();streak++;clearTimeout(cmbT);cmbT=setTimeout(()=>{streak=0;showCombo()},2000);
+ const m=mult();push(sel,b.dataset.t,1,m);showCombo();
+ if(m>before&&!over)say(`¡COMBO x${m}!`);
+ navigator.vibrate&&navigator.vibrate(m>before?[20,30,20]:10);
+ const cd=+b.dataset.cd;if(cd){b.classList.add('cool');b.style.setProperty('--cdt',cd+'ms');setTimeout(()=>b.classList.remove('cool'),cd)}
+}));
+document.addEventListener('keydown',e=>{if(['1','2','3'].includes(e.key)){sel=+e.key-1;update();say(`Tu equipo: ${T[sel].n}`)}});
+function findTeam(text){
+ const raw=String(text||'');
+ const normalized=raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+ const names=[['BRASIL','BRAZIL','BR','🇧🇷'],['PARAGUAY','PARAGUAI','PY','🇵🇾'],['ARGENTINA','ARGENTINE','AR','🇦🇷']];
+ return names.findIndex(aliases=>aliases.some(alias=>
+  alias.length===2?new RegExp(`(^|[^A-Z0-9])${alias}([^A-Z0-9]|$)`).test(normalized):normalized.includes(alias)
+ ));
+}
+function handleLiveEntry(entry){
+ if(!entry||!['chat','gift','like','follow','share'].includes(entry.type))return;
+ const user=String(entry.username||'').trim().toLowerCase();
+ const key=user||`anonymous-${Math.random()}`;
+ let team=entry.type==='chat'?findTeam(entry.content): -1;
+ if(team>=0&&user)picks.set(key,team);
+ if(team<0)team=picks.has(key)?picks.get(key):Math.floor(Math.random()*T.length);
+ if(user&&!picks.has(key))picks.set(key,team);
+ if(entry.type==='chat'){
+  const now=Date.now();
+  if(now-(lastChat.get(key)||0)<8000)return;
+  lastChat.set(key,now);
+ }
+ const type=entry.type==='share'?'follow':entry.type;
+ const rawCount=Number(entry.activityCount);
+ const count=type==='gift'||type==='like'
+  ?Number.isFinite(rawCount)&&rawCount>0?Math.floor(rawCount):1
+  :1;
+ push(team,type,count);
+}
+function setConnection(status){
+ const el=$('#connection'),connected=Boolean(status.connected||status.isConnected);
+ el.classList.toggle('connected',connected);
+ el.classList.toggle('connecting',!connected&&['connecting','reconnecting'].includes(status.status));
+ el.setAttribute('aria-label',`${USER}: ${connected?'en vivo':status.status==='failed'?'sin conexión':'conectando'}`);
+}
+const source=new EventSource('/api/events');
+source.addEventListener('status',event=>setConnection(JSON.parse(event.data)));
+source.addEventListener('update',event=>handleLiveEntry(JSON.parse(event.data).entry));
+source.onerror=()=>setConnection({connected:false,status:'reconnecting'});
+fetch('/api/reconnect',{method:'POST'}).then(async response=>{
+ if(!response.ok&&response.status!==409){
+  const result=await response.json();
+  throw new Error(result.message||'No se pudo iniciar la conexión de TikTok.');
+ }
+}).catch(error=>{
+ setConnection({connected:false,status:'failed'});
+ console.error(error);
+});
+$('#connection').textContent=USER;
+setInterval(()=>{
+ const now=performance.now(),dt=Math.min(2,(now-lastTick)/1000);lastTick=now;
+ if(over)return;
+ S.forEach((s,i)=>{s.p+=100/RACE_SECONDS*sp[i]*dt;walk(i)});
+ lead=update();
+ let w=-1,mx=100;S.forEach((s,i)=>{if(s.p>=mx){mx=s.p;w=i}});
+ if(w>=0)win(w);
+},250);
+window.tortugas={push:(team,type,n)=>push(typeof team==='number'?team:T.findIndex(t=>t.id===team),type,n),reset};
+update();
+</script>
+<script>
+if ('serviceWorker' in navigator)
+ window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js')
+  .catch(error=>console.error('No se pudo registrar tortu como aplicación:',error)));
+</script>
+<script>
+(function(){var a=document.getElementById('app');function fit(){var k=Math.min(innerWidth/360,innerHeight/640);a.style.transform='translate('+((innerWidth-360*k)/2)+'px,'+((innerHeight-640*k)/2)+'px) scale('+k+')'}addEventListener('resize',fit);fit()})();
+</script>
+</body>
+</html>
