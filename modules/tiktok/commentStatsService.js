@@ -69,13 +69,39 @@ function createCommentStatsService({ filePath }) {
     throw new Error('La ruta del archivo de estadísticas es obligatoria.');
   }
 
+  const createEmptyState = () => ({
+    counts: Object.fromEntries(teams.map(({ code }) => [code, 0])),
+    cups: Object.fromEntries(teams.map(({ code }) => [code, 0])),
+    unassigned: 0,
+    updatedAt: null,
+  });
+
   const counts = Object.fromEntries(teams.map(({ code }) => [code, 0]));
   const cups = Object.fromEntries(teams.map(({ code }) => [code, 0]));
   let unassigned = 0;
   let updatedAt = null;
 
+  function resetState() {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    const emptyState = createEmptyState();
+    fs.writeFileSync(filePath, JSON.stringify({
+      updatedAt: emptyState.updatedAt,
+      counts: emptyState.counts,
+      cups: emptyState.cups,
+      unassigned: emptyState.unassigned,
+    }, null, 2));
+    Object.assign(counts, emptyState.counts);
+    Object.assign(cups, emptyState.cups);
+    unassigned = emptyState.unassigned;
+    updatedAt = emptyState.updatedAt;
+  }
+
   try {
-    const saved = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const raw = fs.readFileSync(filePath, 'utf8');
+    if (raw.includes('\0')) {
+      throw new SyntaxError('El archivo de estadísticas está corrupto.');
+    }
+    const saved = JSON.parse(raw);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)
       || !saved.counts || typeof saved.counts !== 'object' || Array.isArray(saved.counts)) {
       throw new Error('El archivo de estadísticas de comentarios no es válido.');
@@ -113,7 +139,13 @@ function createCommentStatsService({ filePath }) {
       updatedAt = saved.updatedAt;
     }
   } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
+    if (error.code !== 'ENOENT') {
+      if (error instanceof SyntaxError) {
+        resetState();
+      } else {
+        throw error;
+      }
+    }
   }
 
   function getStats() {

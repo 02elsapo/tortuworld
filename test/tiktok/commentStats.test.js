@@ -38,6 +38,12 @@ test('comment and cup statistics are country-only and persist in JSON', () => {
       .find((country) => country.code === 'PY').cups, 2);
     assert.equal(stats.recordCup('RMA'), null);
 
+    const corruptedFile = path.join(directory, 'corrupted.json');
+    fs.writeFileSync(corruptedFile, Buffer.alloc(64, 0));
+    const recovered = createCommentStatsService({ filePath: corruptedFile });
+    assert.equal(recovered.getStats().total, 0);
+    assert.deepEqual(JSON.parse(fs.readFileSync(corruptedFile, 'utf8')).counts.BR, 0);
+
     const invalidFile = path.join(directory, 'invalid.json');
     fs.writeFileSync(invalidFile, JSON.stringify({ counts: { BR: '2' } }));
     assert.throws(

@@ -65,6 +65,7 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
   assert.match(dockerfile, /COPY tortugas_tiktok\.html \.\//);
   assert.equal(fs.existsSync(path.join(root, 'tortugas_tiktok.html')), true);
+  assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v68.html')), false);
   assert.doesNotMatch(dockerfile, /v1\.3\.html/);
@@ -92,7 +93,7 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
     assert.match(html, /new EventSource\('\/api\/events'\)/);
     assert.match(html, /source\.addEventListener\('update'/);
     assert.match(html, /fetch\('\/api\/reconnect'/);
-    assert.match(html, /const RACE_SECONDS=60/);
+    assert.match(html, /const RACE_SECONDS=240/);
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
     assert.match(html, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
     assert.match(html, /function handleLiveEntry\(entry\)/);
@@ -172,6 +173,19 @@ test('forwards normalized TikTok updates in the shape consumed by version 68', a
     const stats = await fetch(`${baseUrl}/api/comment-stats`).then((response) => response.json());
     assert.equal(stats.total, 1);
     assert.equal(stats.teams.find((team) => team.code === 'AR').comments, 1);
+
+    monitorService.emit({
+      type: 'member',
+      username: 'new-viewer',
+      avatar: 'https://example.com/new-viewer.png',
+    });
+    const savedRecentUsers = await fetch(`${baseUrl}/api/recent-users`).then((response) => response.json());
+    assert.equal(savedRecentUsers.users[0].username, 'new-viewer');
+    assert.equal(savedRecentUsers.users[0].avatar, 'https://example.com/new-viewer.png');
+    assert.deepEqual(
+      JSON.parse(fs.readFileSync(path.join(directory, 'recent-users.json'), 'utf8')).users,
+      savedRecentUsers.users,
+    );
 
     const recentUsers = [
       { username: 'viewer-one', avatar: 'https://example.com/one.png', t: 1 },

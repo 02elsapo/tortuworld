@@ -63,7 +63,47 @@ function createRecentUsersService({ filePath }) {
     return getRecentUsers();
   }
 
-  return { getRecentUsers, saveRecentUsers };
+  function rememberConnectedUser(value) {
+    const user = normalizeUsers([{
+      username: value?.username,
+      avatar: value?.avatar,
+      t: Date.now(),
+    }])?.[0];
+    if (!user) return null;
+
+    const key = user.username.toLocaleLowerCase();
+    const existing = users.find((item) => item.username.toLocaleLowerCase() === key);
+    if (!user.avatar && existing?.avatar) user.avatar = existing.avatar;
+    return saveRecentUsers([
+      ...users.filter((item) => item.username.toLocaleLowerCase() !== key),
+      user,
+    ]);
+  }
+
+  function updateRecentUserAvatar(value) {
+    const user = normalizeUsers([{
+      username: value?.username,
+      avatar: value?.avatar,
+      t: Date.now(),
+    }])?.[0];
+    if (!user?.avatar) return getRecentUsers();
+
+    const key = user.username.toLocaleLowerCase();
+    const existing = users.find((item) => item.username.toLocaleLowerCase() === key);
+    if (!existing || existing.avatar === user.avatar) return getRecentUsers();
+    return saveRecentUsers(users.map((item) => (
+      item.username.toLocaleLowerCase() === key
+        ? { ...item, avatar: user.avatar }
+        : item
+    )));
+  }
+
+  return {
+    getRecentUsers,
+    saveRecentUsers,
+    rememberConnectedUser,
+    updateRecentUserAvatar,
+  };
 }
 
 module.exports = { createRecentUsersService, MAX_RECENT_USERS };

@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>tortu madera — Gran Carrera de Tortugas</title>
+<title>Tortu Live</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap">
 <style>
@@ -86,23 +86,136 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .cf{position:absolute;top:-10px;width:8px;height:12px;animation:fall 2.6s linear forwards}
 @keyframes fall{to{transform:translateY(520px) rotate(540deg);opacity:.8}}
 @media (prefers-reduced-motion:reduce){.walk .lg,.walk .sh{animation:none}.tt{transition:none}.hop,.cf,.fl{animation:none}}
+
+#toast{position:absolute;top:62px;left:50%;transform:translate(-50%,-12px);z-index:8;max-width:320px;padding:6px 12px;border-radius:14px;background:linear-gradient(#faf3e2,#e2d6bb);color:#2a2018;border:2px solid #6b6f78;font-size:11px;font-weight:800;box-shadow:0 3px 8px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.stats .chip{height:34px}.stats .chip b{font-size:11px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
+.lv{display:flex;flex-direction:column;gap:2px;padding:3px 8px;font-size:10px;min-width:66px;margin-left:auto}
+.lv i{display:block;height:5px;border-radius:3px;background:#3f2713;overflow:hidden}
+.lv u{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd566,#f0701a);transition:width .3s}
+.foot .sm{width:34px;height:30px;padding:0;font-size:14px}
+.sm.off{background:linear-gradient(#6b6f78,#43464d);filter:grayscale(1);opacity:.7}
+.sm.hint{animation:hint .9s ease-in-out infinite alternate}
+@keyframes hint{to{box-shadow:0 0 10px 2px #ffd566}}
+#app.sprint .board{animation:spr .5s ease-in-out infinite alternate}
+@keyframes spr{to{box-shadow:inset 0 2px 5px rgba(0,0,0,.55),0 0 16px #e11d48}}
+.board.shake{animation:shk .5s}
+@keyframes shk{20%{transform:translate(-3px,2px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,0)}}
+@media (prefers-reduced-motion:reduce){#app.sprint .board,.sm.hint,.board.shake{animation:none}#toast{transition:none}}
+
+.in{transform:scale(var(--s,1.3));transition:transform .3s}
+@keyframes hop{40%{transform:translateY(-2px) scale(var(--s,1.3))}}
+.avs{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-content:flex-start;height:44px;overflow:hidden}
+.ua{position:relative;width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--c);background:var(--b);color:#fff;font:800 9px/16px Inter,sans-serif;text-align:center;overflow:hidden;animation:pop .35s}
+.ua img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@keyframes pop{from{transform:scale(0)}60%{transform:scale(1.3)}}
+@media (prefers-reduced-motion:reduce){.ua{animation:none}.in{transition:none}}
+.avs{position:absolute;left:9%;right:9%;bottom:2.5%;height:46px;gap:2px;align-content:center}
+.ua{width:44px;height:44px;font-size:20px;line-height:40px}
+.ua.ph{animation:none;opacity:1}
+/* tipografía más grande */
+.title{font-size:20px;letter-spacing:.5px}
+.hd{font-size:11px;letter-spacing:-.3px}.hd>svg:first-child{display:none}
+.bub{font-size:11.5px}
+.cta{font-size:11.5px}.cta .pt{font-size:11px}
+.act{font-size:13px}
+.live{font-size:13px}
+.combo{font-size:12.5px}
+.chip span{font-size:10px}.chip b{font-size:16px}
+.stats .chip b{font-size:12px}
+.lv{font-size:11px;min-width:72px}
+.plate{font-size:13px}
+#toast{font-size:13px}
+.win h2{font-size:30px}
+.fl{font-size:18px}
+/* pistas más grandes, botones más chicos */
+.title{height:40px}
+.board{padding:6px 4px}
+.lanes{gap:4px}
+.side{width:66px;min-width:66px;gap:6px}
+.rail{gap:8px}
+.cta{height:46px;border-radius:12px;font-size:10.5px;gap:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 0 #3f2713}
+.cta.gift{height:58px}
+.cta svg{width:18px;height:18px}.cta.gift svg{width:22px;height:22px}.cta[data-t=like] svg{width:22px;height:22px}
+.cta .pt{top:-7px;right:-4px;min-width:24px;font-size:10px;padding:0 4px}
+.bub{font-size:10.5px;padding:4px 2px;min-height:48px;word-break:break-word}
+.combo{font-size:11px}
+.side .plate{padding:3px 6px!important;font-size:11px!important}
+.in{transform-origin:50px 520px}
+.ev{position:absolute;left:50%;bottom:calc(2.5% + 52px);transform:translateX(-50%);z-index:3;background:#fff;color:#2a2018;border:2px solid var(--c,#3f2713);border-radius:12px;padding:1px 7px;font:800 12px/1.3 Inter,sans-serif;box-shadow:0 2px 5px rgba(0,0,0,.5);white-space:nowrap;pointer-events:none;animation:pop .3s}
+.ev b{font-size:22px;vertical-align:middle;margin-right:2px}
+.ev:after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-6px;border:6px solid transparent;border-top-color:var(--c,#3f2713);border-bottom:0}
+@media (prefers-reduced-motion:reduce){.ev{animation:none}}
+/* rutas más anchas, CTAs más chicos */
+.board{gap:4px;padding:6px 3px}
+.lanes{gap:3px}
+.sv>svg{height:420px}
+.side{width:54px;min-width:54px;gap:5px}
+.rail{gap:7px}
+.cta{height:34px;border-radius:10px;font-size:8.5px;gap:1px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 0 #3f2713}
+.cta.gift{height:44px}
+.cta svg{width:14px;height:14px}.cta.gift svg{width:18px;height:18px}.cta[data-t=like] svg{width:16px;height:16px}
+.cta .pt{top:-6px;right:-3px;min-width:20px;font-size:8.5px;padding:0 3px}
+.bub{font-size:9px;padding:3px 1px;min-height:44px}
+.side>svg{width:44px;height:44px}
+.side .plate{padding:2px 4px!important;font-size:9px!important}
+.combo{font-size:9.5px}
+/* premios por acciones de espectadores */
+#hype{position:absolute;left:50%;top:118px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:14px;background:linear-gradient(#fff3c4,#ffd566);border:2px solid var(--c,#3f2713);color:#2a2018;font:800 11px/1.2 Inter,sans-serif;box-shadow:0 3px 8px rgba(0,0,0,.55);max-width:300px;pointer-events:none;white-space:nowrap;animation:hy 2s forwards}
+#hype[hidden]{display:none}
+#hype b{font-size:20px}#hype i{display:block;font-style:normal;color:#8a1020;font-size:12px}
+@keyframes hy{0%{opacity:0;transform:translateX(-50%) scale(.6)}12%{opacity:1;transform:translateX(-50%) scale(1.1)}22%{transform:translateX(-50%) scale(1)}85%{opacity:1}100%{opacity:0}}
+.ua.vip{box-shadow:0 0 0 2px #ffd566,0 0 8px #ffd566}
+.lane.turbo .sv>svg{filter:drop-shadow(0 0 6px #ffd566) brightness(1.12)}
+.lane.turbo .hd:after{content:"🔥";position:absolute;left:-4px;top:-10px;font-size:14px}
+@media (prefers-reduced-motion:reduce){#hype{animation:none}}
+.tf{display:none;transform-box:fill-box;transform-origin:50% 0}
+.lane.turbo .tf{display:block;animation:fk .12s ease-in-out infinite alternate}
+@keyframes fk{from{transform:scaleY(.75)}to{transform:scaleY(1.3)}}
+.lane.turbo.walk .lg{animation-duration:.18s}
+.lane.turbo.walk .sh{animation-duration:.35s}
+@media (prefers-reduced-motion:reduce){.lane.turbo .tf{animation:none}}
+/* estadísticas: copas por bandera + MVP doble de ancho */
+.stats .chip{height:42px}
+.chip.wins{flex:1;flex-direction:row;justify-content:space-around;gap:2px;padding:0 3px}
+.chip.mvp{flex:2;min-width:0}
+.chip.mvp b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
+.cp{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
+.cp svg{border:1px solid #fff;border-radius:2px;display:block}
+.stats .chip.wins .cp b{font-size:11px;color:#ffd566;white-space:nowrap}
+/* Don Tortu habla */
+.side>svg.talk{animation:bob .3s ease-in-out infinite alternate}
+.side>svg.talk .mo{display:none}
+.side>svg.talk .mo2{display:block;transform-box:fill-box;transform-origin:center;animation:mo .18s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-2px) rotate(-3deg)}}
+@keyframes mo{from{transform:scaleY(.35)}to{transform:scaleY(1.25)}}
+@media (prefers-reduced-motion:reduce){.side>svg.talk,.side>svg.talk .mo2{animation:none}}
+/* columna de Don Tortu más ancha, avatar grande, nombre en una línea */
+.side{width:68px;min-width:68px}
+.rail{align-items:center}
+.cta{width:58px}
+.bub{font-size:10px;min-height:50px}
+.side>svg{width:60px;height:60px}
+.side .plate{white-space:nowrap!important;font-size:9px!important;padding:2px 3px!important;letter-spacing:0}
+.avs{height:46px;gap:2px;justify-content:center;align-content:center}
+.ua,.ua.ph{width:20px;height:20px;font-size:9px;line-height:16px}
 </style>
 </head>
 <body>
 <main id="app">
-<div class="title"><span>GRAN CARRERA DE TORTUGAS (3 NOMÁS)</span>
+<div class="title"><span>TORTU LIVE</span>
 <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true"><path d="M7 1 C9 5 13 7 13 12 A6 6 0 0 1 1 12 C1 9 3 8 4 6 C5 8 6 7 7 1Z" fill="#f0701a"/><path d="M7 8 C8 10 10 11 10 13 A3 3 0 0 1 4 13 C4 11 6 10 7 8Z" fill="#ffd34d"/></svg></div>
 <section class="board">
 <div class="lanes" id="lanes"></div>
 <div class="side">
 <div class="combo" id="combo" aria-live="polite"><span id="cmt"></span><i id="cmb"></i></div>
 <nav class="rail" aria-label="Acciones">
-<button class="cta" data-t="follow" data-cd="2000"><b class="pt">+3</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5a7a" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M12 21 C4 15 2 11 2 8 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8 C22 11 20 15 12 21Z"/></svg>SEGUIR</button>
+<button class="cta" data-t="follow" data-cd="2000"><b class="pt">+3</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#5ec3f2" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2 21 C2 15 18 15 18 21Z"/><path d="M20 8V14 M17 11H23" fill="none"/></svg>SEGUIR</button>
 <button class="cta gift" data-t="gift" data-cd="4000"><b class="pt">+10</b><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="1" fill="#7a0f22"/><path d="M12 9 V21 M3 13 H21 M12 9 C9 9 7 7 8 5 C10 4 12 7 12 9 C12 7 14 4 16 5 C17 7 15 9 12 9Z"/></svg>REGALAR</button>
-<button class="cta" data-t="like"><b class="pt">+1</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ffd566" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M7 11 V21 H3 V11Z M7 11 L11 3 C14 3 14 7 13 9 H20 A2 2 0 0 1 22 11 L20 19 A2 2 0 0 1 18 21 H7"/></svg>APOYAR</button>
+<button class="cta" data-t="like"><b class="pt">+1</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5a7a" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M12 21 C4 15 2 11 2 8 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8 C22 11 20 15 12 21Z"/></svg>APOYAR</button>
 </nav>
 <div class="bub" id="bub" aria-live="polite">¡Y ARRANCAN LAS TORTUGAS!</div>
-<svg width="64" height="64" viewBox="0 0 84 84" role="img" aria-label="Avatar del relator">
+<svg width="64" height="64" viewBox="0 0 84 84" role="img" aria-label="Avatar de Don Tortu, el relator">
 <defs><radialGradient id="sp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#3f2713"/></radialGradient></defs>
 <circle cx="42" cy="42" r="40" fill="url(#sp)" stroke="#f1e8d6" stroke-width="3"/>
 <circle cx="42" cy="44" r="19" fill="#f2c39b"/>
@@ -112,13 +225,18 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <path d="M19 54 Q22 66 36 66" fill="none" stroke="#e11d48" stroke-width="3"/><circle cx="36" cy="66" r="3" fill="#fff"/>
 <circle cx="35" cy="44" r="2.4" fill="#2a1d14"/><circle cx="49" cy="44" r="2.4" fill="#2a1d14"/>
 <circle cx="29" cy="50" r="3" fill="#f08a7a" opacity=".6"/><circle cx="55" cy="50" r="3" fill="#f08a7a" opacity=".6"/>
-<path d="M36 54 Q42 60 48 54" fill="none" stroke="#2a1d14" stroke-width="2.4" stroke-linecap="round"/>
+<path class="mo" d="M36 54 Q42 60 48 54" fill="none" stroke="#2a1d14" stroke-width="2.4" stroke-linecap="round"/><ellipse class="mo2" cx="42" cy="56" rx="6" ry="4" fill="#7a1f1f" stroke="#2a1d14" stroke-width="2" display="none"/>
 </svg>
-<span class="plate" style="padding:4px 10px;font-size:12px">RELATOR</span>
+<span class="plate" style="padding:4px 10px;font-size:12px">DON TORTU</span>
 </div>
 <div class="win" id="win" role="alertdialog" aria-label="Ganador"></div>
 </section>
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">jsantosdev</span></div>
+<div class="chips stats" aria-label="Estadísticas">
+<div class="chip wins" id="stW" role="group" aria-label="Copas ganadas por país"></div>
+<div class="chip mvp"><span>MVP DE LA SALA</span><b id="stM">—</b></div>
+</div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">tortulive</span><span class="plate lv" aria-label="Nivel"><b id="lvT">Nv 1</b><i><u id="lvB"></u></i></span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Modo demo con bots (B)" title="Demo con bots (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Voz en off (V)" title="Voz en off (V)">🗣️</button><button class="sm on" id="bMus" aria-pressed="true" aria-label="Música de fondo (M)">🎵</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button></div>
+<div id="toast" role="status" aria-live="polite"></div>
 </main>
 <script>
 const T=[{id:'br',n:'BRASIL',c:'#3ddc5a'},{id:'py',n:'PARAGUAY',c:'#f2b33a'},{id:'ar',n:'ARGENTINA',c:'#5ec3f2'}];
@@ -127,35 +245,35 @@ let sel=0,over=false,auto=false,tmr=null,lead=-1,viewers=1450,rs=null;
 const picks=new Map(),lastChat=new Map();
 let streak=0,cmbT=null;
 const wt=[];
-const RACE_SECONDS=60;
+const RACE_SECONDS=240;
 let sp=[1,1,1],lastTick=performance.now();
 const newSpeeds=()=>{sp=T.map(()=>0.985+Math.random()*0.03)};newSpeeds();
-const USER='jsantosdev'.slice(0,10);
+const USER='tortulive'.slice(0,10);
 const $=s=>document.querySelector(s);
 function flag(k,x,y,w,h){
  if(k==='br')return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#2e9b4a"/><polygon points="${x+w/2},${y+h/8} ${x+w*7/8},${y+h/2} ${x+w/2},${y+h*7/8} ${x+w/8},${y+h/2}" fill="#f6d94a"/><circle cx="${x+w/2}" cy="${y+h/2}" r="${h/5}" fill="#2a4fa3"/>`;
  if(k==='py')return `<rect x="${x}" y="${y}" width="${w}" height="${h/3+.5}" fill="#d52b1e"/><rect x="${x}" y="${y+h/3}" width="${w}" height="${h/3+.5}" fill="#fff"/><rect x="${x}" y="${y+h*2/3}" width="${w}" height="${h/3+.5}" fill="#1f4aa8"/>`;
  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#74acdf"/><rect x="${x}" y="${y+h/3}" width="${w}" height="${h/3+.5}" fill="#fff"/><circle cx="${x+w/2}" cy="${y+h/2}" r="${h/8+1}" fill="#f6b40e"/>`;
 }
-function laneSVG(i,t){return `<svg viewBox="0 0 120 540" role="img" aria-label="Ruta ${t.n} con relieve"><defs>
+function laneSVG(i,t){return `<svg viewBox="0 0 120 630" preserveAspectRatio="none" role="img" aria-label="Ruta ${t.n} con relieve"><defs>
 <filter id="m${i}" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".018 .05" numOctaves="4" seed="${i+1}"/><feColorMatrix values="0 0 0 0 .52 0 0 0 0 .46 0 0 0 0 .4 2.4 0 0 0 -.95"/></filter>
 <linearGradient id="h${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf8"/><stop offset="1" stop-color="#cdbc9f"/></linearGradient>
-<linearGradient id="ga${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd566"/><stop offset="1" stop-color="#d9871b"/></linearGradient>
+<linearGradient id="ga${i}" gradientUnits="userSpaceOnUse" x1="0" y1="456" x2="0" y2="56"><stop offset="0" stop-color="#1e6bff"/><stop offset=".3" stop-color="#2fd0e8"/><stop offset=".55" stop-color="#ffd23f"/><stop offset=".78" stop-color="#ff8a1f"/><stop offset="1" stop-color="#ff1f1f"/></linearGradient>
 <radialGradient id="s${i}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>
 <linearGradient id="go${i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d49a1a"/></linearGradient>
 <linearGradient id="gv${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d0602"/><stop offset=".2" stop-color="#3d2512"/><stop offset=".8" stop-color="#3d2512"/><stop offset="1" stop-color="#0d0602"/></linearGradient><linearGradient id="gt${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".8"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient><clipPath id="hx${i}"><polygon points="50,477 62,483.5 62,496.5 50,503 38,496.5 38,483.5"/></clipPath><clipPath id="c${i}"><ellipse cx="50" cy="490" rx="21" ry="25"/></clipPath></defs>
-<rect width="120" height="540" rx="9" fill="#b07a45"/><rect width="120" height="540" rx="9" filter="url(#m${i})" opacity=".3"/>
-<g stroke="#7d5129" stroke-width=".7" fill="none" opacity=".55"><path d="M2 0 V540 M117 0 V540 M3.6 0 Q2 270 3.6 540 M116 0 Q117.6 270 116 540"/></g>
-<rect x="7" y="3" width="106" height="534" rx="14" fill="#e3b87d" opacity=".7"/>
-<rect x="7.5" y="5" width="105" height="530" rx="13" fill="url(#gv${i})"/>
+<rect width="120" height="630" rx="9" fill="#b07a45"/><rect width="120" height="630" rx="9" filter="url(#m${i})" opacity=".3"/>
+<g stroke="#7d5129" stroke-width=".7" fill="none" opacity=".55"><path d="M2 0 V630 M117 0 V630 M3.6 0 Q2 315 3.6 630 M116 0 Q117.6 315 116 630"/></g>
+<rect x="7" y="3" width="106" height="624" rx="14" fill="#e3b87d" opacity=".7"/>
+<rect x="7.5" y="5" width="105" height="620" rx="13" fill="url(#gv${i})"/><rect x="9" y="548" width="102" height="76" rx="10" fill="#000" opacity=".28"/><path d="M9 545H111" stroke="#e3b87d" stroke-width="1" opacity=".4" stroke-dasharray="4 3"/>
 <g fill="none" stroke="#2b1708" stroke-width="1" opacity=".45"><path d="M8 70 Q60 60 112 72 M8 120 Q60 112 112 124 M8 200 Q60 190 112 204 M8 290 Q60 282 112 292 M8 380 Q60 370 112 384 M8 470 Q60 462 112 474 M8 520 Q60 514 112 522"/></g>
 <rect x="7.5" y="5" width="105" height="130" rx="13" fill="url(#gt${i})"/>
 <g stroke="#1a0e05" stroke-width="1.6" opacity=".7"><path d="M36 159H110 M36 259H110 M36 359H110"/></g><g stroke="#e3b87d" stroke-width=".8" opacity=".35"><path d="M36 160.5H110 M36 260.5H110 M36 360.5H110"/></g>
 <line x1="10" y1="16" x2="110" y2="16" stroke="#f1e8d6" stroke-width="7" stroke-dasharray="7 7"/>
 <text x="60" y="36" fill="#f1e8d6" font-size="9" font-weight="800" text-anchor="middle" font-family="Inter,sans-serif">META</text>
-<rect x="9" y="56" width="7" height="400" rx="3.5" fill="#150a03" stroke="#e3b87d" stroke-opacity=".4" stroke-width=".6"/><rect id="gf${i}" x="10" y="456" width="5" height="0" rx="2.5" fill="url(#ga${i})"/><circle id="gk${i}" cx="12.5" cy="456" r="5" fill="#ffd566" stroke="#fff" stroke-width="1.5"/>
-<g font-size="8" font-weight="700" fill="#f1e8d6" opacity=".85" font-family="Inter,sans-serif"><text x="19" y="59">100</text><text x="19" y="159">75</text><text x="19" y="259">50</text><text x="19" y="359">25</text><text x="19" y="459">0</text></g>
-<g transform="translate(16 0)"><g class="tt" id="tt${i}"><g class="in" id="in${i}">
+<rect x="9" y="56" width="7" height="400" rx="3.5" fill="#150a03" stroke="#e3b87d" stroke-opacity=".4" stroke-width=".6"/><rect x="9" y="56" width="7" height="400" rx="3.5" fill="url(#ga${i})" opacity=".3"/><rect id="gf${i}" x="10" y="456" width="5" height="0" rx="2.5" fill="url(#ga${i})"/><circle id="gk${i}" cx="12.5" cy="456" r="5" fill="#ffd566" stroke="#fff" stroke-width="1.5"/>
+<g font-size="9" font-weight="800" font-family="Inter,sans-serif" stroke="#000" stroke-width=".4" paint-order="stroke"><text x="19" y="59" fill="#ff4d4d">100</text><text x="19" y="159" fill="#ff9a3d">75</text><text x="19" y="259" fill="#ffd23f">50</text><text x="19" y="359" fill="#5fd8ee">25</text><text x="19" y="459" fill="#4da3ff">0</text></g>
+<g transform="translate(13 0)"><g class="tt" id="tt${i}"><g class="in" id="in${i}">
 <ellipse cx="50" cy="528" rx="26" ry="5" fill="#000" opacity=".22"/>
 <g fill="#a8e32c" stroke="#1f3a6b" stroke-width="1.4" stroke-linejoin="round"><path d="M45 514 Q50 531 55 514Z"/><ellipse class="lg l" cx="28" cy="470" rx="7" ry="9"/><ellipse class="lg r" cx="72" cy="470" rx="7" ry="9"/><ellipse class="lg l rv" cx="31" cy="512" rx="7" ry="9"/><ellipse class="lg r rv" cx="69" cy="512" rx="7" ry="9"/><circle cx="50" cy="456" r="10.5"/></g>
 <g fill="none" stroke="#1f3a6b" stroke-width="1.3" stroke-linecap="round"><path d="M43.5 455 Q46 458 48.5 455 M51.5 455 Q54 458 56.5 455"/></g><circle cx="42.5" cy="460" r="2" fill="#f08a7a" opacity=".55"/><circle cx="57.5" cy="460" r="2" fill="#f08a7a" opacity=".55"/>
@@ -164,10 +282,10 @@ function laneSVG(i,t){return `<svg viewBox="0 0 120 540" role="img" aria-label="
 <ellipse cx="50" cy="489" rx="20.5" ry="24.5" fill="#2f9a2a" stroke="#1f3a6b" stroke-width="1.6"/>
 <g clip-path="url(#c${i})"><path d="M50 477V465 M62 483.5L71 478 M62 496.5L71 502 M50 503V515 M38 496.5L29 502 M38 483.5L29 478" stroke="#1f3a6b" stroke-width="1.5" fill="none"/><g clip-path="url(#hx${i})">${flag(t.id,38,477,24,26)}</g><polygon points="50,477 62,483.5 62,496.5 50,503 38,496.5 38,483.5" fill="none" stroke="#1f3a6b" stroke-width="1.6" stroke-linejoin="round"/></g>
 <ellipse cx="50" cy="489" rx="20.5" ry="24.5" fill="url(#s${i})"/>
-<ellipse cx="60" cy="473" rx="6" ry="3" transform="rotate(-35 60 473)" fill="#fff" opacity=".4"/>
+<ellipse cx="60" cy="473" rx="6" ry="3" transform="rotate(-35 60 473)" fill="#fff" opacity=".4"/><polygon points="50,477 62,483.5 62,496.5 50,503 38,496.5 38,483.5" fill="none" stroke="#fff" stroke-width="3.6" stroke-linejoin="round"/><g clip-path="url(#hx${i})">${flag(t.id,38,477,24,26)}</g><polygon points="50,477 62,483.5 62,496.5 50,503 38,496.5 38,483.5" fill="none" stroke="#0d1b3a" stroke-width="1.4" stroke-linejoin="round"/>
 </g>
 <path id="cw${i}" display="none" d="M36 410 L38 394 L44 401 L50 390 L56 401 L62 394 L64 410Z" fill="url(#go${i})" stroke="#8a6410" stroke-width="1.5"/>
-</g></g></g><path d="M0 8Q0 0 8 0H8V540H8Q0 540 0 532Z M112 0H112Q120 0 120 8V532Q120 540 112 540H112Z" fill="#b07a45"/><path d="M8 10V530 M112 10V530" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V528 M117.5 12V528" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="538" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
+</g></g></g><path d="M0 8Q0 0 8 0H8V630H8Q0 630 0 622Z M112 0H112Q120 0 120 8V622Q120 630 112 630H112Z" fill="#b07a45"/><path d="M8 10V620 M112 10V620" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V618 M117.5 12V618" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="628" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
 $('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false"><svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true" style="border:1px solid rgba(255,255,255,.6);border-radius:2px">${flag(t.id,0,0,20,14)}</svg><span>${t.n}</span><i style="background:${t.c};box-shadow:0 0 6px ${t.c}"></i><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
 function say(m){$('#bub').textContent=m}
 function update(){
@@ -180,7 +298,7 @@ function update(){
  T.forEach((t,i)=>{$('#ln'+i).classList.toggle('lead',i===best);const b=document.querySelector(`.hd[data-i="${i}"]`);b.classList.toggle('sel',i===sel);b.setAttribute('aria-pressed',i===sel)});
  return best;
 }
-function float(i,txt){const el=document.createElement('b');el.className='fl';el.textContent=txt;el.style.top=((490-Math.min(100,S[i].p)*4)/540*100)+'%';$('#sv'+i).appendChild(el);setTimeout(()=>el.remove(),900)}
+function float(i,txt){const el=document.createElement('b');el.className='fl';el.textContent=txt;el.style.top=((490-Math.min(100,S[i].p)*4)/630*100)+'%';$('#sv'+i).appendChild(el);setTimeout(()=>el.remove(),900)}
 function walk(i){const l=$('#ln'+i);l.classList.add('walk');clearTimeout(wt[i]);wt[i]=setTimeout(()=>l.classList.remove('walk'),1000)}
 function hop(i){const g=$('#in'+i);g.classList.remove('hop');void g.getBBox();g.classList.add('hop')}
 function push(i,type,n=1,mult=1){
@@ -233,13 +351,14 @@ function findTeam(text){
  ));
 }
 function handleLiveEntry(entry){
- if(!entry||!['chat','gift','like','follow','share'].includes(entry.type))return;
+ if(!entry||!['member','chat','gift','like','follow','share'].includes(entry.type))return;
  const user=String(entry.username||'').trim().toLowerCase();
  const key=user||`anonymous-${Math.random()}`;
  let team=entry.type==='chat'?findTeam(entry.content): -1;
  if(team>=0&&user)picks.set(key,team);
  if(team<0)team=picks.has(key)?picks.get(key):Math.floor(Math.random()*T.length);
  if(user&&!picks.has(key))picks.set(key,team);
+ if(entry.type==='member')return;
  if(entry.type==='chat'){
   const now=Date.now();
   if(now-(lastChat.get(key)||0)<8000)return;
@@ -282,6 +401,360 @@ setInterval(()=>{
 },250);
 window.tortugas={push:(team,type,n)=>push(typeof team==='number'?team:T.findIndex(t=>t.id===team),type,n),reset};
 update();
+</script>
+<script>
+(function(){
+const P={mus:1,sfx:1,xp:0,wins:[0,0,0],best:0,races:0,ach:{}};
+try{Object.assign(P,JSON.parse(localStorage.getItem('tortu.v1')||'{}'))}catch(e){}
+let svT=0;const save=()=>{try{localStorage.setItem('tortu.v1',JSON.stringify(P))}catch(e){}};
+
+/* ===== AUDIO (WebAudio sintetizado, sin archivos externos) ===== */
+const A=(()=>{
+ let c,mg,sg,nb,tm=null,nx=0,st=0,inten=0;
+ const N=m=>440*Math.pow(2,(m-69)/12),run=()=>c&&c.state==='running';
+ function vol(){const t=c.currentTime;[mg.gain,sg.gain].forEach(g=>g.cancelScheduledValues(t));mg.gain.setValueAtTime(P.mus?.2:0,t);sg.gain.setValueAtTime(P.sfx?.6:0,t)}
+ function init(){
+  if(c)return c;
+  try{c=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}
+  const lim=c.createDynamicsCompressor();mg=c.createGain();sg=c.createGain();
+  mg.connect(lim);sg.connect(lim);lim.connect(c.destination);vol();
+  nb=c.createBuffer(1,c.sampleRate,c.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  c.onstatechange=sync;sync();return c;
+ }
+ function sync(){
+  if(run()){if(!tm){nx=c.currentTime+.1;tm=setInterval(sched,100)}}
+  else if(tm){clearInterval(tm);tm=null}
+  ui();
+ }
+ function ui(){
+  const b1=$('#bMus'),b2=$('#bSfx');
+  [[b1,P.mus],[b2,P.sfx]].forEach(([b,v])=>{b.classList.toggle('on',!!v);b.classList.toggle('off',!v);b.setAttribute('aria-pressed',!!v)});
+  const need=(P.mus||P.sfx)&&!run();b1.classList.toggle('hint',need);b1.title=need?'Toca para activar el sonido':'Música';
+ }
+ function o(f,t,d,ty,v,dst,sl){const x=c.createOscillator(),g=c.createGain();x.type=ty||'sine';x.frequency.setValueAtTime(f,t);if(sl)x.frequency.exponentialRampToValueAtTime(sl,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);x.connect(g);g.connect(dst||sg);x.start(t);x.stop(t+d+.05)}
+ function nz(t,d,v,hp,dst){const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=hp;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f);f.connect(g);g.connect(dst||sg);s.start(t);s.stop(t+d+.05)}
+ const CH=[[48,[0,4,7]],[55,[0,4,7]],[57,[0,3,7]],[53,[0,4,7]]];
+ function play(s,t){
+  const [r,iv]=CH[(s>>3)&3],k=s&7;
+  if(k%4===0)o(150,t,.18,'sine',.9,mg,45);
+  if(k%2)nz(t,.05,inten>.5?.22:.12,6000,mg);
+  if(inten>.75&&(k===2||k===6))nz(t,.12,.25,1500,mg);
+  if([0,3,4,7].includes(k))o(N(r-12+(k===3?12:0)),t,.22,'triangle',.55,mg);
+  o(N(r+12+iv[(k*2)%3]+(k>3?12:0)),t,.18,'square',.06+.05*inten,mg);
+  if(inten>.4&&k%2===0)o(N(r+24+iv[k%3]),t,.14,'sine',.16,mg);
+ }
+ function sched(){while(nx<c.currentTime+.3){play(st,nx);nx+=60/(112+inten*30)/2;st++}}
+ const F={
+  tap:(t,n)=>o(N(72+[0,2,4,7,9][n%5]+12*Math.min(2,Math.floor(n/5))),t,.12,'triangle',.45),
+  like:t=>o(660,t,.1,'triangle',.35,sg,990),
+  follow:t=>{o(660,t,.12,'sine',.4);o(990,t+.1,.22,'sine',.4)},
+  gift:t=>[523,659,784,1047,1319].forEach((f,i)=>o(f,t+i*.06,.3,'triangle',.3)),
+  chat:t=>o(900,t,.05,'sine',.12),
+  sel:t=>{o(400,t,.05,'square',.15);o(600,t+.05,.07,'square',.15)},
+  cool:t=>o(1300,t,.04,'square',.08),
+  combo:(t,m)=>[0,4,7,12].slice(0,m+1).forEach((s,i)=>o(N(72+s),t+i*.06,.2,'square',.2)),
+  break:t=>o(330,t,.4,'sawtooth',.18,sg,70),
+  lead:t=>{o(250,t,.3,'sawtooth',.1,sg,1100);o(784,t+.2,.15,'triangle',.3);o(1047,t+.3,.25,'triangle',.3)},
+  beep:(t,n)=>o(n%2?880:1175,t,.12,'square',.14),
+  win:t=>{[523,523,523,659,784,1047].forEach((f,i)=>o(f,t+i*.14+(i>2?.1:0),.3,'square',.25));nz(t+.9,.6,.2,3000)},
+  lvl:t=>[392,523,659,784,1047].forEach((f,i)=>o(f,t+i*.08,.25,'triangle',.3)),
+  ach:t=>{o(1568,t,.5,'sine',.3);o(2093,t+.1,.6,'sine',.25)},
+  on:t=>{o(523,t,.1,'sine',.3);o(784,t+.1,.2,'sine',.3)},
+  off:t=>{o(400,t,.15,'sine',.3);o(260,t+.15,.3,'sine',.3)},
+  start:t=>{for(let i=0;i<3;i++)o(440,t+i*.25,.12,'square',.2);o(880,t+.75,.35,'square',.22)}
+ };
+ return{init,
+  unlock(){const x=init();if(x&&x.state==='suspended')x.resume().catch(()=>{})},
+  sfx(n,a){if(run()&&P.sfx)try{F[n](c.currentTime,a)}catch(e){}},
+  inten(v){inten=v},
+  duck(ms){if(!run())return;const g=mg.gain,t=c.currentTime;g.cancelScheduledValues(t);g.setTargetAtTime(.04,t,.05);g.setTargetAtTime(P.mus?.2:0,t+ms/1000,.4)},
+  tog(k){init();this.unlock();P[k]=P[k]?0:1;save();if(c)vol();ui()},
+  vis(v){if(c)(v?c.resume():c.suspend()).catch(()=>{})}};
+})();
+
+/* ===== GAMIFICACIÓN ===== */
+const need=l=>50+25*l;
+function lvl(){let l=1,x=P.xp;while(x>=need(l)){x-=need(l);l++}return[l,x,need(l)]}
+const contrib=new Map(),AC={first:'Primer toque',x2:'Combo x2 desbloqueado',x3:'¡Combo máximo x3!',gift:'Primer regalo',lead5:'Carrera pareja: 5 cambios de líder',pick:'¡Hincha acertado! Ganó tu equipo',lv5:'Nivel 5 alcanzado',r5:'5 carreras completadas'};
+const mvp=()=>[...contrib].sort((a,b)=>b[1]-a[1])[0];
+const who=n=>n==='TÚ'?n:'@'+n;
+function hud(){
+ const[l,x,n]=lvl(),m=mvp();
+ $('#lvT').textContent='Nv '+l;$('#lvB').style.width=(x/n*100)+'%';
+ $('#stW').innerHTML=P.wins.map((w,i)=>'<span class="cp" title="'+T[i].n+': '+w+' copa'+(w===1?'':'s')+'"><svg width="24" height="16" viewBox="0 0 20 14" aria-hidden="true">'+flag(T[i].id,0,0,20,14)+'</svg><b>🏆 '+w+'</b></span>').join('');
+ $('#stM').textContent=m?(who(m[0])+' '+m[1]):'—';
+}
+const tq=[];let tb=false;
+function toast(m,ic){tq.push((ic||'⭐')+' '+m);if(!tb)nt()}
+function nt(){const e=tq.shift(),t=$('#toast');if(!e){tb=false;t.classList.remove('on');return}tb=true;t.textContent=e;t.classList.add('on');setTimeout(()=>{t.classList.remove('on');setTimeout(nt,250)},2200)}
+function ach(k){if(P.ach[k])return;P.ach[k]=1;save();toast(AC[k],'🏅');A.sfx('ach')}
+function addXp(n){
+ const l0=lvl()[0];P.xp+=n;const l1=lvl()[0];
+ if(l1>l0){A.sfx('lvl');toast('¡Subiste al nivel '+l1+'!','🆙');if(l1>=5)ach('lv5')}
+ if(Date.now()-svT>2000){svT=Date.now();save()}
+}
+
+/* ===== ENGANCHES A LOS EVENTOS REALES ===== */
+let live=false,cu=null,tapping=false,leads=0,sprint=false,pm=1,lastStreak=0,lt=0,tk=0,cc=false;
+const _push=push;
+push=function(i,type,n=1,m=1){
+ const was=over,p0=lead;_push(i,type,n,m);
+ if(was||i<0||!S[i])return;
+ grow(i,.015);
+ const pts=({chat:1,like:1,follow:3,gift:10}[type]||0)*n*m,w=live?cu:'TÚ';
+ contrib.set(w,(contrib.get(w)||0)+pts);
+ if(!live&&streak>P.best)P.best=streak;
+ if(type==='gift'){ach('gift');turboOn(i,3000+Math.min(n,5)*1000);if(!live)hype('🎁','TÚ',' · ¡TURBO '+T[i].n+'!',T[i].c)}
+ addXp(pts);
+ if(!over){
+  if(live){const now=performance.now();if(now-lt>(type==='gift'?120:70)){lt=now;A.sfx(type==='gift'||type==='follow'||type==='like'?type:'chat')}}
+  else{
+   if(tapping)ach('first');
+   if(m>pm){A.sfx('combo',m);ach('x'+m)}else A.sfx(type==='gift'||type==='follow'?type:'tap',streak);
+  }
+  if(lead!==p0&&lead>=0&&p0>=0){leads++;A.sfx('lead');if(leads===5)ach('lead5')}
+ }
+ pm=m;hud();
+};
+const _hle=handleLiveEntry;
+const liveUsers=new Set();
+handleLiveEntry=function(e){live=true;cu=String(e&&e.username||'').trim()||'anónimo';if(cu!=='anónimo')liveUsers.add(cu.toLowerCase());try{_hle(e)}finally{live=false;cu=null}try{avatar(e)}catch(x){console.error(x)}try{perks(e)}catch(x){console.error(x)}};
+const gs=[1.3,1.3,1.3],av=new Map(),seen=new Set();
+T.forEach((t,i)=>$('#sv'+i).insertAdjacentHTML('beforeend','<div class="avs" id="av'+i+'" aria-label="Hinchas de '+t.n+'"></div><div class="ev" id="ev'+i+'" hidden></div>'));
+function ph(i){const el=document.createElement('span');el.className='ua ph';el.style.setProperty('--c',T[i].c);el.innerHTML='<svg viewBox="0 0 20 14" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">'+flag(T[i].id,0,0,20,14)+'</svg>';$('#av'+i).append(el)}
+function fillPh(i){const b=$('#av'+i);b.textContent='';ph(i)}
+T.forEach((_,i)=>fillPh(i));
+const EI={chat:['💬','#8b8f99'],like:['❤️','#ff5a7a'],follow:['➕','#2f9bd6'],share:['↗️','#2f9bd6'],gift:['🎁','#e11d48']},evT=[];
+function showEv(t,type,n){
+ const el=$('#ev'+t),d=EI[type];if(!el||!d)return;
+ n=Math.floor(Number(n))||1;
+ el.innerHTML='<b>'+d[0]+'</b>'+((type==='like'||type==='gift')&&n>1?'x'+n:'');
+ el.style.setProperty('--c',d[1]);el.hidden=false;el.style.animation='none';void el.offsetWidth;el.style.animation='';
+ clearTimeout(evT[t]);evT[t]=setTimeout(()=>{el.hidden=true},2200);
+}
+function grow(i,d){if(!T[i])return;gs[i]=Math.min(1.7,gs[i]+d);$('#in'+i).style.setProperty('--s',gs[i])}
+function setAvatarImage(el,url){
+ if(!/^https?:\/\//i.test(url))return;
+ const previous=el.querySelector('img');
+ if(previous&&previous.getAttribute('src')===url)return;
+ if(previous)previous.remove();
+ const im=new Image();im.referrerPolicy='no-referrer';im.alt='';im.onerror=()=>im.remove();im.src=url;el.append(im);
+}
+function avatar(e){
+ if(over||!e||!['member','chat','gift','like','follow','share'].includes(e.type))return;
+ const u=String(e.username||'').trim();if(!u)return;
+ const k=u.toLowerCase(),t=picks.get(k);if(t==null||!T[t])return;
+ const url=String(e.profilePictureUrl||e.profilePicture||e.avatarUrl||e.avatar||e.userImage||e.imageUrl||'');
+ showEv(t,e.type,e.activityCount);
+ if(!seen.has(k)){seen.add(k);grow(t,.05)}
+ const a=av.get(k);
+ if(a&&a.t===t){setAvatarImage(a.el,url);a.el.parentNode.prepend(a.el);return}
+ if(a){a.el.remove();if(!$('#av'+a.t).querySelector('.ua'))ph(a.t);toast(who(u)+' se pasó a '+T[t].n,'🔁');A.sfx('sel')}
+ const el=document.createElement('span');el.className='ua';el.title='@'+u;el.textContent=u[0].toUpperCase();
+ let h=0;for(const ch of u)h=(h*31+ch.charCodeAt(0))%360;
+ el.style.setProperty('--b','hsl('+h+',55%,40%)');el.style.setProperty('--c',T[t].c);
+ setAvatarImage(el,url);
+ av.set(k,{el,t});const box=$('#av'+t),placeholder=box.querySelector('.ph');if(placeholder)placeholder.remove();box.prepend(el);
+ while(box.querySelectorAll('.ua:not(.ph)').length>4){const users=box.querySelectorAll('.ua:not(.ph)'),last=users[users.length-1];if(!last)break;for(const[kk,v] of av)if(v.el===last)av.delete(kk);last.remove()}
+}
+fetch('/api/recent-users').then(async response=>{
+ if(!response.ok)throw new Error('No se pudieron cargar los usuarios recientes.');
+ const result=await response.json();
+ for(const user of result.users||[]){
+  const key=String(user.username||'').trim().toLowerCase();
+  if(!key||liveUsers.has(key))continue;
+  const team=[...key].reduce((sum,ch)=>sum+ch.charCodeAt(0),0)%T.length;
+  picks.set(key,team);
+  avatar({type:'member',username:user.username,avatar:user.avatar});
+ }
+}).catch(error=>console.error(error));
+const _sc=showCombo;
+showCombo=function(){if(streak===0){if(lastStreak>=3)A.sfx('break');pm=1}lastStreak=streak;_sc()};
+const _win=win;
+win=function(i){
+ const first=!over;_win(i);if(!first)return;
+ P.wins[i]++;P.races++;addXp(20);
+ if(sel===i){addXp(50);ach('pick')}
+ if(P.races>=5)ach('r5');
+ save();A.sfx('win');A.duck(3500);hy.hidden=true;voWin(i);
+ const b=$('.board');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+ $('#app').classList.remove('sprint');
+ const m=mvp(),h=$('#win h2');
+ if(h){const d=document.createElement('div');d.className='plate';d.style.cssText='padding:6px 12px;font-size:11px;text-align:center;white-space:pre-line';
+  d.textContent=(m?'MVP: '+who(m[0])+' · '+m[1]+' pts\n':'')+P.wins.map((w,k)=>T[k].id.toUpperCase()+' '+w).join(' · ')+(sel===i?'\n¡Tu equipo ganó! +50 XP':'');
+  h.after(d)}
+ if(P.wins[i]>=CUPS)champion(i);
+ hud();
+};
+const CUPS=3;
+function champion(i){
+ clearTimeout(rs);
+ const w=$('#win'),h=w.querySelector('h2');
+ if(h)h.innerHTML='¡CAMPEÓN<br>'+T[i].n+'!';
+ const t=document.createElement('div');t.className='plate';t.style.cssText='padding:6px 12px;font-size:16px;text-align:center';t.textContent='🏆🏆🏆 ¡TRES COPAS!';
+ if(h)h.after(t);
+ const bt=$('#again');if(bt){bt.textContent='NUEVO TORNEO';bt.onclick=fullReset}
+ const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
+ w.insertAdjacentHTML('beforeend',Array.from({length:40},()=>'<span class="cf" style="left:'+(Math.random()*100)+'%;background:'+cols[Math.floor(Math.random()*5)]+';animation-delay:'+(Math.random()*2)+'s"></span>').join(''));
+ toast('¡'+T[i].n+' es el campeón del torneo!','🏆');
+ rs=setTimeout(fullReset,12000);
+}
+function fullReset(){
+ clearTimeout(rs);P.wins=[0,0,0];P.best=0;save();
+ reset();
+ vDone.add('intro');
+ hype('👋','¡Nuevo torneo!',' · ¡Bienvenidos otra vez!','#ffd566');
+ toast('Nuevo torneo: ¡el primero en llegar a 3 copas gana!','👋');
+ speak('¡Comienza un nuevo torneo! Soy Don Tortu y les doy la bienvenida otra vez. Elige tu tortuga escribiendo Brasil, Paraguay o Argentina en el chat, ¡y a ver quién llega primero a tres copas!','¡Nuevo torneo!',true);
+}
+const _reset=reset;
+reset=function(){seen.clear();gs.fill(1.3);T.forEach((_,i)=>{$('#ev'+i).hidden=true;$('#in'+i).style.setProperty('--s',1.3)});voReset();contrib.clear();us.clear();joined.clear();turbo.fill(0);lastMvp=null;hy.hidden=true;T.forEach((_,i)=>$('#ln'+i).classList.remove('turbo'));leads=0;sprint=false;pm=1;lastStreak=0;tk=0;$('#app').classList.remove('sprint');_reset();A.sfx('start');hud()};
+window.tortugas.reset=reset;
+const _scn=setConnection;
+setConnection=function(s){const k=!!(s.connected||s.isConnected);if(k!==cc){cc=k;A.sfx(k?'on':'off');if(k)toast('Conectado en vivo','🟢')}_scn(s)};
+
+/* clics del usuario (fase de captura: antes de la lógica original) */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('.cta');if(!b||over||b.classList.contains('cool'))return;
+ tapping=true;setTimeout(()=>tapping=false,0);
+ const cd=+b.dataset.cd;if(cd)setTimeout(()=>{if(!over)A.sfx('cool')},cd);
+},true);
+$('#lanes').addEventListener('click',e=>{if(e.target.closest('.hd'))A.sfx('sel')});
+addEventListener('keydown',e=>{
+ if(['1','2','3'].includes(e.key))A.sfx('sel');
+ const k=e.key.toLowerCase();if(k==='m')A.tog('mus');if(k==='s')A.tog('sfx');
+});
+['pointerdown','keydown','touchend'].forEach(ev=>addEventListener(ev,A.unlock,true));
+$('#bMus').onclick=()=>A.tog('mus');$('#bSfx').onclick=()=>A.tog('sfx');
+document.addEventListener('visibilitychange',()=>A.vis(!document.hidden));
+
+/* intensidad de la música y recta final */
+setInterval(()=>{
+ if(over)return;
+ const mx=Math.max(...S.map(s=>s.p));A.inten(Math.min(1,mx/100));
+ if(mx>=85){if(!sprint){sprint=true;$('#app').classList.add('sprint');toast('¡RECTA FINAL!','🏁');say('¡RECTA FINAL!')}A.sfx('beep',tk++)}
+},500);
+
+/* ===== DEMO CON BOTS: espectadores simulados que usan los mismos eventos reales ===== */
+const BN=['maria_py','juan.cde','lucas_br','sofi.ar','pedro10','carla_asu','tiago_rj','nico_bsas','lola_pya','dani.ps','rafa_sp','vale_ros','mateo_py','ana_cba','joao_sc','fer_enc','gabi_mza','luis_cde','bia_poa','tomi_ar','alma_py','kaka_br','messi_fan','nene_ytu'];
+const CT=['VAMOS BRASIL','Paraguay carajo','ARGENTINA campeón','🇧🇷','🇵🇾','🇦🇷','soy de PY','AR AR AR','BRAZIL!','vamos tortuga','qué carrera!','dale dale'];
+const rnd=a=>a[Math.random()*a.length|0];
+function bot(){
+ const r=Math.random(),e={username:rnd(BN)};
+ if(r<.35){e.type='chat';e.content=rnd(CT)}
+ else if(r<.65){e.type='like';e.activityCount=1+(Math.random()*5|0)}
+ else if(r<.82)e.type='follow';
+ else if(r<.9)e.type='share';
+ else{e.type='gift';e.activityCount=1+(Math.random()*2|0)}
+ handleLiveEntry(e);
+}
+let botT=null;
+function botMode(on){
+ clearInterval(botT);botT=null;
+ if(on){for(let i=0;i<6;i++)setTimeout(()=>{if(botT)handleLiveEntry({type:'chat',username:BN[i],content:CT[i]})},i*250);botT=setInterval(bot,1200)}
+ const b=$('#bBot');b.classList.toggle('on',on);b.classList.toggle('off',!on);b.setAttribute('aria-pressed',on);
+ toast(on?'Demo con bots activada':'Demo con bots apagada','🤖');
+}
+$('#bBot').onclick=()=>botMode(!botT);
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='b')botMode(!botT)});
+if(/[?&]bot/.test(location.search))botMode(true);
+
+/* ===== PREMIOS POR ACCIONES DE ESPECTADORES ===== */
+const us=new Map(),joined=new Set(),welcomed=new Set(),turbo=[0,0,0];let lastMvp=null,hyT;
+const hy=document.createElement('div');hy.id='hype';hy.hidden=true;$('#app').append(hy);
+function hype(ic,name,txt,col){
+ if(over)return;
+ hy.textContent='';const b=document.createElement('b'),w=document.createElement('span'),i=document.createElement('i');
+ b.textContent=ic;i.textContent=name;w.append(i,document.createTextNode(txt));hy.append(b,w);
+ hy.style.setProperty('--c',col||'#ffd566');hy.hidden=false;hy.style.animation='none';void hy.offsetWidth;hy.style.animation='';
+ clearTimeout(hyT);hyT=setTimeout(()=>{hy.hidden=true},2000);
+}
+T.forEach((_,i)=>$('#in'+i).insertAdjacentHTML('afterbegin','<g class="tf"><path d="M50 524C38 536 40 556 50 574C60 556 62 536 50 524Z" fill="#ff7a1a"/><path d="M50 524C44 534 45 548 50 562C55 548 56 534 50 524Z" fill="#ffd34d"/><path d="M33 516C27 524 28 534 33 542C38 534 39 524 33 516Z" fill="#ff7a1a"/><path d="M67 516C61 524 62 534 67 542C72 534 73 524 67 516Z" fill="#ff7a1a"/></g>'));
+const tz=(m,ic)=>{if(tq.length<3)toast(m,ic)};
+const turboOn=(t,ms)=>{const n=performance.now();turbo[t]=Math.min(n+8000,Math.max(n,turbo[t])+ms)};
+const bonus=(t,n)=>{S[t].p+=n;update()};
+setInterval(()=>{
+ if(over)return;const n=performance.now();
+ T.forEach((_,i)=>{const on=turbo[i]>n;$('#ln'+i).classList.toggle('turbo',on);if(on){S[i].p+=.25;walk(i)}});
+ update();
+},250);
+function perks(e){
+ if(over||!e)return;
+ const u=String(e.username||'').trim();if(!u)return;
+ const k=u.toLowerCase(),t=picks.get(k);if(t==null||!T[t])return;
+ const n=Math.max(1,Math.floor(Number(e.activityCount))||1),nm='@'+u,tn=T[t].n,col=T[t].c;
+ let st=us.get(k);if(!st){st={likes:0,lv:0};us.set(k,st)}
+ if(e.type==='chat'&&findTeam(e.content)>=0&&!joined.has(k)){joined.add(k);tz(nm+' se suma a '+tn,'🐢')}
+ if(e.type==='gift'){const big=n>=3;bonus(t,big?10:3);hype(big?'⚡':'🎁',nm,big?' · ¡SÚPER TURBO '+tn+'!':' · ¡TURBO '+tn+'!',col);A.sfx('lead')}
+ else if(e.type==='follow'&&!welcomed.has(k)){welcomed.add(k);bonus(t,3);hype('➕',nm,' · ¡nuevo hincha de '+tn+'!',col);A.sfx('ach')}
+ else if(e.type==='share'){turboOn(t,2000);hype('↗️',nm,' compartió · ¡impulso '+tn+'!',col)}
+ else if(e.type==='like'){
+  st.likes+=n;const M=[20,50,100];
+  if(st.lv<3&&st.likes>=M[st.lv]){bonus(t,[2,4,8][st.lv]);st.lv++;const a=av.get(k);if(a)a.el.classList.add('vip');hype('❤️',nm,' · Fan nivel '+st.lv+' de '+tn,col);A.sfx('ach')}
+ }
+ const mv=mvp();
+ if(mv&&mv[0]!==lastMvp&&mv[1]>=10){const first=lastMvp===null;lastMvp=mv[0];tz(who(mv[0])+(first?' lidera la sala':' es el nuevo MVP'),'👑')}
+}
+/* ===== VOZ EN OFF: explica la dinámica y alienta; cada pedido se dice UNA sola vez por ronda ===== */
+const SS=window.speechSynthesis;
+if(P.vo===undefined)P.vo=1;
+let voices=[],vT0=performance.now(),vLast=-1e9,vRound=0;const vDone=new Set();
+const loadV=()=>{try{voices=SS.getVoices()||[]}catch(e){}};
+if(SS){loadV();SS.onvoiceschanged=loadV}
+const pickV=()=>{const es=voices.filter(v=>/^es/i.test(v.lang));return es.find(v=>/es[-_](US|MX|419)/i.test(v.lang))||es.find(v=>/es[-_]AR/i.test(v.lang))||es[0]||null};
+function speak(text,sub,force){
+ if(!SS||!P.vo)return false;
+ try{
+  if(force)SS.cancel();else if(SS.speaking||SS.pending)return false;
+  const u=new SpeechSynthesisUtterance(text),v=pickV();
+  if(v){u.voice=v;u.lang=v.lang}else u.lang='es-419';
+  u.rate=1.03;u.pitch=1.1;u.volume=1;
+  const end=()=>{if(!SS.speaking)A.duck(0)};u.onend=end;u.onerror=end;
+  A.duck(text.length*75+600);
+  if(sub)say(sub);
+  SS.speak(u);vLast=performance.now();talk(text.length*70+500);return true;
+ }catch(e){return false}
+}
+const dt0=document.querySelector('.side>svg');let talkT;
+function talk(ms){dt0.classList.add('talk');clearTimeout(talkT);talkT=setTimeout(()=>dt0.classList.remove('talk'),ms)}
+const _say=say;
+say=function(t){
+ _say(t);talk(1400);
+ if(!over&&P.vo&&/toma la delantera|^¡Regalo para/.test(t)&&performance.now()-vLast>8000)
+  speak(t.replace(/\s*\+\d+/,'').replace(/[A-ZÁÉÍÓÚÑ]{3,}/g,w=>w[0]+w.slice(1).toLowerCase()),null,false);
+};
+const VL=[
+ {id:'intro',at:5,s:'¡Comenta tu país!',v:['¡Bienvenidos a Tortu Live! Soy Don Tortu, tu relator. Elige tu tortuga escribiendo en el chat Brasil, Paraguay o Argentina. Tu comentario la hace avanzar, ¡y gana la primera que llegue a la meta! El primero en juntar tres copas es el campeón del torneo.','¡Hola a todos, soy Don Tortu! Esto es una carrera de tortugas. Escribe en el chat el país que quieras apoyar, Brasil, Paraguay o Argentina, y tu tortuga empieza a avanzar.']},
+ {id:'tap',at:55,s:'¡Tap tap = empuje!',v:['Si quieres darle un empujón extra a tu tortuga, dale tap tap a la pantalla. Cada me gusta la hace avanzar un poquito más.','Un dato: con cada tap tap, cada me gusta, tu tortuga da un pasito más. Si te animas, ¡mándale cariño!']},
+ {id:'share',at:105,s:'¡Comparte con un amigo!',v:['Y si te está gustando, compártenos con un amigo. Así la carrera se pone más divertida para todos.','Si quieres, comparte el live con alguien que también quiera alentar. ¡Más hinchas, más emoción!']},
+ {id:'gift',at:155,s:'¡Un regalo = turbo!',v:['Los regalos le dan turbo a tu tortuga. Si te animas a mandar uno, ¡gracias de corazón! Y si no, tu comentario y tus me gusta también suman.','Un regalo activa el turbo de tu equipo. Sin ninguna presión: si lo mandas, ¡muchas gracias! Y si no, seguimos disfrutando la carrera juntos.']}
+];
+const VF=['¡Recta final! Todo se decide ahora. ¡Vamos, tortugas!','¡Llegando a la meta! ¡Qué emoción, esto está parejísimo!'];
+const VW=['¡Ganó {n}! Gracias por jugar y alentar. En unos segundos arranca otra ronda, ¡te esperamos!','¡Tenemos campeón: {n}! Gracias por estar. Ya viene una nueva carrera.'];
+function voReset(){vT0=performance.now();vDone.clear();vRound++;vLast=-1e9;try{SS&&SS.cancel();A.duck(0)}catch(e){}}
+function voWin(i){const n=T[i].n[0]+T[i].n.slice(1).toLowerCase();vDone.add('final');speak(P.wins[i]>=3?'¡Tenemos campeón del torneo! '+n+' se lleva las tres copas. ¡Felicitaciones y gracias por jugar!':VW[vRound%VW.length].replace('{n}',n),null,true)}
+setInterval(()=>{
+ if(over)return;const now=performance.now(),el=(now-vT0)/1000;
+ if(sprint&&!vDone.has('final')){vDone.add('final');speak(VF[vRound%VF.length],'¡Recta final!',true);return}
+ for(const l of VL){
+  if(vDone.has(l.id)||el<l.at)continue;
+  if(!P.vo||vDone.has('final')){vDone.add(l.id);continue}
+  if(now-vLast<5000)break;
+  if(speak(l.v[vRound%l.v.length],l.s,false))vDone.add(l.id);
+  break;
+ }
+},500);
+function voUi(){const b=$('#bVoz');b.classList.toggle('on',!!P.vo);b.classList.toggle('off',!P.vo);b.setAttribute('aria-pressed',!!P.vo)}
+function voTog(){P.vo=P.vo?0:1;save();if(!P.vo){try{SS&&SS.cancel();A.duck(0)}catch(e){}}voUi();toast(P.vo?'Voz en off activada':'Voz en off apagada','🗣️')}
+$('#bVoz').onclick=voTog;
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='v')voTog()});
+let vPrimed=false;
+['pointerdown','keydown','touchend'].forEach(ev=>addEventListener(ev,()=>{if(vPrimed||!SS)return;vPrimed=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;SS.speak(u)}catch(e){}},true));
+voUi();
+const _up=update;
+update=function(){const r=_up();S.forEach((x,i)=>{const k=$('#gk'+i);if(k)k.setAttribute('fill','hsl('+((215-215*Math.min(100,x.p)/100)|0)+',95%,55%)')});return r};
+A.init();hud();update();
+})();
 </script>
 <script>
 if ('serviceWorker' in navigator)

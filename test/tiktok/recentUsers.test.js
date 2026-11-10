@@ -25,6 +25,21 @@ test('recent users are deduplicated, limited to four, and persisted in JSON', ()
     assert.deepEqual(createRecentUsersService({ filePath }).getRecentUsers(), saved);
     assert.deepEqual(JSON.parse(fs.readFileSync(filePath, 'utf8')).users, saved.users);
     assert.equal(service.saveRecentUsers([{ username: '', avatar: '', t: 1 }]), null);
+
+    const tracked = service.rememberConnectedUser({
+      username: 'Fede',
+      avatar: 'https://example.com/fede.png',
+    });
+    assert.deepEqual(tracked.users.map((user) => user.username), ['Dani', 'ANA', 'Eva', 'Fede']);
+    service.updateRecentUserAvatar({
+      username: 'ANA',
+      avatar: 'https://example.com/ana-new.png',
+    });
+    assert.equal(service.getRecentUsers().users[1].avatar, 'https://example.com/ana-new.png');
+    assert.deepEqual(
+      createRecentUsersService({ filePath }).getRecentUsers(),
+      service.getRecentUsers(),
+    );
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }

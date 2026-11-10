@@ -26,6 +26,7 @@ El servidor no lee `.env` por sí mismo. Usa variables del entorno o administra 
 | `TIKTOK_USERNAME` | `d4n1el325` | Usuario de TikTok; se acepta con o sin `@`. Tiene prioridad sobre la cuenta persistida. |
 | `TIKTOK_CONFIG_PATH` | `data/tiktok/config.json` | Ruta del archivo JSON con el usuario configurado desde el backend. |
 | `TIKTOK_COMMENT_STATS_PATH` | Junto a `TIKTOK_CONFIG_PATH` | Archivo JSON persistente con comentarios y copas por país. |
+| `TIKTOK_RECENT_USERS_PATH` | Junto a `TIKTOK_CONFIG_PATH` | Archivo JSON de los últimos cuatro usuarios conectados y sus avatares. |
 
 Monta almacenamiento persistente si necesitas conservar la configuración del backend entre reinicios. El directorio `data/` está excluido de Git.
 
@@ -37,7 +38,7 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /`, `/overlay`, `/tortugas.html` o `/tortugas_tiktok.html` | Overlay de TikTok con carrera de 60 segundos y combos. | HTML |
+| `GET /`, `/overlay`, `/tortugas.html` o `/tortugas_tiktok.html` | Overlay versión 3, con carreras de 240 segundos, avatares y combos. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -47,6 +48,8 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 | `GET /api/comment-stats` | Conteo persistente de comentarios mencionando cada país y comentarios sin país. | JSON |
 | `GET /api/cup-stats` | Copas ganadas acumuladas por país. | JSON |
 | `POST /api/cup-stats` | Registra una copa al terminar una ronda. | Envío: `{ "code": "PY" }`; respuesta: estadísticas actualizadas. |
+| `GET /api/recent-users` | Lista los últimos cuatro usuarios conectados y sus avatares. | JSON |
+| `PUT /api/recent-users` | Reemplaza la lista de usuarios recientes. | Envío: `{ "users": [{ "username": "espectador", "avatar": "https://..." }] }`; respuesta: lista guardada. |
 | `GET /api/events` | Flujo SSE de estado, actividad y estadísticas. | Eventos `status`, `snapshot`, `update`, `comment-stats` y `cup-stats`. |
 
 Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` contienen el estado resumido; `snapshot` contiene los eventos recientes al conectar; cada `update` incluye el evento nuevo y la lista actualizada:
@@ -68,7 +71,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay principal `tortugas_tiktok.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Los comentarios pueden elegir equipo escribiendo Brasil/BR, Paraguay/PY o Argentina/AR; el resto de comentarios suma un punto al equipo ya elegido o a uno asignado al azar, con un máximo de un punto cada 8 segundos por usuario. Los likes suman un punto cada uno, los regalos 10 por unidad y los nuevos seguidores y compartidos 3. Los botones del overlay siguen disponibles para pruebas manuales.
+El overlay principal `tortugas_tiktok.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra los avatares reales de TikTok y guarda en JSON los últimos cuatro usuarios que entraron al LIVE; se cargan al abrir el overlay y se conservan entre carreras. Los comentarios pueden elegir equipo escribiendo Brasil/BR, Paraguay/PY o Argentina/AR; el resto de comentarios suma un punto al equipo ya elegido o a uno asignado al azar, con un máximo de un punto cada 8 segundos por usuario. Los likes suman un punto cada uno, los regalos 10 por unidad y los nuevos seguidores y compartidos 3. Los botones del overlay siguen disponibles para pruebas manuales.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 
@@ -89,7 +92,6 @@ modules/
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
 tortugas_tiktok.html                # Overlay principal conectado a eventos de TikTok
-tortugas.html                       # Overlay previo, conservado pero no servido
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE

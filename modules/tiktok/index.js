@@ -58,6 +58,11 @@ function createTikTokModule({
     events.unshift(entry);
     events.length = Math.min(events.length, maxEvents);
     state.lastEventAt = entry.time || new Date().toISOString();
+    if (entry.type === 'member') {
+      recentUsers.rememberConnectedUser(entry);
+    } else if (entry.avatar) {
+      recentUsers.updateRecentUserAvatar(entry);
+    }
     if (entry.type === 'chat') {
       const stats = commentStats.recordComment(entry.content);
       publish('comment-stats', stats);
