@@ -3,7 +3,6 @@ const fs = require('node:fs');
 const { once } = require('node:events');
 const os = require('node:os');
 const path = require('node:path');
-const vm = require('node:vm');
 const test = require('node:test');
 const { createWebserver, startServer } = require('../server');
 
@@ -61,12 +60,14 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves the v1.6 overlay and leaves connection startup to the browser', async () => {
+test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY v1\.3\.html \.\//);
-  assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), true);
+  assert.match(dockerfile, /COPY tortugas\.html \.\//);
+  assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), true);
+  assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v68.html')), false);
+  assert.doesNotMatch(dockerfile, /v1\.3\.html/);
   assert.doesNotMatch(dockerfile, /v45\.html/);
   assert.equal(fs.existsSync(path.join(root, 'v45.html')), false);
 
@@ -88,37 +89,32 @@ test('serves the v1.6 overlay and leaves connection startup to the browser', asy
     assert.equal(monitorService.state.isConnected, false, 'serving the overlay must not connect TikTok');
     assert.match(rootResponse.headers.get('cache-control'), /no-store/);
     const html = await rootResponse.text();
-    assert.match(html, /id="versionBadge" aria-label="Versión 1\.6">v1\.6/);
-    assert.doesNotMatch(html, /Países Bajos|Netherlands|code:\s*"NL"/);
-    const voiceSelectorSource = html.match(/function googleSpanishVoice\(voices\) \{[\s\S]*?\n      \}/)?.[0];
-    assert.ok(voiceSelectorSource, 'the narrator must select a Google Spanish voice');
-    const googleSpanishVoice = vm.runInNewContext(`(${voiceSelectorSource})`);
-    const selectedVoice = googleSpanishVoice([
-      { name: 'Microsoft Helena', lang: 'es-ES' },
-      { name: 'Google español', lang: 'es-ES' },
-      { name: 'Google English', lang: 'en-US' },
-    ]);
-    assert.equal(selectedVoice.name, 'Google español');
-    assert.equal(googleSpanishVoice([{ name: 'Microsoft Helena', lang: 'es-ES' }]), null);
-    assert.match(html, /<title>Country Race<\/title>/);
-    assert.match(html, /id="connectorStatus"/);
-    assert.match(html, /new EventSource\("\/api\/events"\)/);
-    assert.match(html, /source\.addEventListener\("update"/);
-    assert.match(html, /fetch\("\/api\/reconnect"/);
+    assert.match(html, /new EventSource\('\/api\/events'\)/);
+    assert.match(html, /source\.addEventListener\('update'/);
+    assert.match(html, /fetch\('\/api\/reconnect'/);
+    assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
+    assert.match(html, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
+    assert.match(html, /function handleLiveEntry\(entry\)/);
+    assert.match(html, /activityCount/);
     assert.deepEqual(await fetch(`${baseUrl}/api/config`).then((response) => response.json()), {
       username: 'd4n1el325',
     });
 
-    for (const route of ['/overlay', '/v1.3.html', '/v68.html']) {
+    for (const route of ['/overlay', '/tortugas.html']) {
       const response = await fetch(`${baseUrl}${route}`);
       assert.equal(response.status, 200);
       assert.equal(await response.text(), html);
     }
+    assert.equal((await fetch(`${baseUrl}/v1.3.html`)).status, 404);
+    assert.equal((await fetch(`${baseUrl}/v68.html`)).status, 404);
     assert.equal((await fetch(`${baseUrl}/v60.html`)).status, 404);
     assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
-    assert.match(await serviceWorker.text(), /tortu-shell-v4/);
+    assert.match(await serviceWorker.text(), /tortu-shell-v5/);
+    const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
+    assert.equal(manifest.status, 200);
+    assert.equal((await manifest.json()).display, 'fullscreen');
     assert.deepEqual(await fetch(`${baseUrl}/health`).then((response) => response.json()), {
       ok: true,
     });

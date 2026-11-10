@@ -37,7 +37,7 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /`, `/overlay` o `/v1.3.html` | Overlay activo v1.6; el archivo conserva el nombre `v1.3.html`. `/v68.html` sigue disponible como alias. | HTML |
+| `GET /`, `/overlay` o `/tortugas.html` | Nuevo overlay de tres tortugas, conectado a TikTok LIVE. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -68,7 +68,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay activo v1.6 está en `v1.3.html` y consume los eventos normalizados por el backend mediante SSE en `/api/events`. El JavaScript del navegador inicia la conexión de TikTok al cargar el overlay; muestra el estado de conexión y la versión en la franja segura sobre el chat. La narración usa exclusivamente una voz Google en español, con entonación alegre; si no está instalada, no sustituye la voz por otro proveedor. La boca y el globo del avatar empiezan y terminan junto con la reproducción real; `?voice=0` desactiva la narración. `?sound=0` desactiva efectos y música, sin silenciarla. Países Bajos no participa en las carreras ni en las estadísticas de comentarios/copas. Se pueden cargar clips opcionales para la narradora con `?castsetup=1`. Configura la fuente de navegador de TikTok LIVE Studio en `1080 × 1920`. El panel de pruebas manual se abre con `P` o `?panel=1`; también se puede conectar un servidor WebSocket externo con `?ws=ws://localhost:8080`.
+El overlay principal `tortugas.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Los comentarios pueden elegir equipo escribiendo Brasil/BR, Paraguay/PY o Argentina/AR; el resto de comentarios suma un punto al equipo ya elegido o a uno asignado al azar, con un máximo de un punto cada 8 segundos por usuario. Los likes suman un punto cada uno, los regalos 10 por unidad y los nuevos seguidores y compartidos 3. Los botones del overlay siguen disponibles para pruebas manuales.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 
@@ -88,7 +88,7 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-v1.3.html                          # Juego y overlay transparente activo
+tortugas.html                      # Overlay principal conectado a eventos de TikTok
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
