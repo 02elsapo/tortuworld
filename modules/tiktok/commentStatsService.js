@@ -133,10 +133,13 @@ function createCommentStatsService({ filePath }) {
       unassigned = saved.unassigned;
     }
     if (saved.updatedAt !== undefined) {
-      if (typeof saved.updatedAt !== 'string') {
+      if (saved.updatedAt === null) {
+        updatedAt = null;
+      } else if (typeof saved.updatedAt !== 'string' || Number.isNaN(Date.parse(saved.updatedAt))) {
         throw new Error('La fecha de estadísticas guardada no es válida.');
+      } else {
+        updatedAt = saved.updatedAt;
       }
-      updatedAt = saved.updatedAt;
     }
   } catch (error) {
     if (error.code !== 'ENOENT') {
