@@ -98,6 +98,7 @@ test('serves the v2.0 TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const DUELO=\['py','br'\]/);
     assert.match(html, /data-t="gift"/);
     assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,4000\)/);
+    assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
     assert.match(html, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
     assert.match(html, /function handleLiveEntry\(entry\)/);

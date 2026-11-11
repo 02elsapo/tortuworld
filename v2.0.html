@@ -929,7 +929,7 @@ push=function(i,type,n=1,m=1){
  const pts=type==='like'&&live&&!curBot?0:(PTS[type]||0)*n*m,w=live?cu:'TÚ';
  if(!curBot)contrib.set(w,(contrib.get(w)||0)+pts); /* el bot no es MVP */
  if(!live&&streak>P.best)P.best=streak;
- if(type==='like'&&live&&!curBot)heartAdd(i,n); /* corazon: solo los me gusta reales llenan la barra */
+ if(type==='like'&&!curBot)heartAdd(i,n); /* taps manuales y likes reales llenan la barra del equipo */
  if(type==='gift')ach('gift'); /* regalo: sin turbo ni ventaja (regla 1) */
  if(!curBot)addXp(pts); /* ni suma XP */
  if(!over){
