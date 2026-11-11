@@ -117,8 +117,8 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
     const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifest.status, 200);
     const appManifest = await manifest.json();
-    assert.equal(appManifest.name, 'tortu madera');
-    assert.equal(appManifest.short_name, 'tortu madera');
+    assert.equal(appManifest.name, 'madera2');
+    assert.equal(appManifest.short_name, 'madera2');
     assert.equal(appManifest.display, 'fullscreen');
     assert.deepEqual(await fetch(`${baseUrl}/health`).then((response) => response.json()), {
       ok: true,
