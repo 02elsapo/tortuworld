@@ -60,10 +60,11 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async () => {
+test('serves the v2.0 TikTok overlay as a full-screen PWA', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY tortugas_tiktok\.html \.\//);
+  assert.match(dockerfile, /COPY v2\.0\.html \.\//);
+  assert.equal(fs.existsSync(path.join(root, 'v2.0.html')), true);
   assert.equal(fs.existsSync(path.join(root, 'tortugas_tiktok.html')), true);
   assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), false);
@@ -93,7 +94,9 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
     assert.match(html, /new EventSource\('\/api\/events'\)/);
     assert.match(html, /source\.addEventListener\('update'/);
     assert.match(html, /fetch\('\/api\/reconnect'/);
-    assert.match(html, /const RACE_SECONDS=240/);
+    assert.match(html, /const RACE_SECONDS=600/);
+    assert.match(html, /const DUELO=\['py','br'\]/);
+    assert.doesNotMatch(html, /data-t="gift"/);
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
     assert.match(html, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
     assert.match(html, /function handleLiveEntry\(entry\)/);
@@ -102,7 +105,7 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
       username: 'd4n1el325',
     });
 
-    for (const route of ['/overlay', '/tortugas.html', '/tortugas_tiktok.html']) {
+    for (const route of ['/overlay', '/tortugas.html', '/tortugas_tiktok.html', '/v2.0.html']) {
       const response = await fetch(`${baseUrl}${route}`);
       assert.equal(response.status, 200);
       assert.equal(await response.text(), html);
@@ -113,7 +116,7 @@ test('serves the TikTok-connected tortugas overlay as a full-screen PWA', async 
     assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
-    assert.match(await serviceWorker.text(), /tortu-shell-v6/);
+    assert.match(await serviceWorker.text(), /tortu-shell-v7/);
     const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifest.status, 200);
     const appManifest = await manifest.json();

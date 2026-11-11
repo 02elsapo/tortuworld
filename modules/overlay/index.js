@@ -2,8 +2,8 @@ const path = require('node:path');
 const express = require('express');
 
 function registerOverlayRoutes(app) {
-  const overlayPath = path.join(__dirname, '..', '..', 'tortugas_tiktok.html');
-  app.get(['/', '/overlay', '/tortugas.html', '/tortugas_tiktok.html'], (request, response) => {
+  const overlayPath = path.join(__dirname, '..', '..', 'v2.0.html');
+  app.get(['/', '/overlay', '/tortugas.html', '/tortugas_tiktok.html', '/v2.0.html'], (request, response) => {
     response.setHeader('Cache-Control', 'no-store, max-age=0');
     response.sendFile(overlayPath);
   });

@@ -38,7 +38,7 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 
 | Método y ruta | Uso | Respuesta |
 |---|---|---|
-| `GET /`, `/overlay`, `/tortugas.html` o `/tortugas_tiktok.html` | Overlay versión 3, con carreras de 240 segundos, avatares y combos. | HTML |
+| `GET /`, `/overlay`, `/tortugas.html`, `/tortugas_tiktok.html` o `/v2.0.html` | Overlay v2.0, con duelos de dos países, estadísticas integradas, nido y carreras de 600 segundos. | HTML |
 | `GET /backend` | Configurar la cuenta y ver estadísticas de comentarios y copas por país. | HTML |
 | `GET /health` | Comprobar que el servidor responde. | `{ "ok": true }` |
 | `GET /api/status` | Estado actual y diagnóstico del conector. | JSON |
@@ -71,7 +71,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay principal `tortugas_tiktok.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra los avatares reales de TikTok y guarda en JSON los últimos cuatro usuarios que entraron al LIVE; se cargan al abrir el overlay y se conservan entre carreras. Los comentarios pueden elegir equipo escribiendo Brasil/BR, Paraguay/PY o Argentina/AR; el resto de comentarios suma un punto al equipo ya elegido o a uno asignado al azar, con un máximo de un punto cada 8 segundos por usuario. Los likes suman un punto cada uno, los regalos 10 por unidad y los nuevos seguidores y compartidos 3. Los botones del overlay siguen disponibles para pruebas manuales.
+El overlay principal `v2.0.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra avatares reales, estadísticas integradas y un nido de hinchas por carril. El duelo activo está configurado en `DUELO`; los comentarios que nombran un país del duelo lo apoyan y los demás no mueven la carrera. Los regalos se registran y agradecen, sin puntos ni botón para pedirlos.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 
@@ -91,7 +91,8 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-tortugas_tiktok.html                # Overlay principal conectado a eventos de TikTok
+v2.0.html                            # Overlay principal v2.0 conectado a eventos de TikTok
+tortugas_tiktok.html                # Overlay anterior, conservado como referencia
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
