@@ -71,7 +71,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 
 Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay principal `v2.0.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra avatares reales, estadísticas integradas y un nido de hinchas por carril. El duelo activo está configurado en `DUELO`; los comentarios que nombran un país del duelo lo apoyan y los demás no mueven la carrera. Los regalos se registran y agradecen, sin puntos ni botón para pedirlos.
+El overlay principal `v2.0.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra avatares reales, estadísticas integradas y un nido de hinchas por carril. El duelo activo está configurado en `DUELO`; los comentarios que nombran un país del duelo lo apoyan y los demás no mueven la carrera. Los regalos reales se registran y agradecen, sin puntos ni turbo. El botón ROSITA activa un turbo manual local y no simula un regalo.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 

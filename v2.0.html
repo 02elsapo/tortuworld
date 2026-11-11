@@ -3,17 +3,18 @@
 REGLAS DEL PROYECTO. LEER ANTES DE TOCAR EL CODIGO (backend y frontend)
 Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
 
-1. REGALOS (prioridad maxima)
- - NUNCA pedir regalos, rosas ni monedas: ni por voz, ni en texto, ni en botones, burbujas o carteles. Tampoco con otras palabras (por ejemplo "manda una rosita", "una rosa y gana tu equipo", "salva a tu tortuga").
- - NUNCA prometer resultados ligados a regalar (que regalar haga ganar, defina o salve la carrera).
- - NO repetir ningun mensaje sobre regalos en cada ronda ni de forma insistente.
+1. REGALOS Y CONTROL ROSITA
+ - El boton ROSITA es un control manual del juego: activa turbo local por 4 segundos; no envia ni simula un regalo real de TikTok.
+ - Los regalos reales solo se agradecen; no suman puntos ni activan el turbo.
+ - No prometer resultados ligados a regalar (que un regalo defina o salve la carrera).
+ - No repetir mensajes sobre regalos en cada ronda ni de forma insistente.
  - SANCION DE TIKTOK: TikTok sanciono al autor por 3 infracciones. Todo el codigo debe evitarlas:
      (a) ACCIONES REPETIDAS DE INTERACCION: no pedir likes, comentarios, compartir ni seguir en bucle ni en cada ronda. Todo pedido de interaccion (voz, texto, boton, cartel) se hace como maximo UNA vez por sesion (ver once:true en VL). Tampoco se fingen interacciones: el bot usa solo nombres identificables como bot (tortubot_N) y NUNCA finge regalos, seguidores ni compartidos.
      (b) PROMESAS FALSAS: no prometer premios, resultados ni ventajas que el juego no cumple (ej. "regala y ganas", "un regalo define la carrera").
-     (c) PEDIR REGALOS: ver el primer punto de esta regla. Los regalos solo se agradecen.
+     (c) EVENTOS REALES: nunca presentar el boton manual ROSITA como un regalo real ni contabilizarlo como tal.
  - Antes de agregar cualquier texto, voz, boton o cartel nuevo, revisar que no cumpla (a), (b) ni (c).
  - PERMITIDO: reaccionar cuando llega un regalo (efecto visual o sonoro, nombre del usuario en pantalla, agradecimiento del relator tipo "Gracias {usuario}"), sin haberlo pedido antes.
- - Un icono chico y fijo puede mostrar que efecto produce una rosa, sin que nadie lo diga en voz alta ni lo repita.
+ - El boton ROSITA es manual y opcional; el contador de regalos solo refleja eventos reales.
  - Los regalos NO suman en el top 3, ni en el top 10, ni en el sorteo del rival, y no dan ventaja de votacion.
  - La carrera debe poder jugarse completa solo con chat y likes. Regalar es opcional.
 
@@ -42,9 +43,9 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
  - Duelo con solo 2 carriles, mas grandes, y tortugas mas grandes. Los 2 paises activos se definen en DUELO (ids de POOL).
  - Cada pais se muestra con su bandera grande y su nombre debajo, con el mismo ancho que la bandera. Sin luz ni barra de color bajo el encabezado: es un overlay de TikTok, no un juego.
 
-6. RESUELTO EN v12 (antes chocaba con la regla 1)
- - Se elimino el boton "REGALAR" y el guion de voz 'gift'. Ya no hay mensaje "Regalo para ..." ni turbo por regalo.
- - Un regalo solo dispara reaccion visual/sonora + "Gracias {usuario}". Puntos por regalo: GIFT_POINTS (0 por defecto, ver CONFIG).
+6. REGALO REAL Y ROSITA MANUAL
+ - Un regalo real solo dispara reaccion visual/sonora + "Gracias {usuario}". Puntos por regalo: GIFT_POINTS (0 por defecto, ver CONFIG).
+ - El boton ROSITA es una accion manual local; activa el turbo del juego, pero no finge un evento de TikTok.
 
 7. DIFICULTAD (v12)
  - Ganar cuesta: cada evento vale HARD (0.5) de lo que valia, y el avance pasivo se detiene en PASSIVE_CAP (%). El resto de la pista solo se recorre con interaccion.
@@ -94,7 +95,7 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
   - Nido: huevos en blanco al iniciar; los 3 huevos grandes = los 3 usuarios REALES de mayor puntaje; el resto del nido = los demas recientes; huevos de bot (🐢) solo se van cargando con eventos del bot.
   - Alerta de evento = avatar grande del usuario sobre los huevos, que luego baja al nido. Puntaje por usuario: unirse 1, comentar 5, like 1 c/u, seguir 3, compartir 3, regalo 0.
   - Estadisticas: panel 📊 con pestaña Usuarios (historial completo por usuario, guardado en localStorage 'tortu.users').
-  - Turbo: solo por regalo REAL (agradecimiento), compartido real, o 'rafaga' de 5 comentarios reales en 10 s; 'impulso' del juego cada 45 s a la tortuga que va 8+ atras. El bot NUNCA activa turbo.
+  - Turbo: por boton ROSITA manual, compartido real, o 'rafaga' de 5 comentarios reales en 10 s; 'impulso' del juego cada 45 s a la tortuga que va 8+ atras. El bot NUNCA activa turbo y un regalo real solo se agradece.
   - CTAs: destello inicial UNA vez por sesion (nada de pedidos en bucle, regla 1.a).
 -->
 <html lang="es">
@@ -167,12 +168,13 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .cta:active{transform:translateY(4px) scale(.96);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
 .cta:focus-visible{outline:3px solid #ffd566;outline-offset:2px}
 .cta .pt{white-space:nowrap;letter-spacing:-2px;line-height:1.15;position:absolute;top:-8px;right:-6px;min-width:28px;padding:1px 5px;border-radius:9px;background:#ffd566;color:#2a2018;border:2px solid #3f2713;font-size:10px;text-shadow:none}
+.cta.gift{height:78px;background:linear-gradient(#e8444f,#a3122a);animation:glow 1.6s ease-in-out infinite}
 @keyframes glow{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 0 #3f2713,0 0 14px #ffd566}}
 .cta.cool{pointer-events:none;animation:none}
 .cta.cool:after{content:"";position:absolute;inset:0;border-radius:13px;background:rgba(20,10,4,.6);transform-origin:bottom;animation:cool var(--cdt) linear forwards}
 @keyframes cool{to{transform:scaleY(0)}}
 .cta:disabled{opacity:.5;cursor:default;animation:none}
-@media (prefers-reduced-motion:reduce){.combo i,.cta.cool:after{animation:none}}
+@media (prefers-reduced-motion:reduce){.cta.gift,.combo i,.cta.cool:after{animation:none}}
 .foot{margin-top:auto;display:flex;align-items:center;gap:5px}.foot .sm{flex:none}
 .live{white-space:nowrap}
 .bar{min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;font-size:11px}
@@ -233,7 +235,8 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .side{width:66px;min-width:66px;gap:6px}
 .rail{gap:8px}
 .cta{height:46px;border-radius:12px;font-size:10.5px;gap:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 0 #3f2713}
-.cta svg{width:18px;height:18px}.cta[data-t=like] svg{width:22px;height:22px}
+.cta.gift{height:58px}
+.cta svg{width:18px;height:18px}.cta.gift svg{width:22px;height:22px}.cta[data-t=like] svg{width:22px;height:22px}
 .cta .pt{top:-7px;right:-4px;min-width:24px;font-size:10px;padding:0 4px}
 .bub{font-size:10.5px;padding:4px 2px;min-height:48px;word-break:break-word}
 .combo{font-size:11px}
@@ -250,7 +253,8 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .side{width:54px;min-width:54px;gap:5px}
 .rail{gap:7px}
 .cta{height:34px;border-radius:10px;font-size:8.5px;gap:1px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 0 #3f2713}
-.cta svg{width:14px;height:14px}.cta[data-t=like] svg{width:16px;height:16px}
+.cta.gift{height:44px}
+.cta svg{width:14px;height:14px}.cta.gift svg{width:18px;height:18px}.cta[data-t=like] svg{width:16px;height:16px}
 .cta .pt{top:-6px;right:-3px;min-width:20px;font-size:8.5px;padding:0 3px}
 .bub{font-size:9px;padding:3px 1px;min-height:44px}
 .side>svg{width:44px;height:44px}
@@ -398,14 +402,18 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 #stp header span{display:flex;gap:6px}
 /* TURBO: rojo, grande y parpadeando para llamar la atencion */
 @keyframes tbk{0%,100%{transform:scale(1);opacity:1;box-shadow:0 0 6px 1px #ff2d2d}50%{transform:scale(1.18);opacity:.5;box-shadow:0 0 16px 5px #ff2d2d}}
+.cta .pt.tb{background:#e11d48;color:#fff;border:2px solid #fff;font-size:12px;line-height:1.1;padding:2px 7px;letter-spacing:.5px;text-shadow:0 1px 1px #000;animation:tbk .6s ease-in-out infinite;z-index:2}
 .lane.turbo .hd:after{content:"🔥 TURBO";left:50%;top:-13px;transform:translateX(-50%);background:#e11d48;color:#fff;border:2px solid #fff;border-radius:9px;padding:1px 7px;font:800 12px/1.2 Inter,sans-serif;white-space:nowrap;text-shadow:0 1px 1px #000;box-shadow:0 0 10px 2px #ff2d2d;animation:tbk .5s ease-in-out infinite;z-index:6}
-@media (prefers-reduced-motion:reduce){.lane.turbo .hd:after{animation:none}}
+@media (prefers-reduced-motion:reduce){.cta .pt.tb,.lane.turbo .hd:after{animation:none}}
 /* botones de accion mas altos */
 .side{position:relative}
 .combo{position:absolute;left:0;right:0;top:96px;min-height:0;z-index:5;pointer-events:none}
 .side>svg{width:60px;height:60px}
 .cta{height:44px}
-/* orden de los botones: de mayor a menor cantidad de rayos */
+/* La ROSITA manual da turbo local; los demas controles suman rayos segun su accion. */
+.cta[data-t=gift]{height:66px;flex-direction:column;gap:0;font-size:13px;letter-spacing:.5px;background:linear-gradient(#ff5a7a,#c2133f);border-color:#7a0a26;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 0 #7a0a26,0 0 12px rgba(255,45,85,.75)}
+.cta[data-t=gift] .em{font-size:32px;line-height:34px}
+.cta[data-t=gift]{order:-5}
 .cta[data-t=chat]{order:-4}.cta[data-t=share]{order:-3}.cta[data-t=follow]{order:-2}.cta[data-t=like]{order:-1}
 /* botones de accion mas abajo (separados de Don Tortu) */
 .rail{margin-top:26px}
@@ -450,12 +458,13 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <div class="lanes" id="lanes"></div>
 <div class="side">
 <div class="combo" id="combo" aria-live="polite"><span id="cmt"></span><i id="cmb"></i></div>
-<!-- BOTONES DE ACCION manuales, de juego local. No son eventos reales de TikTok -->
+<!-- ROSITA es un turbo manual local; no es una solicitud ni un evento real de TikTok. -->
 <nav class="rail" aria-label="Acciones">
 <button class="cta" data-t="follow" data-cd="2000"><b class="pt" aria-label="3 rayos">⚡⚡⚡</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#5ec3f2" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2 21 C2 15 18 15 18 21Z"/><path d="M20 8V14 M17 11H23" fill="none"/></svg>SEGUIR</button>
 <button class="cta" data-t="like"><b class="pt" aria-label="1 rayo">⚡</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5a7a" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M12 21 C4 15 2 11 2 8 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8 C22 11 20 15 12 21Z"/></svg>APOYAR</button>
 <button class="cta" data-t="chat"><b class="pt" aria-label="10 rayos" style="font-size:9px;letter-spacing:-3px">⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#a98cff" stroke="#fff" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 4H20A2 2 0 0 1 22 6V15A2 2 0 0 1 20 17H11L6 21V17H4A2 2 0 0 1 2 15V6A2 2 0 0 1 4 4Z"/><circle cx="8" cy="10.5" r="1.3" fill="#fff" stroke="none"/><circle cx="12" cy="10.5" r="1.3" fill="#fff" stroke="none"/><circle cx="16" cy="10.5" r="1.3" fill="#fff" stroke="none"/></svg>COMENTAR</button>
 <button class="cta" data-t="share" data-cd="2000"><b class="pt" aria-label="5 rayos">⚡⚡⚡⚡⚡</b><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3 M7.5 7.5L12 3l4.5 4.5" stroke="#5ee08a"/></svg>COMPARTIR</button>
+<button class="cta" data-t="gift" data-cd="3000"><b class="pt tb">TURBO</b><span class="em" aria-hidden="true">🌹</span>ROSITA</button>
 </nav>
 <div class="bub" id="bub" aria-live="polite">¡Y ARRANCAN LAS TORTUGAS!</div>
 <svg width="64" height="64" viewBox="0 0 84 84" role="img" aria-label="Avatar de Don Tortu, el relator">
@@ -741,7 +750,7 @@ function showCombo(){const c=$('#combo'),m=mult();
 document.querySelectorAll('.cta').forEach(b=>b.addEventListener('click',()=>{
  if(over||b.classList.contains('cool'))return;
  const before=mult();streak++;clearTimeout(cmbT);cmbT=setTimeout(()=>{streak=0;showCombo()},2000);
- const m=mult();push(sel,b.dataset.t,1,m);showCombo();
+ const m=mult();if(b.dataset.t==='gift'){turboOn(sel,4000);say('¡ROSITA! ¡TURBO para '+T[sel].n+'! 🔥');A.sfx('lead')}else push(sel,b.dataset.t,1,m);showCombo();
  if(m>before&&!over)say(`¡COMBO x${m}!`);
  navigator.vibrate&&navigator.vibrate(m>before?[20,30,20]:10);
  const cd=+b.dataset.cd;if(cd){b.classList.add('cool');b.style.setProperty('--cdt',cd+'ms');setTimeout(()=>b.classList.remove('cool'),cd)}
