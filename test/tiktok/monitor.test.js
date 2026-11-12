@@ -169,7 +169,7 @@ test('monitor normalizes every webcast event and event payload shape', async () 
   assert.equal(connection.options.processInitialData, true);
 
   const cases = [
-    [WebcastEvent.CHAT, { user: { uniqueId: 'ana', profilePictureUrl: 'avatar' }, comment: 'Hola' }],
+    [WebcastEvent.CHAT, { user: { uniqueId: 'ana', nickname: 'Anita', profilePictureUrl: 'avatar' }, comment: 'Hola' }],
     [WebcastEvent.CHAT, { user: 'chat-user', content: 'contenido' }],
     [WebcastEvent.CHAT, { text: 'texto' }],
     [WebcastEvent.CHAT, { displayText: 'display' }],
@@ -200,6 +200,7 @@ test('monitor normalizes every webcast event and event payload shape', async () 
   connection.emit(WebcastEvent.ROOM_USER, { totalUser: 10 });
   assert.equal(received.length, cases.length);
   assert.equal(received[0].username, 'ana');
+  assert.equal(received[0].displayName, 'Anita');
   assert.equal(received[0].avatar, 'avatar');
   assert.equal(received[0].content, 'Hola');
   assert.equal(received[5].activityCount, 2);

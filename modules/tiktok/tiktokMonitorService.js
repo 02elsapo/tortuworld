@@ -102,6 +102,13 @@ function createTikTokMonitorService({
     return user ? safeUserName(user) : 'Sistema';
   }
 
+  function eventDisplayName(data) {
+    const user = data && (data.user || data.sender);
+    if (!user || typeof user !== 'object') return '';
+    const displayName = user.nickname || user.displayName;
+    return typeof displayName === 'string' ? displayName.trim() : '';
+  }
+
   function pictureUrl(picture) {
     if (typeof picture === 'string') return picture;
     if (Array.isArray(picture)) {
@@ -241,6 +248,7 @@ function createTikTokMonitorService({
         if (wasEventAlreadyReceived(eventName, payload)) return;
         const summary = summarizeEvent(eventName, payload);
         const username = eventAuthor(payload);
+        const displayName = eventDisplayName(payload);
         const content = eventContent(eventName, payload);
         const activityCount = eventName === webcastEvents.GIFT
           ? getGiftActivityCount(payload)
@@ -268,6 +276,7 @@ function createTikTokMonitorService({
           type: eventName,
           eventLabel: eventLabels[eventName] || eventName,
           username,
+          ...(displayName ? { displayName } : {}),
           avatar: eventAvatar(payload),
           content,
           ...(activityCount === undefined ? {} : { activityCount }),

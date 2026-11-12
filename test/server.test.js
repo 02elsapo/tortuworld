@@ -105,14 +105,14 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
     assert.match(html, /const BOT_CAP=80/);
     assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
-    assert.match(html, /joined\.add\(k\);greet\(u,t\)/);
-    assert.match(html, /const txt='Saludamos al hincha de '\+cap\(T\[t\]\.n\)\+', '\+u/);
+    assert.match(html, /joined\.add\(k\);greet\(u,t,e\.displayName\)/);
+    assert.match(html, /const txt='Saludamos al hincha de '\+cap\(T\[t\]\.n\)\+', '\+name/);
     assert.match(html, /mx>=50&&!vDone\.has\('half'\)/);
     assert.match(html, /nombrar tu club en el chat, hacer tap tap en el corazón o compartir la transmisión/);
     assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
     assert.match(html, /Quien quiera puede activar un turbo prolongado con el botón ROSITA/);
-    assert.match(html, /const LOSING_AT=\[10,20,30,40,50,60,70,80,90\]/);
-    assert.match(html, /va perdiendo la carrera\. ¡Todavía puede remontar!/);
+    assert.match(html, /const LOSING_AT=\[20,40,60,80\]/);
+    assert.match(html, /speak\(name\+' va perdiendo la carrera\. ¡Todavía puede remontar!'/);
     assert.match(html, /now-alLast<18000/);
     assert.match(html, /rocket:t=>/);
     assert.match(html, /FA\.p\('rocket'\)/);
@@ -196,28 +196,28 @@ test('the prolonged manual turbo advances more than the bot turbo', () => {
   assert.equal(turboGain(1, 4000, 0.25), 1);
 });
 
-test('announces the trailing club at each newly reached ten-percent milestone', () => {
+test('announces the trailing club at each newly reached twenty-percent milestone', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function nextLosingCall\(progress,done\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must select the next losing-club milestone');
   const nextLosingCall = vm.runInNewContext(`(${source[0]})`, {
-    LOSING_AT: [10, 20, 30, 40, 50, 60, 70, 80, 90],
+    LOSING_AT: [20, 40, 60, 80],
     Math,
   });
   const announced = new Set();
 
-  const first = nextLosingCall([8, 12], announced);
-  assert.equal(first.percent, 10);
+  const first = nextLosingCall([18, 22], announced);
+  assert.equal(first.percent, 20);
   assert.equal(first.loser, 0);
-  announced.add('losing10');
-
-  const second = nextLosingCall([19, 21], announced);
-  assert.equal(second.percent, 20);
-  assert.equal(second.loser, 0);
   announced.add('losing20');
 
-  const tied = nextLosingCall([30, 30], announced);
-  assert.equal(tied.percent, 30);
+  const second = nextLosingCall([39, 41], announced);
+  assert.equal(second.percent, 40);
+  assert.equal(second.loser, 0);
+  announced.add('losing40');
+
+  const tied = nextLosingCall([60, 60], announced);
+  assert.equal(tied.percent, 60);
   assert.equal(tied.loser, -1);
 });
 

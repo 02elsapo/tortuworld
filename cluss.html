@@ -1350,12 +1350,13 @@ setInterval(()=>{
 },250);
 /* SALUDO: a cada hincha real se lo saluda UNA sola vez por sesion, con una sola frase: "Saludamos al hincha de <club> <usuario>". Sin nada mas. */
 const greeted=new Set();let grLast=-1e9;
-function greet(u,t){
+function greet(u,t,alias){
  const k=String(u).toLowerCase();if(greeted.has(k)||!T[t])return;greeted.add(k);
- const txt='Saludamos al hincha de '+cap(T[t].n)+', '+u;
+ const name=String(alias||'').trim()||u;
+ const txt='Saludamos al hincha de '+cap(T[t].n)+', '+name;
  hype('👋',txt,'',T[t].c);
  const now=performance.now();
- if(P.vo&&now-grLast>6000&&speak('Saludamos al hincha de '+cap(T[t].n)+', '+u.replace(/[_.]+/g,' '),null,false))grLast=now;
+ if(P.vo&&now-grLast>6000&&speak('Saludamos al hincha de '+cap(T[t].n)+', '+name.replace(/[_.]+/g,' '),null,false))grLast=now;
 }
 /* Premios por acciones reales (seguir, compartir, likes). El REGALO solo se agradece: sin turbo ni puntos (regla 1) */
 function perks(e){
@@ -1370,8 +1371,8 @@ function perks(e){
  const k=u.toLowerCase(),t=picks.get(k);if(t==null||!T[t])return;
  const n=Math.max(1,Math.floor(Number(e.activityCount))||1),nm='@'+u,tn=T[t].n,col=T[t].c;
  let st=us.get(k);if(!st){st={likes:0,lv:0};us.set(k,st)}
- if(e.type==='chat'&&findTeam(e.content)>=0&&!joined.has(k)){joined.add(k);greet(u,t)}
- if(e.type==='follow'&&!welcomed.has(k)){welcomed.add(k);bonus(t,3);if(greeted.has(k))hype('➕',nm,' · ¡nuevo hincha de '+tn+'!',col);else greet(u,t);A.sfx('ach')}
+ if(e.type==='chat'&&findTeam(e.content)>=0&&!joined.has(k)){joined.add(k);greet(u,t,e.displayName)}
+ if(e.type==='follow'&&!welcomed.has(k)){welcomed.add(k);bonus(t,3);if(greeted.has(k))hype('➕',nm,' · ¡nuevo hincha de '+tn+'!',col);else greet(u,t,e.displayName);A.sfx('ach')}
  else if(e.type==='share'){turboOn(t,2000);hype('↗️',nm,' compartió · ¡impulso '+tn+'!',col)}
  else if(e.type==='like'){
   st.likes+=n;const M=[20,50,100];
@@ -1417,7 +1418,7 @@ const VL=[
 ];
 const VF=['¡Recta final! Todo se decide ahora. ¡Vamos, tortugas!','¡Llegando a la meta! ¡Qué emoción, esto está parejísimo!'];
 const VW=['¡Ganó {n}! Gracias por jugar y alentar. En unos segundos arranca otra ronda, ¡te esperamos!','¡Tenemos campeón: {n}! Gracias por estar. Ya viene una nueva carrera.'];
-const LOSING_AT=[10,20,30,40,50,60,70,80,90];
+const LOSING_AT=[20,40,60,80];
 function nextLosingCall(progress,done){
  const percent=LOSING_AT.find(value=>Math.max(...progress)>=value&&!done.has('losing'+value));
  if(percent===undefined)return null;
@@ -1437,7 +1438,7 @@ setInterval(()=>{
   else{
    if(now-vLast<5000||SS.speaking||SS.pending)return;
    const name=cap(T[losing.loser].n);
-   if(speak('Al '+losing.percent+'%, '+name+' va perdiendo la carrera. ¡Todavía puede remontar!','Al '+losing.percent+'%: '+name+' va detrás.',false)){vDone.add(key);return}
+   if(speak(name+' va perdiendo la carrera. ¡Todavía puede remontar!',name+' va detrás.',false)){vDone.add(key);return}
   }
  }
  if(P.vo&&SS&&mx>=50&&!vDone.has('half')){

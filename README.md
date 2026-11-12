@@ -61,6 +61,7 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
     "type": "chat",
     "eventLabel": "Comentario",
     "username": "espectador",
+    "displayName": "Nombre visible",
     "avatar": "",
     "content": "¡Hola!",
     "time": "2026-11-05T12:00:00.000Z"
@@ -69,9 +70,9 @@ Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` co
 }
 ```
 
-Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. Campos adicionales como `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
+Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, likes, seguidores, compartidos, entradas y otros eventos del LIVE. `displayName` es opcional y contiene el alias visible del usuario cuando TikTok lo proporciona; `activityCount` y `diamondCount` solo aparecen cuando aplican. El conector conserva los valores del proveedor para que cada mini app decida cómo presentarlos.
 
-El overlay principal `v2.0.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra avatares reales, estadísticas integradas y un nido de hinchas por carril. El duelo activo está configurado en `DUELO`; los comentarios que nombran un país del duelo lo apoyan y los demás no mueven la carrera. Los regalos reales se registran y agradecen, sin puntos ni turbo. El botón ROSITA activa un turbo manual local y no simula un regalo.
+El overlay `cluss.html` consume los eventos normalizados por SSE en `/api/events` e inicia la conexión de TikTok al cargarse. Muestra avatares reales, estadísticas integradas y un nido de hinchas por carril. El duelo activo está configurado en `DUELO`; los comentarios que nombran un país del duelo lo apoyan y los demás no mueven la carrera. Los regalos reales se registran y agradecen, sin puntos ni turbo. El botón ROSITA activa un turbo manual local y no simula un regalo.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 
@@ -91,7 +92,7 @@ modules/
     index.js                      # Rutas del overlay y backend
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
-v2.0.html                            # Overlay principal v2.0 conectado a eventos de TikTok
+cluss.html                            # Overlay conectado a eventos de TikTok
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
