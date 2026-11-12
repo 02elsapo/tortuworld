@@ -101,6 +101,10 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /P\.duel=duel\.slice\(\)/);
     assert.match(html, /P\.nextRival=nextRival/);
     assert.match(html, /El ganador de este duelo jugará contra '\+rival\+', sorteado entre los clubes que no están jugando/);
+    assert.match(html, /stCloseTimer=setTimeout\(stClose,3000\)/);
+    assert.match(html, /botTurboGiftCloseTimer=setTimeout\(closeBotTurboGift,3000\)/);
+    assert.match(html, /rs=setTimeout\(reset,3000\)/);
+    assert.match(html, /rs=setTimeout\(\(\)=>fullReset\(T\[i\]\.id\),3000\)/);
     assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4,lu:4,na:4,sa:4\}/);
     assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
     assert.match(html, /const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000/);

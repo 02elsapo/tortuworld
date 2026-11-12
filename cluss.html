@@ -686,7 +686,9 @@ const ST_VIEWS={
   return g.length?`<table><tr><th>Fecha</th><th>Duelo</th><th>Ganó</th><th>🎁</th><th></th></tr>${g.map(x=>`<tr><td>${stFd(x.start)}</td><td>${stDuel(x.duel)}</td><td>${stH(stClub(x.winner))}</td><td>${x.gifts}</td><td>${x.hasLog===false?'<span class="mut">sin log</span>':`<button data-log="${x.id}">Ver</button> <button data-dl="${x.id}">⬇</button>`}</td></tr><tr hidden><td colspan="5" id="L${x.id}"></td></tr>`).join('')}</table>`:'<p class="mut">Ninguna ronda tuvo regalos todavía.</p>'}
 };
 function stTab(t){const p=document.getElementById('stp');p.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));p.querySelector('.stb').innerHTML=ST_VIEWS[t]()}
-function stOpen(t){document.getElementById('stp').hidden=false;stTab(t||'torneos')}
+let stCloseTimer=0;
+function stClose(){clearTimeout(stCloseTimer);stCloseTimer=0;document.getElementById('stp').hidden=true}
+function stOpen(t){const p=document.getElementById('stp');clearTimeout(stCloseTimer);p.hidden=false;stTab(t||'torneos');stCloseTimer=setTimeout(stClose,3000)}
 function stLogHtml(L){ /* log completo: cada regalo con su contexto + todo el chat con hora */
  return'<b>Regalos</b><pre>'+stH(L.gifts.map(g=>`${stTm(g.t)} · ${g.user} · ${g.gift} x${g.count} · apoya: ${(g.supports||'?').toUpperCase()} · duelo: ${stDuel(g.duel)}\n   último comentario suyo: ${g.userLastComment?'"'+g.userLastComment.text+'" (hace '+g.userLastComment.secondsBefore+' s)':'ninguno'}`).join('\n'))+'</pre><b>Chat completo</b><pre>'+stH(L.chat.map(m=>`${stTm(m.t)} ${m.user}: ${m.text}`).join('\n'))+'</pre>';
 }
@@ -695,10 +697,10 @@ document.addEventListener('click',e=>{ /* eventos del panel (delegados) */
  const p=document.getElementById('stp');if(!p||p.hidden||!p.contains(e.target))return;
  const b=e.target.closest('button');if(!b)return;
  if(b.dataset.tab)stTab(b.dataset.tab);
- else if('close' in b.dataset)p.hidden=true;
+ else if('close' in b.dataset)stClose();
  else if('reset' in b.dataset){ /* doble toque para evitar reinicios por error */
   if(!b.dataset.sure){b.dataset.sure=1;b.textContent='¿Seguro? Toca de nuevo';setTimeout(()=>{delete b.dataset.sure;b.textContent='↺ Reiniciar copas'},4000)}
-  else{delete b.dataset.sure;b.textContent='↺ Reiniciar copas';window.tortugas.resetCopas();p.hidden=true}
+  else{delete b.dataset.sure;b.textContent='↺ Reiniciar copas';window.tortugas.resetCopas();stClose()}
  }
  else if(b.dataset.dl)stDownload(b.dataset.dl);
  else if(b.dataset.log){const c=document.getElementById('L'+b.dataset.log),r=c.parentNode;r.hidden=!r.hidden;if(!r.hidden){const L=LS.get(ST_LOG+b.dataset.log);c.innerHTML=L?stLogHtml(L):'Log no disponible'}}
@@ -709,7 +711,7 @@ document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matche
  const IC={chat:'💬',like:'❤️',gift:'🎁',follow:'➕',share:'↗️',member:'👋'},NM={chat:'comentó',like:'likes',gift:'regalo',follow:'siguió',share:'compartió',member:'se unió'};
  box.innerHTML='<table>'+[...u.ev].reverse().map(r=>`<tr><td>${stFd(r.t)}</td><td>${IC[r.type]||''} ${NM[r.type]||r.type}${r.n>1?' x'+r.n:''}${r.gift?' '+stH(r.gift):''}</td><td>${r.text?'"'+stH(r.text)+'"':''}</td></tr>`).join('')+'</table>';
 },true);
-addEventListener('keydown',e=>{if(e.key==='Escape'){const p=document.getElementById('stp');if(p)p.hidden=true}});
+addEventListener('keydown',e=>{if(e.key==='Escape')stClose()});
 const PTS={share:5*HARD, /* compartir = 5 rayos */chat:10*HARD, /* comentar = 10 rayos */like:1*HARD,follow:3*HARD,gift:GIFT_PROGRESS}; /* puntos por tipo de evento (share cuenta como follow) */
 let sp=[1,1,1],lastTick=performance.now();
 const newSpeeds=()=>{sp=T.map(()=>0.985+Math.random()*0.03)};newSpeeds();
@@ -809,7 +811,7 @@ function win(i){
  w.innerHTML=`<svg width="64" height="44" viewBox="0 0 20 14" aria-hidden="true" style="border:2px solid #fff;border-radius:3px">${flag(T[i].id,0,0,20,14)}</svg><h2>¡GANÓ<br>${T[i].n}!</h2><button class="act" style="flex:none;width:180px" id="again">NUEVA CARRERA</button>`+
  Array.from({length:28},()=>`<span class="cf" style="left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*5)]};animation-delay:${Math.random()*1.2}s"></span>`).join('');
  w.classList.add('show');$('#again').onclick=reset;$('#again').focus();
- rs=setTimeout(reset,9000);
+ rs=setTimeout(reset,3000);
 }
 /* Nueva carrera: vuelve todo a 0 y sortea velocidades pasivas nuevas */
 function reset(){
@@ -1198,7 +1200,7 @@ function champion(i){
  const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
  w.insertAdjacentHTML('beforeend',Array.from({length:40},()=>'<span class="cf" style="left:'+(Math.random()*100)+'%;background:'+cols[Math.floor(Math.random()*5)]+';animation-delay:'+(Math.random()*2)+'s"></span>').join(''));
  toast('¡'+T[i].n+' es el campeón del torneo!','🏆');
- rs=setTimeout(()=>fullReset(T[i].id),12000);
+ rs=setTimeout(()=>fullReset(T[i].id),3000);
 }
 /* Reinicia el torneo completo (copas en 0). El saludo de voz se dice solo al iniciar torneo, no en cada ronda */
 function fullReset(winnerId){
@@ -1371,6 +1373,7 @@ const bonus=(t,n)=>{S[t].p+=n*HANDICAP[t];update()};
 const botTurboGiftQueue=[];
 let activeBotTurboGift=null;
 const botTurboGiftDialog=$('#botTurboGift'),botTurboGiftTeam=$('#botTurboGiftTeam'),botTurboGiftFlag=$('#botTurboGiftFlag'),botTurboGiftClose=$('#botTurboGiftClose');
+let botTurboGiftCloseTimer=0;
 function queueBotTurboGift(team,ms,power,taps){
  if(over||!T[team]||!S[team])return;
  botTurboGiftQueue.push({team,ms,power,taps});
@@ -1383,6 +1386,8 @@ function showBotTurboGift(){
  botTurboGiftFlag.innerHTML='<svg viewBox="0 0 40 26" role="img" aria-label="Bandera de '+club.n+'">'+flag(club.id,0,0,40,26)+'</svg>';
  botTurboGiftTeam.textContent=club.n;
  botTurboGiftDialog.hidden=false;
+ clearTimeout(botTurboGiftCloseTimer);
+ botTurboGiftCloseTimer=setTimeout(closeBotTurboGift,3000);
  botTurboGiftClose.focus();
  if(P.vo)speak(announcement,null,true);else say(announcement);
 }
@@ -1395,6 +1400,7 @@ function advanceBotTurboGift(team){
 }
 function closeBotTurboGift(){
  if(!activeBotTurboGift)return;
+ clearTimeout(botTurboGiftCloseTimer);botTurboGiftCloseTimer=0;
  const grant=activeBotTurboGift;
  activeBotTurboGift=null;botTurboGiftDialog.hidden=true;
  if(advanceBotTurboGift(grant.team)){
@@ -1407,6 +1413,7 @@ function closeBotTurboGift(){
  showBotTurboGift();
 }
 function cancelBotTurboGift(){
+ clearTimeout(botTurboGiftCloseTimer);botTurboGiftCloseTimer=0;
  botTurboGiftQueue.length=0;activeBotTurboGift=null;
  botTurboGiftDialog.hidden=true;
 }
