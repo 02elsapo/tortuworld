@@ -116,10 +116,10 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /type==='gift'\?GIFT_PROGRESS\*n/);
     assert.match(html, /const BOT_TURBO_GIFT_MIN_MS=30000,BOT_TURBO_GIFT_MAX_MS=40000/);
     assert.match(html, /id="botTurboGift" hidden role="dialog"/);
-    assert.match(html, /CERRAR Y ACTIVAR TURBO/);
+    assert.match(html, /id="botTurboGiftClose" type="button">CERRAR</);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /v1\.0\.6/);
+    assert.match(html, /v1\.0\.7/);
     assert.match(html, /id="bVozB"/);
     assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);
@@ -129,20 +129,20 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /mx>=40&&!vDone\.has\('din40'\)/);
     assert.match(html, /recuerden cómo se juega/i);
     assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
-    assert.match(html, /Quien quiera puede activar un turbo prolongado con el botón ROSITA/);
+    assert.match(html, /Al completar 500 taps se activa el turbo/);
     assert.match(html, /const LOSING_AT=\[20,40,60,80\]/);
     assert.match(html, /const LOSING_LINES=\[/);
     assert.match(html, /LOSING_LINES\[\(losing\.percent\/20-1\)%LOSING_LINES\.length\]/);
-    for (const action of ['compartiendo el LIVE', 'siguiendo la cuenta', 'comentando en el chat', 'ROSITA para el modo turbo']) {
+    for (const action of ['compartiendo el LIVE', 'siguiendo la cuenta', 'comentando en el chat', 'cargando el contador tap tap']) {
       assert.ok(html.includes(action), `losing prompt must mention ${action}`);
     }
     assert.match(html, /now-alLast<18000/);
     assert.match(html, /rocket:t=>/);
     assert.match(html, /FA\.p\('rocket'\)/);
     assert.match(html, /data-t="gift"/);
-    assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,TURBO_PROLONGED_MS\)/);
+    assert.match(html, /heartAdd\(sel,b\.dataset\.t==='gift'\?ROSITA_TAPS:TAP_WEIGHTS\[b\.dataset\.t\]\|\|1\)/);
     assert.match(html, /const tap=\(\)=>heartAdd\(i,1\)/);
-    assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
+    assert.match(html, /heartAdd\(i,\(TAP_WEIGHTS\[type\]\|\|0\)\*n\)/);
     assert.match(html, /RETOQUES FINALES \(v2\.1\): confeti, efectos, banners, pips de copas/);
     assert.match(html, /window\.fx=\{confetti/);
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
@@ -362,9 +362,9 @@ test('does not narrate free turbo gifts', () => {
   assert.doesNotMatch(voiceScripts[1], /gratis|regalar/i);
 });
 
-test('a full 500-tap counter adds 10% and activates turbo; bot taps only charge the heart', () => {
+test('a full 500-tap counter advances 7% and activates turbo', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
-  const source = html.match(/function heartAdd\(t,n,advanceRace=true\)\{[\s\S]*?\n\}/);
+  const source = html.match(/function heartAdd\(t,n\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must define tap-to-board progress');
 
   const heart = [0];
@@ -383,7 +383,7 @@ test('a full 500-tap counter adds 10% and activates turbo; bot taps only charge 
     T: [{}],
     heart,
     HEART_N: 500,
-    HEART_PTS: 10,
+    HEART_TURBO_PROGRESS: 7,
     TURBO_PROLONGED_MS: 8000,
     turboOn: (...args) => turboCalls.push(args),
     S,
@@ -399,35 +399,131 @@ test('a full 500-tap counter adds 10% and activates turbo; bot taps only charge 
   };
   const turboCalls = [];
   const heartAdd = vm.runInNewContext(`(${source[0]})`, context);
-  assert.match(html, /const HEART_N=500,HEART_PTS=10/);
+  assert.match(html, /const HEART_N=500,HEART_TURBO_PROGRESS=7,heart=T\.map\(\(\)=>0\)/);
+  assert.match(html, /HEART_TURBO_PROGRESS=7/);
 
   heartAdd(0, 499);
   assert.equal(S[0].p, 0);
   assert.equal(heart[0], 499);
   heartAdd(0, 1);
-  assert.equal(S[0].p, 10);
+  assert.equal(S[0].p, 7);
   assert.equal(heart[0], 0);
   assert.deepEqual(turboCalls, [[0, 8000]]);
 
   heartAdd(0, 499);
-  assert.equal(S[0].p, 10);
+  assert.equal(S[0].p, 7);
   assert.equal(heart[0], 499);
   assert.deepEqual(turboCalls, [[0, 8000]]);
 
   heartAdd(0, 1);
-  assert.equal(S[0].p, 20);
+  assert.equal(S[0].p, 14);
   assert.equal(heart[0], 0);
   assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
 
   heartAdd(0, 250);
-  assert.equal(S[0].p, 20);
+  assert.equal(S[0].p, 14);
   assert.equal(heart[0], 250);
   assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
+});
 
-  heartAdd(0, 25, false);
-  assert.equal(S[0].p, 20);
-  assert.equal(heart[0], 275);
-  assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
+test('real TikTok events only add their configured weights to the tap counter', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/push=function\(i,type,n=1,m=1\)\{[\s\S]*?\n};/);
+  assert.ok(source, 'the overlay must route real events through the tap counter');
+
+  const weightsSource = html.match(/const TAP_WEIGHTS=(\{[^}]+\})/);
+  assert.ok(weightsSource, 'the overlay must define event weights');
+  const weights = vm.runInNewContext(`(${weightsSource[1]})`);
+  assert.deepEqual({ ...weights }, { member: 1, chat: 10, like: 1, follow: 3, share: 5 });
+  assert.match(html, /ROSITA_TAPS=75/);
+  const progress = { p: 42, l: 0, g: 0 };
+  const received = [];
+  const gifts = [];
+  let directPushes = 0;
+  const context = {
+    live: true,
+    curBot: false,
+    S: [progress],
+    realLane: [[]],
+    cu: 'viewer',
+    Date: { now: () => 1 },
+    over: false,
+    lead: 0,
+    lt: 0,
+    TAP_WEIGHTS: weights,
+    GIFT_PROGRESS: 15,
+    _push() { directPushes++; },
+    heartAdd(team, amount) { received.push([team, amount]); },
+    giftTurboOn(team, count) { gifts.push([team, count]); },
+    grow() {},
+    update() {},
+    float() {},
+    walk() {},
+    PTS: {},
+    BOT_W: 0.25,
+    HANDICAP: [0.5],
+    contrib: new Map(),
+    streak: 0,
+    P: { best: 0 },
+    addXp() {},
+    ach() {},
+    A: { sfx() {} },
+    performance: { now: () => 100 },
+    tapping: false,
+    pm: 1,
+    hud() {},
+  };
+  const push = vm.runInNewContext(`(() => { let push; ${source[0]}; return push; })()`, context);
+
+  for (const [type, count] of [['member', 1], ['chat', 1], ['like', 12], ['follow', 1], ['share', 1]]) {
+    push(0, type, count);
+  }
+
+  assert.deepEqual(received, [
+    [0, 1], [0, 10], [0, 12], [0, 3], [0, 5],
+  ]);
+  assert.equal(progress.p, 42);
+  assert.equal(directPushes, 0);
+  assert.deepEqual(gifts, []);
+  push(0, 'gift', 2);
+  assert.equal(progress.p, 72);
+  assert.equal(progress.g, 2);
+  assert.deepEqual(gifts, [[0, 2]]);
+});
+
+test('each real gift independently adds 15% and ten seconds of one-percent-per-second turbo', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function giftTurboOn\(t,count\)\{[\s\S]*?\}/);
+  assert.ok(source, 'the overlay must define per-gift turbo timing');
+  assert.match(html, /GIFT_TURBO_MS=10000,GIFT_TURBO_PPS=1/);
+
+  let now = 1000;
+  const giftTurboUntil = [0];
+  const giftTurboOn = vm.runInNewContext(`(${source[0]})`, {
+    giftTurboUntil,
+    GIFT_TURBO_MS: 10000,
+    performance: { now: () => now },
+  });
+
+  giftTurboOn(0, 1);
+  assert.equal(giftTurboUntil[0], 11_000);
+  now = 2000;
+  giftTurboOn(0, 2);
+  assert.equal(giftTurboUntil[0], 31_000);
+});
+
+test('race victory waits until both turbo effects have finished', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function turboFinished\(t,now=performance\.now\(\)\)\{[\s\S]*?\}/);
+  assert.ok(source, 'the overlay must defer victory until turbo ends');
+  const turboFinished = vm.runInNewContext(`(${source[0]})`, {
+    turbo: [12_000],
+    giftTurboUntil: [20_000],
+    performance: { now: () => 10_000 },
+  });
+
+  assert.equal(turboFinished(0, 15_000), false);
+  assert.equal(turboFinished(0, 20_000), true);
 });
 
 test('forwards normalized TikTok updates in the shape consumed by version 68', async () => {
