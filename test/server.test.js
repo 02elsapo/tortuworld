@@ -65,7 +65,8 @@ test('serves the v2.0 TikTok overlay as a full-screen PWA', async () => {
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
   assert.match(dockerfile, /COPY v2\.0\.html \.\//);
   assert.equal(fs.existsSync(path.join(root, 'v2.0.html')), true);
-  assert.equal(fs.existsSync(path.join(root, 'tortugas_tiktok.html')), true);
+  assert.equal(fs.existsSync(path.join(root, 'tortugas_tiktok.html')), false);
+  assert.equal(fs.existsSync(path.join(root, 'v2_1 (1).html')), false);
   assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v68.html')), false);
@@ -99,6 +100,8 @@ test('serves the v2.0 TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /data-t="gift"/);
     assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,4000\)/);
     assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
+    assert.match(html, /RETOQUES FINALES \(v2\.1\): confeti, efectos, banners, pips de copas/);
+    assert.match(html, /window\.fx=\{confetti/);
     assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
     assert.match(html, /navigator\.serviceWorker\.register\('\/sw\.js'\)/);
     assert.match(html, /function handleLiveEntry\(entry\)/);

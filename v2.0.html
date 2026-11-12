@@ -3,20 +3,6 @@
 REGLAS DEL PROYECTO. LEER ANTES DE TOCAR EL CODIGO (backend y frontend)
 Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
 
-1. REGALOS Y CONTROL ROSITA
- - El boton ROSITA es un control manual del juego: activa turbo local por 4 segundos; no envia ni simula un regalo real de TikTok.
- - Los regalos reales solo se agradecen; no suman puntos ni activan el turbo.
- - No prometer resultados ligados a regalar (que un regalo defina o salve la carrera).
- - No repetir mensajes sobre regalos en cada ronda ni de forma insistente.
- - SANCION DE TIKTOK: TikTok sanciono al autor por 3 infracciones. Todo el codigo debe evitarlas:
-     (a) ACCIONES REPETIDAS DE INTERACCION: no pedir likes, comentarios, compartir ni seguir en bucle ni en cada ronda. Todo pedido de interaccion (voz, texto, boton, cartel) se hace como maximo UNA vez por sesion (ver once:true en VL). Tampoco se fingen interacciones: el bot usa solo nombres identificables como bot (tortubot_N) y NUNCA finge regalos, seguidores ni compartidos.
-     (b) PROMESAS FALSAS: no prometer premios, resultados ni ventajas que el juego no cumple (ej. "regala y ganas", "un regalo define la carrera").
-     (c) EVENTOS REALES: nunca presentar el boton manual ROSITA como un regalo real ni contabilizarlo como tal.
- - Antes de agregar cualquier texto, voz, boton o cartel nuevo, revisar que no cumpla (a), (b) ni (c).
- - PERMITIDO: reaccionar cuando llega un regalo (efecto visual o sonoro, nombre del usuario en pantalla, agradecimiento del relator tipo "Gracias {usuario}"), sin haberlo pedido antes.
- - El boton ROSITA es manual y opcional; el contador de regalos solo refleja eventos reales.
- - Los regalos NO suman en el top 3, ni en el top 10, ni en el sorteo del rival, y no dan ventaja de votacion.
- - La carrera debe poder jugarse completa solo con chat y likes. Regalar es opcional.
 
 2. FORMATO DEL TORNEO (especificacion, aun no implementado)
  - Duelos de 2 paises en 2 carriles, con eliminacion directa: el que pierde queda eliminado.
@@ -52,6 +38,7 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
 
 8. RITMO AUTOMATICO / BOT ADAPTABLE (v12)
  - Objetivo: sostener TARGET_EPM eventos por minuto. bot = TARGET_EPM - eventos reales/min (nunca menos de 0, maximo BOT_MAX_EPM). Si entran mas usuarios reales el bot baja solo; si no hay nadie, sube. No genera regalos, seguidores ni compartidos.
+ - ROSITA DE BOT (v2.1): hasta 3 por carrera (BOT_ROSITA_MAX), repartidas por avance de la pista (tramo inicial, medio y final). Cada una da turbo corto (BOT_ROSITA_MS) a la tortuga que va atras, se muestra como fuego firmado 🤖 tortubot_N (no como rosa ni regalo real) y sube la barra de tap tap del equipo +BOT_ROSITA_TAPS sin llenarla. No cuenta en estadisticas ni XP.
  - El bot GENERA EVENTOS visibles (chat y likes) con nombres tortubot_N: suman puntos, suenan y muestran su burbuja sobre la tortuga. NO cuentan en estadisticas, MVP, XP, avatares, avisos ni logs, y nunca dan el golpe final (BOT_CAP).
 9. ESTADISTICAS INTEGRADAS (v14, un solo archivo)
  - Ya no hay backend aparte: el modulo "ESTADISTICAS INTEGRADAS" guarda todo en el navegador (localStorage) y el panel vive en este mismo HTML.
@@ -91,12 +78,17 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
  NOVEDADES v38 (reglas de juego):
   - Bot: un evento suyo vale 1/4 (BOT_W) y, si hay gente real activa, nunca pasa a una tortuga por delante de la otra.
   - Puntos manuales/reales: comentar = 10 rayos, compartir = 5, seguir = 3, apoyar = 1 (likes llenan el corazon: cada 100 = +10). Todo x HARD.
-  - Un usuario SOLO mueve la carrera si nombro un pais del duelo (o ya lo habia elegido). Pais fuera del duelo = solo estadistica.
+  - Un usuario mueve la carrera si nombro un pais del duelo (o ya lo habia elegido); los likes sin equipo van al carril seleccionado. Pais fuera del duelo = solo estadistica.
   - Nido: huevos en blanco al iniciar; los 3 huevos grandes = los 3 usuarios REALES de mayor puntaje; el resto del nido = los demas recientes; huevos de bot (🐢) solo se van cargando con eventos del bot.
   - Alerta de evento = avatar grande del usuario sobre los huevos, que luego baja al nido. Puntaje por usuario: unirse 1, comentar 5, like 1 c/u, seguir 3, compartir 3, regalo 0.
   - Estadisticas: panel 📊 con pestaña Usuarios (historial completo por usuario, guardado en localStorage 'tortu.users').
   - Turbo: por boton ROSITA manual, compartido real, o 'rafaga' de 5 comentarios reales en 10 s; 'impulso' del juego cada 45 s a la tortuga que va 8+ atras. El bot NUNCA activa turbo y un regalo real solo se agradece.
   - CTAs: destello inicial UNA vez por sesion (nada de pedidos en bucle, regla 1.a).
+ 14. RETOQUES FINALES (v2.1) - capa independiente al final del archivo (confeti, efectos, banners, pips de copas, sonidos propios)
+  - Solo REACCIONA a lo que pasa en la carrera. No pide likes/comentarios/regalos/seguir/compartir, no promete nada, no inventa eventos (reglas 1a, 1b, 1c).
+  - Los eventos del bot NO disparan chispas ni emojis de usuario; solo los toques manuales y los eventos reales. Los banners (hitos, remontada, carrera pareja, foto finish) son del estado de la pista.
+  - ROSITA manual se muestra como fuego (nunca como rosa/regalo). La rosa solo aparece al llegar un regalo REAL.
+  - Respeta prefers-reduced-motion (menos particulas, sin anillos) y el boton 🔊. La musica de fondo sigue la regla 10 (OFF por partida).
 -->
 <html lang="es">
 <head>
@@ -442,12 +434,28 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 /* contador de me gusta v2: pildora limpia con el numero DENTRO de la barra y el corazon montado a la izquierda */
 .hb{position:relative;height:22px;gap:0;padding:0;background:none;border-radius:0}
 .hb .hi{position:absolute;left:-2px;top:50%;margin-top:-11px;z-index:2;font-size:20px;line-height:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
-.hb i{flex:1;margin-left:10px;height:18px;border:2px solid rgba(255,255,255,.85);border-radius:9px;background:rgba(20,10,4,.55);box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.hb i{position:relative;flex:1;margin-left:10px;height:18px;border:2px solid rgba(255,255,255,.85);border-radius:9px;background:rgba(20,10,4,.55);box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.hb i b{position:absolute;left:0;top:0;z-index:1}
+.hb{cursor:pointer;touch-action:manipulation}
+.hb:focus-visible{outline:2px solid #ffd566;outline-offset:2px}
 .hb em{position:absolute;left:16px;right:2px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;min-width:0;font-size:10px;color:#fff;text-shadow:0 1px 2px #000;pointer-events:none;z-index:1}
 .hb.bump i{box-shadow:0 0 6px 1px rgba(255,90,130,.9)}
 /* alerta v3: solo el icono del evento dentro de una burbuja chica */
 .ev{flex-direction:row;padding:2px 8px}
 .ev .eb{position:static;font-size:22px;line-height:1.2;background:none;border:0;padding:0}
+/* v2.1 CONTADOR DE TAPS: que cada tap se SIENTA. Marcas cada 10, +N flotante por tap, premio +1 visible y barra que brilla */
+.hb i b{transition:width .1s ease-out}
+.hb i:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),rgba(0,0,0,.5) calc(10% - 1px),rgba(0,0,0,.5) 10%)}
+.hb.bump i b{filter:brightness(1.35)}
+.hb em{justify-content:flex-start;left:20px;right:30px;font-size:11px;font-weight:800}
+.hb .gl{position:absolute;right:3px;top:50%;margin-top:-7px;z-index:3;height:14px;line-height:14px;padding:0 4px;border-radius:7px;background:#ffd566;color:#3a2300;font-size:9px;font-weight:800;text-decoration:none;pointer-events:none;box-shadow:0 1px 2px rgba(0,0,0,.6)}
+.hb .gl.got{animation:glg .5s ease-out}
+@keyframes glg{0%{transform:scale(1)}30%{transform:scale(1.7);background:#fff;box-shadow:0 0 10px 3px #ffd566}100%{transform:scale(1)}}
+.hb .tp{position:absolute;left:30%;top:-2px;z-index:4;font-weight:800;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #ff2d55;pointer-events:none;animation:tpu .75s ease-out forwards}
+@keyframes tpu{0%{opacity:0;transform:translateY(4px) scale(.6)}15%{opacity:1;transform:translateY(-4px) scale(1.15)}100%{opacity:0;transform:translateY(-30px) scale(1)}}
+.hb.full i{animation:hbf .6s ease-out}
+@keyframes hbf{0%,60%{box-shadow:0 0 14px 5px #ffd566}100%{box-shadow:0 1px 3px rgba(0,0,0,.5)}}
+@media (prefers-reduced-motion:reduce){.hb .gl.got,.hb .tp,.hb.full i{animation:none}}
 </style>
 </head>
 <body>
@@ -512,6 +520,9 @@ const TARGET_EPM=30;     /* eventos por minuto que el ritmo automatico intenta s
 const BOT_MAX_EPM=40;    /* tope de eventos por minuto que puede aportar el bot */
 const BOT_W=0.25;        /* peso de un evento del bot: 1/4 del valor de uno real */
 const BOT_CAP=95;        /* el bot nunca empuja una tortuga mas alla de este %: la meta es de la gente real (sus eventos valen <5 puntos) */
+const BOT_ROSITA_MAX=3;      /* maximo de ROSITAS de bot en TODA la carrera (repartidas a lo largo de la pista) */
+const BOT_ROSITA_TAPS=25;     /* cuanto sube la barra de tap tap (corazon) del equipo con cada ROSITA de bot (nunca la llena) */
+const BOT_ROSITA_MS=4000;     /* duracion del turbo de cada ROSITA de bot */
 /* ===== ESTADISTICAS INTEGRADAS (todo en este mismo archivo; se guardan en el navegador con localStorage) =====
  Registra: torneos y rondas · paises nombrados en el chat (+1 por comentario) · si la ronda tuvo regalos, el log completo del chat.
  REGLA TIKTOK: solo OBSERVA eventos reales. No inventa eventos ni pide ni promete nada a nadie (regla 1). */
@@ -686,7 +697,7 @@ function laneSVG(i,t){return `<svg viewBox="0 0 120 630" preserveAspectRatio="no
 </g>
 <path id="cw${i}" display="none" d="M36 410 L38 394 L44 401 L50 390 L56 401 L62 394 L64 410Z" fill="url(#go${i})" stroke="#8a6410" stroke-width="1.5"/>
 </g></g></g><path d="M0 8Q0 0 8 0H8V630H8Q0 630 0 622Z M112 0H112Q120 0 120 8V622Q120 630 112 630H112Z" fill="#b07a45"/><path d="M8 10V620 M112 10V620" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V618 M117.5 12V618" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="628" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
-$('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false" aria-label="${t.n}"><svg class="fgb" width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">${flag(t.id,0,0,20,14)}</svg><span class="cn">${t.n}</span><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="hb" id="hb${i}" title="Cada 100 me gusta llenan el corazón y la tortuga avanza"><span class="hi">❤️</span><i><b></b></i><em>0</em></div><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
+$('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false" aria-label="${t.n}"><svg class="fgb" width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">${flag(t.id,0,0,20,14)}</svg><span class="cn">${t.n}</span><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="hb" id="hb${i}" role="button" tabindex="0" aria-label="Tocar para sumar un like a ${t.n}; cada 100 likes avanza +10 rayos" title="Toca para sumar un like. Cada 100 likes llenan el corazón y la tortuga avanza +10 rayos"><span class="hi">❤️</span><i><b></b></i><em>0</em><s class="gl" aria-hidden="true">+10⚡</s></div><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
 /* Ajusta el ancho de las tortugas (--kx) para que no se deformen al cambiar el tamano del carril */
 function fitK(){document.querySelectorAll('.sv').forEach(v=>{const w=v.offsetWidth,h=v.offsetHeight;if(w&&h)v.querySelectorAll('.in').forEach(g=>g.style.setProperty('--kx',(h/630*120/w).toFixed(3)))})}
 fitK();addEventListener('resize',fitK);
@@ -712,7 +723,7 @@ function hop(i){const g=$('#in'+i);g.classList.remove('hop');void g.getBBox();g.
 /* Suma puntos al carril i por un evento. Puntos = PTS[tipo] * cantidad * combo. Gana quien llega a 100. Los regalos SOLO agradecen (regla 1) */
 function push(i,type,n=1,mult=1){
  if(over||i<0||!S[i])return;
- const pts=type==='like'&&live&&!curBot?0:PTS[type]*n*mult,s=S[i];
+ const pts=PTS[type]*n*mult,s=S[i];
  s.p+=pts;if(type==='like')s.l+=n;if(type==='gift')s.g+=n;
  const prev=lead;lead=update();if(pts>0)float(i,'+'+(+pts.toFixed(1)));hop(i);walk(i);
  if(s.p>=100){return win(i)}
@@ -775,7 +786,9 @@ function handleLiveEntry(entry){
  if(team>=0&&user)picks.set(key,team);
  /* Sin pais del duelo (ni comentado ahora ni elegido antes): NO mueve la carrera, solo queda en las estadisticas */
  if(team<0)team=picks.has(key)?picks.get(key):-1;
- if(entry.type==='member'||team<0)return;
+ if(entry.type==='member')return;
+ if(team<0&&entry.type==='like')team=sel;
+ if(team<0)return;
  if(entry.type==='chat'){
   const now=Date.now();
   if(now-(lastChat.get(key)||0)<8000)return;
@@ -921,7 +934,7 @@ let live=false,curBot=false,cu=null,tapping=false,leads=0,sprint=false,pm=1,last
 /* ENGANCHES a push/handleLiveEntry/win/reset: agregan sonido, XP, corazon, nido, estadisticas sin tocar el motor. BOT: pesa BOT_W y nunca pasa a una tortuga delante de la otra si hay gente real */
 const _push=push;
 push=function(i,type,n=1,m=1){
- const was=over,p0=lead,before=S[i]?S[i].p:0;_push(i,type,n,curBot?m*BOT_W:m); /* el bot vale 1/4 */
+ const was=over,p0=lead,before=S[i]?S[i].p:0;_push(i,type,n,curBot?m*BOT_W:live&&type==='like'?0:m); /* el bot vale 1/4 */
  if(curBot&&S[i]&&realEpm()>0){ /* hay gente real: el bot nunca pasa a una tortuga por delante de la otra */
   const o=Math.max(...S.filter((_,j)=>j!==i).map(y=>y.p));if(before<=o&&S[i].p>o)S[i].p=o}
  if(was||i<0||!S[i])return;
@@ -958,19 +971,35 @@ const HINCHAS_JSON=[ /* editar aqui. Formato: {username:'maria_py', avatar:'http
 /* ===== CORAZON (como el de TikTok): cada HEART_N me gusta llenan la barra y la tortuga avanza HEART_PTS ===== */
 const HEART_N=100,HEART_PTS=10,heart=T.map(()=>0);
 function renderHeart(t){const h=$('#hb'+t);if(!h)return;h.querySelector('b').style.width=(heart[t]/HEART_N*100)+'%';h.querySelector('em').textContent=Math.floor(heart[t])+'/'+HEART_N}
+/* +N flotante sobre el contador en CADA tap/me gusta: el numero crece con la cantidad (rafagas de TikTok) */
+function tapPop(h,n){
+ while(h.querySelectorAll('.tp').length>5)h.querySelector('.tp').remove();
+ const e=document.createElement('span');e.className='tp';e.textContent='+'+n;
+ e.style.fontSize=Math.min(24,13+Math.floor(Math.log2(n+1)*2))+'px';e.style.left=(18+Math.random()*50)+'%';
+ h.appendChild(e);setTimeout(()=>e.remove(),800);
+}
 function heartAdd(t,n){
  if(over||!T[t])return;
- heart[t]+=Math.max(1,Math.floor(n)||1);
+ n=Math.max(1,Math.floor(n)||1);
+ heart[t]+=n;
  let full=0;while(heart[t]>=HEART_N){heart[t]-=HEART_N;full++}
  renderHeart(t);
- {const h=$('#hb'+t);h.classList.remove('bump');void h.offsetWidth;h.classList.add('bump')} /* cada me gusta / tap hace latir el contador */
+ const h=$('#hb'+t);
+ h.classList.remove('bump');void h.offsetWidth;h.classList.add('bump'); /* cada me gusta / tap hace latir el contador */
+ tapPop(h,n);
  if(full){
-  const h=$('#hb'+t);h.classList.remove('full');void h.offsetWidth;h.classList.add('full');
-  S[t].p+=HEART_PTS*full;update();float(t,'❤️ +'+HEART_PTS*full);A.sfx('lead');
-  hype('❤️',T[t].n,' · ¡corazón lleno! +'+HEART_PTS*full,T[t].c);
-  if(!over&&S[t].p>=100)win(t);
+  const g=h.querySelector('.gl');g.classList.remove('got');void g.offsetWidth;g.classList.add('got');
+  h.classList.remove('full');void h.offsetWidth;h.classList.add('full');A.sfx('lead');
+  S[t].p+=HEART_PTS*full;update();float(t,'❤️ +'+HEART_PTS*full+'⚡');
+  hype('❤️',T[t].n,' · ¡corazón lleno! +'+HEART_PTS*full+'⚡',T[t].c);
  }
+ if(full&&!over&&S[t].p>=100)win(t);
 }
+document.querySelectorAll('.hb').forEach((h,i)=>{
+ const tap=()=>heartAdd(i,1);
+ h.addEventListener('click',tap);
+ h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tap()}});
+});
 const NEST_EGGS=12,FRONT_EGGS=3,recent=T.map(()=>[]),botFill=T.map(()=>0),fanPool=[];let fanTurn=0;
 const teamOf=k=>[...k].reduce((a,c)=>a+c.charCodeAt(0),0)%T.length;
 function addFan(f){ /* agrega un usuario del JSON al pool y devuelve su equipo */
@@ -1034,9 +1063,10 @@ function setAvatarImage(el,url){
 function avatar(e){
  if(over||!e||!['member','chat','gift','like','follow','share'].includes(e.type))return;
  const u=String(e.username||'').trim();if(!u)return;
- const k=u.toLowerCase(),t=picks.get(k);
+ const k=u.toLowerCase();let t=picks.get(k);
  const url=String(e.profilePictureUrl||e.profilePicture||e.avatarUrl||e.avatar||e.userImage||e.imageUrl||'');
  const sc=(userScore.get(k)||0)+(SCORE[e.type]||0)*(e.type==='like'?Math.max(1,Math.floor(Number(e.activityCount))||1):1);userScore.set(k,sc); /* cada evento sube su puntaje */
+ if(t==null&&e.type==='member'&&k!=='sistema')t=teamOf(k); /* asignacion visual estable; no guarda equipo para el juego */
  if(t==null||!T[t]){if(e.type==='member')showEv('g','member',1);return} /* se une sin equipo: avatar grande al centro, sin tocar la carrera */
  if(!seen.has(k)){seen.add(k);grow(t,.05)}
  let old=null,from=-1;
@@ -1185,11 +1215,34 @@ function botStep(){
  if(Math.random()<.6||picks.get(u)!==i)handleLiveEntry({type:'chat',username:u,content:BOT_CHAT[Math.random()*BOT_CHAT.length|0].replace(/\{n\}/g,T[i].n),bot:true});
  else handleLiveEntry({type:'like',username:u,activityCount:1+(Math.random()*2|0),bot:true});
 }
+/* ROSITA DE BOT (max BOT_ROSITA_MAX por carrera): el bot "lanza" una ROSITA a la tortuga que va atras.
+   Se programa por AVANCE de la pista (no por tiempo): una en el tramo inicial, otra en el medio y otra al final, en puntos al azar.
+   Efecto = igual que la ROSITA manual (turbo + fuego, NO una rosa) + sube la barra de tap tap (corazon) de ese equipo para que se vea
+   moverse el tablero de arriba. Va firmada como bot (🤖 tortubot_N). NO cuenta en estadisticas, MVP, XP ni logs, y NUNCA llena el corazon ni da el golpe final. */
+let botRosas=0,botRosaAt=[];
+function botRosaPlan(){botRosas=0;botRosaAt=[];const n=BOT_ROSITA_MAX,seg=80/n;for(let k=0;k<n;k++){const a=10+k*seg;botRosaAt.push(a+Math.random()*(seg-6))}}
+function botRosa(){
+ if(over||botRosas>=BOT_ROSITA_MAX||!botRosaAt.length||S.length<2)return;
+ const mx=Math.max(...S.map(x=>x.p));if(mx<botRosaAt[0])return;
+ botRosaAt.shift();
+ const i=S[0].p<=S[1].p?0:1;                       /* la que va atras */
+ if(S[i].p>=BOT_CAP-5)return;                      /* muy cerca de la meta: se salta */
+ botRosas++;
+ const u=BOT_NAMES[Math.random()*BOT_NAMES.length|0];
+ turboOn(i,BOT_ROSITA_MS);
+ hype('🔥','🤖 '+u,' lanzó ROSITA · ¡TURBO '+T[i].n+'!',T[i].c);
+ float(i,'🔥 ROSITA');A.sfx('lead');
+ const n=Math.min(BOT_ROSITA_TAPS,HEART_N-1-Math.floor(heart[i]));
+ if(n>0)heartAdd(i,n);                             /* mueve el tablero de tap tap sin llenarlo */
+}
+botRosaPlan();
+const _rstBR=reset;reset=function(){botRosaPlan();return _rstBR.apply(this,arguments)}; /* carrera nueva = 3 ROSITAS nuevas */
 setInterval(()=>{                      /* cada segundo recalcula cuanto debe aportar el bot */
  if(over||!paceOn){botEpm=0;return}
  botEpm=Math.min(BOT_MAX_EPM,Math.max(0,TARGET_EPM-realEpm()));
  botCarry+=botEpm/60;
  while(botCarry>=1){botCarry--;botStep()}
+ botRosa();
  update();
 },1000);
 /* Enciende/apaga el ritmo automatico (boton 🤖 o tecla B). Se fuerza ON al empezar cada ronda (regla 10) */
@@ -1338,6 +1391,321 @@ if ('serviceWorker' in navigator)
 <script>
 (function(){try{if(sessionStorage.getItem('tortu.attn'))return;sessionStorage.setItem('tortu.attn','1')}catch(e){}
 document.querySelectorAll('.cta').forEach((b,i)=>setTimeout(()=>{b.classList.add('attn');setTimeout(()=>b.classList.remove('attn'),2000)},1500+i*350))})();
+</script>
+<style>
+/* ===== RETOQUES FINALES (v2.1): confeti, efectos, banners, pips de copas, cuenta regresiva ===== */
+#fxc{position:absolute;inset:0;width:416px;height:640px;pointer-events:none;z-index:20}
+#fxb{position:absolute;left:0;right:0;top:34%;z-index:19;display:flex;justify-content:center;pointer-events:none}
+#fxb span{display:none;padding:7px 16px;border-radius:16px;border:3px solid var(--c,#3f2713);background:linear-gradient(#fff3c4,#ffd566);color:#2a2018;font:900 19px/1.1 Inter,sans-serif;letter-spacing:.5px;text-align:center;box-shadow:0 6px 0 rgba(63,39,19,.9),0 10px 22px rgba(0,0,0,.55);white-space:nowrap}
+#fxb span.on{display:block;animation:fxb 1.7s cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes fxb{0%{transform:scale(.2) rotate(-8deg);opacity:0}14%{transform:scale(1.18) rotate(3deg);opacity:1}26%{transform:scale(1) rotate(0)}84%{transform:scale(1);opacity:1}100%{transform:scale(.9) translateY(-14px);opacity:0}}
+#fxn{position:absolute;inset:0;z-index:18;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#fxn b{display:none;font:900 120px/1 Inter,sans-serif;color:#fff;-webkit-text-stroke:6px #3f2713;paint-order:stroke fill;text-shadow:0 8px 0 #3f2713,0 0 34px rgba(255,211,77,.9)}
+#fxn b.on{display:block;animation:fxn .42s ease-out forwards}
+#fxn b.go{color:#ffd34d;font-size:92px}
+@keyframes fxn{0%{transform:scale(2.4);opacity:0}30%{transform:scale(1);opacity:1}100%{transform:scale(.7);opacity:0}}
+.fxflash{position:absolute;inset:0;z-index:17;pointer-events:none;background:#fff;opacity:0;animation:fxf .6s ease-out forwards}
+@keyframes fxf{0%{opacity:.7}100%{opacity:0}}
+.fxring{position:absolute;z-index:17;pointer-events:none;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:5px solid var(--c,#ffd34d);animation:fxr .9s ease-out forwards}
+@keyframes fxr{0%{transform:scale(.3);opacity:1}100%{transform:scale(11);opacity:0}}
+/* pantalla de ganador: rayos giratorios, entrada con rebote y trofeo */
+.win.show:before{content:"";position:absolute;inset:-60%;z-index:-1;background:repeating-conic-gradient(from 0deg,rgba(255,211,77,.20) 0 10deg,transparent 10deg 20deg);animation:fxs 14s linear infinite;pointer-events:none}
+.win.show{overflow:hidden;animation:fxw .5s cubic-bezier(.2,1.3,.4,1)}
+.win.show h2{animation:fxh 1.1s cubic-bezier(.2,1.5,.4,1) both,fxg 1.6s ease-in-out 1.1s infinite alternate}
+.win.show svg{animation:fxh .9s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes fxs{to{transform:rotate(360deg)}}
+@keyframes fxw{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}
+@keyframes fxh{0%{transform:scale(.2) rotate(-12deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes fxg{0%{text-shadow:0 2px 6px #000,0 0 6px rgba(255,211,77,.2)}100%{text-shadow:0 2px 6px #000,0 0 24px rgba(255,211,77,.95)}}
+/* pips de copas del torneo (3 por carril) */
+.fxp{position:absolute;left:3px;top:-9px;z-index:4;display:flex;gap:3px;pointer-events:none}
+.fxp i{width:9px;height:9px;border-radius:50%;border:1.5px solid #3f2713;background:#2a1a0e;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.fxp i.f{background:radial-gradient(circle at 35% 30%,#fff3b0,#ffd34d 55%,#c8870d);box-shadow:0 0 6px #ffd34d}
+.fxp i.n{animation:fxpn .9s cubic-bezier(.2,1.6,.4,1)}
+@keyframes fxpn{0%{transform:scale(0)}60%{transform:scale(2.2)}100%{transform:scale(1)}}
+/* carril lider con brillo suave, borde de tension en la recta final */
+.lane.lead .hd{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 12px rgba(255,211,77,.7),0 2px 3px rgba(0,0,0,.4)}
+#app.sprint:after{content:"";position:absolute;inset:0;z-index:16;pointer-events:none;border-radius:6px;box-shadow:inset 0 0 38px rgba(255,40,40,.55);animation:fxv .6s ease-in-out infinite alternate}
+@keyframes fxv{0%{opacity:.25}100%{opacity:1}}
+/* UX: respuesta tactil, foco visible */
+.cta:active:not(:disabled):not(.cool){transform:translateY(3px) scale(.96);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 0 #3f2713}
+.cta,.hd,.sm,.hb{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
+.cta:focus-visible,.hd:focus-visible,.sm:focus-visible,.hb:focus-visible{outline:3px solid #ffd566;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){#fxb span.on,#fxn b.on,.fxflash,.fxring,.win.show,.win.show h2,.win.show svg,.win.show:before,.fxp i.n,#app.sprint:after{animation:none}#fxb span.on,#fxn b.on{opacity:1}.fxflash,.fxring{display:none}}
+</style>
+<script>
+(function(){
+/* =====================================================================
+   RETOQUES FINALES. Capa independiente: no toca el motor ni el audio de los
+   scripts anteriores; solo envuelve push/win/reset/showCombo/handleLiveEntry
+   (mismo patron _original + wrapper) y lee el estado global (S, T, over, lead).
+   REGLAS 1/5/12: todo es reaccion visual o sonora. No pide ni promete nada,
+   no inventa eventos, el bot nunca dispara efectos de usuario real,
+   ROSITA manual se muestra como fuego (nunca como regalo real).
+   ===================================================================== */
+const app=document.getElementById('app'),board=document.querySelector('.board');
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const rnd=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ---------- Posiciones (el overlay se escala con transform: se mide contra #app) ---------- */
+function pos(el,fx,fy){
+ if(!el)return{x:208,y:320};
+ const a=app.getBoundingClientRect(),r=el.getBoundingClientRect(),k=a.width/416||1;
+ return{x:(r.left-a.left+r.width*(fx==null?.5:fx))/k,y:(r.top-a.top+r.height*(fy==null?.5:fy))/k};
+}
+const laneP=(i,fy)=>pos(document.getElementById('sv'+i),.5,fy==null?.55:fy);
+
+/* ---------- Canvas de particulas (solo corre mientras hay particulas) ---------- */
+const cv=document.createElement('canvas');cv.id='fxc';cv.setAttribute('aria-hidden','true');
+const DPR=Math.min(2,window.devicePixelRatio||1);cv.width=416*DPR;cv.height=640*DPR;app.appendChild(cv);
+const cx=cv.getContext('2d');cx.scale(DPR,DPR);
+const PS=[];let raf=0,lastT=0;const MAXP=420;
+const COLS=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#ffffff','#ff8a1f','#a98cff'];
+function add(p){if(PS.length>=MAXP)PS.shift();PS.push(p);if(!raf){lastT=performance.now();raf=requestAnimationFrame(loop)}}
+function P(o){return Object.assign({x:208,y:320,vx:0,vy:0,g:520,drag:.6,life:1.6,age:0,s:7,rot:0,vr:0,col:'#fff',shape:'r',flut:0,fp:rnd(0,6.28),fade:.35,ch:''},o)}
+function loop(t){
+ const dt=Math.min(.05,(t-lastT)/1000);lastT=t;
+ cx.clearRect(0,0,416,640);
+ for(let i=PS.length-1;i>=0;i--){
+  const p=PS[i];p.age+=dt;
+  if(p.age>=p.life||p.y>700){PS.splice(i,1);continue}
+  const d=Math.max(0,1-p.drag*dt);p.vx*=d;p.vy=p.vy*d+p.g*dt;
+  p.x+=p.vx*dt+(p.flut?Math.sin(p.age*6+p.fp)*p.flut*dt:0);p.y+=p.vy*dt;p.rot+=p.vr*dt;
+  const left=p.life-p.age,al=left<p.fade?Math.max(0,left/p.fade):1;
+  cx.globalAlpha=al;cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);
+  if(p.shape==='r'){cx.fillStyle=p.col;const f=Math.abs(Math.cos(p.age*7+p.fp));cx.fillRect(-p.s/2,-p.s*.35*f-1,p.s,p.s*.7*f+2)}
+  else if(p.shape==='c'){cx.fillStyle=p.col;cx.beginPath();cx.arc(0,0,p.s/2,0,6.283);cx.fill()}
+  else if(p.shape==='s'){cx.fillStyle=p.col;cx.beginPath();for(let k=0;k<10;k++){const r=k%2?p.s*.22:p.s*.55,a=k*Math.PI/5-Math.PI/2;cx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}cx.closePath();cx.fill()}
+  else if(p.shape==='l'){cx.strokeStyle=p.col;cx.lineWidth=2;cx.lineCap='round';cx.beginPath();cx.moveTo(0,0);cx.lineTo(-p.vx*.04,-p.vy*.04);cx.stroke()}
+  else if(p.shape==='e'){cx.font=p.s+'px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(p.ch,0,0)}
+  cx.restore();
+ }
+ cx.globalAlpha=1;
+ if(PS.length)raf=requestAnimationFrame(loop);else{raf=0;cx.clearRect(0,0,416,640)}
+}
+const q=n=>RM?Math.ceil(n*.25):n;
+/* cañon de confeti: abanico desde (x,y) apuntando a "ang" (grados, 0=derecha, -90=arriba) */
+function cannon(x,y,ang,n,spd,spread,cols){
+ for(let i=0;i<q(n);i++){const a=(ang+rnd(-spread,spread))*Math.PI/180,v=rnd(spd*.45,spd);
+  add(P({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:rnd(380,560),drag:rnd(.7,1.3),life:rnd(1.8,3),s:rnd(6,11),rot:rnd(0,6),vr:rnd(-12,12),col:pick(cols||COLS),shape:pick(['r','r','r','c','s']),flut:rnd(20,60)}))}
+}
+function rain(n,cols,dur){
+ for(let i=0;i<q(n);i++)setTimeout(()=>add(P({x:rnd(0,416),y:-12,vx:rnd(-25,25),vy:rnd(40,120),g:rnd(70,150),drag:.2,life:rnd(3,5),s:rnd(6,11),rot:rnd(0,6),vr:rnd(-8,8),col:pick(cols||COLS),shape:pick(['r','r','s','c']),flut:rnd(30,70),fade:.5})),rnd(0,dur||1200));
+}
+function burst(x,y,col,n,spd){
+ for(let i=0;i<q(n||18);i++){const a=rnd(0,6.283),v=rnd((spd||160)*.3,spd||160);
+  add(P({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:240,drag:1.6,life:rnd(.6,1.1),s:rnd(3,6),col:col||'#ffd34d',shape:pick(['c','s','l']),rot:rnd(0,6),vr:rnd(-8,8)}))}
+}
+function emojis(x,y,ch,n,spread){
+ for(let i=0;i<q(n);i++)add(P({x:x+rnd(-(spread||10),spread||10),y,vx:rnd(-40,40),vy:rnd(-150,-80),g:-30,drag:.8,life:rnd(1,1.7),s:rnd(14,22),shape:'e',ch,flut:rnd(15,35),fade:.5}));
+}
+function firework(x,y,col){
+ const cs=col?[col,'#fff']:COLS;
+ for(let i=0;i<q(36);i++){const a=i/36*6.283+rnd(-.1,.1),v=rnd(90,210);
+  add(P({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:140,drag:1.9,life:rnd(.9,1.5),s:rnd(3,5),col:pick(cs),shape:'c'}))}
+ for(let i=0;i<q(8);i++)add(P({x,y,vx:rnd(-60,60),vy:rnd(-60,60),g:60,drag:1,life:1.1,s:rnd(9,14),col:'#fff',shape:'s',rot:rnd(0,6),vr:rnd(-6,6)}));
+}
+/* destello, onda expansiva, banner, cuenta regresiva */
+function flash(c){const f=document.createElement('div');f.className='fxflash';if(c)f.style.background=c;app.appendChild(f);setTimeout(()=>f.remove(),650)}
+function ring(x,y,c){if(RM)return;const r=document.createElement('div');r.className='fxring';r.style.left=x+'px';r.style.top=y+'px';if(c)r.style.setProperty('--c',c);app.appendChild(r);setTimeout(()=>r.remove(),950)}
+const bw=document.createElement('div');bw.id='fxb';bw.setAttribute('role','status');bw.setAttribute('aria-live','polite');
+const bs=[document.createElement('span'),document.createElement('span')];bs.forEach(s=>bw.appendChild(s));app.appendChild(bw);let bi=0,bt=0;
+function banner(txt,col){
+ const s=bs[bi^=1];bs.forEach(x=>x.classList.remove('on'));void s.offsetWidth;
+ s.textContent=txt;s.style.setProperty('--c',col||'#3f2713');s.classList.add('on');
+ clearTimeout(bt);bt=setTimeout(()=>s.classList.remove('on'),1750);
+}
+const cd=document.createElement('div');cd.id='fxn';cd.setAttribute('aria-hidden','true');cd.innerHTML='<b></b>';app.appendChild(cd);
+function num(t,go){const b=cd.firstChild;b.classList.remove('on','go');void b.offsetWidth;b.textContent=t;if(go)b.classList.add('go');b.classList.add('on')}
+
+/* ---------- Sonido propio (WebAudio sintetizado). Respeta el boton 🔊 ---------- */
+const FA=(()=>{
+ let c,mg,nb;
+ const sfxOn=()=>{const b=document.getElementById('bSfx');return !b||b.getAttribute('aria-pressed')!=='false'};
+ const run=()=>c&&c.state==='running'&&sfxOn();
+ function init(){
+  if(c)return c;
+  try{c=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}
+  const lim=c.createDynamicsCompressor();mg=c.createGain();mg.gain.value=.55;mg.connect(lim);lim.connect(c.destination);
+  nb=c.createBuffer(1,c.sampleRate*2,c.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  return c;
+ }
+ function o(f,t,d,ty,v,sl,fl){
+  const x=c.createOscillator(),g=c.createGain();x.type=ty||'sine';x.frequency.setValueAtTime(f,t);if(sl)x.frequency.exponentialRampToValueAtTime(sl,t+d);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  let out=g;if(fl){const f1=c.createBiquadFilter();f1.type='lowpass';f1.frequency.setValueAtTime(fl,t);f1.frequency.exponentialRampToValueAtTime(Math.max(200,fl*.3),t+d);x.connect(f1);f1.connect(g)}else x.connect(g);
+  g.connect(mg);x.start(t);x.stop(t+d+.05);
+ }
+ /* ruido filtrado: tipo (bandpass/highpass/lowpass), frecuencia, barrido opcional, ataque */
+ function nz(t,d,v,ty,f,f2,atk){
+  const s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=nb;s.loop=true;
+  fl.type=ty;fl.frequency.setValueAtTime(f,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+d);fl.Q.value=ty==='bandpass'?1.2:.7;
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+(atk||.005));g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(fl);fl.connect(g);g.connect(mg);s.start(t,Math.random());s.stop(t+d+.05);
+ }
+ const N=m=>440*Math.pow(2,(m-69)/12);
+ /* trompeta: sierra con filtro que abre y cierra */
+ const brass=(m,t,d,v)=>{o(N(m),t,d,'sawtooth',v,0,2600);o(N(m)*1.005,t,d,'square',v*.4,0,1800)};
+ const S={
+  pop:t=>{nz(t,.09,.35,'bandpass',2400,900);o(300,t,.08,'sine',.3,90)},
+  whoosh:t=>nz(t,.45,.22,'bandpass',500,4200,.18),
+  tick:t=>{o(1200,t,.05,'square',.12);nz(t,.03,.1,'highpass',5000)},
+  go:t=>{o(660,t,.28,'square',.2,0,3000);o(990,t,.3,'triangle',.22);nz(t,.5,.18,'bandpass',900,5000,.1)},
+  mile:t=>{o(N(76),t,.12,'triangle',.28);o(N(83),t+.09,.2,'triangle',.28)},
+  lead:t=>{nz(t,.35,.18,'bandpass',600,3500,.12);o(N(72),t+.05,.1,'triangle',.25);o(N(79),t+.13,.18,'triangle',.25)},
+  comeback:t=>{o(220,t,.5,'sawtooth',.14,880,2200);[67,71,74,79].forEach((m,i)=>o(N(m),t+.3+i*.07,.3,'triangle',.28))},
+  close:t=>{[0,.16,.32].forEach(d=>o(N(60),t+d,.1,'square',.12));o(N(72),t+.5,.3,'square',.16)},
+  heart:t=>{[84,88,91,96].forEach((m,i)=>o(N(m),t+i*.05,.28,'sine',.3))},
+  turbo:t=>{o(120,t,.6,'sawtooth',.2,700,1500);nz(t,.6,.2,'bandpass',300,3000,.3)},
+  star:t=>{[96,100,103,108].forEach((m,i)=>o(N(m),t+i*.04,.35,'sine',.16))},
+  boom:t=>{o(130,t,.5,'sine',.5,35);nz(t,.35,.28,'lowpass',900,150)},
+  crack:t=>{nz(t,.25,.2,'highpass',3000,9000);[0,.04,.09].forEach(d=>o(rnd(1800,3200),t+d,.06,'sine',.08))},
+  cheer:(t,v)=>{nz(t,2.2,(v||.22),'bandpass',1400,900,.5);nz(t,2.2,(v||.22)*.7,'bandpass',2600,1800,.7)},
+  /* fanfarria de victoria: sol-do-mi-sol con acorde final y aplausos */
+  win:t=>{
+   [[67,0,.13],[72,.14,.13],[76,.28,.13],[79,.42,.55]].forEach(([m,d,l])=>brass(m,t+d,l,.2));
+   [[79,.42],[76,.42],[72,.42],[84,.8]].forEach(([m,d])=>brass(m,t+d,.9,.17));
+   o(N(48),t+.42,1.1,'triangle',.4);nz(t+.4,.5,.2,'highpass',5000,9000);
+   for(let i=0;i<14;i++)nz(t+1+i*.09+rnd(0,.05),.05,.18,'bandpass',rnd(1200,3500));
+   S.cheer(t+.5,.2);
+  },
+  /* campeon del torneo: fanfarria larga, cascada brillante y fuegos artificiales */
+  champ:t=>{
+   const m=[[60,0],[64,.12],[67,.24],[72,.36],[76,.5],[79,.64],[84,.8]];
+   m.forEach(([n,d],i)=>brass(n,t+d,i===6?1.3:.16,.2));
+   [[72,.8],[76,.8],[79,.8],[88,1.35]].forEach(([n,d])=>brass(n,t+d,1.3,.15));
+   o(N(36),t+.8,1.6,'triangle',.45);S.cheer(t+.6,.26);
+   for(let i=0;i<10;i++)o(N(84+[0,4,7,12][i%4]+(i>3?12:0)),t+1.5+i*.08,.45,'sine',.14);
+   [1.2,1.9,2.6,3.3].forEach(d=>{S.boom(t+d);S.crack(t+d+.15)});
+  }
+ };
+ return{init,unlock(){const x=init();if(x&&x.state==='suspended')x.resume().catch(()=>{})},
+  p(n,delay){if(!run())return;try{S[n](c.currentTime+(delay||0.001))}catch(e){}},
+  vis(v){if(c)(v?c.resume():c.suspend()).catch(()=>{})}};
+})();
+['pointerdown','keydown','touchend'].forEach(e=>addEventListener(e,FA.unlock,true));
+document.addEventListener('visibilitychange',()=>FA.vis(!document.hidden));
+FA.init();
+
+/* ---------- Pips de copas del torneo (3 por carril), leidos del guardado ---------- */
+function wins(){try{return JSON.parse(localStorage.getItem('tortu.v1')||'{}').wins||[]}catch(e){return[]}}
+const pips=[],pipN=[];
+T.forEach((t,i)=>{const l=document.getElementById('ln'+i);if(!l)return;const e=document.createElement('span');e.className='fxp';e.setAttribute('aria-hidden','true');e.innerHTML='<i></i><i></i><i></i>';l.appendChild(e);pips[i]=e;pipN[i]=0});
+function pipsSync(animate){
+ const w=wins();T.forEach((t,i)=>{if(!pips[i])return;const n=Math.min(3,w[i]||0),els=pips[i].children;
+  for(let k=0;k<3;k++){const f=k<n;els[k].classList.toggle('f',f);els[k].classList.remove('n');if(animate&&f&&k===n-1&&n>pipN[i]){void els[k].offsetWidth;els[k].classList.add('n')}}
+  pipN[i]=n})}
+pipsSync(false);
+
+/* ---------- Estado de la ronda para los banners ---------- */
+const mil=new Set();let maxDef=T.map(()=>0),closeShown=false,fxBot=false,lastSpark=0,lastM=1,prevLead=-1;
+function roundReset(){mil.clear();maxDef=T.map(()=>0);closeShown=false;prevLead=-1}
+
+/* ---------- ENGANCHES ---------- */
+const _hle=handleLiveEntry;
+handleLiveEntry=function(e){fxBot=!!(e&&e.bot);try{_hle(e)}finally{fxBot=false}};
+
+const _push=push;
+push=function(i,type,n,m){
+ const was=over,l0=lead;
+ _push.apply(this,arguments);
+ if(was||over||i<0||!S[i])return; /* si esta jugada gano, win() ya hizo sus efectos */
+ const lp=S.map(s=>s.p),mx=Math.max(...lp);
+ /* chispas: toques manuales y eventos REALES (nunca del bot) */
+ const now=performance.now();
+ if(!fxBot&&now-lastSpark>110){
+  lastSpark=now;const c=T[i].c,p=laneP(i,Math.max(.12,.84-S[i].p/100*.72));
+  if(type==='like')emojis(p.x,p.y,'❤️',2,12);
+  else if(type==='gift'){emojis(p.x,p.y,'🌹',6,16);burst(p.x,p.y,'#ff4d6d',14,150)} /* reaccion a regalo real; ROSITA manual no pasa por aqui */
+  else if(type==='share'){burst(p.x,p.y,'#5ee08a',14,150);emojis(p.x,p.y,'↗️',2,10)}
+  else if(type==='follow'){burst(p.x,p.y,'#5ec3f2',14,150);emojis(p.x,p.y,'⭐',3,12)}
+  else if(type==='chat'){burst(p.x,p.y,c,8,110)}
+ }
+ /* remontada y cambio de lider */
+ S.forEach((s,j)=>{const d=Math.max(...lp.filter((_,k)=>k!==j))-s.p;if(d>maxDef[j])maxDef[j]=d});
+ if(lead!==l0&&lead>=0&&l0>=0){
+  if(maxDef[lead]>=18&&mx>=30){banner('¡REMONTADA DE '+T[lead].n+'!',T[lead].c);FA.p('comeback');const p=laneP(lead,.4);burst(p.x,p.y,T[lead].c,30,220);ring(p.x,p.y,T[lead].c);maxDef[lead]=0}
+  else if(mx>=15){FA.p('lead');const p=laneP(lead,.4);ring(p.x,p.y,T[lead].c)}
+ }
+ /* hitos de la pista */
+ [[25,'¡UN CUARTO DE PISTA!'],[50,'¡MITAD DE PISTA!'],[75,'¡TRES CUARTOS!']].forEach(([v,t])=>{if(mx>=v&&!mil.has(v)){mil.add(v);banner(t,T[lead>=0?lead:i].c);FA.p('mile');const p=laneP(i,.3);burst(p.x,p.y,T[i].c,20,170)}});
+ /* carrera pareja en la parte alta */
+ if(!closeShown&&mx>=60&&mx<95){const s=[...lp].sort((a,b)=>b-a);if(s.length>1&&s[0]-s[1]<=4){closeShown=true;banner('¡CARRERA PAREJA!','#e11d48');FA.p('close')}}
+};
+
+const _win=win;
+win=function(i){
+ const first=!over,ps=S.map(s=>s.p);_win(i);
+ if(!first)return;
+ clearTimeout(bt);bs.forEach(x=>x.classList.remove('on')); /* el banner de hito no tapa la pantalla de ganador */
+ const rest=Math.max(...ps.filter((_,j)=>j!==i)),photo=Math.min(100,ps[i])-rest<=3;
+ const c=T[i].c,p=laneP(i,.35);
+ pipsSync(true);
+ const h=document.querySelector('#win h2'),champ=!!(h&&/CAMPE/i.test(h.textContent));
+ flash(champ?'#ffe9a8':'#fff');ring(p.x,p.y,c);setTimeout(()=>ring(p.x,p.y,'#fff'),180);
+ burst(p.x,p.y,c,40,260);
+ cannon(0,640,-62,champ?60:36,820,16);cannon(416,640,-118,champ?60:36,820,16);rain(champ?80:46,null,1500);
+ if(photo&&!champ){setTimeout(()=>banner('¡FOTO FINISH!','#e11d48'),400)}
+ if(champ){
+  FA.p('champ');
+  [[.5,.3],[.2,.42],[.8,.38],[.35,.2],[.7,.24],[.5,.5]].forEach(([fx,fy],k)=>setTimeout(()=>{firework(fx*416,fy*640,k%2?c:null)},700+k*620));
+  setTimeout(()=>rain(60,['#ffd34d','#fff','#ff8a1f'],2500),1800);
+ }else{
+  FA.p('win');[.35,.9,1.4].forEach(d=>setTimeout(()=>{cannon(rnd(60,356),rnd(300,420),-90,12,420,40)},d*1000));
+ }
+ FA.p('star',.9);
+};
+
+const _reset=reset;
+reset=function(){
+ const had=!!document.querySelector('#win.show');
+ _reset.apply(this,arguments);
+ roundReset();lastM=1;PS.length=0;
+ pipsSync(false);
+ /* cuenta regresiva visual de 1.6 s (no bloquea el juego ni pide nada) */
+ if(had&&!RM){[['3',0],['2',.4],['1',.8]].forEach(([t,d])=>setTimeout(()=>{if(!over){num(t);FA.p('tick')}},d*1000));setTimeout(()=>{if(!over){num('¡YA!',1);FA.p('go');flash('#ffd34d');T.forEach((_,k)=>{const p=laneP(k,.8);burst(p.x,p.y,T[k].c,16,160)})}},1200)}
+ else if(had){banner('¡YA!','#3ddc5a')}
+};
+
+/* Combo: estallido al subir de nivel */
+const _sc=showCombo;
+showCombo=function(){
+ _sc.apply(this,arguments);
+ const m=mult();
+ if(m>lastM&&!over){const p=pos(document.getElementById('combo'),.5,.5);burst(p.x,p.y,m===3?'#ff8a1f':'#ffd34d',m===3?34:20,200);if(m===3){flash('#ffb347');FA.p('star')}}
+ lastM=m;
+};
+
+/* ROSITA manual (fuego, no regalo) y toques manuales */
+document.querySelectorAll('.cta').forEach(b=>b.addEventListener('click',()=>{
+ if(over||b.classList.contains('cool'))return;
+ if(b.dataset.t==='gift'){const p=laneP(sel,.7);emojis(p.x,p.y,'🔥',8,16);burst(p.x,p.y,'#ff8a1f',24,220);FA.p('turbo')}
+},true));
+
+/* Observador de clases: corazon lleno, turbo activado, tortuga lider */
+if(window.MutationObserver){
+ new MutationObserver(ms=>ms.forEach(m=>{
+  const el=m.target,was=(m.oldValue||'').split(/\s+/),has=el.classList;
+  if(el.classList.contains('hb')&&has.contains('full')&&!was.includes('full')){
+   const p=pos(el,.5,.5);burst(p.x,p.y,'#ff5a7a',26,200);emojis(p.x,p.y,'❤️',6,14);FA.p('heart')}
+  if(el.classList.contains('lane')&&has.contains('turbo')&&!was.includes('turbo')){
+   const k=T.findIndex((_,j)=>el.id==='ln'+j);if(k>=0){const p=laneP(k,.7);burst(p.x,p.y,'#ff8a1f',22,230);ring(p.x,p.y,'#ff8a1f')}}
+ })).observe(document.getElementById('lanes'),{attributes:true,attributeFilter:['class'],attributeOldValue:true,subtree:true});
+}
+
+/* Recta final: rugido de la hinchada una sola vez por ronda */
+let sprintHeard=false;
+setInterval(()=>{
+ const sp=app.classList.contains('sprint');
+ if(sp&&!sprintHeard){sprintHeard=true;FA.p('cheer');FA.p('whoosh')}
+ if(!sp&&!over)sprintHeard=false;
+},400);
+
+/* API para pruebas por consola: fx.confetti(), fx.champion(), fx.banner('texto') */
+window.fx={confetti(){cannon(0,640,-62,40,820,16);cannon(416,640,-118,40,820,16);rain(40);FA.p('win')},
+ champion(){[[.5,.3],[.2,.42],[.8,.38]].forEach(([x,y],k)=>setTimeout(()=>firework(x*416,y*640),k*500));FA.p('champ')},
+ banner};
+})();
 </script>
 </body>
 </html>

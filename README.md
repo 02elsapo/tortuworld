@@ -92,7 +92,6 @@ modules/
     backend.html                  # Interfaz mínima de configuración
     public/                       # Manifest, service worker e iconos de la PWA tortu
 v2.0.html                            # Overlay principal v2.0 conectado a eventos de TikTok
-tortugas_tiktok.html                # Overlay anterior, conservado como referencia
 test/
   server.test.js                  # HTTP, configuración y publicación
   realtime.test.js                # Conexiones y ciclo de vida SSE
