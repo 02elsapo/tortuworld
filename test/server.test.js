@@ -60,11 +60,11 @@ async function readEvent(reader, eventName) {
   return message;
 }
 
-test('serves the v2.0 TikTok overlay as a full-screen PWA', async () => {
+test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
   const root = path.join(__dirname, '..');
   const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile'), 'utf8');
-  assert.match(dockerfile, /COPY v2\.0\.html \.\//);
-  assert.equal(fs.existsSync(path.join(root, 'v2.0.html')), true);
+  assert.match(dockerfile, /COPY cluss\.html \.\//);
+  assert.equal(fs.existsSync(path.join(root, 'cluss.html')), true);
   assert.equal(fs.existsSync(path.join(root, 'tortugas_tiktok.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v2_1 (1).html')), false);
   assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), false);
@@ -96,7 +96,9 @@ test('serves the v2.0 TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /source\.addEventListener\('update'/);
     assert.match(html, /fetch\('\/api\/reconnect'/);
     assert.match(html, /const RACE_SECONDS=600/);
-    assert.match(html, /const DUELO=\['py','br'\]/);
+    assert.match(html, /const FIXTURES=\[\['ol','cp'\],\['li','ol'\],\['li','cp'\],\['gu','ol'\],\['gu','cp'\]\]/);
+    assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4\}/);
+    assert.match(html, /const BOT_CAP=80/);
     assert.match(html, /data-t="gift"/);
     assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,4000\)/);
     assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
