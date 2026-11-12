@@ -100,26 +100,29 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const START_DUELO=\['ol','cp'\]/);
     assert.match(html, /P\.duel=duel\.slice\(\)/);
     assert.match(html, /P\.nextRival=nextRival/);
-    assert.match(html, /El ganador de este duelo jugará contra '\+rival\+', sorteado entre los clubes que no están jugando/);
+    assert.match(html, /function brNew\(\)/);
+    assert.match(html, /const BR_NOM=\['CUARTOS DE FINAL','SEMIFINAL','FINAL'\]/);
+    assert.match(html, /El ganador de este duelo pasa a '\+rival\+'\./);
     assert.match(html, /stCloseTimer=setTimeout\(stClose,3000\)/);
     assert.match(html, /botTurboGiftCloseTimer=setTimeout\(closeBotTurboGift,3000\)/);
     assert.match(html, /rs=setTimeout\(reset,3000\)/);
-    assert.match(html, /rs=setTimeout\(\(\)=>fullReset\(T\[i\]\.id\),3000\)/);
-    assert.match(html, /const ESFUERZO=\{ol:8,cp:8,li:8,gu:8,lu:8,na:8,sa:8\}/);
+    assert.match(html, /rs=setTimeout\(nextMatch,fin\?7000:5000\)/);
+    assert.match(html, /const ESFUERZO=\{ol:8,cp:8,li:8,gu:8,lu:8,na:8,sa:8,to:8\}/);
     assert.match(html, /const PISTA=1/);
     assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
     assert.match(html, /const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000/);
     assert.match(html, /lu:\{id:'lu',n:'LUQUEÑO'/);
     assert.match(html, /na:\{id:'na',n:'NACIONAL'/);
     assert.match(html, /sa:\{id:'sa',n:'SOL DE AMÉRICA'/);
-    assert.match(html, /\['1er','2do','3er','4to','5to','6to','7mo'\]/);
+    assert.match(html, /to:\{id:'to',n:'12 DE OCTUBRE'/);
+    assert.match(html, /function renderTop3\(\)\{const el=document\.getElementById\('top3'\);if\(!el\|\|!BR\)return/);
     assert.match(html, /type==='gift'\?GIFT_PROGRESS\*n/);
     assert.match(html, /const BOT_TURBO_GIFT_MIN_MS=30000,BOT_TURBO_GIFT_MAX_MS=40000/);
     assert.match(html, /id="botTurboGift" hidden role="dialog"/);
     assert.match(html, /id="botTurboGiftClose" type="button">CERRAR</);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /v1\.0\.7/);
+    assert.match(html, /v1\.0\.8/);
     assert.match(html, /id="bVozB"/);
     assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);
@@ -129,7 +132,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /mx>=40&&!vDone\.has\('din40'\)/);
     assert.match(html, /recuerden cómo se juega/i);
     assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
-    assert.match(html, /Al completar 500 taps se activa el turbo/);
+    assert.match(html, /Al completar '\+HEART_N\+' taps se activa el turbo/);
     assert.match(html, /const LOSING_AT=\[20,40,60,80\]/);
     assert.match(html, /const LOSING_LINES=\[/);
     assert.match(html, /LOSING_LINES\[\(losing\.percent\/20-1\)%LOSING_LINES\.length\]/);
@@ -362,7 +365,7 @@ test('does not narrate free turbo gifts', () => {
   assert.doesNotMatch(voiceScripts[1], /gratis|regalar/i);
 });
 
-test('a full 500-tap counter advances 7% and activates turbo', () => {
+test('a full tap counter advances 7% and activates turbo', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function heartAdd\(t,n\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must define tap-to-board progress');
@@ -399,7 +402,10 @@ test('a full 500-tap counter advances 7% and activates turbo', () => {
   };
   const turboCalls = [];
   const heartAdd = vm.runInNewContext(`(${source[0]})`, context);
-  assert.match(html, /const HEART_N=500,HEART_TURBO_PROGRESS=7,heart=T\.map\(\(\)=>0\)/);
+  assert.match(html, /let HEART_N=500;try\{const n=\+JSON\.parse\(localStorage\.getItem\('cluss\.turboN'\)\)/);
+  assert.match(html, /id="bTurboDn"/);
+  assert.match(html, /id="bTurboUp"/);
+  assert.match(html, /Math\.min\(10000,Math\.max\(100,HEART_N\+d\)\)/);
   assert.match(html, /HEART_TURBO_PROGRESS=7/);
 
   heartAdd(0, 499);

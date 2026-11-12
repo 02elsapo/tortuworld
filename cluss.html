@@ -539,7 +539,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
  </div>
 </section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ Don Tortu, 🎙️B narrador B (lee el chat), 🔊 efectos, 📊 estadisticas, ↺ reiniciar copas, 🔄 refrescar -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Versión 1.0.7">v1.0.7</span></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Versión 1.0.8">v1.0.8</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -550,9 +550,17 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 /* ############ SECCION 1: MOTOR DEL JUEGO (datos, carriles, puntos, conexion SSE, estadisticas) ############ */
 /* SCRIPT 1 = MOTOR DEL JUEGO: datos, carriles, puntos, combo, conexion SSE con el backend y estadisticas. Las capas de sonido/nido/bot/voz estan en el SCRIPT 2 y envuelven estas funciones. */
 /* ===== DATOS: paises disponibles (POOL), duelo activo (DUELO), progreso por carril (S, 0-100) y velocidades pasivas (sp) ===== */
-const POOL={ol:{id:'ol',n:'OLIMPIA',s:'OLI',c:'#f1f1f1'},cp:{id:'cp',n:'CERRO',s:'CER',c:'#3b82f6'},li:{id:'li',n:'LIBERTAD',s:'LIB',c:'#e5e5e5'},gu:{id:'gu',n:'GUARANÍ',s:'GUA',c:'#f5c400'},lu:{id:'lu',n:'LUQUEÑO',s:'LUQ',c:'#2563eb'},na:{id:'na',n:'NACIONAL',s:'NAC',c:'#c8102e'},sa:{id:'sa',n:'SOL DE AMÉRICA',s:'SOL',c:'#f5c400'}}; /* CLUSS: clubes de Paraguay */
+const POOL={ol:{id:'ol',n:'OLIMPIA',s:'OLI',c:'#f1f1f1'},cp:{id:'cp',n:'CERRO',s:'CER',c:'#3b82f6'},li:{id:'li',n:'LIBERTAD',s:'LIB',c:'#e5e5e5'},gu:{id:'gu',n:'GUARANÍ',s:'GUA',c:'#f5c400'},lu:{id:'lu',n:'LUQUEÑO',s:'LUQ',c:'#2563eb'},na:{id:'na',n:'NACIONAL',s:'NAC',c:'#c8102e'},sa:{id:'sa',n:'SOL DE AMÉRICA',s:'SOL',c:'#f5c400'},to:{id:'to',n:'12 DE OCTUBRE',s:'12O',c:'#16a34a'}}; /* CLUSS: clubes de Paraguay */
 /* El ganador permanece y su rival rota entre los otros clubes, sin repetir el duelo anterior. */
 const START_DUELO=['ol','cp'];
+/* CLUSS · CUADRO (eliminacion directa, UN SOLO PARTIDO por club y ronda). 8 clubes = 4 cuartos, 2 semis, 1 final.
+   BR.r[0]=los 8 clubes sorteados (cada 2 seguidos juegan entre si) · r[1]=ganadores de cuartos · r[2]=de semis · r[3]=campeon. null = aun sin jugar.
+   Si agregas o quitas clubes de POOL, la cantidad debe ser potencia de 2 (4, 8, 16). */
+let BR=null;
+const BR_NOM=['CUARTOS DE FINAL','SEMIFINAL','FINAL'];
+function brNew(){const ids=Object.keys(POOL).sort(()=>Math.random()-.5);return{r:[ids,Array(ids.length/2).fill(null),Array(ids.length/4).fill(null),[null]]}}
+function brCur(){for(let k=0;k<3;k++){const m=BR.r[k+1].indexOf(null);if(m>=0)return{k,m,duel:[BR.r[k][2*m],BR.r[k][2*m+1]]}}return null}
+function brWin(id){const c=brCur();if(c)BR.r[c.k+1][c.m]=id}
 const LEGACY_FIXTURES=[['ol','cp'],['li','ol'],['li','cp'],['gu','ol'],['gu','cp']];
 let FX=0,savedDuel=null;
 let savedNextRival=null;
@@ -562,7 +570,10 @@ try{
  if(Array.isArray(saved.duel)&&saved.duel.length===2&&saved.duel.every(k=>POOL[k])&&saved.duel[0]!==saved.duel[1])savedDuel=saved.duel;
  else savedDuel=LEGACY_FIXTURES[FX];
  if(typeof saved.nextRival==='string'&&POOL[saved.nextRival])savedNextRival=saved.nextRival;
+ if(saved.br&&Array.isArray(saved.br.r)&&saved.br.r.length===4&&saved.br.r[0].length===Object.keys(POOL).length&&saved.br.r[0].every(k=>POOL[k]))BR=saved.br;
 }catch(e){}
+if(!BR||!brCur())BR=brNew(); /* sin cuadro guardado o ya terminado: sorteo nuevo */
+savedDuel=brCur().duel;
 const DUELO=(savedDuel||START_DUELO).slice();/* duelo actual, persistido para continuar el torneo */
 function drawNextRival(duel=DUELO){
  const available=Object.keys(POOL).filter(id=>!duel.includes(id));
@@ -578,7 +589,7 @@ function nextFixture(winnerId,rival=nextRival,duel=DUELO){
 }
 /* CLUSS · VENTAJA: cuantas veces MAS interacciones necesita cada club para llegar a la meta. Hoy esta en 8 para todos (equilibrado, 8 veces mas dificil, el doble que antes); un valor 8 significa que ese club necesita 8 veces mas.
    Afecta TODO lo que viene de interaccion (chat, likes, seguir, compartir, corazon, turbo, bonus). El avance pasivo es igual para los dos. */
-const ESFUERZO={ol:8,cp:8,li:8,gu:8,lu:8,na:8,sa:8}; /* llegar a la meta cuesta 8 veces mas interacciones, IGUAL para todos los clubes (equilibrado). 1 = facil. Para dar ventaja a un club sube el numero del otro (ej. cp:8 = Cerro necesita 8 veces mas) */
+const ESFUERZO={ol:8,cp:8,li:8,gu:8,lu:8,na:8,sa:8,to:8}; /* llegar a la meta cuesta 8 veces mas interacciones, IGUAL para todos los clubes (equilibrado). 1 = facil. Para dar ventaja a un club sube el numero del otro (ej. cp:8 = Cerro necesita 8 veces mas) */
 const PISTA=1; /* LARGO DE PISTA: 1 = normal (la pista ya es 20% mas larga a lo visual: svg 496px, overlay 416x746); 1.2 = ademas cuesta 20% mas. Los eventos (chat, likes, seguir, compartir, turbo, bonus) rinden 1/PISTA y el avance pasivo tarda PISTA veces mas. Regalo (15%) y corazon (+10) se miden en % de pista, asi que escalan solos. */
 const HANDICAP=DUELO.map(k=>1/(ESFUERZO[k]*PISTA));
 const T=DUELO.map(k=>({...POOL[k]})); /* copias: al cambiar de clasico se editan los carriles, no la lista de clubes */
@@ -743,7 +754,7 @@ let sp=[1,1,1],lastTick=performance.now();
 const newSpeeds=()=>{sp=T.map(()=>0.985+Math.random()*0.03)};newSpeeds();
 const USER='cluss'.slice(0,10);
 const $=s=>document.querySelector(s);
-const FLAG_C={cp:['#0b3d91','#c8102e'],li:['#ffffff','#111111'],gu:['#f5c400','#111111'],lu:['#2563eb','#f5c400'],na:['#c8102e','#ffffff'],sa:['#f5c400','#1d4ed8']};
+const FLAG_C={cp:['#0b3d91','#c8102e'],li:['#ffffff','#111111'],gu:['#f5c400','#111111'],lu:['#2563eb','#f5c400'],na:['#c8102e','#ffffff'],sa:['#f5c400','#1d4ed8'],to:['#16a34a','#ffffff']};
 function flag(k,x,y,w,h){ /* CLUSS: colores de cada club (aproximados). ol blanco y negro · cp azulgrana · li blanco/negro a rayas · gu amarillo/negro */
  if(k==='ol')return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/><rect x="${x}" y="${y+h*.36}" width="${w}" height="${h*.28}" fill="#111"/>`;
  const c=FLAG_C[k]||FLAG_C.cp;
@@ -868,7 +879,7 @@ document.addEventListener('keydown',e=>{if(['1','2','3'].includes(e.key)){sel=+e
 function findTeam(text){
  const raw=String(text||'');
  const normalized=raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
- const AL={ol:['OLIMPIA','OLI','DECANO'],cp:['CERRO','CERRO PORTENO','CP','CICLON','AZULGRANA'],li:['LIBERTAD','GUMARELO'],gu:['GUARANI','ABORIGEN'],lu:['LUQUENO','LUQUE','SPORTIVO LUQUENO','CHANCHON'],na:['NACIONAL','TRICOLOR','ACADEMIA'],sa:['SOL DE AMERICA','DANZARIN']}; /* CLUSS: palabras que cuentan como nombrar al club */
+ const AL={ol:['OLIMPIA','OLI','DECANO'],cp:['CERRO','CERRO PORTENO','CP','CICLON','AZULGRANA'],li:['LIBERTAD','GUMARELO'],gu:['GUARANI','ABORIGEN'],lu:['LUQUENO','LUQUE','SPORTIVO LUQUENO','CHANCHON'],na:['NACIONAL','TRICOLOR','ACADEMIA'],sa:['SOL DE AMERICA','DANZARIN'],to:['12 DE OCTUBRE','DOCE DE OCTUBRE','12 OCTUBRE','ITAUGUA']}; /* CLUSS: palabras que cuentan como nombrar al club */
  return T.findIndex(t=>(AL[t.id]||[]).some(alias=>/[^\x00-\x7F]/.test(alias)
   ?raw.includes(alias)
   :new RegExp(`(^|[^A-Z0-9])${alias}($|[^A-Z0-9])`).test(normalized)
@@ -935,11 +946,11 @@ update();
 (function(){
 /* ############ SECCION 2: CAPAS (audio, XP, nido y podio, corazon, bot, turbo, voz del relator) ############ */
 /* SCRIPT 2 = CAPAS SOBRE EL MOTOR: audio, XP/MVP, enganches a eventos reales, nido de hinchas, corazon, bot, turbo, voz del relator. Cada capa envuelve una funcion del motor (patron _original + wrapper): el ORDEN de los wrappers importa. */
-const P={mus:1,sfx:1,xp:0,wins:[0,0],fx:0,cp:{ol:0,cp:0,li:0,gu:0,lu:0,na:0,sa:0},best:0,races:0,ach:{}};
+const P={mus:1,sfx:1,xp:0,wins:[0,0],fx:0,cp:{ol:0,cp:0,li:0,gu:0,lu:0,na:0,sa:0,to:0},best:0,races:0,ach:{}};
 try{Object.assign(P,JSON.parse(localStorage.getItem('cluss.v1')||'{}'))}catch(e){}
-P.cp=Object.assign({ol:0,cp:0,li:0,gu:0,lu:0,na:0,sa:0},P.cp||{});
+P.cp=Object.assign({ol:0,cp:0,li:0,gu:0,lu:0,na:0,sa:0,to:0},P.cp||{});
 let svT=0;const save=()=>{try{localStorage.setItem('cluss.v1',JSON.stringify(P))}catch(e){}};
-P.duel=DUELO.slice();P.nextRival=nextRival;save();
+P.duel=DUELO.slice();P.nextRival=nextRival;P.br=BR;save();
 
 /* ===== AUDIO (WebAudio sintetizado, sin archivos externos) ===== */
 const A=(()=>{
@@ -1092,9 +1103,10 @@ T.forEach((t,i)=>$('#sv'+i).insertAdjacentHTML('beforeend','<div class="nest" id
  fanPool    = usuarios del JSON (HINCHAS_JSON + /api/recent-users): se muestran al frente SOLO mientras el equipo no tenga eventos reales. */
 const HINCHAS_JSON=[ /* editar aqui. Formato: {username:'maria_ol', avatar:'https://...jpg', team:'ol'}  (team opcional: 'ol' o 'cp'; avatar debe ser https) */ ];
 /* ===== CONTADOR TAP TAP: todo evento suma su peso; al llegar a 500 activa TURBO (8 s), sin avance directo ===== */
-const HEART_N=500,HEART_TURBO_PROGRESS=7,heart=T.map(()=>0);
+let HEART_N=500;try{const n=+JSON.parse(localStorage.getItem('cluss.turboN'));if(n>=100&&n<=10000&&n%100===0)HEART_N=n}catch(e){} /* limite de taps para activar el turbo; se cambia con los botones ➕ ➖ (de 100 en 100) */
+const HEART_TURBO_PROGRESS=7,heart=T.map(()=>0);
 /* Dibuja el corazon (barra de likes) del equipo t: avanza de 0 a 500 taps. */
-function renderHeart(t){const h=$('#hb'+t);if(!h)return;h.querySelector('b').style.width=(heart[t]/HEART_N*100)+'%';h.querySelector('em').textContent=Math.floor(heart[t])+'/'+HEART_N}
+function renderHeart(t){const h=$('#hb'+t);if(!h)return;h.querySelector('b').style.width=(heart[t]/HEART_N*100)+'%';h.querySelector('em').textContent=Math.floor(heart[t])+'/'+HEART_N;h.setAttribute('aria-label','Contador tap tap de '+T[t].n+'; '+HEART_N+' taps avanzan '+HEART_TURBO_PROGRESS+'% y activan turbo')}
 /* +N flotante sobre el contador en CADA tap/me gusta: el numero crece con la cantidad (rafagas de TikTok) */
 function tapPop(h,n){
  while(h.querySelectorAll('.tp').length>5)h.querySelector('.tp').remove();
@@ -1120,9 +1132,19 @@ function heartAdd(t,n){
   const g=h.querySelector('.gl');g.classList.remove('got');void g.offsetWidth;g.classList.add('got');
   h.classList.remove('full');void h.offsetWidth;h.classList.add('full');A.sfx('lead');
   float(t,'❤️ +'+(HEART_TURBO_PROGRESS*full)+'% · TURBO');
-  hype('❤️',T[t].n,' · ¡500 taps! +'+(HEART_TURBO_PROGRESS*full)+'% y TURBO 🔥',T[t].c);
+  hype('❤️',T[t].n,' · ¡'+HEART_N+' taps! +'+(HEART_TURBO_PROGRESS*full)+'% y TURBO 🔥',T[t].c);
  }
 }
+/* ➕ ➖ de la barra: suben o bajan en 100 el limite de taps para activar el turbo (minimo 100, maximo 10000) */
+function setTurboLimit(d){
+ const n=Math.min(10000,Math.max(100,HEART_N+d));
+ if(n===HEART_N){toast('Límite de turbo: '+HEART_N+' taps ('+(d<0?'mínimo':'máximo')+')','⚡');return}
+ HEART_N=n;try{localStorage.setItem('cluss.turboN',JSON.stringify(n))}catch(e){}
+ T.forEach((_,i)=>{if(heart[i]>=HEART_N&&!over){heart[i]=HEART_N-1;heartAdd(i,1)} /* si ya lo superaba, el turbo se activa ahora */else renderHeart(i)});
+ toast('Turbo cada '+HEART_N+' taps','⚡');
+}
+$('#bTurboUp').onclick=()=>setTurboLimit(100);
+$('#bTurboDn').onclick=()=>setTurboLimit(-100);
 document.querySelectorAll('.hb').forEach((h,i)=>{
  const tap=()=>heartAdd(i,1);
  h.addEventListener('click',tap);
@@ -1254,8 +1276,8 @@ const _sc=showCombo;
 showCombo=function(){if(streak===0){if(lastStreak>=3)A.sfx('break');pm=1}lastStreak=streak;_sc()};
 const _win=win;
 win=function(i){
- const first=!over;_win(i);if(!first)return;
- P.wins[i]++;P.cp[T[i].id]=(P.cp[T[i].id]||0)+1;P.races++;addXp(20);
+ const first=!over,cur0=brCur(),isFinal=!!cur0&&cur0.k===2;_win(i);if(!first)return;
+ P.wins[i]++;P.races++;addXp(20);
  if(sel===i){addXp(50);ach('pick')}
  if(P.races>=5)ach('r5');
  save();A.sfx('win');A.duck(3500);hy.hidden=true;voWin(i);
@@ -1265,35 +1287,42 @@ win=function(i){
  if(h){const d=document.createElement('div');d.className='plate';d.style.cssText='padding:6px 12px;font-size:11px;text-align:center;white-space:pre-line';
   d.textContent=(m?'MVP: '+who(m[0])+' · '+m[1]+' pts\n':'')+P.wins.slice(0,T.length).map((w,k)=>T[k].n+' '+w).join(' · ')+(sel===i?'\n¡Tu equipo ganó! +50 XP':'');
   h.after(d)}
- logStat({type:'round-end',winner:T[i].id,duel:DUELO,champion:P.wins[i]>=CUPS}); /* guarda la ronda (y cierra el torneo si hay campeon) */
+ logStat({type:'round-end',winner:T[i].id,duel:DUELO,champion:isFinal}); /* guarda la ronda (y cierra el torneo si hay campeon) */
  if(P.wins[i]>=CUPS)champion(i);
  hud();
 };
-const CUPS=3;
-/* Un pais llega a CUPS copas: pantalla de campeon y reinicio automatico del torneo */
+const CUPS=1; /* un solo partido por club y ronda */
+/* Termina un partido: el ganador avanza en el cuadro. En la final, campeon del torneo y sorteo nuevo. */
 function champion(i){
  clearTimeout(rs);
+ const id=T[i].id,c=brCur(),fin=!!c&&c.k===2;
+ brWin(id);P.br=BR;if(fin)P.cp[id]=(P.cp[id]||0)+1;save();
  const w=$('#win'),h=w.querySelector('h2');
- if(h)h.innerHTML='¡CAMPEÓN<br>'+T[i].n+'!';
- const t=document.createElement('div');t.className='plate';t.style.cssText='padding:6px 12px;font-size:16px;text-align:center';t.textContent='🏆🏆🏆 ¡TRES COPAS!';
+ if(h)h.innerHTML=fin?'¡CAMPEÓN<br>'+T[i].n+'!':'¡'+T[i].n+'<br>AVANZA!';
+ const t=document.createElement('div');t.className='plate';t.style.cssText='padding:6px 12px;font-size:'+(fin?16:13)+'px;text-align:center';
+ t.textContent=fin?'🏆 ¡GANÓ EL TORNEO!':'➡️ Pasa a '+(c&&c.k===0?'SEMIFINALES':'LA FINAL');
  if(h)h.after(t);
- const bt=$('#again');if(bt){bt.textContent='NUEVO TORNEO';bt.onclick=()=>fullReset(T[i].id)}
- const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
- w.insertAdjacentHTML('beforeend',Array.from({length:40},()=>'<span class="cf" style="left:'+(Math.random()*100)+'%;background:'+cols[Math.floor(Math.random()*5)]+';animation-delay:'+(Math.random()*2)+'s"></span>').join(''));
- toast('¡'+T[i].n+' es el campeón del torneo!','🏆');
- rs=setTimeout(()=>fullReset(T[i].id),3000);
+ const bt=$('#again');if(bt){bt.textContent=fin?'NUEVO TORNEO':'SIGUIENTE PARTIDO';bt.onclick=()=>nextMatch()}
+ if(fin){const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
+  w.insertAdjacentHTML('beforeend',Array.from({length:40},()=>'<span class="cf" style="left:'+(Math.random()*100)+'%;background:'+cols[Math.floor(Math.random()*5)]+';animation-delay:'+(Math.random()*2)+'s"></span>').join(''))}
+ toast(fin?'¡'+T[i].n+' es el campeón del torneo!':T[i].n+' avanza',fin?'🏆':'➡️');
+ renderTop3();
+ rs=setTimeout(nextMatch,fin?7000:5000);
 }
-/* Reinicia el torneo completo (copas en 0). El saludo de voz se dice solo al iniciar torneo, no en cada ronda */
-function fullReset(winnerId){
- clearTimeout(rs);const duel=nextFixture(winnerId,nextRival,DUELO);P.wins=[0,0];P.best=0;FX=(FX+1)%Object.keys(POOL).length;P.fx=FX;P.duel=duel.slice();nextRival=drawNextRival(duel);P.nextRival=nextRival;save();aplicarDuelo(duel);
- reset();
- hype('👋','¡Nuevo clásico!',' · '+T[0].n+' vs '+T[1].n,'#ffd566');
- toast('Nuevo clásico: '+T[0].n+' vs '+T[1].n+' · ¡el primero en llegar a 3 copas gana!','👋');
+/* Siguiente partido del cuadro (o torneo nuevo si ya hubo campeon) */
+function nextMatch(){
+ clearTimeout(rs);
+ if(!brCur()){BR=brNew();P.br=BR}
+ const c=brCur(),duel=c.duel;
+ P.wins=[0,0];P.best=0;P.br=BR;P.duel=duel.slice();save();aplicarDuelo(duel);
+ reset();renderTop3();
+ hype('👋','¡'+BR_NOM[c.k]+'!',' · '+T[0].n+' vs '+T[1].n,'#ffd566');
+ toast(BR_NOM[c.k]+': '+T[0].n+' vs '+T[1].n+' · un solo partido, el que pierde queda eliminado','👋');
 }
 /* ===== RESET DE COPAS (boton "Reiniciar copas" del panel de estadisticas): top 3, copas y torneo vuelven a cero, y arranca una carrera nueva.
  NO borra el historial guardado en las estadisticas; solo cierra el torneo en curso sin campeon. ===== */
 function resetCopas(){
- P.wins=[0,0];Object.keys(POOL).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;P.duel=START_DUELO.slice();nextRival=drawNextRival(START_DUELO);P.nextRival=nextRival;save();aplicarDuelo(START_DUELO);
+ P.wins=[0,0];Object.keys(POOL).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;BR=brNew();P.br=BR;{const d=brCur().duel;P.duel=d.slice();save();aplicarDuelo(d)}
  clearTimeout(rs);reset();renderTop3();stCloseTour();
  toast('Copas reiniciadas: todo empieza de cero','🔄');
 }
@@ -1333,9 +1362,30 @@ setInterval(()=>{
 },500);
 
 /* ===== PODIO DE COPAS (columna derecha): 1er club grande, 2do chico; corona si lidera solo ===== */
-function renderTop3(){const el=document.getElementById('top3');if(!el)return; /* CLUSS: todos los clubes por copas; 1er puesto grande, los demas chicos */
- const a=Object.keys(POOL).map(k=>({k,n:(P.cp&&P.cp[k])||0})).sort((x,y)=>y.n-x.n);
- el.innerHTML=a.map((x,i)=>'<div class="tp" title="'+POOL[x.k].n+': '+x.n+' copa'+(x.n===1?'':'s')+'">'+'<i class="pu pu'+i+'">'+['1er','2do','3er','4to','5to','6to','7mo'][i]+'</i>'+(i===0&&x.n>a[1].n?'<span class="cr">👑</span>':'')+'<svg viewBox="0 0 20 14" aria-hidden="true">'+flag(x.k,0,0,20,14)+'</svg><em>'+(i===0?POOL[x.k].n:POOL[x.k].s)+'</em><b>🏆 '+x.n+'</b></div>').join('')}
+function renderTop3(){const el=document.getElementById('top3');if(!el||!BR)return; /* CLUSS: fixture horizontal. Cada partido es una fila con las 2 banderas lado a lado y "VS" en medio. Los CUARTOS van aparte (bloque propio, abajo); semis y final arriba, con banderas cada vez mas grandes. Ganador en pleno color, eliminado atenuado, partido en juego con borde dorado. */
+ const r=BR.r,cur=brCur(),F='font-family="Inter,sans-serif" font-weight="800"';
+ const FW=[40,44,46],FH=[27,30,32],RH=[33,36,38],GAP=[20,16,12]; /* ancho/alto de bandera, alto de fila y separacion central por ronda (0 cuartos, 1 semis, 2 final) */
+ let o='<svg viewBox="0 0 120 382" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Fixture del torneo: cuartos de final, semifinales y final">';
+ const lb=(t,y)=>'<text x="60" y="'+y+'" text-anchor="middle" fill="#ffd566" font-size="6.4" '+F+' letter-spacing=".5">'+t+'</text><path d="M4 '+(y-2.2)+'H'+(60-t.length*2.4-4)+'M'+(60+t.length*2.4+4)+' '+(y-2.2)+'H116" stroke="#f1e8d6" stroke-opacity=".3" stroke-width=".6"/>';
+ const flg=(id,x,y,w,h,out)=>id?'<g opacity="'+(out?.32:1)+'"><title>'+POOL[id].n+'</title>'+flag(id,x,y,w,h)+'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width=".8"/></g>'
+  :'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2" fill="rgba(0,0,0,.25)" stroke="#f1e8d6" stroke-opacity=".4" stroke-width=".7" stroke-dasharray="2 2"/><text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" fill="#f1e8d6" fill-opacity=".55" font-size="12" '+F+'>?</text>';
+ const match=(k,m,y)=>{ /* fila de un partido: k = ronda, m = indice del partido en esa ronda */
+  const ids=[r[k][2*m],r[k][2*m+1]],par=r[k+1][m],on=cur&&cur.k===k&&cur.m===m,h=RH[k],fw=FW[k],fh=FH[k],fy=y+(h-fh)/2;
+  let g='<rect x="4" y="'+y+'" width="112" height="'+h+'" rx="5" fill="'+(on?'rgba(255,213,102,.18)':'rgba(20,10,4,.55)')+'" stroke="'+(on?'#ffd566':'#f1e8d6')+'" stroke-opacity="'+(on?1:.5)+'" stroke-width="'+(on?2:.8)+'"/>';
+  g+=flg(ids[0],60-GAP[k]/2-fw,fy,fw,fh,ids[0]&&par&&par!==ids[0])+flg(ids[1],60+GAP[k]/2,fy,fw,fh,ids[1]&&par&&par!==ids[1]);
+  g+='<text x="60" y="'+(y+h/2+2.4)+'" text-anchor="middle" fill="'+(on?'#ffd566':'#f1e8d6')+'" fill-opacity="'+(on?1:.7)+'" font-size="'+(on?7:6)+'" '+F+'>VS</text>';
+  return g};
+ /* CAMPEON (arriba) */
+ const ch=r[3][0];
+ o+='<text x="60" y="9" text-anchor="middle" fill="#fff" font-size="8" '+F+' letter-spacing=".6">CAMPEÓN</text><rect x="24" y="13" width="72" height="52" rx="6" fill="#fff" stroke="#ffd566" stroke-width="2"/>'+
+  (ch?flag(ch,37,17,46,31)+'<rect x="37" y="17" width="46" height="31" fill="none" stroke="#2a2018" stroke-opacity=".5"/><text x="60" y="60" text-anchor="middle" fill="#2a2018" font-size="10" '+F+'>'+POOL[ch].s+'</text><text x="90" y="24" text-anchor="middle" font-size="9">🏆</text>':'<text x="60" y="50" text-anchor="middle" font-size="32">🏆</text>');
+ /* FINAL y SEMIS (arriba) */
+ o+=lb('FINAL',79)+match(2,0,82);
+ o+=lb('SEMIFINALES',133)+match(1,0,136)+match(1,1,176);
+ /* CUARTOS DE FINAL: bloque aparte, banderas grandes y horizontales */
+ o+='<rect x="1" y="218" width="118" height="161" rx="7" fill="rgba(0,0,0,.2)" stroke="#f1e8d6" stroke-opacity=".25" stroke-width=".7"/>'+lb('CUARTOS DE FINAL',228);
+ for(let m=0;m<4;m++)o+=match(0,m,232+m*36.5);
+ el.innerHTML=o+'</svg>'}
 /* ===== ESTADISTICAS REALES: solo eventos del live. Los bots (bot:true) y los toques manuales no cuentan ===== */
 const ST={member:0,chat:0,gift:0,like:0,follow:0,share:0};
 /* Formato compacto de numeros (1.2K) */
@@ -1718,11 +1768,11 @@ setInterval(()=>{
  }
  if(P.vo&&SS&&mx>=40&&!vDone.has('din40')){
   if(now-vLast<5000||SS.speaking||SS.pending)return;
-  if(speak('¡La carrera se pone buena! Recuerden cómo se juega: cada evento suma taps con un peso distinto. Al completar 500 taps se activa el turbo durante 8 segundos.','Así se juega: eventos, contador tap tap y turbo.',false)){vDone.add('din40');return}
+  if(speak('¡La carrera se pone buena! Recuerden cómo se juega: cada evento suma taps con un peso distinto. Al completar '+HEART_N+' taps se activa el turbo durante 8 segundos.','Así se juega: eventos, contador tap tap y turbo.',false)){vDone.add('din40');return}
  }
  if(P.vo&&SS&&mx>=75&&!vDone.has('turbo75')){
   if(now-vLast<5000||SS.speaking||SS.pending)return;
-  if(speak('¡Ya falta poco para la meta! Cada evento carga el contador de su equipo; al llegar a 500 taps se activa el turbo.','Ya casi: el contador tap tap activa el turbo.',false)){vDone.add('turbo75');return}
+  if(speak('¡Ya falta poco para la meta! Cada evento carga el contador de su equipo; al llegar a '+HEART_N+' taps se activa el turbo.','Ya casi: el contador tap tap activa el turbo.',false)){vDone.add('turbo75');return}
  }
  for(const l of VL){
   if(vDone.has(l.id)||el<l.at)continue;
@@ -1740,8 +1790,8 @@ setInterval(()=>{
  if(over||!P.vo||vDone.has('final'))return;
  const mx=Math.max(...S.map(x=>x.p)),k=NXT.findIndex((u,j)=>mx>=u&&!vDone.has('nx'+j));
  if(k<0||performance.now()-vLast<5000||performance.now()-nxLast<30000)return;
- const rival=cap(POOL[nextRival].n),txt='El ganador de este duelo jugará contra '+rival+', sorteado entre los clubes que no están jugando.';
- if(speak(txt,'Siguiente rival sorteado: '+rival,false)){vDone.add('nx'+k);nxLast=performance.now()}
+ const cu=brCur(),rival=cu?(cu.k===2?'el campeón del torneo':cu.k===1?'la final':'las semifinales'):'la siguiente ronda',txt='El ganador de este duelo pasa a '+rival+'. El que pierde queda eliminado.';
+ if(speak(txt,'El ganador pasa a '+rival,false)){vDone.add('nx'+k);nxLast=performance.now()}
 },700);
 /* ALIENTO: Don Tortu alienta a los dos equipos durante la carrera (cada ~18 s). Reparte el aliento parejo: al que va atras, al que va adelante y a los dos juntos.
    No promete resultados ni pide regalos (regla 1). Con la voz apagada igual lo muestra en su globo de texto. */
@@ -1900,6 +1950,7 @@ document.querySelectorAll('.cta').forEach((b,i)=>setTimeout(()=>{b.classList.add
 .pod .pr{bottom:12px;right:-4px}
 .pod .pc{left:50%;top:-13px;transform:translateX(-50%) rotate(-10deg);font-size:14px}
 .sv>svg{height:500px} /* pista mas larga (430 -> 500 px); el 0 arranca abajo */
+.top3{flex:1 1 0;min-height:0;margin-top:0;display:flex;align-items:center;justify-content:center;padding:6px 4px}.top3 svg{display:block;width:100%;height:100%;overflow:visible}
 </style>
 <script>
 /* OVERLAY TIKTOK: no se selecciona ningun club (ni clic ni teclas 1-3) */
