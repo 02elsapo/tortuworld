@@ -34,7 +34,11 @@ function createRecentUsersService({ filePath }) {
   let users = [];
   let updatedAt = null;
   try {
-    const saved = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const raw = fs.readFileSync(filePath, 'utf8');
+    if (raw.includes('\0')) {
+      throw new Error('El archivo de usuarios recientes está corrupto.');
+    }
+    const saved = JSON.parse(raw);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)
       || !Array.isArray(saved.users)) {
       throw new Error('El archivo de usuarios recientes no es válido.');
@@ -46,7 +50,8 @@ function createRecentUsersService({ filePath }) {
     }
     updatedAt = saved.updatedAt || null;
   } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
+    users = [];
+    updatedAt = null;
   }
 
   function getRecentUsers() {

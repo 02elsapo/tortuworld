@@ -44,3 +44,21 @@ test('recent users are deduplicated, limited to four, and persisted in JSON', ()
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('recent users ignore corrupt JSON files and initialize cleanly', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'tiktok-recent-users-corrupt-'));
+  const filePath = path.join(directory, 'recent-users.json');
+  fs.writeFileSync(filePath, Buffer.from([0, 0, 0, 0, 0, 0]));
+
+  try {
+    const service = createRecentUsersService({ filePath });
+    assert.deepEqual(service.getRecentUsers(), { updatedAt: null, users: [] });
+    const saved = service.rememberConnectedUser({
+      username: 'Ana',
+      avatar: 'https://example.com/ana.png',
+    });
+    assert.deepEqual(saved.users.map((user) => user.username), ['Ana']);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

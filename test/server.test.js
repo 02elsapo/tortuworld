@@ -105,7 +105,8 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /botTurboGiftCloseTimer=setTimeout\(closeBotTurboGift,3000\)/);
     assert.match(html, /rs=setTimeout\(reset,3000\)/);
     assert.match(html, /rs=setTimeout\(\(\)=>fullReset\(T\[i\]\.id\),3000\)/);
-    assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4,lu:4,na:4,sa:4\}/);
+    assert.match(html, /const ESFUERZO=\{ol:8,cp:8,li:8,gu:8,lu:8,na:8,sa:8\}/);
+    assert.match(html, /const PISTA=1/);
     assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
     assert.match(html, /const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000/);
     assert.match(html, /lu:\{id:'lu',n:'LUQUEÑO'/);
@@ -114,18 +115,19 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /\['1er','2do','3er','4to','5to','6to','7mo'\]/);
     assert.match(html, /type==='gift'\?GIFT_PROGRESS\*n/);
     assert.match(html, /const BOT_TURBO_GIFT_MIN_MS=30000,BOT_TURBO_GIFT_MAX_MS=40000/);
-    assert.match(html, /TortuLive le regala un modo turbo gratis al equipo/);
     assert.match(html, /id="botTurboGift" hidden role="dialog"/);
     assert.match(html, /CERRAR Y ACTIVAR TURBO/);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /v1\.0\.1/);
+    assert.match(html, /v1\.0\.5/);
+    assert.match(html, /id="bVozB"/);
+    assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);
     assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
     assert.match(html, /joined\.add\(k\);greet\(u,t,e\.displayName\)/);
     assert.match(html, /const txt='Saludamos al hincha de '\+cap\(T\[t\]\.n\)\+', '\+name/);
-    assert.match(html, /mx>=50&&!vDone\.has\('half'\)/);
-    assert.match(html, /nombrar tu club en el chat, hacer tap tap en el corazón o compartir la transmisión/);
+    assert.match(html, /mx>=40&&!vDone\.has\('din40'\)/);
+    assert.match(html, /recuerden cómo se juega/i);
     assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
     assert.match(html, /Quien quiera puede activar un turbo prolongado con el botón ROSITA/);
     assert.match(html, /const LOSING_AT=\[20,40,60,80\]/);
@@ -166,8 +168,8 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifest.status, 200);
     const appManifest = await manifest.json();
-    assert.equal(appManifest.name, 'madera2');
-    assert.equal(appManifest.short_name, 'madera2');
+    assert.equal(appManifest.name, 'cluss');
+    assert.equal(appManifest.short_name, 'cluss');
     assert.equal(appManifest.display, 'fullscreen');
     assert.deepEqual(await fetch(`${baseUrl}/health`).then((response) => response.json()), {
       ok: true,
@@ -263,26 +265,20 @@ test('the bot turbo targets the team that is behind', () => {
   assert.equal(losingLane([40, 40]), -1);
 });
 
-test('closing the bot turbo gift advances the lane by ten points', () => {
+test('the bot does not offer free turbos', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
-  const source = html.match(/function advanceBotTurboGift\(team\)\{[\s\S]*?\n\}/);
-  assert.ok(source, 'the overlay must apply the bonus when the gift is accepted');
-  const lanes = [{ p: 24 }, { p: 31 }];
-  const won = [];
-  const advanceBotTurboGift = vm.runInNewContext(`(${source[0]})`, {
-    BOT_TURBO_GIFT_PROGRESS: 10,
-    S: lanes,
-    over: false,
-    update() {},
-    float() {},
-    hop() {},
-    walk() {},
-    win: (team) => won.push(team),
-  });
-
-  assert.equal(advanceBotTurboGift(0), true);
-  assert.equal(lanes[0].p, 34);
-  assert.deepEqual(won, []);
+  const canGift = html.match(/function canBotTurboGift\(\)\{[\s\S]*?\}/);
+  assert.ok(canGift, 'the overlay must define whether the bot can offer free turbo');
+  assert.match(html, /const BOT_TURBO_GIFT_ON=false/);
+  const canOffer = vm.runInNewContext(`(() => {
+    let botTurboGiftCount = 0;
+    const BOT_TURBO_GIFT_ON = false;
+    const BOT_TURBO_GIFT_MAX = 4;
+    const BOT_TURBO_GIFT_STOP_AT = 75;
+    ${canGift[0]}
+    return canBotTurboGift();
+  })()`, { S: [{ p: 24 }, { p: 31 }] });
+  assert.equal(canOffer, false);
 });
 
 test('announces the trailing club at each newly reached twenty-percent milestone', () => {
@@ -310,7 +306,63 @@ test('announces the trailing club at each newly reached twenty-percent milestone
   assert.equal(tied.loser, -1);
 });
 
-test('tap taps advance the board gradually while bot taps only charge the heart', () => {
+test('uses Don Tortu for explanations and explicitly says when a team is losing', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const introductionSource = html.match(/function queueNarratorIntroductions\(\)\{[\s\S]*?\n\}/);
+  assert.ok(introductionSource, 'the overlay must keep the team narrators disabled');
+  const narratorQueue = [];
+  vm.runInNewContext(`(${introductionSource[0]})()`, {
+    T: [{ n: 'OLIMPIA' }, { n: 'CERRO' }],
+    narratorQueue,
+  });
+  assert.deepEqual(narratorQueue, []);
+  assert.match(html, /const dinamicaTxt=\(\)=>/);
+  assert.match(html, /id:'intro',at:2/);
+
+  const losingSource = html.match(/const LOSING_LINES=(\[[\s\S]*?\n\]);/);
+  assert.ok(losingSource, 'the overlay must define spoken losing-team announcements');
+  const losingLines = vm.runInNewContext(losingSource[1]);
+  assert.ok(losingLines.every(({ full }) => full.includes('está perdiendo')));
+  assert.match(html, /AVISO PERIODICO: cada ~40 s Don Tortu dice que equipo va perdiendo/);
+});
+
+test('does not display spoken narrator text', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const narratorCard = html.match(/function showNarrator\(team\)\{[\s\S]*?\n\}/);
+  assert.ok(narratorCard, 'the overlay may identify the active narrator');
+  assert.doesNotMatch(narratorCard[0], /textContent|innerHTML|narratorText/);
+  assert.doesNotMatch(html, /class="narrator-comment"|id="narratorText|showNarratorComment/);
+  assert.doesNotMatch(html, /if\(sub\)say\(sub\)/);
+});
+
+test('uses a Spanish Google voice for Don Tortu and a male voice for the chat reader', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const start = html.indexOf('const FEMALE_VOICE=');
+  const end = html.indexOf('/* Voz del relator', start);
+  assert.ok(start >= 0 && end > start, 'the overlay must define narrator voice selection');
+  const pickV = vm.runInNewContext(`${html.slice(start, end)}\npickV;`, {
+    voices: [
+      { name: 'Google español', lang: 'es-US' },
+      { name: 'Jorge', lang: 'es-ES' },
+    ],
+  });
+
+  assert.equal(pickV().name, 'Google español');
+  assert.equal(pickV('chat').name, 'Jorge');
+});
+
+test('does not narrate free turbo gifts', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const giftSource = html.match(/function showBotTurboGift\(\)\{[\s\S]*?\n\}/);
+  assert.ok(giftSource, 'the overlay must still display the free turbo gift');
+  assert.doesNotMatch(giftSource[0], /\b(?:speak|say)\(/);
+
+  const voiceScripts = html.match(/const VL=\[([\s\S]*?)\n\];/);
+  assert.ok(voiceScripts, 'the overlay must define its voice scripts');
+  assert.doesNotMatch(voiceScripts[1], /gratis|regalar/i);
+});
+
+test('a full tap-tap counter adds 10% and activates turbo; bot taps only charge the heart', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function heartAdd\(t,n,advanceRace=true\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must define tap-to-board progress');
@@ -332,7 +384,8 @@ test('tap taps advance the board gradually while bot taps only charge the heart'
     heart,
     HEART_N: 100,
     HEART_PTS: 10,
-    HANDICAP: [0.25],
+    TURBO_PROLONGED_MS: 8000,
+    turboOn: (...args) => turboCalls.push(args),
     S,
     $: () => heartBar,
     renderHeart() {},
@@ -344,19 +397,26 @@ test('tap taps advance the board gradually while bot taps only charge the heart'
     hype() {},
     win() {},
   };
+  const turboCalls = [];
   const heartAdd = vm.runInNewContext(`(${source[0]})`, context);
 
+  heartAdd(0, 99);
+  assert.equal(S[0].p, 0);
+  assert.equal(heart[0], 99);
   heartAdd(0, 1);
-  assert.ok(Math.abs(S[0].p - 0.025) < 1e-10);
-  assert.equal(heart[0], 1);
-
-  for (let tap = 0; tap < 99; tap += 1) heartAdd(0, 1);
-  assert.ok(Math.abs(S[0].p - 2.5) < 1e-10);
+  assert.equal(S[0].p, 10);
   assert.equal(heart[0], 0);
+  assert.deepEqual(turboCalls, [[0, 8000]]);
+
+  heartAdd(0, 250);
+  assert.equal(S[0].p, 30);
+  assert.equal(heart[0], 50);
+  assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
 
   heartAdd(0, 25, false);
-  assert.ok(Math.abs(S[0].p - 2.5) < 1e-10);
-  assert.equal(heart[0], 25);
+  assert.equal(S[0].p, 30);
+  assert.equal(heart[0], 75);
+  assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
 });
 
 test('forwards normalized TikTok updates in the shape consumed by version 68', async () => {
