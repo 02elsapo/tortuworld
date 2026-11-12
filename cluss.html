@@ -1201,6 +1201,7 @@ function avatar(e){
  const sc=(userScore.get(k)||0)+(SCORE[e.type]||0)*(e.type==='like'?Math.max(1,Math.floor(Number(e.activityCount))||1):1);userScore.set(k,sc); /* cada evento sube su puntaje */
  if(t==null&&e.type==='member'&&k!=='sistema')t=teamOf(k); /* asignacion visual estable; no guarda equipo para el juego */
  if(t==null||!T[t]){if(e.type==='member')showEv('g','member',1,{name:u,url:url||''});return} /* se une sin equipo: avatar grande al centro, sin tocar la carrera */
+ if(sc>=20&&!greeted.has(k))greet(u,t,e.displayName||u); /* saludo de Don Tortu cuando el hincha cruza los 20 puntos */
  if(!seen.has(k)){seen.add(k);grow(t,.05)}
  let old=null,from=-1;
  recent.forEach((l,j)=>{const i=l.findIndex(x=>x.key===k);if(i>=0){old=l.splice(i,1)[0];from=j}}); /* si ya estaba, se saca y se vuelve a poner al frente */
