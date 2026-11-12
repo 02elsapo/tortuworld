@@ -1419,6 +1419,12 @@ const VL=[
 const VF=['¡Recta final! Todo se decide ahora. ¡Vamos, tortugas!','¡Llegando a la meta! ¡Qué emoción, esto está parejísimo!'];
 const VW=['¡Ganó {n}! Gracias por jugar y alentar. En unos segundos arranca otra ronda, ¡te esperamos!','¡Tenemos campeón: {n}! Gracias por estar. Ya viene una nueva carrera.'];
 const LOSING_AT=[20,40,60,80];
+const LOSING_LINES=[
+ {full:'{name} va perdiendo. ¡Ayuda a tu equipo compartiendo el LIVE, siguiendo la cuenta, comentando en el chat quién es tu equipo o activando la ROSITA para el modo turbo!',short:'{name} va perdiendo. Comparte, sigue, comenta tu equipo o activa la ROSITA turbo.'},
+ {full:'{name} está detrás. Anima a tu equipo: comparte la transmisión, sigue la cuenta, escribe en el chat a quién apoyas y activa la ROSITA para el turbo.',short:'{name} está detrás. Comparte, sigue, comenta a quién apoyas o activa la ROSITA turbo.'},
+ {full:'¡{name} necesita apoyo! Comparte el LIVE, sigue la cuenta, comenta cuál es tu equipo y activa la ROSITA para darle turbo.',short:'¡{name} necesita apoyo! Comparte, sigue, comenta tu equipo o activa la ROSITA turbo.'},
+ {full:'¡{name} va atrás! Puedes apoyar a tu equipo compartiendo, siguiendo, escribiendo su nombre en el chat y activando la ROSITA para el modo turbo.',short:'¡{name} va atrás! Comparte, sigue, comenta su nombre o activa la ROSITA turbo.'},
+];
 function nextLosingCall(progress,done){
  const percent=LOSING_AT.find(value=>Math.max(...progress)>=value&&!done.has('losing'+value));
  if(percent===undefined)return null;
@@ -1438,7 +1444,8 @@ setInterval(()=>{
   else{
    if(now-vLast<5000||SS.speaking||SS.pending)return;
    const name=cap(T[losing.loser].n);
-   if(speak(name+' va perdiendo la carrera. ¡Todavía puede remontar!',name+' va detrás.',false)){vDone.add(key);return}
+   const line=LOSING_LINES[(losing.percent/20-1)%LOSING_LINES.length];
+   if(speak(line.full.replace('{name}',name),line.short.replace('{name}',name),false)){vDone.add(key);return}
   }
  }
  if(P.vo&&SS&&mx>=50&&!vDone.has('half')){

@@ -112,7 +112,11 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
     assert.match(html, /Quien quiera puede activar un turbo prolongado con el botón ROSITA/);
     assert.match(html, /const LOSING_AT=\[20,40,60,80\]/);
-    assert.match(html, /speak\(name\+' va perdiendo la carrera\. ¡Todavía puede remontar!'/);
+    assert.match(html, /const LOSING_LINES=\[/);
+    assert.match(html, /LOSING_LINES\[\(losing\.percent\/20-1\)%LOSING_LINES\.length\]/);
+    for (const action of ['compartiendo el LIVE', 'siguiendo la cuenta', 'comentando en el chat', 'ROSITA para el modo turbo']) {
+      assert.ok(html.includes(action), `losing prompt must mention ${action}`);
+    }
     assert.match(html, /now-alLast<18000/);
     assert.match(html, /rocket:t=>/);
     assert.match(html, /FA\.p\('rocket'\)/);
