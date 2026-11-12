@@ -99,15 +99,26 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const RACE_SECONDS=600/);
     assert.match(html, /const START_DUELO=\['ol','cp'\]/);
     assert.match(html, /P\.duel=duel\.slice\(\)/);
+    assert.match(html, /P\.nextRival=nextRival/);
+    assert.match(html, /El ganador de este duelo jugará contra '\+rival\+', sorteado entre los clubes que no están jugando/);
     assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4\}/);
+    assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
     assert.match(html, /const BOT_CAP=80/);
     assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
     assert.match(html, /joined\.add\(k\);greet\(u,t\)/);
+    assert.match(html, /const txt='Saludamos al hincha de '\+cap\(T\[t\]\.n\)\+', '\+u/);
+    assert.match(html, /mx>=50&&!vDone\.has\('half'\)/);
+    assert.match(html, /nombrar tu club en el chat, hacer tap tap en el corazón o compartir la transmisión/);
+    assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
+    assert.match(html, /Quien quiera puede activar un turbo prolongado con el botón ROSITA/);
+    assert.match(html, /const LOSING_AT=\[10,20,30,40,50,60,70,80,90\]/);
+    assert.match(html, /va perdiendo la carrera\. ¡Todavía puede remontar!/);
     assert.match(html, /now-alLast<18000/);
     assert.match(html, /rocket:t=>/);
     assert.match(html, /FA\.p\('rocket'\)/);
     assert.match(html, /data-t="gift"/);
-    assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,4000\)/);
+    assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,TURBO_PROLONGED_MS\)/);
+    assert.match(html, /const tap=\(\)=>heartAdd\(i,1\)/);
     assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
     assert.match(html, /RETOQUES FINALES \(v2\.1\): confeti, efectos, banners, pips de copas/);
     assert.match(html, /window\.fx=\{confetti/);
@@ -145,18 +156,118 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
   }
 });
 
-test('keeps the series winner and rotates the next opponent', () => {
+test('draws a stable next opponent from clubs outside the current duel', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
-  const source = html.match(/function nextFixture\(winnerId,duel=DUELO\)\{[\s\S]*?\n\}/);
-  assert.ok(source, 'the overlay must define its rotating fixture selector');
-
-  const nextFixture = vm.runInNewContext(`(${source[0]})`, {
-    POOL: { ol: {}, cp: {}, li: {}, gu: {} },
+  const pool = { ol: {}, cp: {}, li: {}, gu: {} };
+  const drawSource = html.match(/function drawNextRival\(duel=DUELO\)\{[\s\S]*?\n\}/);
+  assert.ok(drawSource, 'the overlay must define a random rival selector');
+  const drawFirst = vm.runInNewContext(`(${drawSource[0]})`, {
+    POOL: pool,
     DUELO: ['ol', 'cp'],
+    Math: { random: () => 0, floor: Math.floor },
   });
-  assert.deepEqual(Array.from(nextFixture('ol')), ['ol', 'li']);
-  assert.deepEqual(Array.from(nextFixture('ol', ['ol', 'li'])), ['ol', 'gu']);
-  assert.deepEqual(Array.from(nextFixture('cp', ['ol', 'cp'])), ['cp', 'li']);
+  const drawLast = vm.runInNewContext(`(${drawSource[0]})`, {
+    POOL: pool,
+    DUELO: ['ol', 'cp'],
+    Math: { random: () => 0.99, floor: Math.floor },
+  });
+  assert.equal(drawFirst(), 'li');
+  assert.equal(drawLast(), 'gu');
+  assert.equal(drawLast(['ol', 'li']), 'gu');
+
+  const fixtureSource = html.match(/function nextFixture\(winnerId,rival=nextRival,duel=DUELO\)\{[\s\S]*?\n\}/);
+  assert.ok(fixtureSource, 'the overlay must pair the winner with the saved draw');
+  const nextFixture = vm.runInNewContext(`(${fixtureSource[0]})`, {
+    POOL: pool,
+    DUELO: ['ol', 'cp'],
+    nextRival: 'gu',
+  });
+  assert.deepEqual(Array.from(nextFixture('ol')), ['ol', 'gu']);
+  assert.deepEqual(Array.from(nextFixture('cp', 'li', ['ol', 'cp'])), ['cp', 'li']);
+});
+
+test('the prolonged manual turbo advances more than the bot turbo', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function turboGain\(rate,ms,handicap\)\{[\s\S]*?\}/);
+  assert.ok(source, 'the overlay must calculate turbo progress using duration and handicap');
+  const turboGain = vm.runInNewContext(`(${source[0]})`);
+
+  assert.equal(turboGain(4, 8000, 0.25), 8);
+  assert.equal(turboGain(1, 4000, 0.25), 1);
+});
+
+test('announces the trailing club at each newly reached ten-percent milestone', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function nextLosingCall\(progress,done\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must select the next losing-club milestone');
+  const nextLosingCall = vm.runInNewContext(`(${source[0]})`, {
+    LOSING_AT: [10, 20, 30, 40, 50, 60, 70, 80, 90],
+    Math,
+  });
+  const announced = new Set();
+
+  const first = nextLosingCall([8, 12], announced);
+  assert.equal(first.percent, 10);
+  assert.equal(first.loser, 0);
+  announced.add('losing10');
+
+  const second = nextLosingCall([19, 21], announced);
+  assert.equal(second.percent, 20);
+  assert.equal(second.loser, 0);
+  announced.add('losing20');
+
+  const tied = nextLosingCall([30, 30], announced);
+  assert.equal(tied.percent, 30);
+  assert.equal(tied.loser, -1);
+});
+
+test('tap taps advance the board gradually while bot taps only charge the heart', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function heartAdd\(t,n,advanceRace=true\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must define tap-to-board progress');
+
+  const heart = [0];
+  const S = [{ p: 0 }];
+  const heartBar = {
+    classList: { add() {}, remove() {} },
+    offsetWidth: 0,
+    querySelector(selector) {
+      if (selector === 'b') return { style: {} };
+      if (selector === 'em') return { textContent: '' };
+      return { classList: { add() {}, remove() {} } };
+    },
+  };
+  const context = {
+    over: false,
+    T: [{}],
+    heart,
+    HEART_N: 100,
+    HEART_PTS: 10,
+    HANDICAP: [0.25],
+    S,
+    $: () => heartBar,
+    renderHeart() {},
+    tapPop() {},
+    update() {},
+    walk() {},
+    A: { sfx() {} },
+    float() {},
+    hype() {},
+    win() {},
+  };
+  const heartAdd = vm.runInNewContext(`(${source[0]})`, context);
+
+  heartAdd(0, 1);
+  assert.ok(Math.abs(S[0].p - 0.025) < 1e-10);
+  assert.equal(heart[0], 1);
+
+  for (let tap = 0; tap < 99; tap += 1) heartAdd(0, 1);
+  assert.ok(Math.abs(S[0].p - 2.5) < 1e-10);
+  assert.equal(heart[0], 0);
+
+  heartAdd(0, 25, false);
+  assert.ok(Math.abs(S[0].p - 2.5) < 1e-10);
+  assert.equal(heart[0], 25);
 });
 
 test('forwards normalized TikTok updates in the shape consumed by version 68', async () => {

@@ -512,20 +512,25 @@ const POOL={ol:{id:'ol',n:'OLIMPIA',s:'OLI',c:'#f1f1f1'},cp:{id:'cp',n:'CERRO',s
 const START_DUELO=['ol','cp'];
 const LEGACY_FIXTURES=[['ol','cp'],['li','ol'],['li','cp'],['gu','ol'],['gu','cp']];
 let FX=0,savedDuel=null;
+let savedNextRival=null;
 try{
  const saved=JSON.parse(localStorage.getItem('cluss.v1')||'{}');
  FX=(+saved.fx||0)%LEGACY_FIXTURES.length;
  if(Array.isArray(saved.duel)&&saved.duel.length===2&&saved.duel.every(k=>POOL[k])&&saved.duel[0]!==saved.duel[1])savedDuel=saved.duel;
  else savedDuel=LEGACY_FIXTURES[FX];
+ if(typeof saved.nextRival==='string'&&POOL[saved.nextRival])savedNextRival=saved.nextRival;
 }catch(e){}
 const DUELO=(savedDuel||START_DUELO).slice();/* duelo actual, persistido para continuar el torneo */
-function nextFixture(winnerId,duel=DUELO){
- const clubs=Object.keys(POOL),previousOpponent=duel.find(id=>id!==winnerId),start=clubs.indexOf(previousOpponent);
- for(let step=1;step<=clubs.length;step++){
-  const rival=clubs[(start+step+clubs.length)%clubs.length];
-  if(rival!==winnerId&&rival!==previousOpponent)return[winnerId,rival];
- }
- return[winnerId,clubs.find(id=>id!==winnerId)];
+function drawNextRival(duel=DUELO){
+ const available=Object.keys(POOL).filter(id=>!duel.includes(id));
+ if(!available.length)throw new Error('No hay clubes disponibles para sortear el próximo rival.');
+ return available[Math.floor(Math.random()*available.length)];
+}
+let nextRival=savedNextRival&&!DUELO.includes(savedNextRival)?savedNextRival:drawNextRival(DUELO);
+function nextFixture(winnerId,rival=nextRival,duel=DUELO){
+ if(!POOL[winnerId])throw new Error('El ganador no pertenece al torneo.');
+ if(!POOL[rival]||duel.includes(rival))throw new Error('El próximo rival debe ser un club que no esté jugando.');
+ return[winnerId,rival];
 }
 /* CLUSS · VENTAJA: cuantas veces MAS interacciones necesita cada club para llegar a la meta. Hoy esta en 4 para todos (equilibrado, 4 veces mas dificil); un valor 4 significa que ese club necesita 4 veces mas.
    Afecta TODO lo que viene de interaccion (chat, likes, seguir, compartir, corazon, turbo, bonus). El avance pasivo es igual para los dos. */
@@ -541,6 +546,8 @@ const wt=[];
 const RACE_SECONDS=600;  /* segundos que tardaria una tortuga en llegar SOLA por avance pasivo (antes 240) */
 const PASSIVE_CAP=55;    /* el avance pasivo se detiene en este % de pista: el resto exige interaccion */
 const HARD=0.5;          /* multiplicador de puntos de cada evento (1 = facil, menor = mas dificil) */
+const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000; /* turbo real/manual: 4 puntos/s; ROSITA manual dura hasta 8 s */
+function turboGain(rate,ms,handicap){return rate*ms/1000*handicap}
 const GIFT_POINTS=0;     /* puntos por regalo. 0 = regalar NO da ventaja (regla 1: ni pedir ni prometer) */
 const TARGET_EPM=30;     /* eventos por minuto que el ritmo automatico intenta sostener entre reales + bot */
 const BOT_MAX_EPM=40;    /* tope de eventos por minuto que puede aportar el bot */
@@ -795,7 +802,7 @@ function showCombo(){const c=$('#combo'),m=mult();
 document.querySelectorAll('.cta').forEach(b=>b.addEventListener('click',()=>{
  if(over||b.classList.contains('cool'))return;
  const before=mult();streak++;clearTimeout(cmbT);cmbT=setTimeout(()=>{streak=0;showCombo()},2000);
- const m=mult();if(b.dataset.t==='gift'){turboOn(sel,4000);say('¡ROSITA! ¡TURBO para '+T[sel].n+'! 🔥');A.sfx('lead')}else push(sel,b.dataset.t,1,m);showCombo();
+ const m=mult();if(b.dataset.t==='gift'){turboOn(sel,TURBO_PROLONGED_MS);say('¡ROSITA! ¡TURBO para '+T[sel].n+'! 🔥');A.sfx('lead')}else push(sel,b.dataset.t,1,m);showCombo();
  if(m>before&&!over)say(`¡COMBO x${m}!`);
  navigator.vibrate&&navigator.vibrate(m>before?[20,30,20]:10);
  const cd=+b.dataset.cd;if(cd){b.classList.add('cool');b.style.setProperty('--cdt',cd+'ms');setTimeout(()=>b.classList.remove('cool'),cd)}
@@ -874,8 +881,8 @@ update();
 /* SCRIPT 2 = CAPAS SOBRE EL MOTOR: audio, XP/MVP, enganches a eventos reales, nido de hinchas, corazon, bot, turbo, voz del relator. Cada capa envuelve una funcion del motor (patron _original + wrapper): el ORDEN de los wrappers importa. */
 const P={mus:1,sfx:1,xp:0,wins:[0,0],fx:0,cp:{ol:0,cp:0,li:0,gu:0},best:0,races:0,ach:{}};
 try{Object.assign(P,JSON.parse(localStorage.getItem('cluss.v1')||'{}'))}catch(e){}
-P.duel=DUELO.slice();
 let svT=0;const save=()=>{try{localStorage.setItem('cluss.v1',JSON.stringify(P))}catch(e){}};
+P.duel=DUELO.slice();P.nextRival=nextRival;save();
 
 /* ===== AUDIO (WebAudio sintetizado, sin archivos externos) ===== */
 const A=(()=>{
@@ -1016,22 +1023,26 @@ function tapPop(h,n){
  e.style.fontSize=Math.min(24,13+Math.floor(Math.log2(n+1)*2))+'px';e.style.left=(18+Math.random()*50)+'%';
  h.appendChild(e);setTimeout(()=>e.remove(),800);
 }
-function heartAdd(t,n){
+function heartAdd(t,n,advanceRace=true){
  if(over||!T[t])return;
  n=Math.max(1,Math.floor(n)||1);
  heart[t]+=n;
  let full=0;while(heart[t]>=HEART_N){heart[t]-=HEART_N;full++}
  renderHeart(t);
+ if(advanceRace){
+  S[t].p+=HEART_PTS*n/HEART_N*HANDICAP[t];
+  update();walk(t);
+ }
  const h=$('#hb'+t);
  h.classList.remove('bump');void h.offsetWidth;h.classList.add('bump'); /* cada me gusta / tap hace latir el contador */
  tapPop(h,n);
  if(full){
   const g=h.querySelector('.gl');g.classList.remove('got');void g.offsetWidth;g.classList.add('got');
   h.classList.remove('full');void h.offsetWidth;h.classList.add('full');A.sfx('lead');
-  const hp=HEART_PTS*full*HANDICAP[t];S[t].p+=hp;update();float(t,'❤️ +'+(+hp.toFixed(1))+'⚡');
+  const hp=HEART_PTS*full*HANDICAP[t];float(t,'❤️ +'+(+hp.toFixed(1))+'⚡');
   hype('❤️',T[t].n,' · ¡corazón lleno! +'+(+(HEART_PTS*full*HANDICAP[t]).toFixed(1))+'⚡',T[t].c);
  }
- if(full&&!over&&S[t].p>=100)win(t);
+ if(advanceRace&&!over&&S[t].p>=100)win(t);
 }
 document.querySelectorAll('.hb').forEach((h,i)=>{
  const tap=()=>heartAdd(i,1);
@@ -1161,7 +1172,7 @@ function champion(i){
 }
 /* Reinicia el torneo completo (copas en 0). El saludo de voz se dice solo al iniciar torneo, no en cada ronda */
 function fullReset(winnerId){
- clearTimeout(rs);const duel=nextFixture(winnerId,DUELO);P.wins=[0,0];P.best=0;FX=(FX+1)%Object.keys(POOL).length;P.fx=FX;P.duel=duel.slice();save();aplicarDuelo(duel);
+ clearTimeout(rs);const duel=nextFixture(winnerId,nextRival,DUELO);P.wins=[0,0];P.best=0;FX=(FX+1)%Object.keys(POOL).length;P.fx=FX;P.duel=duel.slice();nextRival=drawNextRival(duel);P.nextRival=nextRival;save();aplicarDuelo(duel);
  reset();
  vDone.add('intro');
  hype('👋','¡Nuevo clásico!',' · '+T[0].n+' vs '+T[1].n,'#ffd566');
@@ -1171,12 +1182,12 @@ function fullReset(winnerId){
 /* ===== RESET DE COPAS (boton "Reiniciar copas" del panel de estadisticas): top 3, copas y torneo vuelven a cero, y arranca una carrera nueva.
  NO borra el historial guardado en las estadisticas; solo cierra el torneo en curso sin campeon. ===== */
 function resetCopas(){
- P.wins=[0,0];Object.keys(POOL).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;P.duel=START_DUELO.slice();save();aplicarDuelo(START_DUELO);
+ P.wins=[0,0];Object.keys(POOL).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;P.duel=START_DUELO.slice();nextRival=drawNextRival(START_DUELO);P.nextRival=nextRival;save();aplicarDuelo(START_DUELO);
  clearTimeout(rs);reset();renderTop3();stCloseTour();
  toast('Copas reiniciadas: todo empieza de cero','🔄');
 }
 const _reset=reset;
-reset=function(){ajustesDePartida();seen.clear();recent.forEach(l=>l.length=0);botFill.fill(0);fanTurn++;gs.fill(2);T.forEach((_,i)=>{$('#ev'+i).hidden=true;heart[i]=0;renderHeart(i);$('#in'+i).style.setProperty('--s',2);renderNest(i)});voReset();contrib.clear();us.clear();joined.clear();turbo.fill(0);lastMvp=null;hy.hidden=true;T.forEach((_,i)=>$('#ln'+i).classList.remove('turbo'));leads=0;sprint=false;pm=1;lastStreak=0;tk=0;$('#app').classList.remove('sprint');_reset();A.sfx('start');hud();logStat({type:'round-start',duel:DUELO});toast('Escribe '+T[0].n+' o '+T[1].n+' en el chat para participar · el club contrario = cambias de equipo','ℹ️')}; /* ronda nueva en las estadisticas */
+reset=function(){ajustesDePartida();seen.clear();recent.forEach(l=>l.length=0);botFill.fill(0);fanTurn++;gs.fill(2);T.forEach((_,i)=>{$('#ev'+i).hidden=true;heart[i]=0;renderHeart(i);$('#in'+i).style.setProperty('--s',2);renderNest(i)});voReset();contrib.clear();us.clear();joined.clear();turbo.fill(0);turboPower.fill(0);lastMvp=null;hy.hidden=true;T.forEach((_,i)=>$('#ln'+i).classList.remove('turbo'));leads=0;sprint=false;pm=1;lastStreak=0;tk=0;$('#app').classList.remove('sprint');_reset();A.sfx('start');hud();logStat({type:'round-start',duel:DUELO});toast('Escribe '+T[0].n+' o '+T[1].n+' en el chat para participar · el club contrario = cambias de equipo','ℹ️')}; /* ronda nueva en las estadisticas */
 window.tortugas.reset=reset;window.tortugas.resetCopas=resetCopas;
 /* Boton ↺ de la barra de herramientas: doble toque (el primero lo arma y brilla 4 s, el segundo reinicia las copas) */
 let rsArm=0;
@@ -1267,11 +1278,11 @@ function botRosa(){
  if(S[i].p>=BOT_CAP-5)return;                      /* muy cerca de la meta: se salta */
  botRosas++;
  const u=BOT_NAMES[Math.random()*BOT_NAMES.length|0];
- turboOn(i,BOT_ROSITA_MS);
+ turboOn(i,BOT_ROSITA_MS,BOT_TURBO_PPS);
  hype('🔥','🤖 '+u,' lanzó ROSITA · ¡TURBO '+T[i].n+'!',T[i].c);
  float(i,'🔥 ROSITA');A.sfx('lead');
  const n=Math.min(BOT_ROSITA_TAPS,HEART_N-1-Math.floor(heart[i]));
- if(n>0)heartAdd(i,n);                             /* mueve el tablero de tap tap sin llenarlo */
+ if(n>0)heartAdd(i,n,false);                       /* el bot carga el corazon sin mover el tablero */
 }
 /* ===== APOYO DEL BOT AL LADO SIN INTERACCION (CLUSS) =====
  Si en los ultimos 60 s hay MAS DE 3 USUARIOS REALES distintos de un solo lado (el otro casi sin gente), el bot empuja al carril SIN gente, incluso por delante del otro,
@@ -1314,7 +1325,7 @@ addEventListener('keydown',e=>{if(e.key.toLowerCase()==='b')botMode(!paceOn)});
 botMode(!/[?&]nobot/.test(location.search)); /* activo por defecto; ?nobot lo apaga */
 
 /* ===== PREMIOS POR ACCIONES DE ESPECTADORES ===== */
-const us=new Map(),joined=new Set(),welcomed=new Set(),turbo=[0,0,0];let lastMvp=null,hyT;
+const us=new Map(),joined=new Set(),welcomed=new Set(),turbo=[0,0,0],turboPower=[0,0,0];let lastMvp=null,hyT;
 const hy=document.createElement('div');hy.id='hype';hy.hidden=true;$('#app').append(hy);
 /* Cartel temporal de reaccion (nombre del usuario + mensaje) */
 function hype(ic,name,txt,col){
@@ -1326,7 +1337,7 @@ function hype(ic,name,txt,col){
 }
 T.forEach((_,i)=>$('#in'+i).insertAdjacentHTML('afterbegin','<g class="tf"><path d="M50 524C38 536 40 556 50 574C60 556 62 536 50 524Z" fill="#ff7a1a"/><path d="M50 524C44 534 45 548 50 562C55 548 56 534 50 524Z" fill="#ffd34d"/><path d="M33 516C27 524 28 534 33 542C38 534 39 524 33 516Z" fill="#ff7a1a"/><path d="M67 516C61 524 62 534 67 542C72 534 73 524 67 516Z" fill="#ff7a1a"/></g>'));
 const tz=(m,ic)=>{if(tq.length<3)toast(m,ic)};
-const turboOn=(t,ms)=>{const n=performance.now();turbo[t]=Math.min(n+8000,Math.max(n,turbo[t])+ms)};
+const turboOn=(t,ms,power=TURBO_PPS)=>{const n=performance.now(),active=turbo[t]>n;turbo[t]=Math.min(n+8000,Math.max(n,turbo[t])+ms);turboPower[t]=active?Math.max(turboPower[t],power):power};
 const bonus=(t,n)=>{S[t].p+=n*HANDICAP[t];update()};
 /* IMPULSO DEL JUEGO (no es un regalo ni lo simula): cada 45 s, si una tortuga va 8 puntos o mas atras, recibe un turbo corto. Sin usuarios ni rosas */
 setInterval(()=>{if(over||S.length<2)return;const a=S[0].p,b=S[1].p;if(Math.abs(a-b)<8)return;const t=a<b?0:1;turboOn(t,3000);hype('⚡','¡IMPULSO!',' · '+T[t].n+' recibe un empujón',T[t].c);A.sfx('lead')},45000);
@@ -1334,17 +1345,17 @@ setInterval(()=>{if(over||S.length<2)return;const a=S[0].p,b=S[1].p;if(Math.abs(
 const burst=T.map(()=>[]),burstCd=T.map(()=>0);
 setInterval(()=>{
  if(over)return;const n=performance.now();
- T.forEach((_,i)=>{const on=turbo[i]>n;$('#ln'+i).classList.toggle('turbo',on);if(on){S[i].p+=.25*HANDICAP[i];walk(i)}});
+ T.forEach((_,i)=>{const on=turbo[i]>n;$('#ln'+i).classList.toggle('turbo',on);if(on){S[i].p+=turboGain(turboPower[i],250,HANDICAP[i]);walk(i)}else turboPower[i]=0});
  update();
 },250);
 /* SALUDO: a cada hincha real se lo saluda UNA sola vez por sesion, con una sola frase: "Saludamos al hincha de <club> <usuario>". Sin nada mas. */
 const greeted=new Set();let grLast=-1e9;
 function greet(u,t){
  const k=String(u).toLowerCase();if(greeted.has(k)||!T[t])return;greeted.add(k);
- const txt='Saludamos al hincha de '+cap(T[t].n)+' '+u;
+ const txt='Saludamos al hincha de '+cap(T[t].n)+', '+u;
  hype('👋',txt,'',T[t].c);
  const now=performance.now();
- if(P.vo&&now-grLast>6000&&speak('Saludamos al hincha de '+cap(T[t].n)+' '+u.replace(/[_.]+/g,' '),null,false))grLast=now;
+ if(P.vo&&now-grLast>6000&&speak('Saludamos al hincha de '+cap(T[t].n)+', '+u.replace(/[_.]+/g,' '),null,false))grLast=now;
 }
 /* Premios por acciones reales (seguir, compartir, likes). El REGALO solo se agradece: sin turbo ni puntos (regla 1) */
 function perks(e){
@@ -1406,11 +1417,37 @@ const VL=[
 ];
 const VF=['¡Recta final! Todo se decide ahora. ¡Vamos, tortugas!','¡Llegando a la meta! ¡Qué emoción, esto está parejísimo!'];
 const VW=['¡Ganó {n}! Gracias por jugar y alentar. En unos segundos arranca otra ronda, ¡te esperamos!','¡Tenemos campeón: {n}! Gracias por estar. Ya viene una nueva carrera.'];
+const LOSING_AT=[10,20,30,40,50,60,70,80,90];
+function nextLosingCall(progress,done){
+ const percent=LOSING_AT.find(value=>Math.max(...progress)>=value&&!done.has('losing'+value));
+ if(percent===undefined)return null;
+ const loser=progress[0]===progress[1]?-1:progress[0]<progress[1]?0:1;
+ return{percent,loser};
+}
 function voReset(){nxLast=-1e9;vT0=performance.now();vDone.clear();vRound++;vLast=-1e9;try{SS&&SS.cancel();A.duck(0)}catch(e){}}
 function voWin(i){const n=T[i].n[0]+T[i].n.slice(1).toLowerCase();vDone.add('final');speak(P.wins[i]>=3?'¡Tenemos campeón del torneo! '+n+' se lleva las tres copas. ¡Felicitaciones y gracias por jugar!':VW[vRound%VW.length].replace('{n}',n),null,true)}
 setInterval(()=>{
  if(over)return;const now=performance.now(),el=(now-vT0)/1000;
  if(sprint&&!vDone.has('final')){vDone.add('final');speak(VF[vRound%VF.length],'¡Recta final!',true);return}
+ const mx=Math.max(...S.map(x=>x.p));
+ const losing=nextLosingCall(S.map(x=>x.p),vDone);
+ if(P.vo&&SS&&losing){
+  const key='losing'+losing.percent;
+  if(losing.loser<0)vDone.add(key);
+  else{
+   if(now-vLast<5000||SS.speaking||SS.pending)return;
+   const name=cap(T[losing.loser].n);
+   if(speak('Al '+losing.percent+'%, '+name+' va perdiendo la carrera. ¡Todavía puede remontar!','Al '+losing.percent+'%: '+name+' va detrás.',false)){vDone.add(key);return}
+  }
+ }
+ if(P.vo&&SS&&mx>=50&&!vDone.has('half')){
+  if(now-vLast<5000||SS.speaking||SS.pending)return;
+  if(speak('¡Llegamos al 50%! Para alentar, puedes nombrar tu club en el chat, hacer tap tap en el corazón o compartir la transmisión.','Así puedes alentar: chat, tap tap o compartir.',false)){vDone.add('half');return}
+ }
+ if(P.vo&&SS&&mx>=75&&!vDone.has('turbo75')){
+  if(now-vLast<5000||SS.speaking||SS.pending)return;
+  if(speak('¡Llegamos al 75%! Quien quiera puede activar un turbo prolongado con el botón ROSITA para darle un empujón a su equipo.','Al 75%: activa el turbo prolongado.',false)){vDone.add('turbo75');return}
+ }
  for(const l of VL){
   if(vDone.has(l.id)||el<l.at)continue;
   if(l.once&&vSess.has(l.id)){vDone.add(l.id);continue} /* ya se dijo en esta sesion: NO repetir (infraccion a) */
@@ -1420,16 +1457,14 @@ setInterval(()=>{
   break;
  }
 },500);
-/* CLUSS: la voz anuncia el PROXIMO clasico (quien contra quien) 3 veces por carrera, en distintos momentos: cuando el puntero llega a ~15%, 35% y 52% de la pista,
-   con al menos 30 s entre avisos. No se dice en la recta final. */
-const NXT=[15,35,52],cap=n=>n[0]+n.slice(1).toLowerCase();
+/* CLUSS: al llegar al 15%, la voz anuncia una vez el siguiente rival, sorteado entre los clubes que no están jugando. */
+const NXT=[15],cap=n=>n[0]+n.slice(1).toLowerCase();
 setInterval(()=>{
  if(over||!P.vo||vDone.has('final'))return;
  const mx=Math.max(...S.map(x=>x.p)),k=NXT.findIndex((u,j)=>mx>=u&&!vDone.has('nx'+j));
  if(k<0||performance.now()-vLast<5000||performance.now()-nxLast<30000)return;
- const winner=T[lead>=0?lead:0].id,f=nextFixture(winner,DUELO),a=cap(POOL[f[0]].n),b=cap(POOL[f[1]].n),
-  txt=['Si '+a+' gana esta serie, el próximo duelo será '+a+' contra '+b+'.','Si '+a+' se lleva esta serie, después jugará contra '+b+'.','Si '+a+' resulta ganador, su siguiente rival será '+b+'.'][k];
- if(speak(txt,'Próximo clásico: '+a+' vs '+b,false)){vDone.add('nx'+k);nxLast=performance.now()}
+ const rival=cap(POOL[nextRival].n),txt='El ganador de este duelo jugará contra '+rival+', sorteado entre los clubes que no están jugando.';
+ if(speak(txt,'Siguiente rival sorteado: '+rival,false)){vDone.add('nx'+k);nxLast=performance.now()}
 },700);
 /* ALIENTO: Don Tortu alienta a los dos equipos durante la carrera (cada ~18 s). Reparte el aliento parejo: al que va atras, al que va adelante y a los dos juntos.
    No promete resultados ni pide regalos (regla 1). Con la voz apagada igual lo muestra en su globo de texto. */
