@@ -45,7 +45,7 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
 
 8. RITMO AUTOMATICO / BOT ADAPTABLE (v12)
  - Objetivo: sostener TARGET_EPM eventos por minuto. bot = TARGET_EPM - eventos reales/min (nunca menos de 0, maximo BOT_MAX_EPM). Si entran mas usuarios reales el bot baja solo; si no hay nadie, sube. No genera regalos, seguidores ni compartidos.
- - TURBO GRATIS DEL BOT: ELIMINADO (BOT_TURBO_GIFT_ON=false). El bot ya no regala turbo; el turbo se activa al llegar a 100 taps (corazon lleno), por regalo real, compartido real, rafaga o ROSITA manual.
+ - TURBO GRATIS DEL BOT: ELIMINADO (BOT_TURBO_GIFT_ON=false). El bot ya no regala turbo; el turbo se activa al llegar a 500 taps (corazon lleno), por regalo real, compartido real, rafaga o ROSITA manual.
  - El bot GENERA EVENTOS visibles (chat y likes) con nombres tortubot_N: suman puntos, suenan y muestran su burbuja sobre la tortuga. NO cuentan en estadisticas, MVP, XP, avatares, avisos ni logs, y nunca dan el golpe final (BOT_CAP).
 9. ESTADISTICAS INTEGRADAS (v14, un solo archivo)
  - Ya no hay backend aparte: el modulo "ESTADISTICAS INTEGRADAS" guarda todo en el navegador (localStorage) y el panel vive en este mismo HTML.
@@ -85,12 +85,12 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
   - /api/recent-users solo debe devolver usuarios que de verdad participaron en el live.
  NOVEDADES v38 (reglas de juego):
   - Bot: un evento suyo vale 1/4 (BOT_W) y, si hay gente real activa, nunca pasa a una tortuga por delante de la otra.
-  - Puntos manuales/reales: comentar = 10 rayos, compartir = 5, seguir = 3, apoyar = 1 (likes llenan el corazon: cada 100 = +10). Todo x HARD.
+  - Puntos manuales/reales: comentar = 10 rayos, compartir = 5, seguir = 3, apoyar = 1 (likes llenan el corazon: cada 500 = +10). Todo x HARD.
   - Un usuario mueve la carrera si nombro un pais del duelo (o ya lo habia elegido); los likes sin equipo van al carril seleccionado. Pais fuera del duelo = solo estadistica.
   - Nido: huevos en blanco al iniciar; los 3 huevos grandes = los 3 usuarios REALES de mayor puntaje; el resto del nido = los demas recientes; huevos de bot (🐢) solo se van cargando con eventos del bot.
   - Alerta de evento = avatar grande del usuario sobre los huevos, que luego baja al nido. Puntaje por usuario: unirse 1, comentar 5, like 1 c/u, seguir 3, compartir 3; los regalos afectan el avance del equipo.
   - Estadisticas: panel 📊 con pestaña Usuarios (historial completo por usuario, guardado en localStorage 'cluss.users').
-  - Turbo: por boton ROSITA manual, regalo real (8 s), compartido real, 'rafaga' de 5 comentarios reales en 10 s y al completar 100 taps (corazon lleno, 8 s). Ya no hay turbo gratis del bot.
+  - Turbo: por boton ROSITA manual, regalo real (8 s), compartido real, 'rafaga' de 5 comentarios reales en 10 s y al completar 500 taps (corazon lleno, 8 s). Ya no hay turbo gratis del bot.
   - CTAs: destello inicial UNA vez por sesion (nada de pedidos en bucle, regla 1.a).
  14. RETOQUES FINALES (v2.1) - capa independiente al final del archivo (confeti, efectos, banners, pips de copas, sonidos propios)
   - Solo REACCIONA a lo que pasa en la carrera. No pide likes/comentarios/regalos/seguir/compartir, no promete nada, no inventa eventos (reglas 1a, 1b, 1c).
@@ -777,7 +777,7 @@ function laneSVG(i,t){return `<svg viewBox="0 0 120 588" preserveAspectRatio="no
 </g>
 <path id="cw${i}" display="none" d="M36 410 L38 394 L44 401 L50 390 L56 401 L62 394 L64 410Z" fill="url(#go${i})" stroke="#8a6410" stroke-width="1.5"/>
 </g></g></g><path d="M0 8Q0 0 8 0H8V630H8Q0 630 0 622Z M112 0H112Q120 0 120 8V622Q120 630 112 630H112Z" fill="#b07a45"/><path d="M8 10V620 M112 10V620" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V618 M117.5 12V618" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="628" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
-$('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false" aria-label="${t.n}"><svg class="fgb" width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">${flag(t.id,0,0,20,14)}</svg><span class="pod"></span><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="hb" id="hb${i}" role="button" tabindex="0" aria-label="Tocar para sumar un like a ${t.n}; cada 100 likes avanza +10 rayos" title="Toca para sumar un like. Cada 100 likes llenan el corazón y la tortuga avanza +10 rayos"><span class="hi">❤️</span><i><b></b></i><em>0</em><s class="gl" aria-hidden="true">+10⚡</s></div><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
+$('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false" aria-label="${t.n}"><svg class="fgb" width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">${flag(t.id,0,0,20,14)}</svg><span class="pod"></span><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="hb" id="hb${i}" role="button" tabindex="0" aria-label="Tocar para sumar un like a ${t.n}; cada 500 likes avanza +10 rayos" title="Toca para sumar un like. Cada 500 likes llenan el corazón y la tortuga avanza +10 rayos"><span class="hi">❤️</span><i><b></b></i><em>0</em><s class="gl" aria-hidden="true">+10⚡</s></div><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
 /* Ajusta el ancho de las tortugas (--kx) para que no se deformen al cambiar el tamano del carril */
 function fitK(){document.querySelectorAll('.sv').forEach(v=>{const w=v.offsetWidth,h=v.offsetHeight;if(w&&h)v.querySelectorAll('.in').forEach(g=>g.style.setProperty('--kx',(h/588*120/w).toFixed(3)))})}
 fitK();addEventListener('resize',fitK);
@@ -790,7 +790,7 @@ function aplicarDuelo(ids){
   l.querySelectorAll('.shf').forEach(g=>g.innerHTML=flag(k,38,477,24,26));
   const sv=l.querySelector('.sv>svg');if(sv)sv.setAttribute('aria-label','Ruta '+T[i].n+' con relieve');
   const nest=$('#av'+i);if(nest)nest.setAttribute('aria-label','Hinchas de '+T[i].n);
-  const hb=$('#hb'+i);if(hb)hb.setAttribute('aria-label','Tocar para sumar un like a '+T[i].n+'; cada 100 likes avanza +10 rayos');
+  const hb=$('#hb'+i);if(hb)hb.setAttribute('aria-label','Tocar para sumar un like a '+T[i].n+'; cada 500 likes avanza +10 rayos');
  });
  update();
 }
@@ -1081,8 +1081,8 @@ T.forEach((t,i)=>$('#sv'+i).insertAdjacentHTML('beforeend','<div class="nest" id
  fanPool    = usuarios del JSON (HINCHAS_JSON + /api/recent-users): se muestran al frente SOLO mientras el equipo no tenga eventos reales. */
 const HINCHAS_JSON=[ /* editar aqui. Formato: {username:'maria_ol', avatar:'https://...jpg', team:'ol'}  (team opcional: 'ol' o 'cp'; avatar debe ser https) */ ];
 /* ===== CORAZON (como el de TikTok): al completar HEART_N taps/me gusta, la tortuga avanza HEART_PTS y se activa TURBO (8 s) ===== */
-const HEART_N=100,HEART_PTS=10,heart=T.map(()=>0);
-/* Dibuja el corazon (barra de likes) del equipo t: avanza de 0 a 100 taps. */
+const HEART_N=500,HEART_PTS=10,heart=T.map(()=>0);
+/* Dibuja el corazon (barra de likes) del equipo t: avanza de 0 a 500 taps. */
 function renderHeart(t){const h=$('#hb'+t);if(!h)return;h.querySelector('b').style.width=(heart[t]/HEART_N*100)+'%';h.querySelector('em').textContent=Math.floor(heart[t])+'/'+HEART_N}
 /* +N flotante sobre el contador en CADA tap/me gusta: el numero crece con la cantidad (rafagas de TikTok) */
 function tapPop(h,n){
@@ -1091,7 +1091,7 @@ function tapPop(h,n){
  e.style.fontSize=Math.min(24,13+Math.floor(Math.log2(n+1)*2))+'px';e.style.left=(18+Math.random()*50)+'%';
  h.appendChild(e);setTimeout(()=>e.remove(),800);
 }
-/* Suma likes al corazon del equipo; al llegar a 100 da +10 rayos y activa el turbo. */
+/* Suma likes al corazon del equipo; al llegar a 500 da +10 rayos y activa el turbo. */
 function heartAdd(t,n,advanceRace=true){
  if(over||!T[t])return;
  n=Math.max(1,Math.floor(n)||1);
@@ -1101,7 +1101,7 @@ function heartAdd(t,n,advanceRace=true){
  if(advanceRace&&full){
   S[t].p+=HEART_PTS*full;
   update();walk(t);
-  turboOn(t,TURBO_PROLONGED_MS); /* 100 taps = TURBO 8 s */
+  turboOn(t,TURBO_PROLONGED_MS); /* 500 taps = TURBO 8 s */
  }
  const h=$('#hb'+t);
  h.classList.remove('bump');void h.offsetWidth;h.classList.add('bump'); /* cada me gusta / tap hace latir el contador */
@@ -1110,7 +1110,7 @@ function heartAdd(t,n,advanceRace=true){
   const g=h.querySelector('.gl');g.classList.remove('got');void g.offsetWidth;g.classList.add('got');
   h.classList.remove('full');void h.offsetWidth;h.classList.add('full');A.sfx('lead');
   const hp=HEART_PTS*full;float(t,'❤️ +'+hp+'⚡');
-  hype('❤️',T[t].n,' · ¡100 taps! +'+hp+'⚡ y TURBO 🔥',T[t].c);
+  hype('❤️',T[t].n,' · ¡500 taps! +'+hp+'⚡ y TURBO 🔥',T[t].c);
  }
  if(advanceRace&&!over&&S[t].p>=100)win(t);
 }
@@ -1372,7 +1372,7 @@ const BOT_TURBO_GIFT_MIN_MS=30000,BOT_TURBO_GIFT_MAX_MS=40000;
 let botTurboGiftTimer=null,botTurboGiftCount=0;
 /* Devuelve el carril que va perdiendo (-1 si van empatados). */
 function losingLane(progress){return progress[0]===progress[1]?-1:progress[0]<progress[1]?0:1}
-const BOT_TURBO_GIFT_ON=false; /* TORTULIVE ya NO regala turbo gratis: el turbo solo se gana con 100 taps, regalos, compartir o rafaga reales */
+const BOT_TURBO_GIFT_ON=false; /* TORTULIVE ya NO regala turbo gratis: el turbo solo se gana con 500 taps, regalos, compartir o rafaga reales */
 function canBotTurboGift(){return BOT_TURBO_GIFT_ON&&botTurboGiftCount<BOT_TURBO_GIFT_MAX&&Math.max(...S.map(s=>s.p))<BOT_TURBO_GIFT_STOP_AT}
 /* Regalo turbo del bot (desactivado: BOT_TURBO_GIFT_ON=false). */
 function giveBotTurboGift(){

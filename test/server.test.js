@@ -362,7 +362,7 @@ test('does not narrate free turbo gifts', () => {
   assert.doesNotMatch(voiceScripts[1], /gratis|regalar/i);
 });
 
-test('a full tap-tap counter adds 10% and activates turbo; bot taps only charge the heart', () => {
+test('a full 500-tap counter adds 10% and activates turbo; bot taps only charge the heart', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function heartAdd\(t,n,advanceRace=true\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must define tap-to-board progress');
@@ -382,7 +382,7 @@ test('a full tap-tap counter adds 10% and activates turbo; bot taps only charge 
     over: false,
     T: [{}],
     heart,
-    HEART_N: 100,
+    HEART_N: 500,
     HEART_PTS: 10,
     TURBO_PROLONGED_MS: 8000,
     turboOn: (...args) => turboCalls.push(args),
@@ -399,23 +399,34 @@ test('a full tap-tap counter adds 10% and activates turbo; bot taps only charge 
   };
   const turboCalls = [];
   const heartAdd = vm.runInNewContext(`(${source[0]})`, context);
+  assert.match(html, /const HEART_N=500,HEART_PTS=10/);
 
-  heartAdd(0, 99);
+  heartAdd(0, 499);
   assert.equal(S[0].p, 0);
-  assert.equal(heart[0], 99);
+  assert.equal(heart[0], 499);
   heartAdd(0, 1);
   assert.equal(S[0].p, 10);
   assert.equal(heart[0], 0);
   assert.deepEqual(turboCalls, [[0, 8000]]);
 
+  heartAdd(0, 499);
+  assert.equal(S[0].p, 10);
+  assert.equal(heart[0], 499);
+  assert.deepEqual(turboCalls, [[0, 8000]]);
+
+  heartAdd(0, 1);
+  assert.equal(S[0].p, 20);
+  assert.equal(heart[0], 0);
+  assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
+
   heartAdd(0, 250);
-  assert.equal(S[0].p, 30);
-  assert.equal(heart[0], 50);
+  assert.equal(S[0].p, 20);
+  assert.equal(heart[0], 250);
   assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
 
   heartAdd(0, 25, false);
-  assert.equal(S[0].p, 30);
-  assert.equal(heart[0], 75);
+  assert.equal(S[0].p, 20);
+  assert.equal(heart[0], 275);
   assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
 });
 
