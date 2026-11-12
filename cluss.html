@@ -5,7 +5,7 @@ CLUSS (antes Tortu Live): duelo unico OLIMPIA vs CERRO.
  - Rotacion de clubes: el ganador sigue y enfrenta al siguiente rival disponible, en orden; no repite al rival inmediatamente anterior. Cada duelo es primero a 3 copas.
  - Botones de comentar, seguir y compartir eliminados (quedan APOYAR y ROSITA). El bot se detiene en el 80% (BOT_CAP).
  - APOYO DEL BOT: si hay mas de 3 usuarios reales de un solo lado, el bot empuja al otro lado, incluso por delante, hasta el 80% (APOYO_TOPE) y se queda ahi; nunca pasa de 80, asi que nunca gana. Ver botApoyo / APOYO_*.
- - Duelo equilibrado y 4 veces mas dificil: ESFUERZO={ol:4,cp:4,li:4,gu:4} (mismo valor para todos). Se puede dar ventaja subiendo el valor del club contrario (HANDICAP, junto a DUELO).
+ - Duelo equilibrado y 4 veces mas dificil: todos los clubes comparten el mismo ESFUERZO. Se puede dar ventaja subiendo el valor del club contrario (HANDICAP, junto a DUELO).
  - Podio de copas: 1er club grande y 2do chico, con conteo de copas (P.cp). Las demas reglas de abajo siguen vigentes.
 REGLAS DEL PROYECTO. LEER ANTES DE TOCAR EL CODIGO (backend y frontend)
 Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
@@ -32,12 +32,12 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
  - Sin titulo del live (eliminado).
  - Sin indicador de nivel (Nv) en el pie: no corresponde a un overlay.
  - Franja de estadisticas bajo el tablero (unidos, comentarios, regalos, me gusta, seguidores, compartidos) con eventos REALES del live. Los bots (bot:true) y los toques manuales no cuentan. El contador de regalos es solo informativo, nunca para pedir regalos.
- - Tabla TOP 3 de copas en la columna derecha, ordenada por copas, con etiquetas 1er, 2do y 3er y corona al primero. El acumulado vive en P.cp (por id de pais, se guarda en localStorage). La fila de copas y MVP fue eliminada.
+ - Tabla de copas en la columna derecha, ordenada por copas, con banderas del 1er al 7mo puesto y corona al primero. El acumulado vive en P.cp (por id de club, se guarda en localStorage).
  - Duelo con solo 2 carriles, mas grandes, y tortugas mas grandes. Los 2 paises activos se definen en DUELO (ids de POOL).
  - Cada pais se muestra con su bandera grande y su nombre debajo, con el mismo ancho que la bandera. Sin luz ni barra de color bajo el encabezado: es un overlay de TikTok, no un juego.
 
 6. REGALO REAL Y ROSITA MANUAL
- - Un regalo real solo dispara reaccion visual/sonora + "Gracias {usuario}". Puntos por regalo: GIFT_POINTS (0 por defecto, ver CONFIG).
+ - Un regalo real da 15% de avance por regalo y activa turbo de 8 s para el equipo que el usuario menciono en el chat durante el ultimo minuto. No garantiza una victoria.
  - El boton ROSITA es una accion manual local; activa el turbo del juego, pero no finge un evento de TikTok.
 
 7. DIFICULTAD (v12)
@@ -45,7 +45,7 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
 
 8. RITMO AUTOMATICO / BOT ADAPTABLE (v12)
  - Objetivo: sostener TARGET_EPM eventos por minuto. bot = TARGET_EPM - eventos reales/min (nunca menos de 0, maximo BOT_MAX_EPM). Si entran mas usuarios reales el bot baja solo; si no hay nadie, sube. No genera regalos, seguidores ni compartidos.
- - ROSITA DE BOT (v2.1): hasta 3 por carrera (BOT_ROSITA_MAX), repartidas por avance de la pista (tramo inicial, medio y final). Cada una da turbo corto (BOT_ROSITA_MS) a la tortuga que va atras, se muestra como fuego firmado 🤖 tortubot_N (no como rosa ni regalo real) y sube la barra de tap tap del equipo +BOT_ROSITA_TAPS sin llenarla. No cuenta en estadisticas ni XP.
+ - TURBO GRATIS DEL BOT: cada 30–40 s, elige al equipo que va perdiendo. Muestra una ventana grande con su bandera; al cerrarla, TortuLive anuncia el regalo, suma 10% de avance y activa el turbo. La voz no dice porcentajes.
  - El bot GENERA EVENTOS visibles (chat y likes) con nombres tortubot_N: suman puntos, suenan y muestran su burbuja sobre la tortuga. NO cuentan en estadisticas, MVP, XP, avatares, avisos ni logs, y nunca dan el golpe final (BOT_CAP).
 9. ESTADISTICAS INTEGRADAS (v14, un solo archivo)
  - Ya no hay backend aparte: el modulo "ESTADISTICAS INTEGRADAS" guarda todo en el navegador (localStorage) y el panel vive en este mismo HTML.
@@ -80,16 +80,16 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
  LO QUE EL BACKEND DEBE RESPETAR (reglas 1 y 12; TikTok ya sanciono al autor):
   - Enviar SOLO eventos reales de TikTok. PROHIBIDO inventar, duplicar o simular usuarios, comentarios, likes, regalos, seguidores o compartidos.
   - PROHIBIDO que el backend (o el JSON de usuarios) se haga pasar por personas con nombres inventados. Los bots viven solo en el frontend y se llaman tortubot_N.
-  - El backend no decide puntajes ni ganadores: eso lo hace el frontend. Los regalos solo se agradecen (GIFT_POINTS=0, no dan ventaja).
+  - El backend no decide puntajes ni ganadores: eso lo hace el frontend. Un regalo real da 15% de avance y turbo al equipo apoyado recientemente en el chat, sin garantizar la victoria.
   - /api/recent-users solo debe devolver usuarios que de verdad participaron en el live.
  NOVEDADES v38 (reglas de juego):
   - Bot: un evento suyo vale 1/4 (BOT_W) y, si hay gente real activa, nunca pasa a una tortuga por delante de la otra.
   - Puntos manuales/reales: comentar = 10 rayos, compartir = 5, seguir = 3, apoyar = 1 (likes llenan el corazon: cada 100 = +10). Todo x HARD.
   - Un usuario mueve la carrera si nombro un pais del duelo (o ya lo habia elegido); los likes sin equipo van al carril seleccionado. Pais fuera del duelo = solo estadistica.
   - Nido: huevos en blanco al iniciar; los 3 huevos grandes = los 3 usuarios REALES de mayor puntaje; el resto del nido = los demas recientes; huevos de bot (🐢) solo se van cargando con eventos del bot.
-  - Alerta de evento = avatar grande del usuario sobre los huevos, que luego baja al nido. Puntaje por usuario: unirse 1, comentar 5, like 1 c/u, seguir 3, compartir 3, regalo 0.
+  - Alerta de evento = avatar grande del usuario sobre los huevos, que luego baja al nido. Puntaje por usuario: unirse 1, comentar 5, like 1 c/u, seguir 3, compartir 3; los regalos afectan el avance del equipo.
   - Estadisticas: panel 📊 con pestaña Usuarios (historial completo por usuario, guardado en localStorage 'cluss.users').
-  - Turbo: por boton ROSITA manual, compartido real, o 'rafaga' de 5 comentarios reales en 10 s; 'impulso' del juego cada 45 s a la tortuga que va 8+ atras. El bot NUNCA activa turbo y un regalo real solo se agradece.
+  - Turbo: por boton ROSITA manual, regalo real (8 s), compartido real, 'rafaga' de 5 comentarios reales en 10 s, y regalo gratuito del bot al equipo que va perdiendo cada 30–40 s.
   - CTAs: destello inicial UNA vez por sesion (nada de pedidos en bucle, regla 1.a).
  14. RETOQUES FINALES (v2.1) - capa independiente al final del archivo (confeti, efectos, banners, pips de copas, sonidos propios)
   - Solo REACCIONA a lo que pasa en la carrera. No pide likes/comentarios/regalos/seguir/compartir, no promete nada, no inventa eventos (reglas 1a, 1b, 1c).
@@ -359,8 +359,8 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .nf{margin-top:0;min-height:34px}
 .nf .ua,.nf .ua.ph{width:27px;height:34px;border-width:2.5px;font-size:15px;line-height:28px;box-shadow:0 0 0 1.5px #fff,0 2px 5px rgba(0,0,0,.6)}
 .nf .ua.bt{font-size:15px}
-/* barra de herramientas: 7 botones (🤖 🗣️ 🎵 🔊 📊 🌎 ↺); el nombre del live se recorta si falta ancho */
-.foot{gap:4px}.foot .sm{width:30px;flex:none}.foot .live{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* barra de herramientas desplegable: incluye refrescar y version */
+.foot{gap:4px}.foot .sm{width:30px;flex:none}.foot .live{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.foot .version{margin-left:auto;white-space:nowrap;color:#f1e8d6;font:700 8px Inter,sans-serif}
 /* panel de estadisticas */
 #stp{position:absolute;inset:0;z-index:30;background:#1b120a;color:#f3ece1;padding:10px;display:flex;flex-direction:column;gap:8px;font:12px/1.4 Inter,sans-serif}
 #stp[hidden]{display:none}
@@ -463,6 +463,20 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .hb.full i{animation:hbf .6s ease-out}
 @keyframes hbf{0%,60%{box-shadow:0 0 14px 5px #ffd566}100%{box-shadow:0 1px 3px rgba(0,0,0,.5)}}
 @media (prefers-reduced-motion:reduce){.hb .gl.got,.hb .tp,.hb.full i{animation:none}}
+#botTurboGift{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(10,5,2,.88);color:#fff;text-align:center}
+#botTurboGift[hidden]{display:none}
+.btg-card{width:100%;padding:18px 16px 16px;border:3px solid #ffd566;border-radius:22px;background:radial-gradient(circle at 50% 0,#e85a25,#8c1d16 52%,#32130e);box-shadow:0 0 0 4px rgba(255,255,255,.2),0 0 32px 8px rgba(255,112,22,.7);animation:btg-pop .35s ease-out}
+@keyframes btg-pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.btg-rocket{font-size:58px;line-height:1;text-shadow:0 3px 12px #ffbd36}
+.btg-card h2{margin:8px 0;font-size:21px;line-height:1.1;text-shadow:0 2px 5px #280900}
+.btg-flag{margin:10px auto 6px}
+.btg-flag svg{width:150px;height:96px;border:4px solid #fff;border-radius:10px;box-shadow:0 4px 12px #1a0900}
+.btg-team{font-size:19px;font-weight:800}
+.btg-mode{margin:9px 0;color:#ffe36a;font-size:23px;font-weight:800;text-shadow:0 2px 5px #240900}
+.btg-advance{display:block;margin:8px 0 14px;color:#fff27d;font-size:34px;font-weight:800;text-shadow:0 2px 8px #f15b12}
+.btg-close{width:100%;min-height:50px;border:2px solid #fff;border-radius:13px;background:linear-gradient(#ffbd38,#ed641c);color:#251007;font:800 14px Inter,sans-serif;box-shadow:0 4px 0 #74220f;cursor:pointer}
+.btg-close:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.btg-card{animation:none}}
 </style>
 </head>
 <body>
@@ -496,8 +510,19 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 </div>
 <div class="win" id="win" role="alertdialog" aria-label="Ganador"></div>
 </section>
+<section id="botTurboGift" hidden role="dialog" aria-modal="true" aria-labelledby="botTurboGiftTitle">
+ <div class="btg-card">
+  <div class="btg-rocket" aria-hidden="true">🚀</div>
+  <h2 id="botTurboGiftTitle">¡TORTULIVE TE REGALA!</h2>
+  <div class="btg-flag" id="botTurboGiftFlag"></div>
+  <div class="btg-team" id="botTurboGiftTeam"></div>
+  <div class="btg-mode">MODO TURBO ⚡</div>
+  <strong class="btg-advance">+10% AVANCE</strong>
+  <button class="btg-close" id="botTurboGiftClose" type="button">CERRAR Y ACTIVAR TURBO</button>
+ </div>
+</section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ voz, 🎵 musica, 🔊 efectos, 📊 torneos, 🌎 paises, ↺ reiniciar copas -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Voz en off (V)" title="Voz en off (V)">🗣️</button><button class="sm on" id="bMus" aria-pressed="true" aria-label="Música de fondo (M)">🎵</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bPais" aria-label="Clubes comentados" title="Clubes comentados">🌎</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Voz en off (V)" title="Voz en off (V)">🗣️</button><button class="sm on" id="bMus" aria-pressed="true" aria-label="Música de fondo (M)">🎵</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bPais" aria-label="Clubes comentados" title="Clubes comentados">🌎</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Versión 1.0.0">v1.0.0</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -507,7 +532,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <script>
 /* SCRIPT 1 = MOTOR DEL JUEGO: datos, carriles, puntos, combo, conexion SSE con el backend y estadisticas. Las capas de sonido/nido/bot/voz estan en el SCRIPT 2 y envuelven estas funciones. */
 /* ===== DATOS: paises disponibles (POOL), duelo activo (DUELO), progreso por carril (S, 0-100) y velocidades pasivas (sp) ===== */
-const POOL={ol:{id:'ol',n:'OLIMPIA',s:'OLI',c:'#f1f1f1'},cp:{id:'cp',n:'CERRO',s:'CER',c:'#3b82f6'},li:{id:'li',n:'LIBERTAD',s:'LIB',c:'#e5e5e5'},gu:{id:'gu',n:'GUARANÍ',s:'GUA',c:'#f5c400'}}; /* CLUSS: clubes de Paraguay */
+const POOL={ol:{id:'ol',n:'OLIMPIA',s:'OLI',c:'#f1f1f1'},cp:{id:'cp',n:'CERRO',s:'CER',c:'#3b82f6'},li:{id:'li',n:'LIBERTAD',s:'LIB',c:'#e5e5e5'},gu:{id:'gu',n:'GUARANÍ',s:'GUA',c:'#f5c400'},lu:{id:'lu',n:'LUQUEÑO',s:'LUQ',c:'#2563eb'},na:{id:'na',n:'NACIONAL',s:'NAC',c:'#c8102e'},sa:{id:'sa',n:'SOL DE AMÉRICA',s:'SOL',c:'#f5c400'}}; /* CLUSS: clubes de Paraguay */
 /* El ganador permanece y su rival rota entre los otros clubes, sin repetir el duelo anterior. */
 const START_DUELO=['ol','cp'];
 const LEGACY_FIXTURES=[['ol','cp'],['li','ol'],['li','cp'],['gu','ol'],['gu','cp']];
@@ -534,12 +559,12 @@ function nextFixture(winnerId,rival=nextRival,duel=DUELO){
 }
 /* CLUSS · VENTAJA: cuantas veces MAS interacciones necesita cada club para llegar a la meta. Hoy esta en 4 para todos (equilibrado, 4 veces mas dificil); un valor 4 significa que ese club necesita 4 veces mas.
    Afecta TODO lo que viene de interaccion (chat, likes, seguir, compartir, corazon, turbo, bonus). El avance pasivo es igual para los dos. */
-const ESFUERZO={ol:4,cp:4,li:4,gu:4}; /* llegar a la meta cuesta 4 veces mas interacciones, IGUAL para todos los clubes (equilibrado). 1 = facil. Para dar ventaja a un club sube el numero del otro (ej. cp:4 = Cerro necesita 4 veces mas) */
+const ESFUERZO={ol:4,cp:4,li:4,gu:4,lu:4,na:4,sa:4}; /* llegar a la meta cuesta 4 veces mas interacciones, IGUAL para todos los clubes (equilibrado). 1 = facil. Para dar ventaja a un club sube el numero del otro (ej. cp:4 = Cerro necesita 4 veces mas) */
 const HANDICAP=DUELO.map(k=>1/ESFUERZO[k]);
 const T=DUELO.map(k=>({...POOL[k]})); /* copias: al cambiar de clasico se editan los carriles, no la lista de clubes */
 const S=T.map(()=>({p:0,g:0,l:0}));
 let sel=0,over=false,auto=false,tmr=null,lead=-1,viewers=1450,rs=null;
-const picks=new Map(),lastChat=new Map();
+const picks=new Map(),lastChat=new Map(),recentChatPicks=new Map();
 let streak=0,cmbT=null;
 const wt=[];
 /* ===== CONFIG DE DIFICULTAD Y RITMO (editar solo aqui) ===== */
@@ -548,14 +573,17 @@ const PASSIVE_CAP=55;    /* el avance pasivo se detiene en este % de pista: el r
 const HARD=0.5;          /* multiplicador de puntos de cada evento (1 = facil, menor = mas dificil) */
 const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000; /* turbo real/manual: 4 puntos/s; ROSITA manual dura hasta 8 s */
 function turboGain(rate,ms,handicap){return rate*ms/1000*handicap}
-const GIFT_POINTS=0;     /* puntos por regalo. 0 = regalar NO da ventaja (regla 1: ni pedir ni prometer) */
+const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000; /* cada regalo real avanza 15%; el equipo debe haberse mencionado en el ultimo minuto */
+const BOT_TURBO_GIFT_PROGRESS=10;
+function recentChatTeam(key,now=Date.now()){
+ const pick=recentChatPicks.get(key);
+ return pick&&now>=pick.t&&now-pick.t<=GIFT_TEAM_WINDOW_MS?pick.team:-1;
+}
 const TARGET_EPM=30;     /* eventos por minuto que el ritmo automatico intenta sostener entre reales + bot */
 const BOT_MAX_EPM=40;    /* tope de eventos por minuto que puede aportar el bot */
 const BOT_W=0.25;        /* peso de un evento del bot: 1/4 del valor de uno real */
 const BOT_CAP=80;        /* el bot NUNCA empuja una tortuga mas alla de este % (80): ahi se detiene. La meta es de la gente real */
-const BOT_ROSITA_MAX=3;      /* maximo de ROSITAS de bot en TODA la carrera (repartidas a lo largo de la pista) */
-const BOT_ROSITA_TAPS=25;     /* cuanto sube la barra de tap tap (corazon) del equipo con cada ROSITA de bot (nunca la llena) */
-const BOT_ROSITA_MS=4000;     /* duracion del turbo de cada ROSITA de bot */
+const BOT_TURBO_GIFT_MS=4000,BOT_TURBO_GIFT_TAPS=25; /* turbo automatico y carga parcial del corazon al aceptarlo */
 /* ===== ESTADISTICAS INTEGRADAS (todo en este mismo archivo; se guardan en el navegador con localStorage) =====
  Registra: torneos y rondas · paises nombrados en el chat (+1 por comentario) · si la ronda tuvo regalos, el log completo del chat.
  REGLA TIKTOK: solo OBSERVA eventos reales. No inventa eventos ni pide ni promete nada a nadie (regla 1). */
@@ -682,12 +710,12 @@ document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matche
  box.innerHTML='<table>'+[...u.ev].reverse().map(r=>`<tr><td>${stFd(r.t)}</td><td>${IC[r.type]||''} ${NM[r.type]||r.type}${r.n>1?' x'+r.n:''}${r.gift?' '+stH(r.gift):''}</td><td>${r.text?'"'+stH(r.text)+'"':''}</td></tr>`).join('')+'</table>';
 },true);
 addEventListener('keydown',e=>{if(e.key==='Escape'){const p=document.getElementById('stp');if(p)p.hidden=true}});
-const PTS={share:5*HARD, /* compartir = 5 rayos */chat:10*HARD, /* comentar = 10 rayos */like:1*HARD,follow:3*HARD,gift:GIFT_POINTS}; /* puntos por tipo de evento (share cuenta como follow) */
+const PTS={share:5*HARD, /* compartir = 5 rayos */chat:10*HARD, /* comentar = 10 rayos */like:1*HARD,follow:3*HARD,gift:GIFT_PROGRESS}; /* puntos por tipo de evento (share cuenta como follow) */
 let sp=[1,1,1],lastTick=performance.now();
 const newSpeeds=()=>{sp=T.map(()=>0.985+Math.random()*0.03)};newSpeeds();
 const USER='cluss'.slice(0,10);
 const $=s=>document.querySelector(s);
-const FLAG_C={cp:['#0b3d91','#c8102e'],li:['#ffffff','#111111'],gu:['#f5c400','#111111']};
+const FLAG_C={cp:['#0b3d91','#c8102e'],li:['#ffffff','#111111'],gu:['#f5c400','#111111'],lu:['#2563eb','#f5c400'],na:['#c8102e','#ffffff'],sa:['#f5c400','#1d4ed8']};
 function flag(k,x,y,w,h){ /* CLUSS: colores de cada club (aproximados). ol blanco y negro · cp azulgrana · li blanco/negro a rayas · gu amarillo/negro */
  if(k==='ol')return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/><rect x="${x}" y="${y+h*.36}" width="${w}" height="${h*.28}" fill="#111"/>`;
  const c=FLAG_C[k]||FLAG_C.cp;
@@ -761,14 +789,14 @@ function float(i,txt){const el=document.createElement('b');el.className='fl';el.
 function walk(i){const l=$('#ln'+i);l.classList.add('walk');clearTimeout(wt[i]);wt[i]=setTimeout(()=>l.classList.remove('walk'),1000)}
 /* Salto corto de la tortuga i al recibir un evento */
 function hop(i){const g=$('#in'+i);g.classList.remove('hop');void g.getBBox();g.classList.add('hop')}
-/* Suma puntos al carril i por un evento. Puntos = PTS[tipo] * cantidad * combo. Gana quien llega a 100. Los regalos SOLO agradecen (regla 1) */
+/* Suma puntos al carril i por un evento. Cada regalo real avanza 15 puntos; el resto usa PTS * cantidad * combo. Gana quien llega a 100. */
 function push(i,type,n=1,mult=1){
  if(over||i<0||!S[i])return;
- const pts=PTS[type]*n*mult*HANDICAP[i],s=S[i];
+ const pts=type==='gift'?GIFT_PROGRESS*n:PTS[type]*n*mult*HANDICAP[i],s=S[i];
  s.p+=pts;if(type==='like')s.l+=n;if(type==='gift')s.g+=n;
  const prev=lead;lead=update();if(pts>0)float(i,'+'+(+pts.toFixed(1)));hop(i);walk(i);
  if(s.p>=100){return win(i)}
- if(type==='gift')say('¡Gracias por el regalo!'); /* solo agradece, sin pedir ni prometer nada */
+ if(type==='gift')say('¡Gracias por el regalo!'); /* sin pedir regalos ni prometer una victoria */
  else if(lead!==prev&&lead>=0)say(`¡${T[lead].n} toma la delantera!`);
  else if(!auto||Math.random()<.08)say(['¡Todo se decide en la recta!','¡Vamos, tortugas!','¡Qué carrera, gente!'][Math.floor(Math.random()*3)]);
 }
@@ -786,7 +814,7 @@ function win(i){
 /* Nueva carrera: vuelve todo a 0 y sortea velocidades pasivas nuevas */
 function reset(){
  clearTimeout(rs);sel=0;over=false;lead=-1;S.forEach(s=>{s.p=0;s.g=0;s.l=0});
- picks.clear();lastChat.clear();newSpeeds();lastTick=performance.now();
+ picks.clear();lastChat.clear();recentChatPicks.clear();newSpeeds();lastTick=performance.now();
  T.forEach((t,i)=>$('#cw'+i).setAttribute('display','none'));
  $('#win').classList.remove('show');document.querySelectorAll('.cta').forEach(b=>{b.disabled=false;b.classList.remove('cool')});streak=0;clearTimeout(cmbT);showCombo();
  update();say('¡Y ARRANCAN LAS TORTUGAS!');
@@ -812,7 +840,7 @@ document.addEventListener('keydown',e=>{if(['1','2','3'].includes(e.key)){sel=+e
 function findTeam(text){
  const raw=String(text||'');
  const normalized=raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
- const AL={ol:['OLIMPIA','OLI','DECANO'],cp:['CERRO','CERRO PORTENO','CP','CICLON','AZULGRANA'],li:['LIBERTAD','GUMARELO'],gu:['GUARANI','ABORIGEN']}; /* CLUSS: palabras que cuentan como nombrar al club */
+ const AL={ol:['OLIMPIA','OLI','DECANO'],cp:['CERRO','CERRO PORTENO','CP','CICLON','AZULGRANA'],li:['LIBERTAD','GUMARELO'],gu:['GUARANI','ABORIGEN'],lu:['LUQUENO','LUQUE','SPORTIVO LUQUENO','CHANCHON'],na:['NACIONAL','TRICOLOR','ACADEMIA'],sa:['SOL DE AMERICA','DANZARIN']}; /* CLUSS: palabras que cuentan como nombrar al club */
  return T.findIndex(t=>(AL[t.id]||[]).some(alias=>/[^\x00-\x7F]/.test(alias)
   ?raw.includes(alias)
   :new RegExp(`(^|[^A-Z0-9])${alias}($|[^A-Z0-9])`).test(normalized)
@@ -824,9 +852,10 @@ function handleLiveEntry(entry){
  const user=String(entry.username||'').trim().toLowerCase();
  const key=user||`anonymous-${Math.random()}`;
  let team=entry.type==='chat'?findTeam(entry.content): -1;
- if(team>=0&&user)picks.set(key,team);
+ if(team>=0&&user){picks.set(key,team);recentChatPicks.set(key,{team,t:Date.now()})}
+ if(entry.type==='gift')team=recentChatTeam(key);
  /* Sin pais del duelo (ni comentado ahora ni elegido antes): NO mueve la carrera, solo queda en las estadisticas */
- if(team<0)team=picks.has(key)?picks.get(key):-1;
+ if(team<0&&entry.type!=='gift')team=picks.has(key)?picks.get(key):-1;
  if(entry.type==='member')return;
  /* CLUSS: sin nombrar un club en el chat NO se participa (ni siquiera con likes) */
  if(team<0)return;
@@ -879,8 +908,9 @@ update();
 <script>
 (function(){
 /* SCRIPT 2 = CAPAS SOBRE EL MOTOR: audio, XP/MVP, enganches a eventos reales, nido de hinchas, corazon, bot, turbo, voz del relator. Cada capa envuelve una funcion del motor (patron _original + wrapper): el ORDEN de los wrappers importa. */
-const P={mus:1,sfx:1,xp:0,wins:[0,0],fx:0,cp:{ol:0,cp:0,li:0,gu:0},best:0,races:0,ach:{}};
+const P={mus:1,sfx:1,xp:0,wins:[0,0],fx:0,cp:{ol:0,cp:0,li:0,gu:0,lu:0,na:0,sa:0},best:0,races:0,ach:{}};
 try{Object.assign(P,JSON.parse(localStorage.getItem('cluss.v1')||'{}'))}catch(e){}
+P.cp=Object.assign({ol:0,cp:0,li:0,gu:0,lu:0,na:0,sa:0},P.cp||{});
 let svT=0;const save=()=>{try{localStorage.setItem('cluss.v1',JSON.stringify(P))}catch(e){}};
 P.duel=DUELO.slice();P.nextRival=nextRival;save();
 
@@ -977,7 +1007,7 @@ let live=false,curBot=false,cu=null,tapping=false,leads=0,sprint=false,pm=1,last
 const realLane=T.map(()=>[]); /* CLUSS: marcas de tiempo de eventos REALES por carril (ultimos 60 s), para saber si la interaccion esta de un solo lado */
 const _push=push;
 push=function(i,type,n=1,m=1){
- if(live&&!curBot&&S[i]&&type!=='gift')realLane[i].push({t:Date.now(),u:cu}); /* quien interactuo y cuando */
+ if(live&&!curBot&&S[i])realLane[i].push({t:Date.now(),u:cu}); /* quien interactuo y cuando */
  const was=over,p0=lead,before=S[i]?S[i].p:0;_push(i,type,n,curBot?m*BOT_W:live&&type==='like'?0:m); /* el bot vale 1/4 */
  if(curBot&&S[i]&&S[i].p>BOT_CAP)S[i].p=Math.max(BOT_CAP,before); /* el bot se detiene en BOT_CAP (80%) */
  if(curBot&&S[i]&&realEpm()>0){ /* hay gente real: el bot nunca pasa a una tortuga por delante de la otra */
@@ -988,7 +1018,7 @@ push=function(i,type,n=1,m=1){
  if(!curBot)contrib.set(w,(contrib.get(w)||0)+pts); /* el bot no es MVP */
  if(!live&&streak>P.best)P.best=streak;
  if(type==='like'&&!curBot)heartAdd(i,n); /* taps manuales y likes reales llenan la barra del equipo */
- if(type==='gift')ach('gift'); /* regalo: sin turbo ni ventaja (regla 1) */
+ if(type==='gift')ach('gift');
  if(!curBot)addXp(pts); /* ni suma XP */
  if(!over){
   if(live){const now=performance.now();if(now-lt>(type==='gift'?120:70)){lt=now;A.sfx(type==='gift'||type==='follow'||type==='like'?type:'chat')}}
@@ -1081,7 +1111,7 @@ function markVip(k){recent.forEach((l,t)=>{const x=l.find(y=>y.key===k);if(x){x.
 T.forEach((_,i)=>renderNest(i));
 const EI={chat:['💬','#8b8f99'],like:['❤️','#ff5a7a'],follow:['➕','#2f9bd6'],share:['↗️','#2f9bd6'],gift:['🎁','#e11d48'],member:['👋','#16a34a']},evT=[],evL=[];
 $('.board').insertAdjacentHTML('beforeend','<div class="ev" id="evg" hidden></div>'); /* alerta de quien se une sin equipo: avatar grande al centro */
-/* PUNTAJE POR USUARIO: cada evento real lo aumenta. El regalo vale 0 (regla 1: regalar no da ventaja ni puntos) */
+/* PUNTAJE POR USUARIO: cada evento real lo aumenta. */
 const userScore=new Map(),SCORE={member:1,chat:5,like:1,follow:3,share:3,gift:0};
 function topOf(t){let b=null,m=0;(recent[t]||[]).forEach(x=>{const s=userScore.get(x.key)||0;if(s>m){m=s;b=x.key}});return b}
 /* Alerta: el avatar GRANDE del usuario que genero el evento (t = indice de equipo, o 'g' para quien se une sin equipo). Despues de ~1.7 s baja al nido */
@@ -1224,7 +1254,7 @@ setInterval(()=>{
 /* ===== PODIO DE COPAS (columna derecha): 1er club grande, 2do chico; corona si lidera solo ===== */
 function renderTop3(){const el=document.getElementById('top3');if(!el)return; /* CLUSS: todos los clubes por copas; 1er puesto grande, los demas chicos */
  const a=Object.keys(POOL).map(k=>({k,n:(P.cp&&P.cp[k])||0})).sort((x,y)=>y.n-x.n);
- el.innerHTML=a.map((x,i)=>'<div class="tp" title="'+POOL[x.k].n+': '+x.n+' copa'+(x.n===1?'':'s')+'">'+'<i class="pu pu'+i+'">'+['1er','2do','3er','4to'][i]+'</i>'+(i===0&&x.n>a[1].n?'<span class="cr">👑</span>':'')+'<svg viewBox="0 0 20 14" aria-hidden="true">'+flag(x.k,0,0,20,14)+'</svg><em>'+(i===0?POOL[x.k].n:POOL[x.k].s)+'</em><b>🏆 '+x.n+'</b></div>').join('')}
+ el.innerHTML=a.map((x,i)=>'<div class="tp" title="'+POOL[x.k].n+': '+x.n+' copa'+(x.n===1?'':'s')+'">'+'<i class="pu pu'+i+'">'+['1er','2do','3er','4to','5to','6to','7mo'][i]+'</i>'+(i===0&&x.n>a[1].n?'<span class="cr">👑</span>':'')+'<svg viewBox="0 0 20 14" aria-hidden="true">'+flag(x.k,0,0,20,14)+'</svg><em>'+(i===0?POOL[x.k].n:POOL[x.k].s)+'</em><b>🏆 '+x.n+'</b></div>').join('')}
 /* ===== ESTADISTICAS REALES: solo eventos del live. Los bots (bot:true) y los toques manuales no cuentan ===== */
 const ST={member:0,chat:0,gift:0,like:0,follow:0,share:0};
 /* Formato compacto de numeros (1.2K) */
@@ -1264,25 +1294,20 @@ function botStep(){
  if(Math.random()<.6||picks.get(u)!==i)handleLiveEntry({type:'chat',username:u,content:BOT_CHAT[Math.random()*BOT_CHAT.length|0].replace(/\{n\}/g,T[i].n),bot:true});
  else handleLiveEntry({type:'like',username:u,activityCount:1+(Math.random()*2|0),bot:true});
 }
-/* ROSITA DE BOT (max BOT_ROSITA_MAX por carrera): el bot "lanza" una ROSITA a la tortuga que va atras.
-   Se programa por AVANCE de la pista (no por tiempo): una en el tramo inicial, otra en el medio y otra al final, en puntos al azar.
-   Efecto = igual que la ROSITA manual (turbo + fuego, NO una rosa) + sube la barra de tap tap (corazon) de ese equipo para que se vea
-   moverse el tablero de arriba. Va firmada como bot (🤖 tortubot_N). NO cuenta en estadisticas, MVP, XP ni logs, y NUNCA llena el corazon ni da el golpe final. */
-let botRosas=0,botRosaAt=[];
-function botRosaPlan(){botRosas=0;botRosaAt=[];const n=BOT_ROSITA_MAX,seg=80/n;for(let k=0;k<n;k++){const a=10+k*seg;botRosaAt.push(a+Math.random()*(seg-6))}}
-function botRosa(){
- if(over||botRosas>=BOT_ROSITA_MAX||!botRosaAt.length||S.length<2)return;
- const mx=Math.max(...S.map(x=>x.p));if(mx<botRosaAt[0])return;
- botRosaAt.shift();
- const i=S[0].p<=S[1].p?0:1;                       /* la que va atras */
- if(S[i].p>=BOT_CAP-5)return;                      /* muy cerca de la meta: se salta */
- botRosas++;
- const u=BOT_NAMES[Math.random()*BOT_NAMES.length|0];
- turboOn(i,BOT_ROSITA_MS,BOT_TURBO_PPS);
- hype('🔥','🤖 '+u,' lanzó ROSITA · ¡TURBO '+T[i].n+'!',T[i].c);
- float(i,'🔥 ROSITA');A.sfx('lead');
- const n=Math.min(BOT_ROSITA_TAPS,HEART_N-1-Math.floor(heart[i]));
- if(n>0)heartAdd(i,n,false);                       /* el bot carga el corazon sin mover el tablero */
+/* Turbo gratuito del bot: se programa cada 30–40 segundos y favorece al equipo que va perdiendo. */
+const BOT_TURBO_GIFT_MIN_MS=30000,BOT_TURBO_GIFT_MAX_MS=40000;
+let botTurboGiftTimer=null;
+function losingLane(progress){return progress[0]===progress[1]?-1:progress[0]<progress[1]?0:1}
+function giveBotTurboGift(){
+ if(over||!paceOn||activeBotTurboGift||botTurboGiftQueue.length)return;
+ const i=losingLane(S.map(x=>x.p));
+ if(i>=0)queueBotTurboGift(i,BOT_TURBO_GIFT_MS,BOT_TURBO_PPS,BOT_TURBO_GIFT_TAPS);
+}
+function scheduleBotTurboGift(){
+ clearTimeout(botTurboGiftTimer);
+ if(over||!paceOn)return;
+ const delay=BOT_TURBO_GIFT_MIN_MS+Math.random()*(BOT_TURBO_GIFT_MAX_MS-BOT_TURBO_GIFT_MIN_MS);
+ botTurboGiftTimer=setTimeout(()=>{botTurboGiftTimer=null;giveBotTurboGift();scheduleBotTurboGift()},delay);
 }
 /* ===== APOYO DEL BOT AL LADO SIN INTERACCION (CLUSS) =====
  Si en los ultimos 60 s hay MAS DE 3 USUARIOS REALES distintos de un solo lado (el otro casi sin gente), el bot empuja al carril SIN gente, incluso por delante del otro,
@@ -1301,25 +1326,29 @@ function botApoyo(){
  handleLiveEntry({type:'chat',username:u,content:BOT_CHAT[Math.random()*BOT_CHAT.length|0].replace(/\{n\}/g,T[lo].n),bot:true});
  S[lo].p=Math.min(S[lo].p+amt,APOYO_TOPE);update();float(lo,'🤖 +'+(+amt.toFixed(1)));
 }
-botRosaPlan();
-const _rstBR=reset;reset=function(){botRosaPlan();realLane.forEach(l=>l.length=0);return _rstBR.apply(this,arguments)}; /* carrera nueva = 3 ROSITAS nuevas */
+const _rstBR=reset;reset=function(){
+ clearTimeout(botTurboGiftTimer);botTurboGiftTimer=null;realLane.forEach(l=>l.length=0);
+ const result=_rstBR.apply(this,arguments);scheduleBotTurboGift();return result;
+};
 setInterval(()=>{                      /* cada segundo recalcula cuanto debe aportar el bot */
  if(over||!paceOn){botEpm=0;return}
  botEpm=Math.min(BOT_MAX_EPM,Math.max(0,TARGET_EPM-realEpm()));
  botCarry+=botEpm/60;
  while(botCarry>=1){botCarry--;botStep()}
- botRosa();botApoyo();
+ botApoyo();
  update();
 },1000);
 /* Enciende/apaga el ritmo automatico (boton 🤖 o tecla B). Se fuerza ON al empezar cada ronda (regla 10) */
 function botMode(on){
  paceOn=on;botCarry=0;
  const b=$('#bBot');b.classList.toggle('on',on);b.classList.toggle('off',!on);b.setAttribute('aria-pressed',on);
+ if(on)scheduleBotTurboGift();else{clearTimeout(botTurboGiftTimer);botTurboGiftTimer=null}
  toast(on?'Ritmo automático activado':'Ritmo automático apagado','🤖');
 }
 $('#bStat').onclick=()=>stOpen('torneos');  /* abre el panel de torneos */
 $('#bPais').onclick=()=>stOpen('paises');   /* abre la torta de paises comentados */
 $('#bBot').onclick=()=>botMode(!paceOn);
+$('#bRefresh').onclick=()=>location.reload();
 $('#connection').onclick=()=>document.querySelector('.foot').classList.toggle('open'); /* toca el usuario: la barra se despliega a la derecha */
 addEventListener('keydown',e=>{if(e.key.toLowerCase()==='b')botMode(!paceOn)});
 botMode(!/[?&]nobot/.test(location.search)); /* activo por defecto; ?nobot lo apaga */
@@ -1339,8 +1368,55 @@ T.forEach((_,i)=>$('#in'+i).insertAdjacentHTML('afterbegin','<g class="tf"><path
 const tz=(m,ic)=>{if(tq.length<3)toast(m,ic)};
 const turboOn=(t,ms,power=TURBO_PPS)=>{const n=performance.now(),active=turbo[t]>n;turbo[t]=Math.min(n+8000,Math.max(n,turbo[t])+ms);turboPower[t]=active?Math.max(turboPower[t],power):power};
 const bonus=(t,n)=>{S[t].p+=n*HANDICAP[t];update()};
-/* IMPULSO DEL JUEGO (no es un regalo ni lo simula): cada 45 s, si una tortuga va 8 puntos o mas atras, recibe un turbo corto. Sin usuarios ni rosas */
-setInterval(()=>{if(over||S.length<2)return;const a=S[0].p,b=S[1].p;if(Math.abs(a-b)<8)return;const t=a<b?0:1;turboOn(t,3000);hype('⚡','¡IMPULSO!',' · '+T[t].n+' recibe un empujón',T[t].c);A.sfx('lead')},45000);
+const botTurboGiftQueue=[];
+let activeBotTurboGift=null;
+const botTurboGiftDialog=$('#botTurboGift'),botTurboGiftTeam=$('#botTurboGiftTeam'),botTurboGiftFlag=$('#botTurboGiftFlag'),botTurboGiftClose=$('#botTurboGiftClose');
+function queueBotTurboGift(team,ms,power,taps){
+ if(over||!T[team]||!S[team])return;
+ botTurboGiftQueue.push({team,ms,power,taps});
+ showBotTurboGift();
+}
+function showBotTurboGift(){
+ if(over||activeBotTurboGift||!botTurboGiftQueue.length)return;
+ activeBotTurboGift=botTurboGiftQueue.shift();
+ const {team}=activeBotTurboGift,club=T[team],announcement='TortuLive le regala un modo turbo gratis al equipo '+club.n+'.';
+ botTurboGiftFlag.innerHTML='<svg viewBox="0 0 40 26" role="img" aria-label="Bandera de '+club.n+'">'+flag(club.id,0,0,40,26)+'</svg>';
+ botTurboGiftTeam.textContent=club.n;
+ botTurboGiftDialog.hidden=false;
+ botTurboGiftClose.focus();
+ if(P.vo)speak(announcement,null,true);else say(announcement);
+}
+function advanceBotTurboGift(team){
+ if(over||!S[team])return false;
+ S[team].p+=BOT_TURBO_GIFT_PROGRESS;
+ update();float(team,'🤖 +10%');hop(team);walk(team);
+ if(S[team].p>=100)win(team);
+ return true;
+}
+function closeBotTurboGift(){
+ if(!activeBotTurboGift)return;
+ const grant=activeBotTurboGift;
+ activeBotTurboGift=null;botTurboGiftDialog.hidden=true;
+ if(advanceBotTurboGift(grant.team)){
+  if(!over){
+   const taps=Math.min(grant.taps,HEART_N-1-Math.floor(heart[grant.team]));
+   if(taps>0)heartAdd(grant.team,taps,false);
+   turboOn(grant.team,grant.ms,grant.power);A.sfx('lead');
+  }
+ }
+ showBotTurboGift();
+}
+function cancelBotTurboGift(){
+ botTurboGiftQueue.length=0;activeBotTurboGift=null;
+ botTurboGiftDialog.hidden=true;
+}
+botTurboGiftClose.addEventListener('click',closeBotTurboGift);
+botTurboGiftDialog.addEventListener('click',e=>{if(e.target===botTurboGiftDialog)closeBotTurboGift()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&activeBotTurboGift)closeBotTurboGift()});
+const _winBotTurboGift=win;
+win=function(i){cancelBotTurboGift();clearTimeout(botTurboGiftTimer);botTurboGiftTimer=null;_winBotTurboGift(i)};
+const _resetBotTurboGift=reset;
+reset=function(){cancelBotTurboGift();return _resetBotTurboGift.apply(this,arguments)};
 /* RAFAGA: 5 comentarios REALES de un equipo en 10 s activan su turbo (enfriamiento 20 s). Los bots no cuentan */
 const burst=T.map(()=>[]),burstCd=T.map(()=>0);
 setInterval(()=>{
@@ -1358,12 +1434,14 @@ function greet(u,t,alias){
  const now=performance.now();
  if(P.vo&&now-grLast>6000&&speak('Saludamos al hincha de '+cap(T[t].n)+', '+name.replace(/[_.]+/g,' '),null,false))grLast=now;
 }
-/* Premios por acciones reales (seguir, compartir, likes). El REGALO solo se agradece: sin turbo ni puntos (regla 1) */
+/* Premios por acciones reales (seguir, compartir, likes y regalos). */
 function perks(e){
  if(!e)return;
  const u=String(e.username||'').trim();if(!u)return;
  if(e.type==='gift'){
   toast('@'+u+' · ¡gracias!','🎁');A.sfx('gift');
+  const t=recentChatTeam(u.toLowerCase());
+  if(!over&&t>=0&&T[t]){turboOn(t,TURBO_PROLONGED_MS);hype('🌹','@'+u,' · +15% y TURBO para '+T[t].n+'!',T[t].c)}
   if(performance.now()-vLast>8000)speak('¡Gracias '+u+'!',null,false);
   return;
  }
@@ -1573,13 +1651,13 @@ document.querySelectorAll('.cta').forEach((b,i)=>setTimeout(()=>{b.classList.add
 .cta,.hd,.sm,.hb{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
 .cta:focus-visible,.hd:focus-visible,.sm:focus-visible,.hb:focus-visible{outline:3px solid #ffd566;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){#fxb span.on,#fxn b.on,.fxflash,.fxring,.win.show,.win.show h2,.win.show svg,.win.show:before,.fxp i.n,#app.sprint:after{animation:none}#fxb span.on,#fxn b.on{opacity:1}.fxflash,.fxring{display:none}}
-/* CLUSS: podio de 2 clubes (1ro grande, 2do chico y centrado) con el nombre del club bajo el escudo */
-.top3{grid-template-columns:repeat(3,1fr);gap:8px 2px}
-.top3 .tp:not(:first-child) svg{width:30px;height:21px}
+/* CLUSS: el campeon destaca y los siguientes puestos se acomodan en filas de dos */
+.top3{grid-template-columns:repeat(2,1fr);gap:5px 4px}
+.top3 .tp:not(:first-child) svg{width:34px;height:24px}
 .top3 .tp:not(:first-child) em{font-size:7px}
 .top3 .tp:not(:first-child) b{font-size:9px}
 .top3 .tp:not(:first-child) .pu{left:-5px;font-size:7px;padding:1px 3px}
-.pu3{background:#9aa3b2}
+.pu3{background:#9aa3b2}.pu4{background:#a78bfa}.pu5{background:#67c6b5}.pu6{background:#e879a9}
 .tp em{font:800 9px Inter,sans-serif;font-style:normal;color:#fff;text-shadow:0 1px 1px #000;letter-spacing:.3px;line-height:1}
 .top3 .tp:first-child em{font-size:11px}
 /* CLUSS: APOYAR pierde prioridad: solo color madera, mas chico, sin brillo ni destello inicial; conserva el rayito y el corazon rojo */

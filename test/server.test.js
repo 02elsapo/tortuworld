@@ -101,8 +101,21 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /P\.duel=duel\.slice\(\)/);
     assert.match(html, /P\.nextRival=nextRival/);
     assert.match(html, /El ganador de este duelo jugará contra '\+rival\+', sorteado entre los clubes que no están jugando/);
-    assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4\}/);
+    assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4,lu:4,na:4,sa:4\}/);
     assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
+    assert.match(html, /const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000/);
+    assert.match(html, /lu:\{id:'lu',n:'LUQUEÑO'/);
+    assert.match(html, /na:\{id:'na',n:'NACIONAL'/);
+    assert.match(html, /sa:\{id:'sa',n:'SOL DE AMÉRICA'/);
+    assert.match(html, /\['1er','2do','3er','4to','5to','6to','7mo'\]/);
+    assert.match(html, /type==='gift'\?GIFT_PROGRESS\*n/);
+    assert.match(html, /const BOT_TURBO_GIFT_MIN_MS=30000,BOT_TURBO_GIFT_MAX_MS=40000/);
+    assert.match(html, /TortuLive le regala un modo turbo gratis al equipo/);
+    assert.match(html, /id="botTurboGift" hidden role="dialog"/);
+    assert.match(html, /CERRAR Y ACTIVAR TURBO/);
+    assert.match(html, /id="bRefresh"/);
+    assert.match(html, /location\.reload\(\)/);
+    assert.match(html, /v1\.0\.0/);
     assert.match(html, /const BOT_CAP=80/);
     assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
     assert.match(html, /joined\.add\(k\);greet\(u,t,e\.displayName\)/);
@@ -162,7 +175,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
 
 test('draws a stable next opponent from clubs outside the current duel', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
-  const pool = { ol: {}, cp: {}, li: {}, gu: {} };
+  const pool = { ol: {}, cp: {}, li: {}, gu: {}, lu: {}, na: {}, sa: {} };
   const drawSource = html.match(/function drawNextRival\(duel=DUELO\)\{[\s\S]*?\n\}/);
   assert.ok(drawSource, 'the overlay must define a random rival selector');
   const drawFirst = vm.runInNewContext(`(${drawSource[0]})`, {
@@ -176,8 +189,8 @@ test('draws a stable next opponent from clubs outside the current duel', () => {
     Math: { random: () => 0.99, floor: Math.floor },
   });
   assert.equal(drawFirst(), 'li');
-  assert.equal(drawLast(), 'gu');
-  assert.equal(drawLast(['ol', 'li']), 'gu');
+  assert.equal(drawLast(), 'sa');
+  assert.equal(drawLast(['ol', 'li']), 'sa');
 
   const fixtureSource = html.match(/function nextFixture\(winnerId,rival=nextRival,duel=DUELO\)\{[\s\S]*?\n\}/);
   assert.ok(fixtureSource, 'the overlay must pair the winner with the saved draw');
@@ -198,6 +211,74 @@ test('the prolonged manual turbo advances more than the bot turbo', () => {
 
   assert.equal(turboGain(4, 8000, 0.25), 8);
   assert.equal(turboGain(1, 4000, 0.25), 1);
+});
+
+test('gift boosts only use the team mentioned in chat within the previous minute', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const helperSource = html.match(/function recentChatTeam\(key,now=Date\.now\(\)\)\{[\s\S]*?\n\}/);
+  const handlerSource = html.match(/function handleLiveEntry\(entry\)\{[\s\S]*?\n\}/);
+  assert.ok(helperSource, 'the overlay must resolve gifts only to a recently supported team');
+  assert.ok(handlerSource, 'the overlay must handle real TikTok gift events');
+  let now = 10_000;
+  const recentChatPicks = new Map();
+  const recentChatTeam = vm.runInNewContext(`(${helperSource[0]})`, {
+    Date: { now: () => now },
+    recentChatPicks,
+    GIFT_TEAM_WINDOW_MS: 60_000,
+  });
+  const picks = new Map();
+  const received = [];
+  const handleLiveEntry = vm.runInNewContext(`(${handlerSource[0]})`, {
+    Date: { now: () => now },
+    lastChat: new Map(),
+    picks,
+    recentChatPicks,
+    recentChatTeam,
+    findTeam: (content) => content === 'Cerro' ? 1 : -1,
+    push: (...event) => received.push(event),
+  });
+
+  handleLiveEntry({ type: 'chat', username: 'viewer', content: 'Cerro' });
+  now = 20_000;
+  handleLiveEntry({ type: 'gift', username: 'viewer', activityCount: 2 });
+  assert.deepEqual(received, [[1, 'chat', 1], [1, 'gift', 2]]);
+
+  now = 70_001;
+  handleLiveEntry({ type: 'gift', username: 'viewer', activityCount: 1 });
+  assert.deepEqual(received, [[1, 'chat', 1], [1, 'gift', 2]]);
+});
+
+test('the bot turbo targets the team that is behind', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function losingLane\(progress\)\{[\s\S]*?\}/);
+  assert.ok(source, 'the overlay must select the losing team for its free turbo');
+  const losingLane = vm.runInNewContext(`(${source[0]})`);
+
+  assert.equal(losingLane([24, 31]), 0);
+  assert.equal(losingLane([45, 37]), 1);
+  assert.equal(losingLane([40, 40]), -1);
+});
+
+test('closing the bot turbo gift advances the lane by ten points', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function advanceBotTurboGift\(team\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must apply the bonus when the gift is accepted');
+  const lanes = [{ p: 24 }, { p: 31 }];
+  const won = [];
+  const advanceBotTurboGift = vm.runInNewContext(`(${source[0]})`, {
+    BOT_TURBO_GIFT_PROGRESS: 10,
+    S: lanes,
+    over: false,
+    update() {},
+    float() {},
+    hop() {},
+    walk() {},
+    win: (team) => won.push(team),
+  });
+
+  assert.equal(advanceBotTurboGift(0), true);
+  assert.equal(lanes[0].p, 34);
+  assert.deepEqual(won, []);
 });
 
 test('announces the trailing club at each newly reached twenty-percent milestone', () => {
