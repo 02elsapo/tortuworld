@@ -97,7 +97,7 @@ Las reglas marcadas (propuesto) aun no estan confirmadas por el autor.
   - Los eventos del bot NO disparan chispas ni emojis de usuario; solo los toques manuales y los eventos reales. Los banners (hitos, remontada, carrera pareja, foto finish) son del estado de la pista.
   - ROSITA manual se muestra como fuego (nunca como rosa/regalo). La rosa solo aparece al llegar un regalo REAL.
   - Respeta prefers-reduced-motion (menos particulas, sin anillos) y el boton 🔊. La musica de fondo sigue la regla 10 (OFF por partida).
-15. VOCES (v1.0.5: botones 🗣️ Don Tortu y 🎙️B lector de chat, independientes; sin botones de musica ni de clubes)
+15. VOCES (v1.0.6: alerta con avatar del usuario y botones 🗣️ Don Tortu y 🎙️B lector de chat, independientes; sin botones de musica ni de clubes)
   - Don Tortu: voz en off alegre de Google en espanol (pickV/speak). Lector de chat: segunda voz de sexo opuesto, SOLO lee comentarios reales (enqueueChat, CHAT_LEE_TODOS).
   - Cola del lector (chatQueue): espera a que Don Tortu termine (nunca lo pisa), 2,5 s de aire entre comentarios, maximo CHAT_Q_MAX. Se VACIA al iniciar cada partida (voReset).
 -->
@@ -400,7 +400,8 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 /* alerta = el propio avatar del usuario: aparece grande sobre los huevos, con el icono del evento en la esquina, y despues baja al nido */
 .ev{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 9px 3px;z-index:6;bottom:calc(1% + 112px)}
 .ev[hidden]{display:none}
-.ev .ua.hero{width:48px;height:58px;border-width:3px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;font-size:24px;line-height:52px;box-shadow:0 0 0 2px #fff,0 3px 7px rgba(0,0,0,.6);animation:none}
+.ev .ua.hero{position:relative;display:grid;place-items:center;width:54px;height:64px;border-width:3px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;font-size:26px;line-height:58px;box-shadow:0 0 0 2px #fff,0 3px 7px rgba(0,0,0,.6);animation:none;overflow:hidden;background:linear-gradient(180deg,#fff,#d9d9d9);color:#1c140e}
+.ev .ua.hero img{width:100%;height:100%;object-fit:cover;display:block}
 .ev .ua.hero.bt{font-size:26px}
 .ev .eb{position:absolute;top:-10px;right:-10px;font-size:15px;line-height:1.3;background:#fff;border:2px solid var(--c,#3f2713);border-radius:12px;padding:0 4px;vertical-align:baseline;margin:0}
 .ev .en{max-width:108px;overflow:hidden;text-overflow:ellipsis;font:800 10px/1.2 Inter,sans-serif}
@@ -459,9 +460,10 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 .hb:focus-visible{outline:2px solid #ffd566;outline-offset:2px}
 .hb em{position:absolute;left:16px;right:2px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;min-width:0;font-size:10px;color:#fff;text-shadow:0 1px 2px #000;pointer-events:none;z-index:1}
 .hb.bump i{box-shadow:0 0 6px 1px rgba(255,90,130,.9)}
-/* alerta v3: solo el icono del evento dentro de una burbuja chica */
-.ev{flex-direction:row;padding:2px 8px}
-.ev .eb{position:static;font-size:22px;line-height:1.2;background:none;border:0;padding:0}
+/* alerta v3: avatar del usuario con la burbuja del evento arriba, estilo compacto */
+.ev{flex-direction:row;padding:2px 8px;align-items:flex-end}
+.ev .eb{position:absolute;top:-8px;right:-6px;font-size:18px;line-height:1.2;background:#fff;border:2px solid var(--c,#3f2713);border-radius:12px;padding:0 4px;box-shadow:0 2px 4px rgba(0,0,0,.25)}
+.ev .ua.hero{width:42px;height:50px;border-width:2px;border-radius:50% 50% 46% 46%/58% 58% 42% 42%}
 /* v2.1 CONTADOR DE TAPS: que cada tap se SIENTA. Marcas cada 10, +N flotante por tap, premio +1 visible y barra que brilla */
 .hb i b{transition:width .1s ease-out}
 .hb i:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),rgba(0,0,0,.5) calc(10% - 1px),rgba(0,0,0,.5) 10%)}
@@ -534,7 +536,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
  </div>
 </section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ Don Tortu, 🎙️B narrador B (lee el chat), 🔊 efectos, 📊 estadisticas, ↺ reiniciar copas, 🔄 refrescar -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Versión 1.0.5">v1.0.5</span></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Versión 1.0.6">v1.0.6</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -1068,7 +1070,7 @@ push=function(i,type,n=1,m=1){
 const _hle=handleLiveEntry;
 const liveUsers=new Set();
 handleLiveEntry=function(e){live=true;curBot=!!(e&&e.bot);cu=String(e&&e.username||'').trim()||'anónimo';if(cu!=='anónimo')liveUsers.add(cu.toLowerCase());try{_hle(e)}finally{live=false;cu=null}
- if(e&&e.bot){const t=picks.get(String(e.username||'').toLowerCase());if(t!=null&&T[t]){showEv(t,e.type,e.activityCount); /* bot: SOLO el icono del evento, sin nombre ni avatar */
+ if(e&&e.bot){const t=picks.get(String(e.username||'').toLowerCase());if(t!=null&&T[t]){showEv(t,e.type,e.activityCount,{name:String(e.username||'').trim()||'tortubot',url:'',bot:true});
   if(botFill[t]<NEST_EGGS){botFill[t]++;renderNest(t)}}return} /* bot: solo la burbuja sobre la tortuga (sin avatar, avisos ni premios) */
  try{avatar(e)}catch(x){console.error(x)}try{perks(e)}catch(x){console.error(x)}};
 const gs=[2,2,2],seen=new Set();
@@ -1158,7 +1160,20 @@ function showEv(t,type,n,u,sc){
  const el=$('#ev'+t),d=EI[type];if(!el||!d)return;
  n=Math.floor(Number(n))||1;
  el.textContent='';el.classList.remove('land');
- const ic=document.createElement('b');ic.className='eb';ic.textContent=d[0]+((type==='like'||type==='gift')&&n>1?' x'+n:''); /* SOLO el icono del evento (sin avatar ni nombre) */
+ const info=u&&typeof u==='object'?u:null;
+ const avatar=info&&info.name?document.createElement('span'):document.createElement('span');
+ avatar.className='ua hero';
+ if(info&&info.bot){avatar.classList.add('bt');avatar.textContent='🐢';}
+ else{
+  const name=String(info&&info.name ? info.name : '');
+  const url=String(info&&info.url ? info.url : '');
+  if(/^https?:\/\//i.test(url)){setAvatarImage(avatar,url);}
+  else if(name){avatar.textContent=[...name][0].toUpperCase();}
+  else {avatar.textContent='•';}
+ }
+ avatar.title = info && info.name ? '@'+info.name : '';
+ el.append(avatar);
+ const ic=document.createElement('b');ic.className='eb';ic.textContent=d[0]+((type==='like'||type==='gift')&&n>1?' x'+n:'');
  el.append(ic);
  el.style.setProperty('--c',d[1]);el.hidden=false;el.style.animation='none';void el.offsetWidth;el.style.animation='';
  clearTimeout(evT[t]);clearTimeout(evL[t]);
@@ -1185,7 +1200,7 @@ function avatar(e){
  const url=String(e.profilePictureUrl||e.profilePicture||e.avatarUrl||e.avatar||e.userImage||e.imageUrl||'');
  const sc=(userScore.get(k)||0)+(SCORE[e.type]||0)*(e.type==='like'?Math.max(1,Math.floor(Number(e.activityCount))||1):1);userScore.set(k,sc); /* cada evento sube su puntaje */
  if(t==null&&e.type==='member'&&k!=='sistema')t=teamOf(k); /* asignacion visual estable; no guarda equipo para el juego */
- if(t==null||!T[t]){if(e.type==='member')showEv('g','member',1);return} /* se une sin equipo: avatar grande al centro, sin tocar la carrera */
+ if(t==null||!T[t]){if(e.type==='member')showEv('g','member',1,{name:u,url:url||''});return} /* se une sin equipo: avatar grande al centro, sin tocar la carrera */
  if(!seen.has(k)){seen.add(k);grow(t,.05)}
  let old=null,from=-1;
  recent.forEach((l,j)=>{const i=l.findIndex(x=>x.key===k);if(i>=0){old=l.splice(i,1)[0];from=j}}); /* si ya estaba, se saca y se vuelve a poner al frente */
@@ -1193,7 +1208,7 @@ function avatar(e){
  recent[t].unshift({key:k,name:u,url:url||(old&&old.url)||'',vip:!!(old&&old.vip)});
  known.set(k,{key:k,name:u,url:url||(known.get(k)&&known.get(k).url)||'',t});
  trimNest(t);
- showEv(t,e.type,e.activityCount); /* alerta = solo el icono del evento, y SOLO de usuarios reales */
+ showEv(t,e.type,e.activityCount,{key:k,name:u,url:url||''}); /* alerta con avatar del usuario real */
  renderNest(t);if(from>=0&&from!==t)renderNest(from);
  renderPod(t);if(from>=0&&from!==t)renderPod(from);
 }

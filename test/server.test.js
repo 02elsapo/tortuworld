@@ -119,7 +119,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /CERRAR Y ACTIVAR TURBO/);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /v1\.0\.5/);
+    assert.match(html, /v1\.0\.6/);
     assert.match(html, /id="bVozB"/);
     assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);
