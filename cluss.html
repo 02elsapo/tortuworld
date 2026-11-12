@@ -1055,6 +1055,7 @@ T.forEach((_,i)=>renderNest(i));
 const EI={chat:['💬','#8b8f99'],like:['❤️','#ff5a7a'],follow:['➕','#2f9bd6'],share:['↗️','#2f9bd6'],gift:['🎁','#e11d48'],member:['👋','#16a34a']},evT=[],evL=[];
 $('.board').insertAdjacentHTML('beforeend','<div class="ev" id="evg" hidden></div>'); /* alerta de quien se une sin equipo: avatar grande al centro */
 /* PUNTAJE POR USUARIO: cada evento real lo aumenta. El regalo vale 0 (regla 1: regalar no da ventaja ni puntos) */
+const FAN_GREETING_SCORE=20,greetedFans=new Set(),fanGreetingQueue=[];
 const userScore=new Map(),SCORE={member:1,chat:5,like:1,follow:3,share:3,gift:0};
 function topOf(t){let b=null,m=0;(recent[t]||[]).forEach(x=>{const s=userScore.get(x.key)||0;if(s>m){m=s;b=x.key}});return b}
 /* Alerta: el avatar GRANDE del usuario que genero el evento (t = indice de equipo, o 'g' para quien se une sin equipo). Despues de ~1.7 s baja al nido */
@@ -1098,6 +1099,7 @@ function avatar(e){
  trimNest(t);
  showEv(t,e.type,e.activityCount); /* alerta = solo el icono del evento, y SOLO de usuarios reales */
  renderNest(t);if(from>=0&&from!==t)renderNest(from);
+ if(sc>=FAN_GREETING_SCORE&&!greetedFans.has(k)){greetedFans.add(k);fanGreetingQueue.push(u.slice(0,40))}
 }
 /* JSON de la API: usuarios recientes del backend; alimentan el pool del frente (no se muestran como eventos) */
 fetch('/api/recent-users').then(async response=>{
@@ -1386,6 +1388,11 @@ function voWin(i){const n=T[i].n[0]+T[i].n.slice(1).toLowerCase();vDone.add('fin
 setInterval(()=>{
  if(over)return;const now=performance.now(),el=(now-vT0)/1000;
  if(sprint&&!vDone.has('final')){vDone.add('final');speak(VF[vRound%VF.length],'¡Recta final!',true);return}
+ const mx=Math.max(...S.map(x=>x.p));
+ if(mx>=25&&!vDone.has('mile25')&&now-vLast>=5000&&speak('¡Un cuarto de pista! El botón ROSITA activa un turbo momentáneo para el equipo seleccionado.',null,false)){vDone.add('mile25');return}
+ if(P.vo&&SS&&fanGreetingQueue.length&&!SS.speaking&&!SS.pending&&now-vLast>=5000){
+  if(speak('¡Saludamos a '+fanGreetingQueue[0]+' por llegar a '+FAN_GREETING_SCORE+' puntos! Gracias por alentar.',null,false)){fanGreetingQueue.shift();return}
+ }
  for(const l of VL){
   if(vDone.has(l.id)||el<l.at)continue;
   if(l.once&&vSess.has(l.id)){vDone.add(l.id);continue} /* ya se dijo en esta sesion: NO repetir (infraccion a) */

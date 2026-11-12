@@ -99,6 +99,9 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const FIXTURES=\[\['ol','cp'\],\['li','ol'\],\['li','cp'\],\['gu','ol'\],\['gu','cp'\]\]/);
     assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4\}/);
     assert.match(html, /const BOT_CAP=80/);
+    assert.match(html, /El botón ROSITA activa un turbo momentáneo para el equipo seleccionado/);
+    assert.match(html, /const FAN_GREETING_SCORE=20/);
+    assert.match(html, /por llegar a '\+FAN_GREETING_SCORE\+' puntos/);
     assert.match(html, /data-t="gift"/);
     assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,4000\)/);
     assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
