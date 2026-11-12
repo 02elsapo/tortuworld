@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const vm = require('node:vm');
 const { once } = require('node:events');
 const os = require('node:os');
 const path = require('node:path');
@@ -96,12 +97,15 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /source\.addEventListener\('update'/);
     assert.match(html, /fetch\('\/api\/reconnect'/);
     assert.match(html, /const RACE_SECONDS=600/);
-    assert.match(html, /const FIXTURES=\[\['ol','cp'\],\['li','ol'\],\['li','cp'\],\['gu','ol'\],\['gu','cp'\]\]/);
+    assert.match(html, /const START_DUELO=\['ol','cp'\]/);
+    assert.match(html, /P\.duel=duel\.slice\(\)/);
     assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4\}/);
     assert.match(html, /const BOT_CAP=80/);
-    assert.match(html, /El botón ROSITA activa un turbo momentáneo para el equipo seleccionado/);
-    assert.match(html, /const FAN_GREETING_SCORE=20/);
-    assert.match(html, /por llegar a '\+FAN_GREETING_SCORE\+' puntos/);
+    assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
+    assert.match(html, /joined\.add\(k\);greet\(u,t\)/);
+    assert.match(html, /now-alLast<18000/);
+    assert.match(html, /rocket:t=>/);
+    assert.match(html, /FA\.p\('rocket'\)/);
     assert.match(html, /data-t="gift"/);
     assert.match(html, /if\(b\.dataset\.t==='gift'\)\{turboOn\(sel,4000\)/);
     assert.match(html, /if\(type==='like'&&!curBot\)heartAdd\(i,n\)/);
@@ -139,6 +143,20 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
   } finally {
     await close(server);
   }
+});
+
+test('keeps the series winner and rotates the next opponent', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function nextFixture\(winnerId,duel=DUELO\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must define its rotating fixture selector');
+
+  const nextFixture = vm.runInNewContext(`(${source[0]})`, {
+    POOL: { ol: {}, cp: {}, li: {}, gu: {} },
+    DUELO: ['ol', 'cp'],
+  });
+  assert.deepEqual(Array.from(nextFixture('ol')), ['ol', 'li']);
+  assert.deepEqual(Array.from(nextFixture('ol', ['ol', 'li'])), ['ol', 'gu']);
+  assert.deepEqual(Array.from(nextFixture('cp', ['ol', 'cp'])), ['cp', 'li']);
 });
 
 test('forwards normalized TikTok updates in the shape consumed by version 68', async () => {

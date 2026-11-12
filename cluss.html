@@ -2,7 +2,7 @@
 <!--
 CLUSS (antes Tortu Live): duelo unico OLIMPIA vs CERRO.
  - Para participar hay que nombrar el club en el chat (olimpia/oli/decano · cerro/cp/ciclon/azulgrana). Sin club no se mueve la carrera.
- - CALENDARIO (FIXTURES): Olimpia-Cerro, Libertad-Olimpia, Libertad-Cerro, Guarani-Olimpia, Guarani-Cerro. Cada duelo es primero a 3 copas; luego pasa al siguiente.
+ - Rotacion de clubes: el ganador sigue y enfrenta al siguiente rival disponible, en orden; no repite al rival inmediatamente anterior. Cada duelo es primero a 3 copas.
  - Botones de comentar, seguir y compartir eliminados (quedan APOYAR y ROSITA). El bot se detiene en el 80% (BOT_CAP).
  - APOYO DEL BOT: si hay mas de 3 usuarios reales de un solo lado, el bot empuja al otro lado, incluso por delante, hasta el 80% (APOYO_TOPE) y se queda ahi; nunca pasa de 80, asi que nunca gana. Ver botApoyo / APOYO_*.
  - Duelo equilibrado y 4 veces mas dificil: ESFUERZO={ol:4,cp:4,li:4,gu:4} (mismo valor para todos). Se puede dar ventaja subiendo el valor del club contrario (HANDICAP, junto a DUELO).
@@ -476,7 +476,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <!-- ROSITA es un turbo manual local; no es una solicitud ni un evento real de TikTok. -->
 <nav class="rail" aria-label="Acciones">
 <button class="cta" data-t="like"><b class="pt" aria-label="1 rayo">⚡</b><svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5a7a" stroke="#fff" stroke-width="2" aria-hidden="true"><path d="M12 21 C4 15 2 11 2 8 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8 C22 11 20 15 12 21Z"/></svg>APOYAR</button>
-<button class="cta" data-t="gift" data-cd="3000"><b class="pt tb">TURBO</b><span class="em" aria-hidden="true">🌹</span>ROSITA</button>
+<button class="cta" data-t="gift" data-cd="3000"><b class="pt tb"><span aria-hidden="true">🚀</span> TURBO</b><span class="em" aria-hidden="true">🌹</span>ROSITA</button>
 </nav>
 <div class="bub" id="bub" aria-live="polite">¡Y ARRANCAN LAS TORTUGAS!</div>
 <svg width="64" height="64" viewBox="0 0 84 84" role="img" aria-label="Avatar de Don Tortu, el relator">
@@ -508,10 +508,25 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 /* SCRIPT 1 = MOTOR DEL JUEGO: datos, carriles, puntos, combo, conexion SSE con el backend y estadisticas. Las capas de sonido/nido/bot/voz estan en el SCRIPT 2 y envuelven estas funciones. */
 /* ===== DATOS: paises disponibles (POOL), duelo activo (DUELO), progreso por carril (S, 0-100) y velocidades pasivas (sp) ===== */
 const POOL={ol:{id:'ol',n:'OLIMPIA',s:'OLI',c:'#f1f1f1'},cp:{id:'cp',n:'CERRO',s:'CER',c:'#3b82f6'},li:{id:'li',n:'LIBERTAD',s:'LIB',c:'#e5e5e5'},gu:{id:'gu',n:'GUARANÍ',s:'GUA',c:'#f5c400'}}; /* CLUSS: clubes de Paraguay */
-/* CALENDARIO DE CLASICOS: cada duelo es una serie al mejor de 3 copas. Al salir campeon se pasa al siguiente y al final vuelve al primero. Editar aqui. */
-const FIXTURES=[['ol','cp'],['li','ol'],['li','cp'],['gu','ol'],['gu','cp']];
-let FX=0;try{FX=(+JSON.parse(localStorage.getItem('cluss.v1')||'{}').fx||0)%FIXTURES.length}catch(e){}
-const DUELO=FIXTURES[FX].slice();/* duelo en curso: carril 0 y carril 1 (se actualiza al cambiar de clasico) */
+/* El ganador permanece y su rival rota entre los otros clubes, sin repetir el duelo anterior. */
+const START_DUELO=['ol','cp'];
+const LEGACY_FIXTURES=[['ol','cp'],['li','ol'],['li','cp'],['gu','ol'],['gu','cp']];
+let FX=0,savedDuel=null;
+try{
+ const saved=JSON.parse(localStorage.getItem('cluss.v1')||'{}');
+ FX=(+saved.fx||0)%LEGACY_FIXTURES.length;
+ if(Array.isArray(saved.duel)&&saved.duel.length===2&&saved.duel.every(k=>POOL[k])&&saved.duel[0]!==saved.duel[1])savedDuel=saved.duel;
+ else savedDuel=LEGACY_FIXTURES[FX];
+}catch(e){}
+const DUELO=(savedDuel||START_DUELO).slice();/* duelo actual, persistido para continuar el torneo */
+function nextFixture(winnerId,duel=DUELO){
+ const clubs=Object.keys(POOL),previousOpponent=duel.find(id=>id!==winnerId),start=clubs.indexOf(previousOpponent);
+ for(let step=1;step<=clubs.length;step++){
+  const rival=clubs[(start+step+clubs.length)%clubs.length];
+  if(rival!==winnerId&&rival!==previousOpponent)return[winnerId,rival];
+ }
+ return[winnerId,clubs.find(id=>id!==winnerId)];
+}
 /* CLUSS · VENTAJA: cuantas veces MAS interacciones necesita cada club para llegar a la meta. Hoy esta en 4 para todos (equilibrado, 4 veces mas dificil); un valor 4 significa que ese club necesita 4 veces mas.
    Afecta TODO lo que viene de interaccion (chat, likes, seguir, compartir, corazon, turbo, bonus). El avance pasivo es igual para los dos. */
 const ESFUERZO={ol:4,cp:4,li:4,gu:4}; /* llegar a la meta cuesta 4 veces mas interacciones, IGUAL para todos los clubes (equilibrado). 1 = facil. Para dar ventaja a un club sube el numero del otro (ej. cp:4 = Cerro necesita 4 veces mas) */
@@ -859,6 +874,7 @@ update();
 /* SCRIPT 2 = CAPAS SOBRE EL MOTOR: audio, XP/MVP, enganches a eventos reales, nido de hinchas, corazon, bot, turbo, voz del relator. Cada capa envuelve una funcion del motor (patron _original + wrapper): el ORDEN de los wrappers importa. */
 const P={mus:1,sfx:1,xp:0,wins:[0,0],fx:0,cp:{ol:0,cp:0,li:0,gu:0},best:0,races:0,ach:{}};
 try{Object.assign(P,JSON.parse(localStorage.getItem('cluss.v1')||'{}'))}catch(e){}
+P.duel=DUELO.slice();
 let svT=0;const save=()=>{try{localStorage.setItem('cluss.v1',JSON.stringify(P))}catch(e){}};
 
 /* ===== AUDIO (WebAudio sintetizado, sin archivos externos) ===== */
@@ -1055,7 +1071,6 @@ T.forEach((_,i)=>renderNest(i));
 const EI={chat:['💬','#8b8f99'],like:['❤️','#ff5a7a'],follow:['➕','#2f9bd6'],share:['↗️','#2f9bd6'],gift:['🎁','#e11d48'],member:['👋','#16a34a']},evT=[],evL=[];
 $('.board').insertAdjacentHTML('beforeend','<div class="ev" id="evg" hidden></div>'); /* alerta de quien se une sin equipo: avatar grande al centro */
 /* PUNTAJE POR USUARIO: cada evento real lo aumenta. El regalo vale 0 (regla 1: regalar no da ventaja ni puntos) */
-const FAN_GREETING_SCORE=20,greetedFans=new Set(),fanGreetingQueue=[];
 const userScore=new Map(),SCORE={member:1,chat:5,like:1,follow:3,share:3,gift:0};
 function topOf(t){let b=null,m=0;(recent[t]||[]).forEach(x=>{const s=userScore.get(x.key)||0;if(s>m){m=s;b=x.key}});return b}
 /* Alerta: el avatar GRANDE del usuario que genero el evento (t = indice de equipo, o 'g' para quien se une sin equipo). Despues de ~1.7 s baja al nido */
@@ -1099,7 +1114,6 @@ function avatar(e){
  trimNest(t);
  showEv(t,e.type,e.activityCount); /* alerta = solo el icono del evento, y SOLO de usuarios reales */
  renderNest(t);if(from>=0&&from!==t)renderNest(from);
- if(sc>=FAN_GREETING_SCORE&&!greetedFans.has(k)){greetedFans.add(k);fanGreetingQueue.push(u.slice(0,40))}
 }
 /* JSON de la API: usuarios recientes del backend; alimentan el pool del frente (no se muestran como eventos) */
 fetch('/api/recent-users').then(async response=>{
@@ -1139,15 +1153,15 @@ function champion(i){
  if(h)h.innerHTML='¡CAMPEÓN<br>'+T[i].n+'!';
  const t=document.createElement('div');t.className='plate';t.style.cssText='padding:6px 12px;font-size:16px;text-align:center';t.textContent='🏆🏆🏆 ¡TRES COPAS!';
  if(h)h.after(t);
- const bt=$('#again');if(bt){bt.textContent='NUEVO TORNEO';bt.onclick=fullReset}
+ const bt=$('#again');if(bt){bt.textContent='NUEVO TORNEO';bt.onclick=()=>fullReset(T[i].id)}
  const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
  w.insertAdjacentHTML('beforeend',Array.from({length:40},()=>'<span class="cf" style="left:'+(Math.random()*100)+'%;background:'+cols[Math.floor(Math.random()*5)]+';animation-delay:'+(Math.random()*2)+'s"></span>').join(''));
  toast('¡'+T[i].n+' es el campeón del torneo!','🏆');
- rs=setTimeout(fullReset,12000);
+ rs=setTimeout(()=>fullReset(T[i].id),12000);
 }
 /* Reinicia el torneo completo (copas en 0). El saludo de voz se dice solo al iniciar torneo, no en cada ronda */
-function fullReset(){
- clearTimeout(rs);P.wins=[0,0];P.best=0;FX=(FX+1)%FIXTURES.length;P.fx=FX;save();aplicarDuelo(FIXTURES[FX]); /* siguiente clasico del calendario */
+function fullReset(winnerId){
+ clearTimeout(rs);const duel=nextFixture(winnerId,DUELO);P.wins=[0,0];P.best=0;FX=(FX+1)%Object.keys(POOL).length;P.fx=FX;P.duel=duel.slice();save();aplicarDuelo(duel);
  reset();
  vDone.add('intro');
  hype('👋','¡Nuevo clásico!',' · '+T[0].n+' vs '+T[1].n,'#ffd566');
@@ -1157,7 +1171,7 @@ function fullReset(){
 /* ===== RESET DE COPAS (boton "Reiniciar copas" del panel de estadisticas): top 3, copas y torneo vuelven a cero, y arranca una carrera nueva.
  NO borra el historial guardado en las estadisticas; solo cierra el torneo en curso sin campeon. ===== */
 function resetCopas(){
- P.wins=[0,0];Object.keys(POOL).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;save();aplicarDuelo(FIXTURES[0]);
+ P.wins=[0,0];Object.keys(POOL).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;P.duel=START_DUELO.slice();save();aplicarDuelo(START_DUELO);
  clearTimeout(rs);reset();renderTop3();stCloseTour();
  toast('Copas reiniciadas: todo empieza de cero','🔄');
 }
@@ -1323,6 +1337,15 @@ setInterval(()=>{
  T.forEach((_,i)=>{const on=turbo[i]>n;$('#ln'+i).classList.toggle('turbo',on);if(on){S[i].p+=.25*HANDICAP[i];walk(i)}});
  update();
 },250);
+/* SALUDO: a cada hincha real se lo saluda UNA sola vez por sesion, con una sola frase: "Saludamos al hincha de <club> <usuario>". Sin nada mas. */
+const greeted=new Set();let grLast=-1e9;
+function greet(u,t){
+ const k=String(u).toLowerCase();if(greeted.has(k)||!T[t])return;greeted.add(k);
+ const txt='Saludamos al hincha de '+cap(T[t].n)+' '+u;
+ hype('👋',txt,'',T[t].c);
+ const now=performance.now();
+ if(P.vo&&now-grLast>6000&&speak('Saludamos al hincha de '+cap(T[t].n)+' '+u.replace(/[_.]+/g,' '),null,false))grLast=now;
+}
 /* Premios por acciones reales (seguir, compartir, likes). El REGALO solo se agradece: sin turbo ni puntos (regla 1) */
 function perks(e){
  if(!e)return;
@@ -1336,8 +1359,8 @@ function perks(e){
  const k=u.toLowerCase(),t=picks.get(k);if(t==null||!T[t])return;
  const n=Math.max(1,Math.floor(Number(e.activityCount))||1),nm='@'+u,tn=T[t].n,col=T[t].c;
  let st=us.get(k);if(!st){st={likes:0,lv:0};us.set(k,st)}
- if(e.type==='chat'&&findTeam(e.content)>=0&&!joined.has(k)){joined.add(k);tz(nm+' se suma a '+tn,'🐢')}
- if(e.type==='follow'&&!welcomed.has(k)){welcomed.add(k);bonus(t,3);hype('➕',nm,' · ¡nuevo hincha de '+tn+'!',col);A.sfx('ach')}
+ if(e.type==='chat'&&findTeam(e.content)>=0&&!joined.has(k)){joined.add(k);greet(u,t)}
+ if(e.type==='follow'&&!welcomed.has(k)){welcomed.add(k);bonus(t,3);if(greeted.has(k))hype('➕',nm,' · ¡nuevo hincha de '+tn+'!',col);else greet(u,t);A.sfx('ach')}
  else if(e.type==='share'){turboOn(t,2000);hype('↗️',nm,' compartió · ¡impulso '+tn+'!',col)}
  else if(e.type==='like'){
   st.likes+=n;const M=[20,50,100];
@@ -1388,11 +1411,6 @@ function voWin(i){const n=T[i].n[0]+T[i].n.slice(1).toLowerCase();vDone.add('fin
 setInterval(()=>{
  if(over)return;const now=performance.now(),el=(now-vT0)/1000;
  if(sprint&&!vDone.has('final')){vDone.add('final');speak(VF[vRound%VF.length],'¡Recta final!',true);return}
- const mx=Math.max(...S.map(x=>x.p));
- if(mx>=25&&!vDone.has('mile25')&&now-vLast>=5000&&speak('¡Un cuarto de pista! El botón ROSITA activa un turbo momentáneo para el equipo seleccionado.',null,false)){vDone.add('mile25');return}
- if(P.vo&&SS&&fanGreetingQueue.length&&!SS.speaking&&!SS.pending&&now-vLast>=5000){
-  if(speak('¡Saludamos a '+fanGreetingQueue[0]+' por llegar a '+FAN_GREETING_SCORE+' puntos! Gracias por alentar.',null,false)){fanGreetingQueue.shift();return}
- }
  for(const l of VL){
   if(vDone.has(l.id)||el<l.at)continue;
   if(l.once&&vSess.has(l.id)){vDone.add(l.id);continue} /* ya se dijo en esta sesion: NO repetir (infraccion a) */
@@ -1409,10 +1427,34 @@ setInterval(()=>{
  if(over||!P.vo||vDone.has('final'))return;
  const mx=Math.max(...S.map(x=>x.p)),k=NXT.findIndex((u,j)=>mx>=u&&!vDone.has('nx'+j));
  if(k<0||performance.now()-vLast<5000||performance.now()-nxLast<30000)return;
- const f=FIXTURES[(FX+1)%FIXTURES.length],a=cap(POOL[f[0]].n),b=cap(POOL[f[1]].n),
-  txt=['Atención: cuando termine este clásico, el siguiente duelo será '+a+' contra '+b+'.','Después de esta serie viene '+a+' contra '+b+'.','Para ir anotando: el próximo clásico es '+a+' contra '+b+'.'][k];
+ const winner=T[lead>=0?lead:0].id,f=nextFixture(winner,DUELO),a=cap(POOL[f[0]].n),b=cap(POOL[f[1]].n),
+  txt=['Si '+a+' gana esta serie, el próximo duelo será '+a+' contra '+b+'.','Si '+a+' se lleva esta serie, después jugará contra '+b+'.','Si '+a+' resulta ganador, su siguiente rival será '+b+'.'][k];
  if(speak(txt,'Próximo clásico: '+a+' vs '+b,false)){vDone.add('nx'+k);nxLast=performance.now()}
 },700);
+/* ALIENTO: Don Tortu alienta a los dos equipos durante la carrera (cada ~18 s). Reparte el aliento parejo: al que va atras, al que va adelante y a los dos juntos.
+   No promete resultados ni pide regalos (regla 1). Con la voz apagada igual lo muestra en su globo de texto. */
+let alLast=performance.now(),alK=0,alRound=-1;
+const ALT={
+ atras:[n=>'¡Ánimo '+n+'! ¡La carrera sigue, a no aflojar!',n=>'¡Vamos '+n+'! ¡Todavía hay pista por delante!',n=>'¡Arriba '+n+'! ¡Tortuga, un pasito más!'],
+ delante:[n=>'¡Muy bien '+n+'! ¡Sigue así, a todo vapor!',n=>'¡Qué buen paso lleva '+n+'! ¡Vamos, vamos!',n=>'¡Esa es '+n+'! ¡Que no pare el ritmo!'],
+ juntos:[(a,b)=>'¡Vamos '+a+' y '+b+'! ¡Qué carrera tan linda!',(a,b)=>'¡Fuerza '+a+'! ¡Fuerza '+b+'! ¡Los dos a darlo todo!',(a,b)=>'¡Aliento para '+a+' y para '+b+'! ¡Que gane la mejor tortuga!']
+};
+setInterval(()=>{
+ const now=performance.now();
+ if(alRound!==vRound){alRound=vRound;alLast=now;alK=0}
+ if(over||sprint||vDone.has('final')||S.length<2)return;
+ if((now-vT0)/1000<14||now-alLast<18000||now-vLast<6000)return;
+ if(SS&&(SS.speaking||SS.pending))return;
+ const a=cap(T[0].n),b=cap(T[1].n),d=S[0].p-S[1].p,k=alK++,j=Math.floor(k/3)%3;
+ const back=d<0?0:1,front=d<0?1:0,nm=i=>i===0?a:b;
+ let txt;
+ if(k%3===2||Math.abs(d)<6){ /* parejo o turno de los dos */
+  txt=Math.abs(d)<6&&k%3!==2?ALT.atras[j](nm(k%2)):ALT.juntos[j](a,b);
+ }else if(k%3===0)txt=ALT.atras[j](nm(back));
+ else txt=ALT.delante[j](nm(front));
+ alLast=now;
+ if(P.vo)speak(txt,txt,false);else say(txt);
+},1000);
 function voUi(){const b=$('#bVoz');b.classList.toggle('on',!!P.vo);b.classList.toggle('off',!P.vo);b.setAttribute('aria-pressed',!!P.vo)}
 function voTog(){P.vo=P.vo?0:1;save();if(!P.vo){try{SS&&SS.cancel();A.duck(0)}catch(e){}}voUi();toast(P.vo?'Voz en off activada':'Voz en off apagada','🗣️')}
 $('#bVoz').onclick=voTog;
@@ -1627,6 +1669,13 @@ const FA=(()=>{
   close:t=>{[0,.16,.32].forEach(d=>o(N(60),t+d,.1,'square',.12));o(N(72),t+.5,.3,'square',.16)},
   heart:t=>{[84,88,91,96].forEach((m,i)=>o(N(m),t+i*.05,.28,'sine',.3))},
   turbo:t=>{o(120,t,.6,'sawtooth',.2,700,1500);nz(t,.6,.2,'bandpass',300,3000,.3)},
+  /* cohete: ignicion, motor que sube de tono, estela de ruido y chispas al final */
+  rocket:t=>{
+   nz(t,.12,.4,'highpass',2500,6000);o(70,t,.15,'square',.3,40);
+   o(80,t+.08,1.3,'sawtooth',.3,900,1800);o(160,t+.08,1.3,'square',.16,1400,2200);
+   nz(t+.05,1.4,.38,'lowpass',400,4200,.15);nz(t+.15,1.2,.22,'bandpass',900,6000,.3);
+   [0,.07,.14,.21].forEach((d,i)=>o(N(84+i*4),t+1+d,.3,'sine',.16));
+  },
   star:t=>{[96,100,103,108].forEach((m,i)=>o(N(m),t+i*.04,.35,'sine',.16))},
   boom:t=>{o(130,t,.5,'sine',.5,35);nz(t,.35,.28,'lowpass',900,150)},
   crack:t=>{nz(t,.25,.2,'highpass',3000,9000);[0,.04,.09].forEach(d=>o(rnd(1800,3200),t+d,.06,'sine',.08))},
@@ -1650,7 +1699,8 @@ const FA=(()=>{
   }
  };
  return{init,unlock(){const x=init();if(x&&x.state==='suspended')x.resume().catch(()=>{})},
-  p(n,delay){if(!run())return;try{S[n](c.currentTime+(delay||0.001))}catch(e){}},
+  p(n,delay){if(!c||!sfxOn())return;const go=()=>{try{S[n](c.currentTime+(delay||0.001))}catch(e){}};
+   if(c.state==='running')go();else c.resume().then(go).catch(()=>{})},
   vis(v){if(c)(v?c.resume():c.suspend()).catch(()=>{})}};
 })();
 ['pointerdown','keydown','touchend'].forEach(e=>addEventListener(e,FA.unlock,true));
@@ -1749,7 +1799,7 @@ showCombo=function(){
 /* ROSITA manual (fuego, no regalo) y toques manuales */
 document.querySelectorAll('.cta').forEach(b=>b.addEventListener('click',()=>{
  if(over||b.classList.contains('cool'))return;
- if(b.dataset.t==='gift'){const p=laneP(sel,.7);emojis(p.x,p.y,'🔥',8,16);burst(p.x,p.y,'#ff8a1f',24,220);FA.p('turbo')}
+ if(b.dataset.t==='gift'){const p=laneP(sel,.7);emojis(p.x,p.y,'🔥',8,16);emojis(p.x,p.y,'🚀',3,10);burst(p.x,p.y,'#ff8a1f',24,220);ring(p.x,p.y,'#5b8cff');FA.p('rocket')}
 },true));
 
 /* Observador de clases: corazon lleno, turbo activado, tortuga lider */
