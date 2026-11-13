@@ -534,7 +534,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <div class="win" id="win" role="alertdialog" aria-label="Ganador"></div>
 </section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ Don Tortu, 🎙️B narrador B (lee el chat), 🔊 efectos, 📊 estadisticas, ↺ reiniciar copas, 🔄 refrescar -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm" id="bLang" type="button" aria-label="Idioma / Language" title="Idioma / Language">EN</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.2.0"><span id="turboLim">⚡ Límite 50 taps</span> · v1.2.0</span></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm" id="bLang" type="button" aria-label="Idioma / Language" title="Idioma / Language">EN</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.2.1"><span id="turboLim">⚡ Límite 50 taps</span> · v1.2.1</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -1091,8 +1091,8 @@ P.duel=DUELO.slice();P.nextRival=nextRival;P.br=BR;save();
 const tournamentButton=document.createElement('button');
 tournamentButton.className='sm';tournamentButton.id='bTournament';tournamentButton.type='button';
 document.querySelector('.version').before(tournamentButton);
-document.querySelector('.version').setAttribute('aria-label','Límite de taps del turbo y versión 1.2.0');
-document.querySelector('.version').lastChild.textContent=' · v1.2.0';
+document.querySelector('.version').setAttribute('aria-label','Límite de taps del turbo y versión 1.2.1');
+document.querySelector('.version').lastChild.textContent=' · v1.2.1';
 function refreshTournamentButton(){tournamentButton.textContent='🏆';tournamentButton.title='Torneo actual: '+TOURNAMENT_LABELS[tournamentMode]+' · cambiar';tournamentButton.setAttribute('aria-label','Cambiar torneo; actual: '+TOURNAMENT_LABELS[tournamentMode])}
 function startTournament(mode){
  if(!TOURNAMENT_MODES.includes(mode))throw new Error('Tipo de torneo desconocido: '+mode);
@@ -1503,7 +1503,7 @@ const _reset=reset;
 reset=function(){ajustesDePartida();seen.clear();known.clear();userScore.clear();recent.forEach(l=>l.length=0);fanTurn++;gs.fill(2);T.forEach((_,i)=>{$('#ev'+i).hidden=true;heart[i]=0;renderHeart(i);$('#in'+i).style.setProperty('--s',2);renderNest(i);renderPod(i)});voReset();contrib.clear();us.clear();joined.clear();turbo.fill(0);turboPower.fill(0);giftTurboUntil.fill(0);lastMvp=null;hy.hidden=true;T.forEach((_,i)=>$('#ln'+i).classList.remove('turbo'));leads=0;sprint=false;pm=1;lastStreak=0;tk=0;$('#app').classList.remove('sprint');_reset();A.sfx('start');hud();logStat({type:'round-start',duel:DUELO});toast(T[0].n+'  ·  '+T[1].n,'💬')}; /* ronda nueva en las estadisticas */
 window.tortugas.reset=reset;window.tortugas.resetCopas=resetCopas;
 const _resetTurboLimit=reset;
-reset=function(){heartLimitOffset=0;HEART_N=50;realEv.length=0;raceStartedAt=Date.now();lowActivityFinished=false;_resetTurboLimit();syncHeartLimit()};
+reset=function(){heartLimitOffset=0;HEART_N=50;realEv.length=0;matchInteractionCount=0;raceStartedAt=Date.now();lastInteractionAt=raceStartedAt;lowActivityFinished=false;_resetTurboLimit();syncHeartLimit()};
 window.tortugas.reset=reset;
 /* Boton ↺ de la barra de herramientas: doble toque (el primero lo arma y brilla 4 s, el segundo reinicia las copas) */
 let rsArm=0;
@@ -1586,7 +1586,7 @@ const stFmt=n=>n<1000?String(n):n<10000?(n/1000).toFixed(1)+'K':Math.round(n/100
 const _hleSt=handleLiveEntry;
 handleLiveEntry=function(e){
  try{if(e&&!e.bot&&['member','chat','gift','like','follow','share'].includes(e.type))stUser(e)}catch(x){console.error(x)}
- try{if(e&&!e.bot&&e.type in ST)realEv.push(Date.now()); /* alimenta el calculo de eventos/min reales */
+ try{if(e&&!e.bot&&TAP_POLICY.isInteractionEvent(e.type)){const eventAt=Date.now();realEv.push(eventAt);lastInteractionAt=eventAt;matchInteractionCount++} /* solo interacciones, no ingresos al LIVE */
   if(e&&!e.bot&&e.type in ST){
   const n=(e.type==='like'||e.type==='gift')?Math.max(1,+e.activityCount||1):1;
   ST[e.type]+=n;const el=document.querySelector('.st[data-k="'+e.type+'"]');
@@ -1602,7 +1602,7 @@ handleLiveEntry=function(e){
 /* ===== MEDICIÓN DE ACTIVIDAD =====
  Cuenta eventos reales en una ventana de 60 s para ajustar el límite de taps y detectar baja actividad. */
 const realEv=[];                       /* marcas de tiempo de eventos reales (últimos 60 s) */
-let raceStartedAt=Date.now(),lowActivityFinished=false;
+let raceStartedAt=Date.now(),lastInteractionAt=raceStartedAt,lowActivityFinished=false,matchInteractionCount=0;
 function realEpm(now=Date.now()){while(realEv.length&&now-realEv[0]>60000)realEv.shift();return realEv.length}
 function realEventRatePerSecond(now=Date.now()){
  const elapsed=Math.max(1000,Math.min(60000,now-raceStartedAt));
@@ -1628,8 +1628,10 @@ T.forEach((_,i)=>$('#in'+i).insertAdjacentHTML('afterbegin','<g class="tf"><path
 const tz=(m,ic)=>{if(tq.length<3)toast(m,ic)};
 const turboOn=(t,ms,power=TURBO_PPS)=>{const n=performance.now(),active=turbo[t]>n;turbo[t]=Math.min(n+60000,Math.max(n,turbo[t])+ms);turboPower[t]=active?Math.max(turboPower[t],power):power};
 function finishForLowActivity(now=Date.now()){
- const rate=realEventRatePerSecond(now),elapsed=now-raceStartedAt;
- if(over||lowActivityFinished||!TAP_POLICY.shouldFinishForLowActivity(rate,elapsed))return;
+ const idleMs=now-lastInteractionAt;
+ const progress=Math.max(0,...S.map(s=>s.p));
+ const timeoutMs=TAP_POLICY.inactivityTimeoutMs(progress,matchInteractionCount);
+ if(over||lowActivityFinished||!TAP_POLICY.shouldFinishForInactivity(idleMs,timeoutMs))return;
  lowActivityFinished=true;
  const winner=lead>=0?lead:Math.max(0,update());
  turboOn(winner,HEART_TURBO_MS,TURBO_PPS);

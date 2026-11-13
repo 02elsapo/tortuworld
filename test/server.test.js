@@ -103,7 +103,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(servedHtml, /const HINCHAS_JSON=\[/);
     assert.match(servedHtml, /const TAP_WEIGHTS=\{member:1,chat:10,like:1,follow:3,share:5\}/);
     assert.match(servedHtml, /<script src="\/activity-policy\.js"><\/script>/);
-    assert.match(servedHtml, /v1\.2\.0/);
+    assert.match(servedHtml, /v1\.2\.1/);
     assert.match(servedHtml, /e\.profilePictureUrl\|\|e\.profilePicture/);
     assert.match(servedHtml, /data-local-only disabled/);
     assert.match(servedHtml, /rel="manifest" href="\/manifest.webmanifest"/);
@@ -122,7 +122,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
-    assert.match(await serviceWorker.text(), /tortu-shell-v10/);
+    assert.match(await serviceWorker.text(), /tortu-shell-v11/);
     assert.equal((await fetch(`${baseUrl}/activity-policy.js`)).status, 200);
     const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifest.status, 200);

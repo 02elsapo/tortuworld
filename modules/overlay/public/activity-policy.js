@@ -4,16 +4,25 @@
   root.TORTUWORLD_ACTIVITY_POLICY = policy;
 })(globalThis, function () {
   return Object.freeze({
+    isInteractionEvent(type) {
+      return ['chat', 'gift', 'like', 'follow', 'share'].includes(type);
+    },
     tapLimitStep(eventsPerSecond) {
       if (!Number.isFinite(eventsPerSecond) || eventsPerSecond <= 3) return 0;
       return eventsPerSecond > 10 ? 100 : 50;
     },
-    shouldFinishForLowActivity(eventsPerSecond, elapsedMs) {
-      return Number.isFinite(eventsPerSecond)
-        && eventsPerSecond >= 0
-        && eventsPerSecond <= 1
-        && Number.isFinite(elapsedMs)
-        && elapsedMs >= 60000;
+    inactivityTimeoutMs(progress, interactionCount) {
+      return Number.isFinite(progress)
+        && progress >= 80
+        && Number.isFinite(interactionCount)
+        && interactionCount > 1000
+        ? 120000
+        : 60000;
+    },
+    shouldFinishForInactivity(idleMs, timeoutMs) {
+      return Number.isFinite(idleMs)
+        && Number.isFinite(timeoutMs)
+        && idleMs >= timeoutMs;
     },
   });
 });

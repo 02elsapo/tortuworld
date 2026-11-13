@@ -74,7 +74,7 @@ Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, l
 
 El overlay `v10.html` es el contrato principal de interfaz y consume por SSE los eventos reales en `/api/events`. El backend limita los eventos a los seis tipos que v10 maneja, ofrece avatares de participantes reales y no permite insertar listas arbitrarias en `/api/recent-users`; las reglas de puntuación y carrera quedan en el overlay.
 
-El límite de taps aumenta 50 por cada 10% de recorrido si el promedio supera 3 eventos reales por segundo, y 100 si supera 10. Tras 60 segundos con un promedio de 1 evento por segundo o menos, el líder recibe turbo, gana la carrera y el torneo avanza al siguiente duelo. La etiqueta del overlay muestra v1.2.0.
+El límite de taps aumenta 50 por cada 10% de recorrido si el promedio supera 3 eventos reales por segundo, y 100 si supera 10. Sin actividad real durante 1 minuto, el líder recibe turbo y gana; si el recorrido alcanza 80% y hubo más de 1000 interacciones en el partido, el plazo sin actividad es de 2 minutos. Los ingresos al LIVE no cuentan ni reinician el reloj. La etiqueta del overlay muestra v1.2.1.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 
