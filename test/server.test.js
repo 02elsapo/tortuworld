@@ -96,7 +96,8 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /new EventSource\('\/api\/events'\)/);
     assert.match(html, /source\.addEventListener\('update'/);
     assert.match(html, /fetch\('\/api\/reconnect'/);
-    assert.match(html, /const RACE_SECONDS=600/);
+    assert.match(html, /const RACE_SECONDS=1800/);
+    assert.match(html, /const PASSIVE_CAP=100/);
     assert.match(html, /const START_DUELO=\['ol','cp'\]/);
     assert.match(html, /P\.duel=duel\.slice\(\)/);
     assert.match(html, /P\.nextRival=nextRival/);
@@ -122,8 +123,11 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /id="botTurboGiftClose" type="button">CERRAR</);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /aria-label="Límite de taps del turbo y versión 1\.0\.10"/);
-    assert.match(html, /v1\.0\.10/);
+    assert.match(html, /aria-label="Límite de taps del turbo y versión 1\.0\.11"/);
+    assert.match(html, /v1\.0\.11/);
+    assert.match(html, /id="clubName\$\{i\}".*>\$\{t\.n\}<\/text>/);
+    assert.match(html, /\$\('#clubName'\+i\)\.textContent=T\[i\]\.n/);
+    assert.doesNotMatch(html, /out\?\.32:1/);
     assert.match(html, /id="bVozB"/);
     assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);

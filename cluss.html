@@ -807,7 +807,7 @@ function laneSVG(i,t){return `<svg viewBox="0 0 120 588" preserveAspectRatio="no
 <ellipse cx="60" cy="473" rx="6" ry="3" transform="rotate(-35 60 473)" fill="#fff" opacity=".4"/><polygon points="50,469.5 68,479.25 68,498.75 50,508.5 32,498.75 32,479.25" fill="none" stroke="#fff" stroke-width="3.6" stroke-linejoin="round"/><g class="shf" clip-path="url(#hx${i})">${flag(t.id,32,469.5,36,39)}</g><polygon points="50,469.5 68,479.25 68,498.75 50,508.5 32,498.75 32,479.25" fill="none" stroke="#0d1b3a" stroke-width="1.4" stroke-linejoin="round"/>
 </g>
 <path id="cw${i}" display="none" d="M36 410 L38 394 L44 401 L50 390 L56 401 L62 394 L64 410Z" fill="url(#go${i})" stroke="#8a6410" stroke-width="1.5"/>
-</g></g></g><path d="M0 8Q0 0 8 0H8V630H8Q0 630 0 622Z M112 0H112Q120 0 120 8V622Q120 630 112 630H112Z" fill="#b07a45"/><path d="M8 10V620 M112 10V620" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V618 M117.5 12V618" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="628" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
+</g><text id="clubName${i}" x="50" y="552" text-anchor="middle" fill="#fff" font-size="8" font-weight="800" font-family="Inter,sans-serif" stroke="#000" stroke-width=".7" paint-order="stroke">${t.n}</text></g></g><path d="M0 8Q0 0 8 0H8V630H8Q0 630 0 622Z M112 0H112Q120 0 120 8V622Q120 630 112 630H112Z" fill="#b07a45"/><path d="M8 10V620 M112 10V620" stroke="#0d0602" stroke-width="2.6" opacity=".95"/><path d="M2.5 12V618 M117.5 12V618" stroke="#e3b87d" stroke-width="1" opacity=".55"/><path d="M0 535H80" stroke="#000" stroke-width="0"/><rect x="1" y="1" width="118" height="628" rx="8" fill="none" stroke="#3f2713" stroke-width="2"/></svg>`}
 $('#lanes').innerHTML=T.map((t,i)=>`<div class="lane" id="ln${i}"><button class="hd" data-i="${i}" aria-pressed="false" aria-label="${t.n}"><svg class="fgb" width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">${flag(t.id,0,0,20,14)}</svg><span class="pod"></span><svg class="crown" width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 14 L3 3 L7 8 L10 1 L13 8 L17 3 L18 14Z" fill="#ffd34d" stroke="#8a6410" stroke-width="1.2"/></svg></button><div class="hb" id="hb${i}" role="progressbar" aria-valuemin="0" aria-valuemax="500" aria-valuenow="0" aria-label="Contador tap tap de ${t.n}; solo eventos reales suman taps; cada 500 activa el turbo" title="Solo los eventos reales de TikTok suman taps; al llegar a 500 se activa el turbo"><span class="hi">❤️</span><i><b></b></i><em>0</em><s class="gl" aria-hidden="true">TURBO</s></div><div class="sv" id="sv${i}">${laneSVG(i,t)}</div></div>`).join('');
 /* Ajusta el ancho de las tortugas (--kx) para que no se deformen al cambiar el tamano del carril */
 function fitK(){document.querySelectorAll('.sv').forEach(v=>{const w=v.offsetWidth,h=v.offsetHeight;if(w&&h)v.querySelectorAll('.in').forEach(g=>g.style.setProperty('--kx',(h/588*120/w).toFixed(3)))})}
@@ -817,6 +817,7 @@ function aplicarDuelo(ids){
  DUELO.splice(0,2,...ids);
  ids.forEach((k,i)=>{Object.assign(T[i],POOL[k]);HANDICAP[i]=1/(ESFUERZO[k]*PISTA);
   const l=$('#ln'+i),hd=l.querySelector('.hd');
+  $('#clubName'+i).textContent=T[i].n;
   hd.setAttribute('aria-label',T[i].n);hd.querySelector('.fgb').innerHTML=flag(k,0,0,20,14);if(typeof renderPod==='function')renderPod(i);
   l.querySelectorAll('.shf').forEach(g=>g.innerHTML=flag(k,32,469.5,36,39));
   const sv=l.querySelector('.sv>svg');if(sv)sv.setAttribute('aria-label','Ruta '+T[i].n+' con relieve');
@@ -1371,12 +1372,12 @@ function renderTop3(){const el=document.getElementById('top3');if(!el||!BR)retur
  const FW=[53,54,54],FH=[33,34,35],RH=[36,37,38],GAP=[8,8,8]; /* ancho/alto de bandera, alto de fila y separacion central por ronda (0 cuartos, 1 semis, 2 final) */
  let o='<svg viewBox="0.5 0 119 395" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Fixture del torneo: cuartos de final, semifinales y final">';
  const lb=(t,y,fs)=>{fs=fs||10;const hw=t.length*fs*.35+3,l=hw<54?'<path d="M4 '+(y-fs*.3)+'H'+(60-hw)+'M'+(60+hw)+' '+(y-fs*.3)+'H116" stroke="#f1e8d6" stroke-opacity=".3" stroke-width=".6"/>':'';return '<text x="60" y="'+y+'" text-anchor="middle" fill="#ffd566" font-size="'+fs+'" '+F+' letter-spacing=".1">'+t+'</text>'+l};
- const flg=(id,x,y,w,h,out)=>id?'<g opacity="'+(out?.32:1)+'"><title>'+POOL[id].n+'</title>'+flag(id,x,y,w,h)+'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width=".8"/></g>'
+ const flg=(id,x,y,w,h)=>id?'<g><title>'+POOL[id].n+'</title>'+flag(id,x,y,w,h)+'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width=".8"/></g>'
   :'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2" fill="rgba(0,0,0,.25)" stroke="#f1e8d6" stroke-opacity=".4" stroke-width=".7" stroke-dasharray="2 2"/><text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" fill="#f1e8d6" fill-opacity=".55" font-size="16" '+F+'>?</text>';
  const match=(k,m,y)=>{ /* fila de un partido: k = ronda, m = indice del partido en esa ronda */
-  const ids=[r[k][2*m],r[k][2*m+1]],par=r[k+1][m],on=cur&&cur.k===k&&cur.m===m,h=RH[k],fw=FW[k],fh=FH[k],fy=y+(h-fh)/2;
+  const ids=[r[k][2*m],r[k][2*m+1]],on=cur&&cur.k===k&&cur.m===m,h=RH[k],fw=FW[k],fh=FH[k],fy=y+(h-fh)/2;
   let g='<rect x="1" y="'+y+'" width="118" height="'+h+'" rx="5" fill="'+(on?'rgba(255,213,102,.18)':'rgba(20,10,4,.55)')+'" stroke="'+(on?'#ffd566':'#f1e8d6')+'" stroke-opacity="'+(on?1:.5)+'" stroke-width="'+(on?2:.8)+'"/>';
-  g+=flg(ids[0],60-GAP[k]/2-fw,fy,fw,fh,ids[0]&&par&&par!==ids[0])+flg(ids[1],60+GAP[k]/2,fy,fw,fh,ids[1]&&par&&par!==ids[1]);
+  g+=flg(ids[0],60-GAP[k]/2-fw,fy,fw,fh)+flg(ids[1],60+GAP[k]/2,fy,fw,fh);
   g+='<text x="60" y="'+(y+h/2+2.4)+'" text-anchor="middle" fill="'+(on?'#ffd566':'#f1e8d6')+'" fill-opacity="'+(on?1:.7)+'" font-size="'+(on?9:8)+'" '+F+'>VS</text>';
   return g};
  /* CAMPEON (arriba) */
