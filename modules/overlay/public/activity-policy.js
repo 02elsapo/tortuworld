@@ -24,5 +24,9 @@
         && Number.isFinite(timeoutMs)
         && idleMs >= timeoutMs;
     },
+    inactivityRemainingSeconds(idleMs, timeoutMs) {
+      if (!Number.isFinite(idleMs) || !Number.isFinite(timeoutMs)) return 0;
+      return Math.max(0, Math.ceil((timeoutMs - Math.max(0, idleMs)) / 1000));
+    },
   });
 });

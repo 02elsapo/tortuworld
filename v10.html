@@ -1185,7 +1185,7 @@ const A=(()=>{
 const need=l=>50+25*l;
 /* XP y nivel: solo internos (el nivel NO se muestra, regla 5) */
 function lvl(){let l=1,x=P.xp;while(x>=need(l)){x-=need(l);l++}return[l,x,need(l)]}
-const contrib=new Map(),AC={first:'Primer toque',x2:'Combo x2 desbloqueado',x3:'¡Combo máximo x3!',gift:'Primer regalo',lead5:'Carrera pareja: 5 cambios de líder',pick:'¡Hincha acertado! Ganó tu equipo',lv5:'Nivel 5 alcanzado',r5:'5 carreras completadas'};
+const contrib=new Map(),contribTeam=new Map(),AC={first:'Primer toque',x2:'Combo x2 desbloqueado',x3:'¡Combo máximo x3!',gift:'Primer regalo',lead5:'Carrera pareja: 5 cambios de líder',pick:'¡Hincha acertado! Ganó tu equipo',lv5:'Nivel 5 alcanzado',r5:'5 carreras completadas'};
 const mvp=()=>[...contrib].sort((a,b)=>b[1]-a[1])[0];
 const who=n=>n==='TÚ'?n:'@'+n;
 /* Actualiza el HUD (barra de nivel/XP y datos de la partida). */
@@ -1227,6 +1227,7 @@ push=function(i,type,n=1,m=1){
  if(was||i<0||!S[i])return;
  grow(i,.015);
  const pts=type==='like'&&live?0:(PTS[type]||0)*n*m,w=live?cu:'TÚ';
+ if(live&&cu)contribTeam.set(String(cu).toLowerCase(),i);
  contrib.set(w,(contrib.get(w)||0)+pts);
  if(!live&&streak>P.best)P.best=streak;
  if(type==='gift')ach('gift');
@@ -1581,6 +1582,10 @@ function renderTop3(){
 }
 /* ===== ESTADISTICAS REALES: solo eventos del live. Los bots (bot:true) y los toques manuales no cuentan ===== */
 const ST={member:0,chat:0,gift:0,like:0,follow:0,share:0};
+const idleStat=document.createElement('div');
+idleStat.className='st';idleStat.dataset.k='idle';idleStat.title='Tiempo restante sin interacción';
+idleStat.innerHTML='<b>⏳</b><span id="idleCountdown" aria-live="off">60s</span>';
+document.getElementById('evs').appendChild(idleStat);
 /* Formato compacto de numeros (1.2K) */
 const stFmt=n=>n<1000?String(n):n<10000?(n/1000).toFixed(1)+'K':Math.round(n/1000)+'K';
 const _hleSt=handleLiveEntry;
@@ -1607,6 +1612,13 @@ function realEpm(now=Date.now()){while(realEv.length&&now-realEv[0]>60000)realEv
 function realEventRatePerSecond(now=Date.now()){
  const elapsed=Math.max(1000,Math.min(60000,now-raceStartedAt));
  return realEpm(now)/(elapsed/1000);
+}
+function renderInactivityCountdown(now=Date.now()){
+ const progress=Math.max(0,...S.map(s=>s.p));
+ const timeoutMs=TAP_POLICY.inactivityTimeoutMs(progress,matchInteractionCount);
+ const seconds=TAP_POLICY.inactivityRemainingSeconds(now-lastInteractionAt,timeoutMs);
+ const counter=$('#idleCountdown'),text=seconds+'s';
+ if(counter&&counter.textContent!==text)counter.textContent=text;
 }
 /* BOT ELIMINADO: sin ritmo automatico, sin eventos tortubot, sin apoyo al lado vacio y sin regalos gratis. Solo cuentan los eventos REALES del live. */
 $('#bStat').onclick=()=>stOpen('torneos');  /* abre el panel de torneos */
@@ -1648,6 +1660,7 @@ setInterval(()=>{
   if(!on)turboPower[i]=0;
  });
  update();
+ renderInactivityCountdown();
  finishForLowActivity();
 },250);
 /* SALUDO: a cada hincha real se lo saluda UNA sola vez por sesion, con una sola frase: "Saludamos al hincha de <club> <usuario>". Sin nada mas. */
@@ -1706,7 +1719,16 @@ function perks(e){
   if(st.lv<3&&st.likes>=M[st.lv]){st.lv++;markVip(k);hype('❤️',nm,' · Fan nivel '+st.lv+' de '+tn,col);A.sfx('ach')}
  }
  const mv=mvp();
- if(mv&&mv[0]!==lastMvp&&mv[1]>=10){const first=lastMvp===null;lastMvp=mv[0];tz(who(mv[0])+(first?' lidera la sala':' es el nuevo MVP'),'👑')}
+ if(mv&&mv[0]!==lastMvp&&mv[1]>=10){
+  const first=lastMvp===null,key=String(mv[0]).toLowerCase(),fan=known.get(key);
+  const teamIndex=contribTeam.has(key)?contribTeam.get(key):(fan?fan.t:-1),team=T[teamIndex];
+  const name=String(fan&&fan.name||mv[0]).replace(/[_.]+/g,' ');
+  const club=team?cap(team.n):'';
+  const greeting=club?'Saludamos al hincha destacado de '+club+', '+name:'Saludamos al hincha destacado, '+name;
+  lastMvp=mv[0];
+  tz(greeting+(first?' · lidera la sala':' · es el nuevo MVP'),'👑');
+  if(P.vo)speak(greeting,null,false);
+ }
 }
 /* ===== VOZ EN OFF: explica la dinamica y presenta pedidos de interaccion escalonados ===== */
 const SS=window.speechSynthesis;

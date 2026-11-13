@@ -27,3 +27,10 @@ test('other matches finish after one idle minute', () => {
   assert.equal(policy.shouldFinishForInactivity(59999, 60000), false);
   assert.equal(policy.shouldFinishForInactivity(60000, 60000), true);
 });
+
+test('inactivity display counts down and resets to the configured timeout', () => {
+  assert.equal(policy.inactivityRemainingSeconds(0, 60000), 60);
+  assert.equal(policy.inactivityRemainingSeconds(1500, 60000), 59);
+  assert.equal(policy.inactivityRemainingSeconds(60000, 60000), 0);
+  assert.equal(policy.inactivityRemainingSeconds(0, 120000), 120);
+});
