@@ -13,6 +13,11 @@ test('free tournament is the default locked mode and can be manually unlocked', 
   assert.match(html, /localStorage\.setItem\('cluss\.torneoLock',lock\|\|'auto'\)/);
 });
 
+test('empty free-tournament lanes do not show waiting-team labels', () => {
+  assert.doesNotMatch(html, /ESPERANDO EQUIPO|esperando equipo/);
+  assert.match(html, /'free-wait-a':\{id:'free-wait-a',n:'',s:'—',emoji:'🆓'/);
+});
+
 test('inactivity victories advance without awarding a cup', () => {
   assert.match(html, /win\(winner,\{timedOut:true\}\)/);
   assert.match(html, /TAP_POLICY\.shouldAwardCup\(fin,timedOut\)/);
