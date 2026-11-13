@@ -101,17 +101,20 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const START_DUELO=\['ol','cp'\]/);
     assert.match(html, /P\.duel=duel\.slice\(\)/);
     assert.match(html, /P\.nextRival=nextRival/);
-    assert.match(html, /function brNew\(\)/);
-    assert.match(html, /const BR_NOM=\['CUARTOS DE FINAL','SEMIFINAL','FINAL'\]/);
-    assert.match(html, /El ganador de este duelo pasa a '\+rival\+'\./);
+    assert.match(html, /function brNew\(mode=tournamentMode\)/);
+    assert.match(html, /function roundName\(k\)/);
+    assert.match(html, /function interactionFinalists\(\)/);
+    assert.match(html, /const TOURNAMENT_MODES=\['libertadores','champions','countries','america'\]/);
+    assert.ok(html.indexOf('<h1 class="title">CLUSS</h1>') < html.indexOf('<section class="board">'));
+    assert.match(html, /tournamentMode=TOURNAMENT_MODES\[\(TOURNAMENT_MODES\.indexOf\(tournamentMode\)\+1\)%TOURNAMENT_MODES\.length\]/);
     assert.match(html, /stCloseTimer=setTimeout\(stClose,3000\)/);
     assert.match(html, /botTurboGiftCloseTimer=setTimeout\(closeBotTurboGift,2800\)/);
     assert.match(html, /rs=setTimeout\(reset,2800\)/);
     assert.match(html, /rs=setTimeout\(nextMatch,fin\?7000:5000\)/);
     assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4,lu:4,na:4,sa:4,to:4\}/);
     assert.match(html, /const PISTA=1/);
-    assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
-    assert.match(html, /const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000/);
+    assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=10000/);
+    assert.match(html, /const GIFT_PROGRESS=10,GIFT_TEAM_WINDOW_MS=60000/);
     assert.match(html, /lu:\{id:'lu',n:'LUQUEÑO'/);
     assert.match(html, /na:\{id:'na',n:'NACIONAL'/);
     assert.match(html, /sa:\{id:'sa',n:'SOL DE AMÉRICA'/);
@@ -123,8 +126,11 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /id="botTurboGiftClose" type="button">CERRAR</);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /aria-label="Límite de taps del turbo y versión 1\.0\.11"/);
-    assert.match(html, /v1\.0\.11/);
+    assert.match(html, /aria-label="Límite de taps del turbo y versión 1\.1\.0"/);
+    assert.doesNotMatch(html, /v1\.0\.11/);
+    assert.match(html, /v1\.1\.0/);
+    assert.match(html, /before\(tournamentButton\)/);
+    assert.match(html, /setAttribute\('y',p<=50\?456\+54-p\*4\.8-16:528\+54-p\*4\.8\+14\)/);
     assert.match(html, /id="clubName\$\{i\}".*>\$\{t\.n\}<\/text>/);
     assert.match(html, /\$\('#clubName'\+i\)\.textContent=T\[i\]\.n/);
     assert.doesNotMatch(html, /out\?\.32:1/);
@@ -134,7 +140,8 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
     assert.match(html, /joined\.add\(k\);greet\(u,t,e\.displayName\)/);
     assert.match(html, /const txt='Saludamos al hincha de '\+cap\(T\[t\]\.n\)\+', '\+name/);
-    assert.match(html, /const ENGAGEMENT_AT=\[25,50,75\]/);
+    assert.match(html, /const ENGAGEMENT_AT=\[50,75\]/);
+    assert.doesNotMatch(html, /25:'Para avanzar, comenta el nombre de tu equipo en el chat y suma taps con APOYAR'/);
     assert.match(html, /function nextEngagementCall\(progress,done\)/);
     assert.match(html, /call\.percent===50&&vSess\.has\('turbo-rose'\)/);
     assert.match(html, /if\(call\.percent===50\)vSess\.add\('turbo-rose'\)/);
@@ -174,7 +181,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
-    assert.match(await serviceWorker.text(), /tortu-shell-v7/);
+    assert.match(await serviceWorker.text(), /tortu-shell-v8/);
     const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifest.status, 200);
     const appManifest = await manifest.json();
@@ -291,14 +298,13 @@ test('the bot does not offer free turbos', () => {
   assert.equal(canOffer, false);
 });
 
-test('stages interaction prompts at 25%, 50%, and 75%', () => {
+test('removes the tap call-to-action and keeps later prompts', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function nextEngagementCall\(progress,done\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must select only the next interaction milestone');
   const nextEngagementCall = vm.runInNewContext(`(${source[0]})`, {
-    ENGAGEMENT_AT: [25, 50, 75],
+    ENGAGEMENT_AT: [50, 75],
     ENGAGEMENT_CALLS: {
-      25: 'comenta',
       50: 'envía una rosita real para activar el modo turbo',
       75: 'sigue y comparte',
     },
@@ -306,19 +312,16 @@ test('stages interaction prompts at 25%, 50%, and 75%', () => {
   });
   const announced = new Set();
 
-  const first = nextEngagementCall([30, 0], announced);
-  assert.equal(first.percent, 25);
-  assert.match(first.text, /comenta/);
-  announced.add('engagement25');
+  assert.equal(nextEngagementCall([30, 0], announced), null);
 
-  const second = nextEngagementCall([60, 0], announced);
-  assert.equal(second.percent, 50);
-  assert.match(second.text, /rosita real.*modo turbo/);
+  const first = nextEngagementCall([60, 0], announced);
+  assert.equal(first.percent, 50);
+  assert.match(first.text, /rosita real.*modo turbo/);
   announced.add('engagement50');
 
-  const third = nextEngagementCall([80, 0], announced);
-  assert.equal(third.percent, 75);
-  assert.match(third.text, /sigue y comparte/);
+  const second = nextEngagementCall([80, 0], announced);
+  assert.equal(second.percent, 75);
+  assert.match(second.text, /sigue y comparte/);
   announced.add('engagement75');
   assert.equal(nextEngagementCall([100, 0], announced), null);
 });
@@ -394,7 +397,7 @@ test('does not narrate free turbo gifts and explains the real rose turbo once', 
   assert.match(html, /if\(call\.percent===50\)vSess\.add\('turbo-rose'\)/);
 });
 
-test('a full tap counter advances 7% and activates turbo', () => {
+test('a full tap counter advances 3% and activates turbo', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function heartAdd\(t,n\)\{[\s\S]*?\n\}/);
   assert.ok(source, 'the overlay must define tap-to-board progress');
@@ -414,9 +417,9 @@ test('a full tap counter advances 7% and activates turbo', () => {
     over: false,
     T: [{}],
     heart,
-    HEART_N: 500,
-    HEART_TURBO_PROGRESS: 7,
-    TURBO_PROLONGED_MS: 8000,
+    HEART_N: 50,
+    HEART_TURBO_PROGRESS: 3,
+    TURBO_PROLONGED_MS: 10000,
     turboOn: (...args) => turboCalls.push(args),
     S,
     $: () => heartBar,
@@ -431,34 +434,101 @@ test('a full tap counter advances 7% and activates turbo', () => {
   };
   const turboCalls = [];
   const heartAdd = vm.runInNewContext(`(${source[0]})`, context);
-  assert.match(html, /let HEART_N=500;try\{const n=\+JSON\.parse\(localStorage\.getItem\('cluss\.turboN'\)\)/);
+  assert.match(html, /let HEART_N=50,heartLimitOffset=0/);
   assert.match(html, /id="bTurboDn"/);
   assert.match(html, /id="bTurboUp"/);
-  assert.match(html, /Math\.min\(10000,Math\.max\(100,HEART_N\+d\)\)/);
-  assert.match(html, /HEART_TURBO_PROGRESS=7/);
+  assert.match(html, /heartLimitOffset=Math\.max\(-10000,Math\.min\(10000,heartLimitOffset\+d\)\)/);
+  assert.match(html, /HEART_TURBO_PROGRESS=3/);
 
-  heartAdd(0, 499);
+  heartAdd(0, 49);
   assert.equal(S[0].p, 0);
-  assert.equal(heart[0], 499);
+  assert.equal(heart[0], 49);
   heartAdd(0, 1);
-  assert.equal(S[0].p, 7);
+  assert.equal(S[0].p, 3);
   assert.equal(heart[0], 0);
-  assert.deepEqual(turboCalls, [[0, 8000]]);
+  assert.deepEqual(turboCalls, [[0, 10000]]);
 
-  heartAdd(0, 499);
-  assert.equal(S[0].p, 7);
-  assert.equal(heart[0], 499);
-  assert.deepEqual(turboCalls, [[0, 8000]]);
+  heartAdd(0, 49);
+  assert.equal(S[0].p, 3);
+  assert.equal(heart[0], 49);
+  assert.deepEqual(turboCalls, [[0, 10000]]);
 
   heartAdd(0, 1);
-  assert.equal(S[0].p, 14);
+  assert.equal(S[0].p, 6);
   assert.equal(heart[0], 0);
-  assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
+  assert.deepEqual(turboCalls, [[0, 10000], [0, 10000]]);
 
-  heartAdd(0, 250);
-  assert.equal(S[0].p, 14);
-  assert.equal(heart[0], 250);
-  assert.deepEqual(turboCalls, [[0, 8000], [0, 8000]]);
+  heartAdd(0, 25);
+  assert.equal(S[0].p, 6);
+  assert.equal(heart[0], 25);
+  assert.deepEqual(turboCalls, [[0, 10000], [0, 10000]]);
+});
+
+test('tap turbo duration is capped at ten seconds', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/const turboOn=\(t,ms,power=TURBO_PPS\)=>\{[\s\S]*?\};/);
+  assert.ok(source);
+  const turbo = [0];
+  const startTurbo = vm.runInNewContext(source[0].replace(/^const turboOn=/, ''), {
+    turbo,
+    turboPower: [0],
+    TURBO_PROLONGED_MS: 10000,
+    TURBO_PPS: 4,
+    performance: { now: () => 1000 },
+  });
+
+  startTurbo(0, 20000);
+  assert.equal(turbo[0], 11000);
+});
+
+test('dynamic tap cap starts at 50 and applies the tournament/final increments', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const stepSource = html.match(/function heartLimitStep\(\)\{[\s\S]*?\n\s*\}/);
+  const syncSource = html.match(/function syncHeartLimit\(\)\{[\s\S]*?\n\s*\}/);
+  assert.ok(stepSource);
+  assert.ok(syncSource);
+  const stepFor = (DUELO, k) => vm.runInNewContext(`(${stepSource[0]})`, {
+    DUELO,
+    BR: { r: [[], [], [], []] },
+    brCur: () => ({ k }),
+  })();
+
+  assert.equal(stepFor(['lib-oli', 'lib-fla'], 0), 100);
+  assert.equal(stepFor(['lib-gua', 'lib-fla'], 0), 50);
+  assert.equal(stepFor(['lib-gua', 'lib-cer'], 0), 100);
+  assert.equal(stepFor(['ucl-rm', 'ucl-bc'], 2), 100);
+  assert.equal(stepFor(['lib-oli', 'lib-fla'], 2), 200);
+  assert.equal(stepFor(['lib-gua', 'lib-fla'], 2), 150);
+
+  const state = {
+    S: [{ p: 0 }, { p: 0 }],
+    HEART_N: 50,
+    heartLimitOffset: 0,
+    heartLimitStep: () => 100,
+    T: [{}, {}],
+    renderHeart() {},
+  };
+  vm.runInNewContext(`(${syncSource[0]})`, state)();
+  assert.equal(state.HEART_N, 50);
+  state.S[0].p = 10;
+  vm.runInNewContext(`(${syncSource[0]})`, state)();
+  assert.equal(state.HEART_N, 150);
+
+  const narratorScripts = html.match(/const dinamicaTxt=[\s\S]*?const VL=\[[\s\S]*?\n\];/);
+  assert.ok(narratorScripts);
+  assert.doesNotMatch(narratorScripts[0], /\b\d+\s*taps?\b/i);
+  assert.match(html, /class="version" aria-label="Límite de taps del turbo y versión 1\.1\.0"><span id="turboLim">[^<]*50 taps<\/span> · v1\.1\.0<\/span>/);
+});
+
+test('the two most interactive participants enter the final', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function interactionFinalists\(\)\{[\s\S]*?\n\}/);
+  assert.ok(source);
+  const finalists = vm.runInNewContext(`(${source[0]})`, {
+    BR: { r: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], [], ['a', 'b'], [null]] },
+    tournamentInteractions: { a: 2, b: 3, c: 1, d: 10, e: 9, f: 0, g: 0, h: 0 },
+  });
+  assert.deepEqual(Array.from(finalists()), ['d', 'e']);
 });
 
 test('real TikTok events only add their configured weights to the tap counter', () => {
@@ -486,7 +556,7 @@ test('real TikTok events only add their configured weights to the tap counter', 
     lead: 0,
     lt: 0,
     TAP_WEIGHTS: weights,
-    GIFT_PROGRESS: 15,
+    GIFT_PROGRESS: 10,
     _push() { directPushes++; },
     heartAdd(team, amount) { received.push([team, amount]); },
     giftTurboOn(team, count) { gifts.push([team, count]); },
@@ -520,33 +590,45 @@ test('real TikTok events only add their configured weights to the tap counter', 
   assert.equal(directPushes, 0);
   assert.deepEqual(gifts, []);
   push(0, 'gift', 2);
-  assert.equal(progress.p, 72);
+  assert.equal(progress.p, 62);
   assert.equal(progress.g, 2);
   assert.deepEqual(gifts, [[0, 2]]);
 });
 
-test('each real gift independently adds 15% and ten seconds of five-percent-per-second turbo', () => {
+test('each real gift advances 10% and activates twenty seconds of five-percent-per-second turbo', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function giftTurboOn\(t,count\)\{[\s\S]*?\}/);
   assert.ok(source, 'the overlay must define per-gift turbo timing');
-  assert.match(html, /GIFT_TURBO_MS=10000,GIFT_TURBO_PPS=5/);
+  assert.match(html, /GIFT_TURBO_MS=20000,GIFT_TURBO_PPS=5/);
   const turboGainSource = html.match(/function turboGain\(rate,ms,handicap\)\{[\s\S]*?\}/);
   const turboGain = vm.runInNewContext(`(${turboGainSource[0]})`);
-  assert.equal(15 + turboGain(5, 10_000, 1), 65);
+  assert.equal(10 + turboGain(5, 20_000, 1), 110);
 
   let now = 1000;
   const giftTurboUntil = [0];
   const giftTurboOn = vm.runInNewContext(`(${source[0]})`, {
     giftTurboUntil,
-    GIFT_TURBO_MS: 10000,
+    GIFT_TURBO_MS: 20000,
     performance: { now: () => now },
   });
 
   giftTurboOn(0, 1);
-  assert.equal(giftTurboUntil[0], 11_000);
+  assert.equal(giftTurboUntil[0], 21_000);
   now = 2000;
   giftTurboOn(0, 2);
-  assert.equal(giftTurboUntil[0], 31_000);
+  assert.equal(giftTurboUntil[0], 61_000);
+});
+
+test('money gun wins for the team named by the gifting user', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function isMoneyGunGift\(e\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must recognize Money Gun gift events');
+  const isMoneyGunGift = vm.runInNewContext(`(${source[0]})`);
+
+  assert.equal(isMoneyGunGift({ content: 'Envió Money Gun' }), true);
+  assert.equal(isMoneyGunGift({ giftName: 'Pistola de dinero' }), true);
+  assert.equal(isMoneyGunGift({ giftName: 'Diamond Gun' }), false);
+  assert.match(html, /if\(!isMoneyGunGift\(e\)\)return;[\s\S]*?S\[t\]\.p=100;win\(t\)/);
 });
 
 test('gift narration interrupts other voice and announces the team turbo', () => {
