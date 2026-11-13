@@ -1,7 +1,8 @@
-const CACHE_NAME = 'tortu-shell-v9';
+const CACHE_NAME = 'tortu-shell-v10';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
+  '/activity-policy.js',
   '/icons/tortu-192.png',
   '/icons/tortu-512.png',
 ];

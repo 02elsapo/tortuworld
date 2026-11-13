@@ -494,6 +494,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 @media (prefers-reduced-motion:reduce){.btg-card{animation:none}}
 </style>
 <script>window.I18N={en:false,tr:function(x){return x}};</script>
+<script src="/activity-policy.js"></script>
 </head>
 <body>
 <!-- OVERLAY de 416x746 px; el ultimo script lo escala para llenar la ventana (OBS / navegador) -->
@@ -533,7 +534,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <div class="win" id="win" role="alertdialog" aria-label="Ganador"></div>
 </section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ Don Tortu, 🎙️B narrador B (lee el chat), 🔊 efectos, 📊 estadisticas, ↺ reiniciar copas, 🔄 refrescar -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm" id="bLang" type="button" aria-label="Idioma / Language" title="Idioma / Language">EN</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.1.0"><span id="turboLim">⚡ Límite 50 taps</span> · v1.1.0</span></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm" id="bLang" type="button" aria-label="Idioma / Language" title="Idioma / Language">EN</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.2.0"><span id="turboLim">⚡ Límite 50 taps</span> · v1.2.0</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -854,6 +855,7 @@ document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matche
 addEventListener('keydown',e=>{if(e.key==='Escape')stClose()});
 const PTS={share:5*HARD, /* compartir = 5 rayos */chat:10*HARD, /* comentar = 10 rayos */like:1*HARD,follow:3*HARD,gift:GIFT_PROGRESS}; /* puntos usados por los eventos automaticos del bot */
 const TAP_WEIGHTS={member:1,chat:10,like:1,follow:3,share:5};
+const TAP_POLICY=window.TORTUWORLD_ACTIVITY_POLICY;
 let sp=[1,1,1],lastTick=performance.now();
 const newSpeeds=()=>{sp=T.map(()=>0.985+Math.random()*0.03)};newSpeeds();
 const USER='cluss'.slice(0,10);
@@ -1089,8 +1091,8 @@ P.duel=DUELO.slice();P.nextRival=nextRival;P.br=BR;save();
 const tournamentButton=document.createElement('button');
 tournamentButton.className='sm';tournamentButton.id='bTournament';tournamentButton.type='button';
 document.querySelector('.version').before(tournamentButton);
-document.querySelector('.version').setAttribute('aria-label','Límite de taps del turbo y versión 1.1.0');
-document.querySelector('.version').lastChild.textContent=' · v1.1.0';
+document.querySelector('.version').setAttribute('aria-label','Límite de taps del turbo y versión 1.2.0');
+document.querySelector('.version').lastChild.textContent=' · v1.2.0';
 function refreshTournamentButton(){tournamentButton.textContent='🏆';tournamentButton.title='Torneo actual: '+TOURNAMENT_LABELS[tournamentMode]+' · cambiar';tournamentButton.setAttribute('aria-label','Cambiar torneo; actual: '+TOURNAMENT_LABELS[tournamentMode])}
 function startTournament(mode){
  if(!TOURNAMENT_MODES.includes(mode))throw new Error('Tipo de torneo desconocido: '+mode);
@@ -1255,7 +1257,8 @@ const HEART_TURBO_PROGRESS=3,heart=T.map(()=>0);
 function heartLimitStep(){
  const active=DUELO,finalRound=brCur()&&brCur().k===BR.r.length-2;
  const clubStep=active.some(id=>['ol','cp','lib-oli','lib-cer'].includes(id))?100:active.some(id=>['gu','lib-gua'].includes(id))?50:0;
- return clubStep+(finalRound?100:0);
+ const activityStep=TAP_POLICY.tapLimitStep(realEventRatePerSecond());
+ return clubStep+(finalRound?100:0)+activityStep;
 }
 function syncHeartLimit(){
  const progress=Math.max(0,...S.map(s=>Math.min(100,s.p))),n=Math.max(50,50+Math.floor(progress/10)*heartLimitStep()+heartLimitOffset);
@@ -1500,7 +1503,7 @@ const _reset=reset;
 reset=function(){ajustesDePartida();seen.clear();known.clear();userScore.clear();recent.forEach(l=>l.length=0);fanTurn++;gs.fill(2);T.forEach((_,i)=>{$('#ev'+i).hidden=true;heart[i]=0;renderHeart(i);$('#in'+i).style.setProperty('--s',2);renderNest(i);renderPod(i)});voReset();contrib.clear();us.clear();joined.clear();turbo.fill(0);turboPower.fill(0);giftTurboUntil.fill(0);lastMvp=null;hy.hidden=true;T.forEach((_,i)=>$('#ln'+i).classList.remove('turbo'));leads=0;sprint=false;pm=1;lastStreak=0;tk=0;$('#app').classList.remove('sprint');_reset();A.sfx('start');hud();logStat({type:'round-start',duel:DUELO});toast(T[0].n+'  ·  '+T[1].n,'💬')}; /* ronda nueva en las estadisticas */
 window.tortugas.reset=reset;window.tortugas.resetCopas=resetCopas;
 const _resetTurboLimit=reset;
-reset=function(){heartLimitOffset=0;HEART_N=50;_resetTurboLimit();syncHeartLimit()};
+reset=function(){heartLimitOffset=0;HEART_N=50;realEv.length=0;raceStartedAt=Date.now();lowActivityFinished=false;_resetTurboLimit();syncHeartLimit()};
 window.tortugas.reset=reset;
 /* Boton ↺ de la barra de herramientas: doble toque (el primero lo arma y brilla 4 s, el segundo reinicia las copas) */
 let rsArm=0;
@@ -1583,7 +1586,7 @@ const stFmt=n=>n<1000?String(n):n<10000?(n/1000).toFixed(1)+'K':Math.round(n/100
 const _hleSt=handleLiveEntry;
 handleLiveEntry=function(e){
  try{if(e&&!e.bot&&['member','chat','gift','like','follow','share'].includes(e.type))stUser(e)}catch(x){console.error(x)}
- try{if(e&&!e.bot&&e.type!=='member'&&e.type in ST)realEv.push(Date.now()); /* alimenta el calculo de eventos/min reales */
+ try{if(e&&!e.bot&&e.type in ST)realEv.push(Date.now()); /* alimenta el calculo de eventos/min reales */
   if(e&&!e.bot&&e.type in ST){
   const n=(e.type==='like'||e.type==='gift')?Math.max(1,+e.activityCount||1):1;
   ST[e.type]+=n;const el=document.querySelector('.st[data-k="'+e.type+'"]');
@@ -1596,13 +1599,15 @@ handleLiveEntry=function(e){
   logStat({type:e.type,username:e.username,content:e.content,gift:e.giftName||e.gift_name||e.gift||e.giftId||'',count:Math.max(1,+e.activityCount||1),team:t!=null&&T[t]?T[t].id:null,duel:DUELO})}}catch(x){}
  return r;
 };
-/* ===== RITMO AUTOMATICO (bot adaptable) =====
- Sostiene TARGET_EPM eventos/min en total. Cuenta los eventos REALES de los ultimos 60 s y el bot solo aporta lo que falta:
-   eventos del bot por minuto = clamp(TARGET_EPM - reales, 0, BOT_MAX_EPM)
- Mas usuarios reales -> el bot baja hasta 0. Sin usuarios -> sube hasta BOT_MAX_EPM.
- REGLA TIKTOK: no inventa usuarios ni likes/regalos/seguidores falsos (infraccion a). Solo mueve las tortugas. */
-const realEv=[];                       /* marcas de tiempo de eventos reales (ultimos 60 s) */
-function realEpm(){const n=Date.now();while(realEv.length&&n-realEv[0]>60000)realEv.shift();return realEv.length}
+/* ===== MEDICIÓN DE ACTIVIDAD =====
+ Cuenta eventos reales en una ventana de 60 s para ajustar el límite de taps y detectar baja actividad. */
+const realEv=[];                       /* marcas de tiempo de eventos reales (últimos 60 s) */
+let raceStartedAt=Date.now(),lowActivityFinished=false;
+function realEpm(now=Date.now()){while(realEv.length&&now-realEv[0]>60000)realEv.shift();return realEv.length}
+function realEventRatePerSecond(now=Date.now()){
+ const elapsed=Math.max(1000,Math.min(60000,now-raceStartedAt));
+ return realEpm(now)/(elapsed/1000);
+}
 /* BOT ELIMINADO: sin ritmo automatico, sin eventos tortubot, sin apoyo al lado vacio y sin regalos gratis. Solo cuentan los eventos REALES del live. */
 $('#bStat').onclick=()=>stOpen('torneos');  /* abre el panel de torneos */
 $('#bRefresh').onclick=()=>location.reload();
@@ -1622,6 +1627,15 @@ function hype(ic,name,txt,col){
 T.forEach((_,i)=>$('#in'+i).insertAdjacentHTML('afterbegin','<g class="tf"><path d="M50 524C38 536 40 556 50 574C60 556 62 536 50 524Z" fill="#ff7a1a"/><path d="M50 524C44 534 45 548 50 562C55 548 56 534 50 524Z" fill="#ffd34d"/><path d="M33 516C27 524 28 534 33 542C38 534 39 524 33 516Z" fill="#ff7a1a"/><path d="M67 516C61 524 62 534 67 542C72 534 73 524 67 516Z" fill="#ff7a1a"/></g>'));
 const tz=(m,ic)=>{if(tq.length<3)toast(m,ic)};
 const turboOn=(t,ms,power=TURBO_PPS)=>{const n=performance.now(),active=turbo[t]>n;turbo[t]=Math.min(n+60000,Math.max(n,turbo[t])+ms);turboPower[t]=active?Math.max(turboPower[t],power):power};
+function finishForLowActivity(now=Date.now()){
+ const rate=realEventRatePerSecond(now),elapsed=now-raceStartedAt;
+ if(over||lowActivityFinished||!TAP_POLICY.shouldFinishForLowActivity(rate,elapsed))return;
+ lowActivityFinished=true;
+ const winner=lead>=0?lead:Math.max(0,update());
+ turboOn(winner,HEART_TURBO_MS,TURBO_PPS);
+ $('#ln'+winner).classList.add('turbo');
+ S[winner].p=100;lead=update();win(winner);
+}
 function giftTurboOn(t,count){giftTurboUntil[t]=Math.max(performance.now(),giftTurboUntil[t])+GIFT_TURBO_MS*count}
 setInterval(()=>{
  if(over)return;const n=performance.now();
@@ -1632,6 +1646,7 @@ setInterval(()=>{
   if(!on)turboPower[i]=0;
  });
  update();
+ finishForLowActivity();
 },250);
 /* SALUDO: a cada hincha real se lo saluda UNA sola vez por sesion, con una sola frase: "Saludamos al hincha de <club> <usuario>". Sin nada mas. */
 const greeted=new Set();let grLast=-1e9;
