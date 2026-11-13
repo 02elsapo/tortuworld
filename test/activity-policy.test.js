@@ -60,3 +60,14 @@ test('only a normally finished final awards a cup', () => {
   assert.equal(policy.shouldAwardCup(true, true), false);
   assert.equal(policy.shouldAwardCup(false, true), false);
 });
+
+test('free tournament fills missing chat teams with random teams without duplicates', () => {
+  const first = policy.selectFreeTournamentPair([], ['a', 'b', 'c'], () => 0);
+  assert.deepEqual(first, ['a', 'b']);
+
+  const oneRegistered = policy.selectFreeTournamentPair(['viewer-team'], ['viewer-team', 'fallback'], () => 0);
+  assert.deepEqual(oneRegistered, ['viewer-team', 'fallback']);
+
+  const twoRegistered = policy.selectFreeTournamentPair(['top-team', 'second-team'], ['fallback']);
+  assert.deepEqual(twoRegistered, ['top-team', 'second-team']);
+});

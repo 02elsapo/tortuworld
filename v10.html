@@ -505,6 +505,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
  P.inactivityTimeoutMs=P.inactivityTimeoutMs||function(){return 60000};
  P.inactivityRemainingSeconds=P.inactivityRemainingSeconds||function(i,t){return Math.max(0,Math.ceil((t-i)/1000))};
  P.shouldAwardCup=P.shouldAwardCup||function(f,t){return f===true&&t!==true};
+ P.selectFreeTournamentPair=P.selectFreeTournamentPair||function(r,a,random){var p=Array.isArray(r)?r.slice(0,2):[],v=Array.from(new Set(Array.isArray(a)?a:[])).filter(function(id){return p.indexOf(id)<0});while(p.length<2&&v.length){var n=random?random():Math.random(),i=Number.isFinite(n)?Math.max(0,Math.min(v.length-1,Math.floor(n*v.length))):0;p.push(v.splice(i,1)[0])}return p};
  P.shouldFinishForInactivity=P.shouldFinishForInactivity||function(i,t){return i>=t};})();
 </script>
 </head>
@@ -641,11 +642,9 @@ const ELITE_POOL={ /* ELITE NATIONS CUP: 8 paises */
 };
 const TOURNAMENT_MODES=['libertadores','champions','countries','america','elite','free'];
 const TOURNAMENT_LABELS={libertadores:'LIBERTADORES',champions:'CHAMPIONS',countries:'COPA DEL MUNDO',america:'COPA AMÉRICA',elite:'ELITE NATIONS CUP',free:'TORNEO LIBRE'};
-const FREE_WAIT_IDS=['free-wait-a','free-wait-b'];
-const FREE_POOL={
- 'free-wait-a':{id:'free-wait-a',n:'',s:'—',emoji:'🆓',aliases:[],c:'#687386'},
- 'free-wait-b':{id:'free-wait-b',n:'',s:'—',emoji:'🆓',aliases:[],c:'#687386'}
-};
+const FREE_POOL={};
+function freeTeamPool(){return Object.assign({},POOL,COUNTRY_POOL,CHAMPIONS_POOL,LIBERTADORES_POOL,AMERICA_POOL,ELITE_POOL,FREE_POOL)}
+function freeTeamList(){return Object.values(freeTeamPool())}
 let freeTournamentStats={updatedAt:null,enabled:false,teams:[]};
 const COUNTRY_CHAMPIONS=['ct-ar','ct-br','ct-de','ct-es','ct-fr','ct-it','ct-uy','ct-en'];
 const COUNTRY_POPULAR_FALLBACK=['ct-py','ct-co','ct-cl','ct-mx','ct-us','ct-pt','ct-nl','ct-jp']; /* entran al Mundial si el chat aun no voto */
@@ -659,7 +658,7 @@ try{
  if(Array.isArray(saved.countryEntrants))countryEntrants=saved.countryEntrants;
  if(saved.tournamentInteractions&&typeof saved.tournamentInteractions==='object')tournamentInteractions=saved.tournamentInteractions;
 }catch(e){}
-function poolForMode(mode=tournamentMode){return mode==='free'?FREE_POOL:mode==='countries'?COUNTRY_POOL:mode==='champions'?CHAMPIONS_POOL:mode==='libertadores'?LIBERTADORES_POOL:mode==='america'?AMERICA_POOL:mode==='elite'?ELITE_POOL:POOL}
+function poolForMode(mode=tournamentMode){return mode==='free'?freeTeamPool():mode==='countries'?COUNTRY_POOL:mode==='champions'?CHAMPIONS_POOL:mode==='libertadores'?LIBERTADORES_POOL:mode==='america'?AMERICA_POOL:mode==='elite'?ELITE_POOL:POOL}
 function countryTournamentIds(){
  const nonWinners=Object.keys(COUNTRY_POOL).filter(id=>!COUNTRY_CHAMPIONS.includes(id));
  const fallbackRank=new Map(COUNTRY_POPULAR_FALLBACK.map((id,i)=>[id,i]));
@@ -669,8 +668,8 @@ function countryTournamentIds(){
 }
 function tournamentIds(mode=tournamentMode){
  if(mode==='free'){
-  const pair=freeTournamentStats.teams.filter(team=>FREE_POOL[team.id]).slice(0,2).map(team=>team.id);
-  return pair.length===2?pair:FREE_WAIT_IDS.slice();
+  const registered=freeTournamentStats.teams.filter(team=>FREE_POOL[team.id]).slice(0,2).map(team=>team.id);
+  return window.TORTUWORLD_ACTIVITY_POLICY.selectFreeTournamentPair(registered,freeTeamList().map(team=>team.id));
  }
  if(mode==='countries'&&countryEntrants.length===16&&countryEntrants.every(id=>COUNTRY_POOL[id]))return countryEntrants;
  return Object.keys(poolForMode(mode));
@@ -678,7 +677,7 @@ function tournamentIds(mode=tournamentMode){
 function tournamentItem(id){const item=POOL[id]||COUNTRY_POOL[id]||CHAMPIONS_POOL[id]||LIBERTADORES_POOL[id]||AMERICA_POOL[id]||ELITE_POOL[id]||FREE_POOL[id];return item?Object.assign({c:'#3b82f6'},item):null}
 function applyFreeTournamentStats(stats){
  if(!stats||!Array.isArray(stats.teams))return;
- Object.keys(FREE_POOL).filter(id=>!FREE_WAIT_IDS.includes(id)).forEach(id=>delete FREE_POOL[id]);
+ Object.keys(FREE_POOL).forEach(id=>delete FREE_POOL[id]);
  const colors=['#2563eb','#e11d48','#16a34a','#f59e0b','#8b5cf6','#0891b2'];
  const teams=[];
  stats.teams.forEach((team,index)=>{
@@ -1097,8 +1096,6 @@ source.addEventListener('status',event=>setConnection(JSON.parse(event.data)));
 source.addEventListener('update',event=>handleLiveEntry(JSON.parse(event.data).entry));
 source.addEventListener('free-tournament-stats',event=>{
  applyFreeTournamentStats(JSON.parse(event.data));
- const tournament=window.clussTorneo;
- if(tournament&&typeof tournament.refreshFree==='function')tournament.refreshFree();
  if(activeStatTab==='libre'&&!document.getElementById('stp').hidden)stTab('libre');
 });
 source.addEventListener('comment-archive-stats',event=>{
@@ -1118,7 +1115,7 @@ fetch('/api/reconnect',{method:'POST'}).then(async response=>{
 $('#connection').textContent=USER;
 setInterval(()=>{
  const now=performance.now(),dt=Math.min(2,(now-lastTick)/1000);lastTick=now;
- if(over||(tournamentMode==='free'&&DUELO.some(id=>FREE_WAIT_IDS.includes(id))))return;
+ if(over)return;
  S.forEach((s,i)=>{if(s.p<PASSIVE_CAP){s.p=Math.min(PASSIVE_CAP,s.p+100/RACE_SECONDS*sp[i]*dt);walk(i)}}); /* avance pasivo con tope */
  lead=update();
  let w=-1;S.forEach((s,i)=>{if(w<0&&s.p>=100)w=i}); /* gana en cuanto la cabeza toca la meta, sin esperar a que termine el turbo */
@@ -1155,12 +1152,12 @@ document.querySelector('.version').lastChild.textContent=' · v1.2.2';
 function refreshTournamentButton(){tournamentButton.textContent='🏆';tournamentButton.title='Torneo actual: '+TOURNAMENT_LABELS[tournamentMode]+' · cambiar';tournamentButton.setAttribute('aria-label','Cambiar torneo; actual: '+TOURNAMENT_LABELS[tournamentMode])}
 function setFreeTournamentEnabled(enabled){
  fetch('/api/free-tournament/mode',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled})})
-  .then(async response=>{const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.message||'No se pudo actualizar el torneo libre.');applyFreeTournamentStats(result.stats);refreshFreePairIfWaiting()})
+  .then(async response=>{const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.message||'No se pudo actualizar el torneo libre.');applyFreeTournamentStats(result.stats);refreshFreePair()})
   .catch(error=>{console.error(error);toast('No se pudo actualizar el torneo libre.','⚠️')});
 }
-function refreshFreePairIfWaiting(){
- if(tournamentMode!=='free'||!DUELO.every(id=>FREE_WAIT_IDS.includes(id)))return;
- const pair=tournamentIds('free');if(pair.some(id=>FREE_WAIT_IDS.includes(id)))return;
+function refreshFreePair(){
+ if(tournamentMode!=='free'||matchInteractionCount>0||freeTournamentStats.teams.length<1)return;
+ const pair=tournamentIds('free');if(pair.every(id=>DUELO.includes(id)))return;
  BR=brNew('free');const c=brCur();if(!c)return;
  P.br=BR;P.duel=c.duel.slice();P.wins=[0,0];save();
  clearTimeout(rs);aplicarDuelo(c.duel);reset();renderTop3();refreshTournamentButton();
@@ -1174,13 +1171,13 @@ function startTournament(mode){
  P.tournamentInteractions=tournamentInteractions;P.br=BR;P.duel=c.duel.slice();P.wins=[0,0];save();
  setFreeTournamentEnabled(mode==='free');
  clearTimeout(rs);aplicarDuelo(c.duel);reset();renderTop3();refreshTournamentButton();
- if(mode==='free'&&DUELO.every(id=>FREE_WAIT_IDS.includes(id)))toast('Torneo libre: comenta nombres de equipos para registrarlos','🆓');
+ if(mode==='free'&&freeTournamentStats.teams.length<2)toast('Torneo libre: comenta nombres de equipos para registrarlos','🆓');
  else{toast('Torneo: '+TOURNAMENT_LABELS[mode],'🏆');hype('🏆',TOURNAMENT_LABELS[mode],' · '+T[0].n+' vs '+T[1].n,'#ffd566')}
 }
 refreshTournamentButton();
 tournamentButton.onclick=()=>startTournament(TOURNAMENT_MODES[(TOURNAMENT_MODES.indexOf(tournamentMode)+1)%TOURNAMENT_MODES.length]);
-window.clussTorneo={start:startTournament,toast:(m,ic)=>toast(m,ic),modo:()=>tournamentMode,refreshFree:refreshFreePairIfWaiting}; /* lo usa el boton TORNEO (🔄/🔒) de herramientas */
-fetch('/api/free-tournament/stats').then(async response=>{if(!response.ok)throw new Error('No se pudieron cargar los votos del torneo libre.');applyFreeTournamentStats(await response.json());refreshFreePairIfWaiting()}).catch(error=>console.error(error));
+window.clussTorneo={start:startTournament,toast:(m,ic)=>toast(m,ic),modo:()=>tournamentMode,refreshFree:refreshFreePair}; /* lo usa el boton TORNEO (🔄/🔒) de herramientas */
+fetch('/api/free-tournament/stats').then(async response=>{if(!response.ok)throw new Error('No se pudieron cargar los votos del torneo libre.');applyFreeTournamentStats(await response.json());refreshFreePair()}).catch(error=>console.error(error));
 fetch('/api/comment-archive/stats').then(async response=>{if(!response.ok)throw new Error('No se pudo cargar el archivo de comentarios.');commentArchiveSummary=await response.json()}).catch(error=>console.error(error));
 setFreeTournamentEnabled(tournamentMode==='free');
 
@@ -1736,7 +1733,7 @@ function finishForLowActivity(now=Date.now()){
 }
 function giftTurboOn(t,count){giftTurboUntil[t]=Math.max(performance.now(),giftTurboUntil[t])+GIFT_TURBO_MS*count}
 setInterval(()=>{
- if(over||(tournamentMode==='free'&&DUELO.some(id=>FREE_WAIT_IDS.includes(id))))return;const n=performance.now();
+ if(over)return;const n=performance.now();
  T.forEach((_,i)=>{
   const on=turbo[i]>n,giftOn=giftTurboUntil[i]>n,pts=(on?turboGain(turboPower[i],250,1):0)+(giftOn?GIFT_TURBO_PPS*250/1000:0);
   $('#ln'+i).classList.toggle('turbo',on||giftOn);
@@ -3320,9 +3317,9 @@ poner(true);
 .cnTop{position:absolute;left:3px;right:3px;bottom:3px;z-index:5;pointer-events:none;padding:3px 4px;border:2px solid #ffe14d;border-radius:8px;background:rgba(10,6,2,.85);color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:900 14px/1.1 Inter,sans-serif;text-shadow:0 1px 2px #000;letter-spacing:.2px}
 .banRos{flex:none;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px}
 .banRos svg.fgb{display:block!important;flex:none;width:38px;height:27px;border:2px solid #fff;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.6)}
-.ctaBox{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-width:0;flex:0 1 auto}
-.rosaCta{flex:none;position:relative;display:inline-flex;align-items:center;gap:3px;padding:3px 7px 3px 5px;border-radius:999px;border:2px solid #ffe14d;background:linear-gradient(var(--c1,#ff5a7a),var(--c2,#b80f3a));color:#fff;font:900 11px/1 Inter,sans-serif;letter-spacing:.3px;text-shadow:0 1px 2px #000;white-space:nowrap;box-shadow:0 2px 0 #5c0816,0 0 10px 2px rgba(255,60,110,.85);animation:rosaPulso 1.1s ease-in-out infinite}
-.rosaCta .r{display:inline-block;font-size:16px;line-height:1;animation:rosaWob .6s ease-in-out infinite alternate}
+.ctaBox{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-width:0;flex:0 1 auto}
+.rosaCta{flex:none;position:relative;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border-radius:999px;border:1px solid #ffe14d;background:linear-gradient(var(--c1,#ff5a7a),var(--c2,#b80f3a));color:#fff;text-shadow:0 1px 2px #000;box-shadow:0 1px 0 #5c0816,0 0 5px 1px rgba(255,60,110,.85);animation:rosaPulso 1.1s ease-in-out infinite}
+.rosaCta .r{display:inline-block;font-size:11px;line-height:1;animation:rosaWob .6s ease-in-out infinite alternate}
 .rosaCta:after{content:"";position:absolute;inset:-3px;border-radius:999px;border:2px solid #ffe14d;opacity:0;pointer-events:none;animation:rosaAro 1.4s ease-out infinite}
 @keyframes rosaPulso{0%,100%{transform:scale(1);box-shadow:0 2px 0 #5c0816,0 0 8px 1px rgba(255,60,110,.8)}50%{transform:scale(1.08);box-shadow:0 2px 0 #5c0816,0 0 18px 5px rgba(255,225,77,.95)}}
 @keyframes rosaWob{from{transform:rotate(-14deg) scale(1)}to{transform:rotate(14deg) scale(1.18)}}
@@ -3404,16 +3401,11 @@ html.ctaTopOff #regalos{display:none!important}
 <script>
 (function(){
 const tb=document.getElementById('topbar'),foot=tb&&tb.querySelector('.foot');if(!tb||!foot)return;
-/* 8 regalos: k = id, ic = icono, n = nombre en el cartel, a/b = colores. Editar aca para cambiar los regalos. */
+/* Regalos disponibles en los CTA de equipo. */
 const GIFTS=[
  {k:'rosa',ic:'🌹',n:'ROSA',a:'#ff5a7a',b:'#b80f3a'},
- {k:'pistola',ic:'🔫',n:'PISTOLA',a:'#35d27a',b:'#0c7a3a'},
- {k:'dedos',ic:'💗',n:'DEDITOS',a:'#ff7ab8',b:'#b5186a'},
  {k:'dona',ic:'🍩',n:'DONA',a:'#ffa65a',b:'#b8500f'},
- {k:'perfume',ic:'🧴',n:'PERFUME',a:'#b98aff',b:'#5b2db8'},
- {k:'confeti',ic:'🎉',n:'CONFETI',a:'#5aa8ff',b:'#1c4fb8'},
- {k:'corgi',ic:'🐶',n:'CORGI',a:'#f0b25a',b:'#8a5a1a'},
- {k:'manos',ic:'🙌',n:'MANOS',a:'#ff6a6a',b:'#a31515'}];
+ {k:'confeti',ic:'🎉',n:'CONFETI',a:'#5aa8ff',b:'#1c4fb8'}];
 const KEYS=GIFTS.map(g=>g.k),LSK='cluss.cta';
 let st={top:false,A:[],B:[]}; /* CTA SIEMPRE ARRANCA APAGADO: no se lee lo guardado; se activa a mano desde el boton CTA */
 try{const v=null;if(v&&typeof v==='object'){
@@ -3448,7 +3440,7 @@ function pinta(){
  let cambio=false;
  [0,1].forEach(i=>{const box=document.querySelector('#ln'+i+' .ctaBox');if(!box)return;
   const list=st[i?'B':'A'],sig=list.join(',');if(box.dataset.sig===sig)return;box.dataset.sig=sig;cambio=true;
-  box.innerHTML=list.map(k=>{const g=GIFTS[KEYS.indexOf(k)];return`<span class="rosaCta" aria-hidden="true" style="--c1:${g.a};--c2:${g.b}"><span class="r">${g.ic}</span>${g.n}</span>`}).join('')});
+  box.innerHTML=list.map(k=>{const g=GIFTS[KEYS.indexOf(k)];return`<span class="rosaCta" role="img" aria-label="${g.n}" title="${g.n}" style="--c1:${g.a};--c2:${g.b}"><span class="r">${g.ic}</span></span>`}).join('')});
  if(cambio)refit()}
 const abrir=()=>{pan.hidden=false;pinta()},cerrar=()=>{pan.hidden=true};
 bt.onclick=abrir;pan.querySelector('#ctaX').onclick=cerrar;

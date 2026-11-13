@@ -49,5 +49,18 @@
     shouldAwardCup(isFinal, timedOut) {
       return isFinal === true && timedOut !== true;
     },
+    selectFreeTournamentPair(registeredIds, allTeamIds, random = Math.random) {
+      const pair = Array.isArray(registeredIds) ? registeredIds.slice(0, 2) : [];
+      const available = [...new Set(Array.isArray(allTeamIds) ? allTeamIds : [])]
+        .filter((id) => !pair.includes(id));
+      while (pair.length < 2 && available.length) {
+        const value = random();
+        const index = Number.isFinite(value)
+          ? Math.max(0, Math.min(available.length - 1, Math.floor(value * available.length)))
+          : 0;
+        pair.push(available.splice(index, 1)[0]);
+      }
+      return pair;
+    },
   });
 });

@@ -15,7 +15,9 @@ test('free tournament is the default locked mode and can be manually unlocked', 
 
 test('empty free-tournament lanes do not show waiting-team labels', () => {
   assert.doesNotMatch(html, /ESPERANDO EQUIPO|esperando equipo/);
-  assert.match(html, /'free-wait-a':\{id:'free-wait-a',n:'',s:'—',emoji:'🆓'/);
+  assert.doesNotMatch(html, /FREE_WAIT_IDS|free-wait-a|free-wait-b/);
+  assert.match(html, /function freeTeamPool\(\)/);
+  assert.match(html, /window\.TORTUWORLD_ACTIVITY_POLICY\.selectFreeTournamentPair/);
 });
 
 test('inactivity victories advance without awarding a cup', () => {
