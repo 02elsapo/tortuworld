@@ -122,29 +122,27 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /id="botTurboGiftClose" type="button">CERRAR</);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /v1\.0\.8/);
+    assert.match(html, /aria-label="Versión 1\.0\.9">1\.0\.9/);
     assert.match(html, /id="bVozB"/);
     assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);
     assert.match(html, /const greeted=new Set\(\);let grLast=-1e9/);
     assert.match(html, /joined\.add\(k\);greet\(u,t,e\.displayName\)/);
     assert.match(html, /const txt='Saludamos al hincha de '\+cap\(T\[t\]\.n\)\+', '\+name/);
-    assert.match(html, /mx>=40&&!vDone\.has\('din40'\)/);
-    assert.match(html, /recuerden cómo se juega/i);
-    assert.match(html, /mx>=75&&!vDone\.has\('turbo75'\)/);
-    assert.match(html, /Al completar '\+HEART_N\+' taps se activa el turbo/);
-    assert.match(html, /const LOSING_AT=\[20,40,60,80\]/);
-    assert.match(html, /const LOSING_LINES=\[/);
-    assert.match(html, /LOSING_LINES\[\(losing\.percent\/20-1\)%LOSING_LINES\.length\]/);
-    for (const action of ['compartiendo el LIVE', 'siguiendo la cuenta', 'comentando en el chat', 'cargando el contador tap tap']) {
-      assert.ok(html.includes(action), `losing prompt must mention ${action}`);
-    }
+    assert.match(html, /const ENGAGEMENT_AT=\[25,50,75\]/);
+    assert.match(html, /function nextEngagementCall\(progress,done\)/);
+    assert.match(html, /call\.percent===50&&vSess\.has\('turbo-rose'\)/);
+    assert.match(html, /if\(call\.percent===50\)vSess\.add\('turbo-rose'\)/);
+    assert.doesNotMatch(html, /LOSING_LINES|AVISO PERIODICO/);
     assert.match(html, /now-alLast<18000/);
-    assert.match(html, /rocket:t=>/);
-    assert.match(html, /FA\.p\('rocket'\)/);
-    assert.match(html, /data-t="gift"/);
-    assert.match(html, /heartAdd\(sel,b\.dataset\.t==='gift'\?ROSITA_TAPS:TAP_WEIGHTS\[b\.dataset\.t\]\|\|1\)/);
-    assert.match(html, /const tap=\(\)=>heartAdd\(i,1\)/);
+    assert.match(html, /data-local-only disabled aria-label="APOYAR deshabilitado/);
+    assert.match(html, /data-local-only disabled aria-label="ROSITA deshabilitada/);
+    assert.doesNotMatch(html, /heartAdd\(sel/);
+    assert.match(html, /role="progressbar"/);
+    assert.doesNotMatch(html, /document\.querySelectorAll\('\.hb'\)\.forEach/);
+    assert.match(html, /Para ganar este partido, envía una Pistola de dinero/);
+    assert.match(html, /hype\('💵🔫','PISTOLA DE DINERO'/);
+    assert.doesNotMatch(html, /const tap=\(\)=>heartAdd\(i,1\)/);
     assert.match(html, /heartAdd\(i,\(TAP_WEIGHTS\[type\]\|\|0\)\*n\)/);
     assert.match(html, /RETOQUES FINALES \(v2\.1\): confeti, efectos, banners, pips de copas/);
     assert.match(html, /window\.fx=\{confetti/);
@@ -284,32 +282,39 @@ test('the bot does not offer free turbos', () => {
   assert.equal(canOffer, false);
 });
 
-test('announces the trailing club at each newly reached twenty-percent milestone', () => {
+test('stages interaction prompts at 25%, 50%, and 75%', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
-  const source = html.match(/function nextLosingCall\(progress,done\)\{[\s\S]*?\n\}/);
-  assert.ok(source, 'the overlay must select the next losing-club milestone');
-  const nextLosingCall = vm.runInNewContext(`(${source[0]})`, {
-    LOSING_AT: [20, 40, 60, 80],
+  const source = html.match(/function nextEngagementCall\(progress,done\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must select only the next interaction milestone');
+  const nextEngagementCall = vm.runInNewContext(`(${source[0]})`, {
+    ENGAGEMENT_AT: [25, 50, 75],
+    ENGAGEMENT_CALLS: {
+      25: 'comenta',
+      50: 'envía una rosita real para activar el modo turbo',
+      75: 'sigue y comparte',
+    },
     Math,
   });
   const announced = new Set();
 
-  const first = nextLosingCall([18, 22], announced);
-  assert.equal(first.percent, 20);
-  assert.equal(first.loser, 0);
-  announced.add('losing20');
+  const first = nextEngagementCall([30, 0], announced);
+  assert.equal(first.percent, 25);
+  assert.match(first.text, /comenta/);
+  announced.add('engagement25');
 
-  const second = nextLosingCall([39, 41], announced);
-  assert.equal(second.percent, 40);
-  assert.equal(second.loser, 0);
-  announced.add('losing40');
+  const second = nextEngagementCall([60, 0], announced);
+  assert.equal(second.percent, 50);
+  assert.match(second.text, /rosita real.*modo turbo/);
+  announced.add('engagement50');
 
-  const tied = nextLosingCall([60, 60], announced);
-  assert.equal(tied.percent, 60);
-  assert.equal(tied.loser, -1);
+  const third = nextEngagementCall([80, 0], announced);
+  assert.equal(third.percent, 75);
+  assert.match(third.text, /sigue y comparte/);
+  announced.add('engagement75');
+  assert.equal(nextEngagementCall([100, 0], announced), null);
 });
 
-test('uses Don Tortu for explanations and explicitly says when a team is losing', () => {
+test('uses Don Tortu for explanations and defines the staged prompts', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const introductionSource = html.match(/function queueNarratorIntroductions\(\)\{[\s\S]*?\n\}/);
   assert.ok(introductionSource, 'the overlay must keep the team narrators disabled');
@@ -321,12 +326,12 @@ test('uses Don Tortu for explanations and explicitly says when a team is losing'
   assert.deepEqual(narratorQueue, []);
   assert.match(html, /const dinamicaTxt=\(\)=>/);
   assert.match(html, /id:'intro',at:2/);
-
-  const losingSource = html.match(/const LOSING_LINES=(\[[\s\S]*?\n\]);/);
-  assert.ok(losingSource, 'the overlay must define spoken losing-team announcements');
-  const losingLines = vm.runInNewContext(losingSource[1]);
-  assert.ok(losingLines.every(({ full }) => full.includes('está perdiendo')));
-  assert.match(html, /AVISO PERIODICO: cada ~40 s Don Tortu dice que equipo va perdiendo/);
+  assert.match(html, /const ENGAGEMENT_CALLS=\{/);
+  assert.match(html, /Para ganar este partido, envía una Pistola de dinero/);
+  assert.match(html, /hype\('💵🔫','PISTOLA DE DINERO'/);
+  assert.match(html, /Para activar el modo turbo, envía una rosita real/);
+  assert.match(html, /call\.percent===50&&vSess\.has\('turbo-rose'\)/);
+  assert.match(html, /if\(call\.percent===50\)vSess\.add\('turbo-rose'\)/);
 });
 
 test('does not display spoken narrator text', () => {
@@ -354,7 +359,7 @@ test('uses a Spanish Google voice for Don Tortu and a male voice for the chat re
   assert.equal(pickV('chat').name, 'Jorge');
 });
 
-test('does not narrate free turbo gifts', () => {
+test('does not narrate free turbo gifts and explains the real rose turbo once', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const giftSource = html.match(/function showBotTurboGift\(\)\{[\s\S]*?\n\}/);
   assert.ok(giftSource, 'the overlay must still display the free turbo gift');
@@ -363,6 +368,8 @@ test('does not narrate free turbo gifts', () => {
   const voiceScripts = html.match(/const VL=\[([\s\S]*?)\n\];/);
   assert.ok(voiceScripts, 'the overlay must define its voice scripts');
   assert.doesNotMatch(voiceScripts[1], /gratis|regalar/i);
+  assert.match(html, /Para activar el modo turbo, envía una rosita real/);
+  assert.match(html, /if\(call\.percent===50\)vSess\.add\('turbo-rose'\)/);
 });
 
 test('a full tap counter advances 7% and activates turbo', () => {
@@ -441,7 +448,7 @@ test('real TikTok events only add their configured weights to the tap counter', 
   assert.ok(weightsSource, 'the overlay must define event weights');
   const weights = vm.runInNewContext(`(${weightsSource[1]})`);
   assert.deepEqual({ ...weights }, { member: 1, chat: 10, like: 1, follow: 3, share: 5 });
-  assert.match(html, /ROSITA_TAPS=75/);
+  assert.doesNotMatch(html, /ROSITA_TAPS/);
   const progress = { p: 42, l: 0, g: 0 };
   const received = [];
   const gifts = [];
@@ -475,7 +482,6 @@ test('real TikTok events only add their configured weights to the tap counter', 
     ach() {},
     A: { sfx() {} },
     performance: { now: () => 100 },
-    tapping: false,
     pm: 1,
     hud() {},
   };
@@ -497,11 +503,14 @@ test('real TikTok events only add their configured weights to the tap counter', 
   assert.deepEqual(gifts, [[0, 2]]);
 });
 
-test('each real gift independently adds 15% and ten seconds of one-percent-per-second turbo', () => {
+test('each real gift independently adds 15% and ten seconds of five-percent-per-second turbo', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
   const source = html.match(/function giftTurboOn\(t,count\)\{[\s\S]*?\}/);
   assert.ok(source, 'the overlay must define per-gift turbo timing');
-  assert.match(html, /GIFT_TURBO_MS=10000,GIFT_TURBO_PPS=1/);
+  assert.match(html, /GIFT_TURBO_MS=10000,GIFT_TURBO_PPS=5/);
+  const turboGainSource = html.match(/function turboGain\(rate,ms,handicap\)\{[\s\S]*?\}/);
+  const turboGain = vm.runInNewContext(`(${turboGainSource[0]})`);
+  assert.equal(15 + turboGain(5, 10_000, 1), 65);
 
   let now = 1000;
   const giftTurboUntil = [0];
@@ -516,6 +525,18 @@ test('each real gift independently adds 15% and ten seconds of one-percent-per-s
   now = 2000;
   giftTurboOn(0, 2);
   assert.equal(giftTurboUntil[0], 31_000);
+});
+
+test('gift narration interrupts other voice and announces the team turbo', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const textSource = html.match(/function giftThanksText\(g\)\{[\s\S]*?\n\}/);
+  assert.ok(textSource, 'the overlay must create a gift-specific thank-you');
+  const giftThanksText = vm.runInNewContext(`(${textSource[0]})`, {
+    T: [{ n: 'CERRO' }],
+    cap: (name) => name[0] + name.slice(1).toLowerCase(),
+  });
+  assert.equal(giftThanksText({ name: 'Ana', t: 0, count: 1 }), '¡Gracias Ana por tu regalo! ¡Cerro entró en modo turbo!');
+  assert.match(html, /speak\(txt,null,true,undefined,\(\)=>\{giftSpeaking=false;speakNextGift\(\)\}\)/);
 });
 
 test('race victory waits until both turbo effects have finished', () => {
