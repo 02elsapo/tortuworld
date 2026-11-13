@@ -104,10 +104,10 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /const BR_NOM=\['CUARTOS DE FINAL','SEMIFINAL','FINAL'\]/);
     assert.match(html, /El ganador de este duelo pasa a '\+rival\+'\./);
     assert.match(html, /stCloseTimer=setTimeout\(stClose,3000\)/);
-    assert.match(html, /botTurboGiftCloseTimer=setTimeout\(closeBotTurboGift,3000\)/);
-    assert.match(html, /rs=setTimeout\(reset,3000\)/);
+    assert.match(html, /botTurboGiftCloseTimer=setTimeout\(closeBotTurboGift,2800\)/);
+    assert.match(html, /rs=setTimeout\(reset,2800\)/);
     assert.match(html, /rs=setTimeout\(nextMatch,fin\?7000:5000\)/);
-    assert.match(html, /const ESFUERZO=\{ol:8,cp:8,li:8,gu:8,lu:8,na:8,sa:8,to:8\}/);
+    assert.match(html, /const ESFUERZO=\{ol:4,cp:4,li:4,gu:4,lu:4,na:4,sa:4,to:4\}/);
     assert.match(html, /const PISTA=1/);
     assert.match(html, /const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000/);
     assert.match(html, /const GIFT_PROGRESS=15,GIFT_TEAM_WINDOW_MS=60000/);
@@ -122,7 +122,8 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /id="botTurboGiftClose" type="button">CERRAR</);
     assert.match(html, /id="bRefresh"/);
     assert.match(html, /location\.reload\(\)/);
-    assert.match(html, /aria-label="Versión 1\.0\.9">1\.0\.9/);
+    assert.match(html, /aria-label="Límite de taps del turbo y versión 1\.0\.10"/);
+    assert.match(html, /v1\.0\.10/);
     assert.match(html, /id="bVozB"/);
     assert.match(html, /const CHAT_LEE_TODOS=true/);
     assert.match(html, /const BOT_CAP=80/);
@@ -137,11 +138,15 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(html, /now-alLast<18000/);
     assert.match(html, /data-local-only disabled aria-label="APOYAR deshabilitado/);
     assert.match(html, /data-local-only disabled aria-label="ROSITA deshabilitada/);
+    assert.match(html, /class="cta apoyar-cta" data-local-only disabled/);
+    assert.match(html, /class="cta rosita-cta" data-local-only disabled/);
+    assert.match(html, /class="hint">EN EL LIVE</);
+    assert.match(html, /class="hint">MODO TURBO</);
+    assert.match(html, /\.cta\[data-local-only\]:disabled\{opacity:1/);
     assert.doesNotMatch(html, /heartAdd\(sel/);
     assert.match(html, /role="progressbar"/);
     assert.doesNotMatch(html, /document\.querySelectorAll\('\.hb'\)\.forEach/);
-    assert.match(html, /Para ganar este partido, envía una Pistola de dinero/);
-    assert.match(html, /hype\('💵🔫','PISTOLA DE DINERO'/);
+    assert.match(html, /hype\('💵🔫','','➜ 🏆'/);
     assert.doesNotMatch(html, /const tap=\(\)=>heartAdd\(i,1\)/);
     assert.match(html, /heartAdd\(i,\(TAP_WEIGHTS\[type\]\|\|0\)\*n\)/);
     assert.match(html, /RETOQUES FINALES \(v2\.1\): confeti, efectos, banners, pips de copas/);
@@ -327,11 +332,24 @@ test('uses Don Tortu for explanations and defines the staged prompts', () => {
   assert.match(html, /const dinamicaTxt=\(\)=>/);
   assert.match(html, /id:'intro',at:2/);
   assert.match(html, /const ENGAGEMENT_CALLS=\{/);
-  assert.match(html, /Para ganar este partido, envía una Pistola de dinero/);
-  assert.match(html, /hype\('💵🔫','PISTOLA DE DINERO'/);
-  assert.match(html, /Para activar el modo turbo, envía una rosita real/);
+  assert.match(html, /hype\('💵🔫','','➜ 🏆'/);
+  assert.match(html, /txt\(ro,'ROSITA','activa el TURBO 🚀'\)/);
   assert.match(html, /call\.percent===50&&vSess\.has\('turbo-rose'\)/);
   assert.match(html, /if\(call\.percent===50\)vSess\.add\('turbo-rose'\)/);
+});
+
+test('enlarges fan avatars and abbreviates large podium scores', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'cluss.html'), 'utf8');
+  const source = html.match(/function formatAvatarScore\(score\)\{[\s\S]*?\n\}/);
+  assert.ok(source, 'the overlay must format displayed fan scores');
+  const formatAvatarScore = vm.runInNewContext(`(${source[0]})`, { Intl });
+
+  assert.equal(formatAvatarScore(999), '999');
+  assert.equal(formatAvatarScore(1000), '1k');
+  assert.equal(formatAvatarScore(1250), '1.3k');
+  assert.equal(formatAvatarScore(1_000_000), '1m');
+  assert.match(html, /\.pod \.pw \.ua\{width:26px;height:26px/);
+  assert.match(html, /\.pod \.pw1 \.ua\{width:32px;height:32px/);
 });
 
 test('does not display spoken narrator text', () => {
