@@ -8,6 +8,8 @@ const {
 } = require('./eventConfig');
 const { createEventFeedStore } = require('./eventFeedService');
 
+const overlayEventTypes = new Set(['member', 'chat', 'gift', 'like', 'follow', 'share']);
+
 function loadTikTokConnector() {
   return import('tiktok-live-connector');
 }
@@ -99,7 +101,12 @@ function createTikTokMonitorService({
 
   function eventAuthor(data) {
     const user = data && (data.user || data.sender);
-    return user ? safeUserName(user) : 'Sistema';
+    if (!user) return '';
+    if (typeof user === 'string') return user.trim();
+    if (typeof user !== 'object') return '';
+    const username = [user.uniqueId, user.displayId, user.nickname, user.displayName]
+      .find((value) => typeof value === 'string' && value.trim());
+    return username ? username.trim() : '';
   }
 
   function eventDisplayName(data) {
@@ -146,7 +153,16 @@ function createTikTokMonitorService({
         ? data.incrementalLikeCount || data.count || data.likeCount
         : undefined;
     const count = Number(rawCount);
-    return Number.isFinite(count) && count > 0 ? Math.floor(count) : undefined;
+    return Number.isFinite(count) && count > 0
+      ? Math.floor(count)
+      : eventName === webcastEvents.LIKE ? 1 : undefined;
+  }
+
+  function eventGiftName(data) {
+    if (!data || typeof data !== 'object') return '';
+    const giftName = data.giftName || data.gift_name || data.gift?.name
+      || data.giftDetails?.giftName || data.giftId;
+    return typeof giftName === 'string' ? giftName.trim() : '';
   }
 
   function getGiftActivityCount(data) {
@@ -244,7 +260,8 @@ function createTikTokMonitorService({
     const listeners = new Map();
     for (const eventName of eventNames) {
       listeners.set(eventName, (payload) => {
-        if (state.connection !== connection || !state.enabledEvents.has(eventName)) return;
+        if (state.connection !== connection || !state.enabledEvents.has(eventName)
+          || !overlayEventTypes.has(eventName)) return;
         if (wasEventAlreadyReceived(eventName, payload)) return;
         const summary = summarizeEvent(eventName, payload);
         const username = eventAuthor(payload);
@@ -253,10 +270,11 @@ function createTikTokMonitorService({
         const activityCount = eventName === webcastEvents.GIFT
           ? getGiftActivityCount(payload)
           : eventActivityCount(eventName, payload);
+        const giftName = eventName === webcastEvents.GIFT ? eventGiftName(payload) : '';
         const diamondCount = eventDiamondCount(eventName, payload);
         if (eventName === webcastEvents.GIFT && activityCount === 0) return;
 
-        if (eventName === webcastEvents.MEMBER && username !== 'Sistema') {
+        if (eventName === webcastEvents.MEMBER && username) {
           state.recentJoiners.unshift({ username, time: new Date().toISOString() });
           state.recentJoiners = state.recentJoiners.slice(0, 10);
         }
@@ -278,6 +296,8 @@ function createTikTokMonitorService({
           username,
           ...(displayName ? { displayName } : {}),
           avatar: eventAvatar(payload),
+          profilePictureUrl: eventAvatar(payload),
+          ...(giftName ? { giftName } : {}),
           content,
           ...(activityCount === undefined ? {} : { activityCount }),
           ...(diamondCount === undefined ? {} : { diamondCount }),

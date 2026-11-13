@@ -7,7 +7,7 @@ RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY server.js ./
 COPY modules ./modules
-COPY cluss.html ./
+COPY v10.html ./
 
 ENV NODE_ENV=production
 EXPOSE 80

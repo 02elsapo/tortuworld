@@ -1,8 +1,8 @@
 {
-  "name": "cluss",
+  "name": "tortuworld",
   "version": "1.0.9",
   "private": true,
-  "description": "Base modular para mini apps de TikTok Live con conector y overlay",
+  "description": "TortuWorld: carreras de tortugas para TikTok LIVE con overlay y conector",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

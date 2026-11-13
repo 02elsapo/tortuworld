@@ -82,10 +82,6 @@ function createTikTokModule({
     return recentUsers.getRecentUsers();
   }
 
-  function saveRecentUsers(users) {
-    return recentUsers.saveRecentUsers(users);
-  }
-
   function recordCup(code) {
     const stats = commentStats.recordCup(code);
     if (stats) publish('cup-stats', stats);
@@ -157,7 +153,6 @@ function createTikTokModule({
       getCommentStats,
       getCupStats,
       getRecentUsers,
-      saveRecentUsers,
       recordCup,
       saveConfiguration,
       reconnect,

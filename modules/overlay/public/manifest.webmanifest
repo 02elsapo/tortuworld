@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "cluss",
-  "short_name": "cluss",
-  "description": "Carrera de tortugas para TikTok LIVE",
+  "name": "TortuWorld",
+  "short_name": "TortuWorld",
+  "description": "Tortuga del mundo: carreras interactivas para TikTok LIVE",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

@@ -31,9 +31,9 @@ The connector starts with the environment or persisted username, defaulting to `
 | `modules/tiktok/eventFeedService.js` | Maintains an ordered event feed for connector diagnostics. |
 | `modules/tiktok/routes.js` | Maps HTTP requests to connector operations; it contains no connection logic. |
 | `modules/realtime/sseHub.js` | Attaches SSE responses, sends initial messages, broadcasts named events and heartbeats, and removes closed clients. |
-| `modules/overlay/index.js` | Maps `/` and `/overlay` to the turtle game, `/backend` to configuration, and serves the `tortu` PWA assets. |
+| `modules/overlay/index.js` | Maps `/` and `/overlay` to `v10.html`, `/backend` to configuration, and serves the `tortu` PWA assets. |
 | `modules/overlay/public/` | Provides the `tortu` install manifest, full-screen service worker, and app icons. |
-| `cluss.html` | Main TikTok overlay, served at `/` and connected to normalized SSE events. |
+| `v10.html` | Main TikTok overlay, served at `/` and connected to normalized SSE events. Its game rules and scoring stay in the overlay. |
 | `modules/overlay/backend.html` | Reads status/configuration and displays live comment and cup statistics by country. |
 
 Add a mini app as a new module with its own routes and event subscription. Keep the provider connection reusable and app-agnostic.
@@ -56,15 +56,15 @@ Add a mini app as a new module with its own routes and event subscription. Keep 
 
 `GET /api/comment-stats` returns totals by country and unassigned comments. Every incoming chat event is counted and persisted in JSON. `GET /api/cup-stats` returns cumulative cup wins by country; `POST /api/cup-stats` accepts `{ "code": "PY" }` to persist a winner. Both statistics are shown in `/backend` and broadcast through SSE as `comment-stats` and `cup-stats`.
 
-`GET /api/events` is an SSE stream:
+`GET /api/events` is an SSE stream consumed by v10:
 
 1. `status` gives the current facade connection state.
 2. `snapshot` gives up to 100 recent normalized events, newest first.
-3. `update` gives `{ "entry": <event>, "events": <current snapshot> }`.
+3. `update` gives `{ "entry": <event>, "events": <current snapshot> }`. Only `member`, `chat`, `gift`, `like`, `follow`, and `share` activity is forwarded to the overlay.
 
 An event entry has `id`, `type`, `eventLabel`, `username`, `avatar`, `content`, and `time`. `activityCount` and `diamondCount` are optional. `id` is the provider message ID when available and otherwise a generated UUID. `content` is a short human-readable summary; the full provider payload remains available to connector diagnostics.
 
-Unknown `/api/*` paths return JSON 404. The game and backend are served as static HTML files.
+`GET /api/recent-users` contains only users recorded from actual member events; it cannot be overwritten through HTTP. Unknown `/api/*` paths return JSON 404. The overlay and backend are served as static HTML files.
 
 ## Lifecycle and failure behavior
 

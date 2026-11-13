@@ -186,12 +186,6 @@ test('monitor normalizes every webcast event and event payload shape', async () 
     [WebcastEvent.SHARE, { user: { uniqueId: 'sharer' } }],
     [WebcastEvent.MEMBER, { user: { uniqueId: 'joiner', avatarThumb: { urlList: ['member.png'] } } }],
     [WebcastEvent.MEMBER, {}],
-    [eventNames.at(-1), { comment: 'summary comment', user: 'commenter' }],
-    [eventNames.at(-1), { gift: { name: 'gift-summary' }, sender: 'sender' }],
-    [eventNames.at(-1), { followerCount: 1, user: 'follow-summary' }],
-    [eventNames.at(-1), { likeCount: 4 }],
-    [eventNames.at(-1), { viewerCount: 3 }],
-    [eventNames.at(-1), {}],
     [WebcastEvent.CHAT, { user: { uniqueId: 'url-list', profilePictureUrl: { urlList: ['https://example.test/a.webp'] } }, comment: 'Paraguay' }],
     [WebcastEvent.CHAT, { user: { uniqueId: 'nested-picture', userDetails: { profilePictureUrls: ['https://example.test/b.webp'] } }, comment: 'Argentina' }],
   ];
@@ -205,17 +199,23 @@ test('monitor normalizes every webcast event and event payload shape', async () 
   assert.equal(received[0].content, 'Hola');
   assert.equal(received[5].activityCount, 2);
   assert.equal(received[5].diamondCount, 3);
+  assert.equal(received[5].giftName, 'Rose');
   assert.match(received[5].content, /Rose x2/);
   assert.equal(received[6].diamondCount, 7);
   assert.equal(received.find((entry) => entry.username === 'string-liker').activityCount, 6);
+  assert.equal(received.find((entry) => entry.type === 'like' && !entry.username).activityCount, 1);
   assert.equal(received.find((entry) => entry.username === 'joiner').avatar, 'member.png');
-  assert.equal(received.filter((entry) => entry.type === 'member')[1].username, 'Sistema');
+  assert.equal(received.filter((entry) => entry.type === 'member')[1].username, '');
+  assert.equal(received[0].profilePictureUrl, 'avatar');
   assert.equal(received.at(-2).avatar, 'https://example.test/a.webp');
   assert.equal(received.at(-1).avatar, 'https://example.test/b.webp');
   assert.equal(monitor.state.recentJoiners.length, 1);
   assert.equal(monitor.getEventFeed().length, cases.length);
   assert.equal(monitor.getStatusPayload('server-1').serverInstanceId, 'server-1');
   assert.ok(statuses.length > 0);
+
+  connection.emit(eventNames.at(-1), { comment: 'ignored non-overlay event' });
+  assert.equal(received.length, cases.length);
 
   monitor.setEnabledEvents(['not-a-real-event']);
   const count = received.length;
