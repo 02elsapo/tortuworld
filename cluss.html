@@ -555,7 +555,7 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
  </div>
 </section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ Don Tortu, 🎙️B narrador B (lee el chat), 🔊 efectos, 📊 estadisticas, ↺ reiniciar copas, 🔄 refrescar -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.0.10"><span id="turboLim">⚡ Límite 500 taps</span> · v1.0.10</span></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm off" id="bBot" aria-pressed="false" aria-label="Ritmo automático (B)" title="Ritmo automático (B)">🤖</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.0.11"><span id="turboLim">⚡ Límite 500 taps</span> · v1.0.11</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -615,8 +615,8 @@ const picks=new Map(),lastChat=new Map(),recentChatPicks=new Map();
 let streak=0,cmbT=null;
 const wt=[];
 /* ===== CONFIG DE DIFICULTAD Y RITMO (editar solo aqui) ===== */
-const RACE_SECONDS=600*PISTA;  /* segundos que tardaria una tortuga en llegar SOLA por avance pasivo (antes 240; x PISTA) */
-const PASSIVE_CAP=55;    /* el avance pasivo se detiene en este % de pista: el resto exige interaccion */
+const RACE_SECONDS=1800*PISTA;  /* segundos que tardaria una tortuga en llegar SOLA por avance pasivo (antes 240; x PISTA) */
+const PASSIVE_CAP=100;    /* el avance pasivo se detiene en este % de pista: el resto exige interaccion */
 const HARD=0.5;          /* multiplicador de puntos de cada evento (1 = facil, menor = mas dificil) */
 const TURBO_PPS=4,BOT_TURBO_PPS=1,TURBO_PROLONGED_MS=8000,GIFT_TURBO_MS=10000,GIFT_TURBO_PPS=5; /* cada regalo añade 10 s a 5%/s */
 function turboGain(rate,ms,handicap){return rate*ms/1000*handicap}
@@ -831,7 +831,7 @@ function say(m){$('#bub').textContent=m}
 function update(){
  let best=-1,mx=0;
  S.forEach((s,i)=>{const p=Math.min(100,s.p),h=p*4.7;
-  $('#tt'+i).style.transform=`translateY(${54-p*4.7}px)`; /* +34: arranca mas abajo, cubriendo los huevos chicos */
+  $('#tt'+i).style.transform=`translateY(${54-p*4.8}px)`; /* +34: arranca mas abajo, cubriendo los huevos chicos · 4.8: al 100% la CABEZA toca la linea de META */
   $('#gf'+i).setAttribute('y',536-h);$('#gf'+i).setAttribute('height',h);$('#gk'+i).setAttribute('cy',536-h);
   if(s.p>mx){mx=s.p;best=i}
  });
@@ -943,7 +943,7 @@ setInterval(()=>{
  if(over)return;
  S.forEach((s,i)=>{if(s.p<PASSIVE_CAP){s.p=Math.min(PASSIVE_CAP,s.p+100/RACE_SECONDS*sp[i]*dt);walk(i)}}); /* avance pasivo con tope */
  lead=update();
- let w=-1;S.forEach((s,i)=>{if(s.p>=100&&turboFinished(i,now))w=i});
+ let w=-1;S.forEach((s,i)=>{if(w<0&&s.p>=100)w=i}); /* gana en cuanto la cabeza toca la meta, sin esperar a que termine el turbo */
  if(w>=0)win(w);
 },250);
 /* API de depuracion por consola: tortugas.push("cp","chat",1) · tortugas.reset() · tortugas.resetCopas() */
@@ -1828,7 +1828,7 @@ voUi();voBUi();
 function ajustesDePartida(){
  P.vo=1;P.sfx=1;P.mus=0;save();   /* voz y efectos ON · musica OFF */
  A.apply();voUi();                /* refleja el cambio en volumen y botones */
- if(!paceOn)botMode(true);        /* ritmo automatico ON */
+ if(paceOn)botMode(false);        /* ritmo automatico OFF al arrancar (se puede activar a mano con 🤖 o tecla B) */
 }
 ajustesDePartida();
 /* Capa extra de update(): el color de la perilla de la barra cambia con el avance */
@@ -2388,6 +2388,48 @@ handleLiveEntry=function(e){
   if(t==='gift'){const gn=String(e.giftName||e.gift_name||e.gift||'');hit(/money\s*gun|pistola/i.test(gn)?pi:ro)}
   else if(t==='like'||t==='chat'||t==='follow'||t==='share')hit(ap)}}catch(x){}
  return r};
+})();
+</script>
+<!-- ===== CTA v3: los 3 botones (ROSITA, APOYAR/me gusta, PISTOLA) llaman la atencion POR TURNOS: reposo = brillo suave de su color; en su turno = pulso grande, aro, destello, etiqueta "¡AHORA!" y frase de accion. Un evento real sigue haciendo "hit" encima ===== -->
+<style id="cta-turnos">
+/* reposo: los tres se ven vivos pero tranquilos (el unico que se mueve es el que tiene el turno) */
+.rail .rosita-cta:not(.spot):not(.hit),.rail .rosita-cta:not(.spot):not(.hit):after,.rail .rosita-cta:not(.spot):not(.hit) .em{animation:none}
+.rail .rosita-cta:not(.spot):after{opacity:0}
+.rail .rosita-cta:not(.spot):not(.hit){box-shadow:0 3px 0 #5c0816,0 0 12px 2px rgba(255,60,110,.85)}
+.rail .apoyar-cta:not(.spot):not(.hit){box-shadow:0 3px 0 #052a63,0 0 12px 2px rgba(70,150,255,.85)}
+.rail .pistola-cta:not(.spot):not(.hit){box-shadow:0 3px 0 #053d1c,0 0 12px 2px rgba(60,220,120,.8)}
+/* en turno */
+.rail .cta.spot:not(.hit){z-index:5;border-color:#ffe14d;animation:spotPop .6s ease-in-out infinite,spotGlow .6s ease-in-out infinite}
+.rail .cta.spot .em{display:inline-block;animation:rositaWob .45s ease-in-out infinite alternate}
+.rail .cta.spot:after{content:"";position:absolute;inset:-3px;border-radius:15px;border:3px solid #ffe14d;opacity:0;pointer-events:none;animation:rositaRing 1s ease-out infinite}
+.rail .cta.spot:before{content:"¡AHORA!";position:absolute;top:-10px;left:8px;z-index:6;padding:2px 6px;border-radius:8px;border:2px solid #000;background:#ffe14d;color:#1a1000;font:900 9px/1 Inter,sans-serif;letter-spacing:.5px;text-shadow:none;animation:spotTag .6s ease-in-out infinite alternate}
+.rail .cta.spot .cx i{color:#ffe14d;font-weight:900}
+@keyframes spotPop{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes spotGlow{0%,100%{box-shadow:0 3px 0 rgba(0,0,0,.55),0 0 10px 2px #ffe14d}50%{box-shadow:0 3px 0 rgba(0,0,0,.55),0 0 24px 8px #fff}}
+@keyframes spotTag{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-3px) rotate(4deg)}}
+@media (prefers-reduced-motion:reduce){.rail .cta.spot,.rail .cta.spot .em,.rail .cta.spot:after,.rail .cta.spot:before{animation:none}.rail .cta.spot{transform:scale(1.05)}}
+</style>
+<script>
+(function(){const rail=document.querySelector('.rail');if(!rail)return;
+const ro=rail.querySelector('.rosita-cta'),ap=rail.querySelector('.apoyar-cta'),pi=rail.querySelector('.pistola-cta');
+/* orden de los turnos y frase de accion de cada boton mientras tiene el turno */
+/* APOYAR rota su identidad en cada turno: APOYAR (me gusta) -> COMPARTIR -> SEGUIR (taps del contador: 1 / 5 / 3) */
+const ID=[['❤️','APOYAR','cada toque suma +1','¡toca el live! ❤️','APOYAR: cada toque en el live suma 1 tap'],['↗️','COMPARTIR','comparte y suma +5','¡comparte el live! ↗️','COMPARTIR: compartir el live suma 5 taps'],['➕','SEGUIR','sigue y suma +3','¡sigue la cuenta! ➕','SEGUIR: seguir la cuenta suma 3 taps']];let idn=-1,idCur=0;
+function nuevaId(){if(!ap)return;idCur=++idn%ID.length;const d=ID[idCur],em=ap.querySelector('.em'),bb=ap.querySelector('.cx b'),ii=ap.querySelector('.cx i');if(em)em.textContent=d[0];if(bb)bb.textContent=d[1];if(ii)ii.textContent=d[2];ap.setAttribute('aria-label',d[4]);ap.title=d[4]}
+const turnos=[[ro,()=>'¡manda una rosita! 🚀'],[ap,()=>ID[idCur][3]],[pi,()=>'🏆 ¡gana al instante!']].filter(x=>x[0]);
+if(!turnos.length)return;
+const SPOT_MS=2600,PERIOD_MS=3000;let k=0,prev=null;
+function frase(b,t){const i=b&&b.querySelector('.cx i');if(!i)return;if(t!==undefined){if(i.dataset.o===undefined)i.dataset.o=i.textContent;i.textContent=t}else if(i.dataset.o!==undefined){i.textContent=i.dataset.o;delete i.dataset.o}}
+function quita(b){if(!b)return;b.classList.remove('spot');frase(b)}
+function turno(){
+ let fin=false;try{fin=!!over}catch(e){}
+ if(prev){quita(prev);prev=null}
+ if(fin||document.hidden)return;
+ const [b,f]=turnos[k++%turnos.length];
+ if(b===ap)nuevaId();   /* APOYAR cambia a COMPARTIR / SEGUIR antes de su turno */
+ b.classList.add('spot');frase(b,f());prev=b;
+ setTimeout(()=>{if(prev===b){quita(b);prev=null}},SPOT_MS)}
+setTimeout(()=>{turno();setInterval(turno,PERIOD_MS)},1500);
 })();
 </script>
 </body>
