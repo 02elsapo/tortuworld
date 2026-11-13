@@ -10,6 +10,8 @@ function createWebserver({
     || path.join(__dirname, 'data', 'tiktok', 'config.json'),
   commentStatsPath = process.env.TIKTOK_COMMENT_STATS_PATH,
   recentUsersPath = process.env.TIKTOK_RECENT_USERS_PATH,
+  freeTournamentPath = process.env.TIKTOK_FREE_TOURNAMENT_PATH,
+  commentArchivePath = process.env.TIKTOK_COMMENT_ARCHIVE_PATH,
   defaultUsername = process.env.TIKTOK_USERNAME || '',
   monitorService = createTikTokMonitorService(),
 } = {}) {
@@ -24,6 +26,10 @@ function createWebserver({
       || path.join(path.dirname(configurationPath), 'comment-stats.json'),
     recentUsersPath: recentUsersPath
       || path.join(path.dirname(configurationPath), 'recent-users.json'),
+    freeTournamentPath: freeTournamentPath
+      || path.join(path.dirname(configurationPath), 'free-tournament.json'),
+    commentArchivePath: commentArchivePath
+      || path.join(path.dirname(configurationPath), 'comments-archive.json'),
     defaultUsername,
   });
 

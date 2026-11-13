@@ -7,6 +7,26 @@ test('new LIVE members do not count as interaction activity', () => {
   assert.equal(policy.isInteractionEvent('chat'), true);
 });
 
+test('statistics bar counts every supported event with the right activity delta', () => {
+  assert.equal(policy.statEventDelta('member'), 1);
+  assert.equal(policy.statEventDelta('chat'), 1);
+  assert.equal(policy.statEventDelta('gift', 4), 4);
+  assert.equal(policy.statEventDelta('like', 2.8), 2);
+  assert.equal(policy.statEventDelta('follow'), 1);
+  assert.equal(policy.statEventDelta('share'), 1);
+  assert.equal(policy.statEventDelta('unknown'), 0);
+  assert.equal(policy.statEventDelta('gift', 0), 1);
+});
+
+test('statistics bar formats units consistently at thousand and million boundaries', () => {
+  assert.equal(policy.formatStatCount(999), '999');
+  assert.equal(policy.formatStatCount(1000), '1K');
+  assert.equal(policy.formatStatCount(1250), '1.3K');
+  assert.equal(policy.formatStatCount(999499), '999K');
+  assert.equal(policy.formatStatCount(999500), '1M');
+  assert.equal(policy.formatStatCount(1250000), '1.3M');
+});
+
 test('tap limit rises by 50 or 100 for activity above the rate thresholds', () => {
   assert.equal(policy.tapLimitStep(3), 0);
   assert.equal(policy.tapLimitStep(3.01), 50);
@@ -33,4 +53,10 @@ test('inactivity display counts down and resets to the configured timeout', () =
   assert.equal(policy.inactivityRemainingSeconds(1500, 60000), 59);
   assert.equal(policy.inactivityRemainingSeconds(60000, 60000), 0);
   assert.equal(policy.inactivityRemainingSeconds(0, 120000), 120);
+});
+
+test('only a normally finished final awards a cup', () => {
+  assert.equal(policy.shouldAwardCup(true, false), true);
+  assert.equal(policy.shouldAwardCup(true, true), false);
+  assert.equal(policy.shouldAwardCup(false, true), false);
 });

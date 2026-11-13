@@ -50,6 +50,11 @@ Selecciona el constructor **Dockerfile** para evitar la instalación de Nixpacks
 | `POST /api/cup-stats` | Registra una copa al terminar una ronda. | Envío: `{ "code": "PY" }`; respuesta: estadísticas actualizadas. |
 | `GET /api/recent-users` | Lista los últimos cuatro usuarios conectados y sus avatares. | JSON |
 | `PUT /api/recent-users` | Reemplaza la lista de usuarios recientes. | Envío: `{ "users": [{ "username": "espectador", "avatar": "https://..." }] }`; respuesta: lista guardada. |
+| `GET /api/free-tournament/stats` | Votos, equipos y estado del Torneo Libre. | JSON |
+| `PUT /api/free-tournament/mode` | Activa o desactiva los votos del Torneo Libre. | Envío: `{ "enabled": true }`; respuesta: estado actualizado. |
+| `GET /api/comment-archive/stats` | Cantidad de comentarios guardados. | JSON |
+| `GET /api/comment-archive` o `/api/comment-archive.txt` | Descarga comentarios sin nombres de usuario como JSON o TXT. | Archivo |
+| `POST /api/comment-archive/reset` | Vacía el archivo de comentarios. | Envío requerido: `{ "confirm": true }`. |
 | `GET /api/events` | Flujo SSE de estado, actividad y estadísticas. | Eventos `status`, `snapshot`, `update`, `comment-stats` y `cup-stats`. |
 
 Un usuario vacío o inválido al guardar devuelve `400`. Los eventos `status` contienen el estado resumido; `snapshot` contiene los eventos recientes al conectar; cada `update` incluye el evento nuevo y la lista actualizada:
@@ -74,7 +79,11 @@ Los tipos dependen de los eventos que entregue TikTok; incluyen chat, regalos, l
 
 El overlay `v10.html` es el contrato principal de interfaz y consume por SSE los eventos reales en `/api/events`. El backend limita los eventos a los seis tipos que v10 maneja, ofrece avatares de participantes reales y no permite insertar listas arbitrarias en `/api/recent-users`; las reglas de puntuación y carrera quedan en el overlay.
 
-El límite de taps aumenta 50 por cada 10% de recorrido si el promedio supera 3 eventos reales por segundo, y 100 si supera 10. La franja de estadísticas muestra una cuenta regresiva de inactividad: sin interacción real durante 1 minuto, el líder recibe turbo y gana; si el recorrido alcanza 80% y hubo más de 1000 interacciones en el partido, el plazo es de 2 minutos. Los ingresos al LIVE no cuentan ni reinician el reloj. La etiqueta del overlay muestra v1.2.1.
+El límite de taps aumenta 50 por cada 10% de recorrido si el promedio supera 3 eventos reales por segundo, y 100 si supera 10. La barra de estadísticas muestra entradas, comentarios, regalos, likes, seguimientos, compartidos, límite de taps y cuenta regresiva fija de inactividad de 60 segundos; las entradas al LIVE no reinician el reloj. Una victoria por tiempo agotado cuenta como victoria y avanza en el cuadro, pero no suma una copa. El overlay muestra los 10 usuarios con más puntos y las tres copas principales. La versión es v1.2.2.
+
+El Torneo Libre queda activo y bloqueado por defecto; toca el control `🔒 LIBRE` para desbloquearlo y luego el botón 🏆 para cambiar de torneo. La selección manual queda guardada. El Torneo Libre registra equipos nuevos cuando un comentario contiene solo el nombre del equipo; las menciones posteriores dentro de una frase suman un voto real. Los dos más votados se aplican al comenzar la siguiente carrera, y un comentario también aporta progreso si su equipo está compitiendo. Los votos y su número de usuarios únicos se guardan en `data/tiktok/free-tournament.json`.
+
+Todos los textos de chat real se conservan aparte, sin el nombre del usuario, en `data/tiktok/comments-archive.json`. En Estadísticas → Comentarios se pueden descargar como JSON o TXT y vaciar el archivo con confirmación.
 
 El navegador que carga el overlay inicia la conexión con reintentos cada 5 segundos durante un máximo de 5 minutos; si se agotan, el botón rojo permite reiniciarlos manualmente. El panel `/backend` también permite iniciar la conexión al guardar la cuenta; cargar el panel o arrancar el servidor no conecta TikTok.
 

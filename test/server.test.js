@@ -72,6 +72,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
   assert.equal(fs.existsSync(path.join(root, 'tortugas.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v1.3.html')), false);
   assert.equal(fs.existsSync(path.join(root, 'v68.html')), false);
+  assert.equal(fs.existsSync(path.join(root, 'v11.html')), false);
   assert.doesNotMatch(dockerfile, /v1\.3\.html/);
   assert.doesNotMatch(dockerfile, /v45\.html/);
   assert.equal(fs.existsSync(path.join(root, 'v45.html')), false);
@@ -103,8 +104,14 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.match(servedHtml, /const HINCHAS_JSON=\[/);
     assert.match(servedHtml, /const TAP_WEIGHTS=\{member:1,chat:10,like:1,follow:3,share:5\}/);
     assert.match(servedHtml, /<script src="\/activity-policy\.js"><\/script>/);
-    assert.match(servedHtml, /v1\.2\.1/);
+    assert.match(servedHtml, /v1\.2\.2/);
     assert.match(servedHtml, /id="idleCountdown"/);
+    assert.match(servedHtml, /id="tapLimit"/);
+    assert.match(servedHtml, /box\.id='rank'/);
+    assert.match(servedHtml, /data-tab="libre"/);
+    assert.match(servedHtml, /data-tab="comentarios"/);
+    assert.match(servedHtml, /TAP_POLICY\.statEventDelta\(e\.type,e\.activityCount\)/);
+    assert.match(servedHtml, /TAP_POLICY\.inactivityRemainingSeconds\(now-lastInteractionAt,IDLE_LIMIT_MS\)/);
     assert.match(servedHtml, /e\.profilePictureUrl\|\|e\.profilePicture/);
     assert.match(servedHtml, /data-local-only disabled/);
     assert.match(servedHtml, /rel="manifest" href="\/manifest.webmanifest"/);
@@ -123,7 +130,7 @@ test('serves the Cluss TikTok overlay as a full-screen PWA', async () => {
     assert.equal((await fetch(`${baseUrl}/v45.html`)).status, 404);
     const serviceWorker = await fetch(`${baseUrl}/sw.js`);
     assert.equal(serviceWorker.status, 200);
-    assert.match(await serviceWorker.text(), /tortu-shell-v12/);
+    assert.match(await serviceWorker.text(), /tortu-shell-v13/);
     assert.equal((await fetch(`${baseUrl}/activity-policy.js`)).status, 200);
     const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
     assert.equal(manifest.status, 200);
@@ -147,6 +154,71 @@ test('forwards normalized TikTok updates in the shape consumed by version 68', a
     commentStatsPath: path.join(directory, 'comment-stats.json'),
     recentUsersPath: path.join(directory, 'recent-users.json'),
     monitorService,
+  });
+
+  test('archives real comment text and tracks free-tournament votes without user names', async (t) => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'tortu-free-mode-'));
+    t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+    const monitorService = createMonitorService();
+    const { server } = createWebserver({
+      configurationPath: path.join(directory, 'config.json'),
+      commentStatsPath: path.join(directory, 'comment-stats.json'),
+      recentUsersPath: path.join(directory, 'recent-users.json'),
+      freeTournamentPath: path.join(directory, 'free-tournament.json'),
+      commentArchivePath: path.join(directory, 'comments-archive.json'),
+      monitorService,
+    });
+    const baseUrl = await listen(server);
+
+    try {
+      monitorService.emit({ type: 'chat', username: 'ana', content: 'Cerro Porteño' });
+      const initialStats = await fetch(`${baseUrl}/api/free-tournament/stats`).then((response) => response.json());
+      assert.equal(initialStats.enabled, true, 'free voting is enabled by default');
+      assert.equal(initialStats.teams[0].votes, 1);
+
+      const disabled = await fetch(`${baseUrl}/api/free-tournament/mode`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: false }),
+      }).then((response) => response.json());
+      assert.equal(disabled.enabled, false);
+      monitorService.emit({ type: 'chat', username: 'ana', content: 'Cerro Porteño' });
+
+      const enabled = await fetch(`${baseUrl}/api/free-tournament/mode`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: true }),
+      }).then((response) => response.json());
+      assert.equal(enabled.enabled, true);
+      monitorService.emit({ type: 'chat', username: 'ana', content: 'Vamos Cerro Porteño hoy' });
+
+      const votes = await fetch(`${baseUrl}/api/free-tournament/stats`).then((response) => response.json());
+      assert.deepEqual(votes.teams.map(({ name, votes: total, users }) => ({ name, votes: total, users })), [
+        { name: 'Cerro Porteño', votes: 2, users: 1 },
+      ]);
+
+      const archive = await fetch(`${baseUrl}/api/comment-archive`).then((response) => response.json());
+      assert.deepEqual(archive.comments.map((comment) => comment.text), [
+        'Cerro Porteño', 'Cerro Porteño', 'Vamos Cerro Porteño hoy',
+      ]);
+      assert.equal('username' in archive.comments[0], false);
+      const textExport = await fetch(`${baseUrl}/api/comment-archive.txt`).then((response) => response.text());
+      assert.equal(textExport, 'Cerro Porteño\nCerro Porteño\nVamos Cerro Porteño hoy');
+      const savedVotes = fs.readFileSync(path.join(directory, 'free-tournament.json'), 'utf8');
+      assert.doesNotMatch(savedVotes, /ana/);
+
+      const deniedReset = await fetch(`${baseUrl}/api/comment-archive/reset`, { method: 'POST' });
+      assert.equal(deniedReset.status, 400);
+      const reset = await fetch(`${baseUrl}/api/comment-archive/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      }).then((response) => response.json());
+      assert.equal(reset.count, 0);
+      assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory, 'comments-archive.json'), 'utf8')).comments, []);
+    } finally {
+      await close(server);
+    }
   });
   const baseUrl = await listen(server);
   let reader;

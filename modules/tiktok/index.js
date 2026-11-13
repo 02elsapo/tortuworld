@@ -4,6 +4,8 @@ const { registerTikTokRoutes } = require('./routes');
 const { createTikTokMonitorService } = require('./tiktokMonitorService');
 const { createCommentStatsService } = require('./commentStatsService');
 const { createRecentUsersService } = require('./recentUsersService');
+const { createFreeTournamentService } = require('./freeTournamentService');
+const { createCommentArchiveService } = require('./commentArchiveService');
 
 const maxEvents = 100;
 
@@ -14,6 +16,8 @@ function createTikTokModule({
     || path.join(__dirname, '..', '..', 'data', 'tiktok', 'config.json'),
   commentStatsPath = process.env.TIKTOK_COMMENT_STATS_PATH,
   recentUsersPath = process.env.TIKTOK_RECENT_USERS_PATH,
+  freeTournamentPath = process.env.TIKTOK_FREE_TOURNAMENT_PATH,
+  commentArchivePath = process.env.TIKTOK_COMMENT_ARCHIVE_PATH,
   defaultUsername = process.env.TIKTOK_USERNAME || '',
 } = {}) {
   if (!stream || typeof stream.attach !== 'function' || typeof stream.broadcast !== 'function') {
@@ -26,6 +30,12 @@ function createTikTokModule({
   });
   const recentUsers = createRecentUsersService({
     filePath: recentUsersPath || path.join(path.dirname(configurationPath), 'recent-users.json'),
+  });
+  const freeTournament = createFreeTournamentService({
+    filePath: freeTournamentPath || path.join(path.dirname(configurationPath), 'free-tournament.json'),
+  });
+  const commentArchive = createCommentArchiveService({
+    filePath: commentArchivePath || path.join(path.dirname(configurationPath), 'comments-archive.json'),
   });
   let username = environmentUsername;
   const events = [];
@@ -66,6 +76,9 @@ function createTikTokModule({
     if (entry.type === 'chat') {
       const stats = commentStats.recordComment(entry.content);
       publish('comment-stats', stats);
+      publish('comment-archive-stats', commentArchive.recordComment(entry.content, entry.time));
+      const freeStats = freeTournament.recordComment(entry);
+      if (freeStats) publish('free-tournament-stats', freeStats);
     }
     publish('update', { entry, events });
   }
@@ -80,6 +93,35 @@ function createTikTokModule({
 
   function getRecentUsers() {
     return recentUsers.getRecentUsers();
+  }
+
+  function getFreeTournamentStats() {
+    return freeTournament.getStats();
+  }
+
+  function setFreeTournamentMode(enabled) {
+    const stats = freeTournament.setEnabled(enabled);
+    if (!stats) return { ok: false, message: 'El estado del torneo libre no es válido.' };
+    publish('free-tournament-stats', stats);
+    return { ok: true, enabled, stats };
+  }
+
+  function getCommentArchive() {
+    return commentArchive.getArchive();
+  }
+
+  function getCommentArchiveSummary() {
+    return commentArchive.getSummary();
+  }
+
+  function getCommentArchiveText() {
+    return commentArchive.getTextExport();
+  }
+
+  function resetCommentArchive() {
+    const summary = commentArchive.reset();
+    publish('comment-archive-stats', summary);
+    return summary;
   }
 
   function recordCup(code) {
@@ -153,6 +195,12 @@ function createTikTokModule({
       getCommentStats,
       getCupStats,
       getRecentUsers,
+      getFreeTournamentStats,
+      setFreeTournamentMode,
+      getCommentArchive,
+      getCommentArchiveSummary,
+      getCommentArchiveText,
+      resetCommentArchive,
       recordCup,
       saveConfiguration,
       reconnect,
@@ -166,7 +214,11 @@ function createTikTokModule({
     close() {
       unsubscribeEvents();
       unsubscribeStatus();
-      monitorService.disconnectUser();
+      try {
+        commentArchive.close();
+      } finally {
+        monitorService.disconnectUser();
+      }
     },
   };
 }

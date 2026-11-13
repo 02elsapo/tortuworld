@@ -495,6 +495,18 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 </style>
 <script>window.I18N={en:false,tr:function(x){return x}};</script>
 <script src="/activity-policy.js"></script>
+<script>
+/* Mantiene el overlay operativo con los valores base si falla una parte de activity-policy.js. */
+(function(){var P=window.TORTUWORLD_ACTIVITY_POLICY=window.TORTUWORLD_ACTIVITY_POLICY||{};
+ P.isInteractionEvent=P.isInteractionEvent||function(t){return['chat','like','gift','follow','share'].indexOf(t)>=0};
+ P.statEventDelta=P.statEventDelta||function(t,n){if(['member','chat','gift','like','follow','share'].indexOf(t)<0)return 0;return t==='gift'||t==='like'?Math.max(1,Math.floor(Number(n))||1):1};
+ P.formatStatCount=P.formatStatCount||function(n){n=Math.max(0,Math.floor(Number(n)||0));if(n<1000)return String(n);if(n<999500)return(n<10000?(n/1000).toFixed(1).replace(/\.0$/,''):String(Math.round(n/1000)))+'K';return(n<1e7?(n/1e6).toFixed(1).replace(/\.0$/,''):String(Math.round(n/1e6)))+'M'};
+ P.tapLimitStep=P.tapLimitStep||function(){return 0};
+ P.inactivityTimeoutMs=P.inactivityTimeoutMs||function(){return 60000};
+ P.inactivityRemainingSeconds=P.inactivityRemainingSeconds||function(i,t){return Math.max(0,Math.ceil((t-i)/1000))};
+ P.shouldAwardCup=P.shouldAwardCup||function(f,t){return f===true&&t!==true};
+ P.shouldFinishForInactivity=P.shouldFinishForInactivity||function(i,t){return i>=t};})();
+</script>
 </head>
 <body>
 <!-- OVERLAY de 416x746 px; el ultimo script lo escala para llenar la ventana (OBS / navegador) -->
@@ -534,12 +546,12 @@ background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),r
 <div class="win" id="win" role="alertdialog" aria-label="Ganador"></div>
 </section>
 <!-- BARRA DE HERRAMIENTAS desplegable (tocar el usuario): 🤖 ritmo automatico, 🗣️ Don Tortu, 🎙️B narrador B (lee el chat), 🔊 efectos, 📊 estadisticas, ↺ reiniciar copas, 🔄 refrescar -->
-<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm" id="bLang" type="button" aria-label="Idioma / Language" title="Idioma / Language">EN</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.2.1"><span id="turboLim">⚡ Límite 50 taps</span> · v1.2.1</span></div>
+<div class="foot"><span class="live connecting" id="connection" role="status" aria-live="polite">cluss</span><button class="sm" id="bLang" type="button" aria-label="Idioma / Language" title="Idioma / Language">EN</button><button class="sm on" id="bVoz" aria-pressed="true" aria-label="Narrador Don Tortu (V)" title="Narrador Don Tortu (V)">🗣️</button><button class="sm on" id="bVozB" aria-pressed="true" aria-label="Narrador B: lee comentarios del chat" title="Narrador B: lee comentarios del chat">🎙️B</button><button class="sm on" id="bSfx" aria-pressed="true" aria-label="Efectos de sonido (S)">🔊</button><button class="sm" id="bStat" aria-label="Estadísticas de torneos" title="Estadísticas de torneos">📊</button><button class="sm" id="bReset" aria-label="Reiniciar copas (tocar dos veces)" title="Reiniciar copas (tocar dos veces)">↺</button><button class="sm" id="bTurboDn" aria-label="Bajar el límite de taps del turbo en 100" title="Turbo: 100 taps menos">➖</button><button class="sm" id="bTurboUp" aria-label="Subir el límite de taps del turbo en 100" title="Turbo: 100 taps más">➕</button><button class="sm" id="bRefresh" aria-label="Refrescar página" title="Refrescar página">🔄</button><span class="version" aria-label="Límite de taps del turbo y versión 1.2.2"><span id="turboLim">⚡ Límite 50 taps</span> · v1.2.2</span></div>
 <!-- FRANJA DE ESTADISTICAS del live: solo eventos REALES (los bots y los toques manuales no cuentan). El contador de regalos es solo informativo -->
 <div class="evs" id="evs" role="status" aria-label="Estadisticas del live"><div class="st" data-k="member" title="Unidos"><b>👥</b><span>0</span></div><div class="st" data-k="chat" title="Comentarios"><b>💬</b><span>0</span></div><div class="st" data-k="gift" title="Regalos"><b>🎁</b><span>0</span></div><div class="st" data-k="like" title="Me gusta"><b>❤️</b><span>0</span></div><div class="st" data-k="follow" title="Seguidores nuevos"><b>➕</b><span>0</span></div><div class="st" data-k="share" title="Compartidos"><b>↗️</b><span>0</span></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <!-- PANEL DE ESTADISTICAS (📊/🌎): contiene nombres y comentarios reales; cerrarlo antes de mostrar pantalla -->
-<section id="stp" hidden role="dialog" aria-label="Estadísticas"><header><b>🐢 Estadísticas</b><span><button data-reset>↺ Reiniciar copas</button> <button data-close aria-label="Cerrar">✕</button></span></header><nav><button data-tab="torneos">🏆 Torneos</button><button data-tab="paises">🌎 Clubes</button><button data-tab="usuarios">👤 Usuarios</button><button data-tab="regalos">🎁 Regalos</button></nav><div class="stb"></div></section>
+<section id="stp" hidden role="dialog" aria-label="Estadísticas"><header><b>🐢 Estadísticas</b><span><button data-reset>↺ Reiniciar copas</button> <button data-close aria-label="Cerrar">✕</button></span></header><nav><button data-tab="torneos">🏆 Torneos</button><button data-tab="paises">🌎 Clubes</button><button data-tab="libre">🆓 Libre</button><button data-tab="comentarios">📝 Comentarios</button><button data-tab="usuarios">👤 Usuarios</button><button data-tab="regalos">🎁 Regalos</button></nav><div class="stb"></div></section>
 </main>
 <script>
 /* ############ SECCION 1: MOTOR DEL JUEGO (datos, carriles, puntos, conexion SSE, estadisticas) ############ */
@@ -627,19 +639,27 @@ const ELITE_POOL={ /* ELITE NATIONS CUP: 8 paises */
  'el-gb':{id:'el-gb',n:'REINO UNIDO',s:'GBR',emoji:'🇬🇧',aliases:['REINO UNIDO','UK','UNITED KINGDOM','GRAN BRETAÑA','GRAN BRETANA']},'el-de':{id:'el-de',n:'ALEMANIA',s:'GER',emoji:'🇩🇪',aliases:['ALEMANIA','GERMANY']},
  'el-au':{id:'el-au',n:'AUSTRALIA',s:'AUS',emoji:'🇦🇺',aliases:['AUSTRALIA']},'el-sg':{id:'el-sg',n:'SINGAPUR',s:'SGP',emoji:'🇸🇬',aliases:['SINGAPUR','SINGAPORE']}
 };
-const TOURNAMENT_MODES=['libertadores','champions','countries','america','elite'];
-const TOURNAMENT_LABELS={libertadores:'LIBERTADORES',champions:'CHAMPIONS',countries:'COPA DEL MUNDO',america:'COPA AMÉRICA',elite:'ELITE NATIONS CUP'};
+const TOURNAMENT_MODES=['libertadores','champions','countries','america','elite','free'];
+const TOURNAMENT_LABELS={libertadores:'LIBERTADORES',champions:'CHAMPIONS',countries:'COPA DEL MUNDO',america:'COPA AMÉRICA',elite:'ELITE NATIONS CUP',free:'TORNEO LIBRE'};
+const FREE_WAIT_IDS=['free-wait-a','free-wait-b'];
+const FREE_POOL={
+ 'free-wait-a':{id:'free-wait-a',n:'ESPERANDO EQUIPO',s:'...',emoji:'⏳',aliases:['esperando equipo'],c:'#687386'},
+ 'free-wait-b':{id:'free-wait-b',n:'ESPERANDO EQUIPO',s:'...',emoji:'⏳',aliases:['esperando equipo'],c:'#687386'}
+};
+let freeTournamentStats={updatedAt:null,enabled:false,teams:[]};
 const COUNTRY_CHAMPIONS=['ct-ar','ct-br','ct-de','ct-es','ct-fr','ct-it','ct-uy','ct-en'];
 const COUNTRY_POPULAR_FALLBACK=['ct-py','ct-co','ct-cl','ct-mx','ct-us','ct-pt','ct-nl','ct-jp']; /* entran al Mundial si el chat aun no voto */
-let tournamentMode='libertadores',countryPopularity={},countryEntrants=[],tournamentInteractions={};
+let tournamentMode='free',countryPopularity={},countryEntrants=[],tournamentInteractions={};
 try{
  const saved=JSON.parse(localStorage.getItem('cluss.v1')||'{}');
- if(TOURNAMENT_MODES.includes(saved.tournamentMode))tournamentMode=saved.tournamentMode;
+ const savedLock=localStorage.getItem('cluss.torneoLock');
+ if(TOURNAMENT_MODES.includes(savedLock))tournamentMode=savedLock;
+ else if(savedLock==='auto'&&TOURNAMENT_MODES.includes(saved.tournamentMode))tournamentMode=saved.tournamentMode;
  if(saved.countryPopularity&&typeof saved.countryPopularity==='object')countryPopularity=saved.countryPopularity;
  if(Array.isArray(saved.countryEntrants))countryEntrants=saved.countryEntrants;
  if(saved.tournamentInteractions&&typeof saved.tournamentInteractions==='object')tournamentInteractions=saved.tournamentInteractions;
 }catch(e){}
-function poolForMode(mode=tournamentMode){return mode==='countries'?COUNTRY_POOL:mode==='champions'?CHAMPIONS_POOL:mode==='libertadores'?LIBERTADORES_POOL:mode==='america'?AMERICA_POOL:mode==='elite'?ELITE_POOL:POOL}
+function poolForMode(mode=tournamentMode){return mode==='free'?FREE_POOL:mode==='countries'?COUNTRY_POOL:mode==='champions'?CHAMPIONS_POOL:mode==='libertadores'?LIBERTADORES_POOL:mode==='america'?AMERICA_POOL:mode==='elite'?ELITE_POOL:POOL}
 function countryTournamentIds(){
  const nonWinners=Object.keys(COUNTRY_POOL).filter(id=>!COUNTRY_CHAMPIONS.includes(id));
  const fallbackRank=new Map(COUNTRY_POPULAR_FALLBACK.map((id,i)=>[id,i]));
@@ -648,10 +668,28 @@ function countryTournamentIds(){
  return COUNTRY_CHAMPIONS.concat(popular);
 }
 function tournamentIds(mode=tournamentMode){
+ if(mode==='free'){
+  const pair=freeTournamentStats.teams.filter(team=>FREE_POOL[team.id]).slice(0,2).map(team=>team.id);
+  return pair.length===2?pair:FREE_WAIT_IDS.slice();
+ }
  if(mode==='countries'&&countryEntrants.length===16&&countryEntrants.every(id=>COUNTRY_POOL[id]))return countryEntrants;
  return Object.keys(poolForMode(mode));
 }
-function tournamentItem(id){const item=POOL[id]||COUNTRY_POOL[id]||CHAMPIONS_POOL[id]||LIBERTADORES_POOL[id]||AMERICA_POOL[id]||ELITE_POOL[id];return item?Object.assign({c:'#3b82f6'},item):null}
+function tournamentItem(id){const item=POOL[id]||COUNTRY_POOL[id]||CHAMPIONS_POOL[id]||LIBERTADORES_POOL[id]||AMERICA_POOL[id]||ELITE_POOL[id]||FREE_POOL[id];return item?Object.assign({c:'#3b82f6'},item):null}
+function applyFreeTournamentStats(stats){
+ if(!stats||!Array.isArray(stats.teams))return;
+ Object.keys(FREE_POOL).filter(id=>!FREE_WAIT_IDS.includes(id)).forEach(id=>delete FREE_POOL[id]);
+ const colors=['#2563eb','#e11d48','#16a34a','#f59e0b','#8b5cf6','#0891b2'];
+ const teams=[];
+ stats.teams.forEach((team,index)=>{
+  if(!team||typeof team.id!=='string'||!/^free-[a-f0-9]{12}$/.test(team.id)
+   ||typeof team.name!=='string'||!team.name.trim())return;
+  const item={id:team.id,n:team.name.trim(),s:team.name.trim().replace(/[^A-Z0-9]/gi,'').slice(0,3).toUpperCase()||'LIB',
+   emoji:'🆓',aliases:[team.name.trim()],c:colors[index%colors.length]};
+  FREE_POOL[item.id]=item;teams.push({...team,name:item.n});
+ });
+ freeTournamentStats={updatedAt:stats.updatedAt||null,enabled:Boolean(stats.enabled),teams};
+}
 /* CLUSS · CUADRO (eliminacion directa, UN SOLO PARTIDO por club y ronda). 8 clubes = 4 cuartos, 2 semis, 1 final.
    BR.r[0]=los 8 clubes sorteados (cada 2 seguidos juegan entre si) · r[1]=ganadores de cuartos · r[2]=de semis · r[3]=campeon. null = aun sin jugar.
    Si agregas o quitas clubes de POOL, la cantidad debe ser potencia de 2 (4, 8, 16). */
@@ -730,6 +768,7 @@ const LS={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==
  del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 const US_KEY='cluss.users'; /* historial completo por usuario: clave aparte para no inflar el guardado principal */
 const DB=Object.assign({tournaments:[],countries:{},gifts:[],users:{}},LS.get(ST_KEY,{}));DB.users=LS.get(US_KEY,DB.users||{}); /* tournaments · countries{codigo:{name,flag,mentions,users[]}} · gifts[indice de logs] */
+let commentArchiveSummary={updatedAt:null,count:0},activeStatTab=null;
 const dbSave=()=>{const{users,...rest}=DB;return LS.set(ST_KEY,rest)};
 function usSave(){ /* si el navegador se queda sin espacio, descarta los usuarios mas viejos y reintenta */
  let ks;while(!LS.set(US_KEY,DB.users)&&(ks=Object.keys(DB.users)).length>20)ks.sort((a,b)=>DB.users[a].last-DB.users[b].last).slice(0,Math.ceil(ks.length*.1)).forEach(x=>delete DB.users[x]);
@@ -790,7 +829,7 @@ function stEnd(e){ /* fin de ronda: guarda la ronda en su torneo; con campeon ci
  if(!stCur)stNew(e.duel);
  const c=stCur;stFlush(e.winner);
  if(!stTour){stTour={id:stStamp(),start:c.start,end:null,champion:null,rounds:[]};DB.tournaments.push(stTour)}
- stTour.rounds.push({id:c.id,start:c.start,end:Date.now(),duel:e.duel||c.duel,winner:e.winner||null,gifts:c.gifts.reduce((a,g)=>a+g.count,0),chatMessages:c.chat.length,log:c.gifts.length?c.id:null});
+ stTour.rounds.push({id:c.id,start:c.start,end:Date.now(),duel:e.duel||c.duel,winner:e.winner||null,gifts:c.gifts.reduce((a,g)=>a+g.count,0),chatMessages:c.chat.length,cupAwarded:e.cupAwarded!==false,log:c.gifts.length?c.id:null});
  if(e.champion){stTour.end=Date.now();stTour.champion=e.winner||null;stTour=null}
  dbSave();stCur=null;
 }
@@ -816,6 +855,9 @@ const ST_VIEWS={
  paises(){const c=Object.values(DB.countries).map(v=>({flag:v.flag,name:v.name,mentions:v.mentions,users:v.users.length})).sort((a,b)=>b.mentions-a.mentions);
   const items=c.slice(0,8).map(x=>({l:x.flag+' '+x.name,v:x.mentions})),rest=c.slice(8).reduce((a,x)=>a+x.mentions,0);if(rest)items.push({l:'Otros',v:rest});
   return stPie(items)+(c.length?`<table><tr><th></th><th>Club</th><th>Menciones</th><th>Personas</th></tr>${c.map((x,i)=>`<tr><td style="color:${ST_COL[Math.min(i,8)]}">●</td><td>${x.flag} ${stH(x.name)}</td><td>${x.mentions}</td><td>${x.users}</td></tr>`).join('')}</table><p class="mut">Cada comentario que nombra un club suma 1.</p>`:'')},
+ libre(){const teams=freeTournamentStats.teams||[];
+  return teams.length?`<p class="mut">Cada comentario real suma 1 voto. El top 2 pasa al duelo siguiente.</p><table><tr><th>Equipo</th><th>Votos</th><th>Usuarios reales</th></tr>${teams.map(team=>`<tr><td>${stH(team.name)}</td><td>${team.votes}</td><td>${team.users}</td></tr>`).join('')}</table>`:'<p class="mut">Aún no hay equipos. En Torneo Libre, comenta solo el nombre para registrarlo.</p>'},
+ comentarios(){return`<p>Comentarios reales guardados: <b>${commentArchiveSummary.count}</b>. No se guarda quién los escribió.</p><p><a href="/api/comment-archive" download="comentarios.json">Descargar JSON</a> · <a href="/api/comment-archive.txt" download="comentarios.txt">Descargar TXT</a></p><p><button type="button" data-reset-archive>🗑️ Vaciar archivo de comentarios</button></p>`},
  usuarios(){const IC={chat:'💬',like:'❤️',gift:'🎁',follow:'➕',share:'↗️',member:'👋'},NM={chat:'comentó',like:'likes',gift:'regalo',follow:'siguió',share:'compartió',member:'se unió'};
   const l=Object.values(DB.users).sort((a,b)=>b.last-a.last);
   return l.length?l.map(u=>{const t=picks.get(u.name.toLowerCase());return`<details data-u="${stH(u.name.toLowerCase())}"><summary><b>${stH(u.name)}</b> <span class="mut">${t!=null&&T[t]?T[t].n+' · ':''}${u.ev.length} eventos · ${stTm(u.last)}</span></summary><div class="ue"></div></details>`}).join(''):'<p class="mut">Todavía no hay usuarios registrados.</p>'},
@@ -823,10 +865,10 @@ const ST_VIEWS={
   return g.length?`<table><tr><th>Fecha</th><th>Duelo</th><th>Ganó</th><th>🎁</th><th></th></tr>${g.map(x=>`<tr><td>${stFd(x.start)}</td><td>${stDuel(x.duel)}</td><td>${stH(stClub(x.winner))}</td><td>${x.gifts}</td><td>${x.hasLog===false?'<span class="mut">sin log</span>':`<button data-log="${x.id}">Ver</button> <button data-dl="${x.id}">⬇</button>`}</td></tr><tr hidden><td colspan="5" id="L${x.id}"></td></tr>`).join('')}</table>`:'<p class="mut">Ninguna ronda tuvo regalos todavía.</p>'}
 };
 /* Panel de estadisticas: cambia de pestana y redibuja su contenido. */
-function stTab(t){const p=document.getElementById('stp');p.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));p.querySelector('.stb').innerHTML=ST_VIEWS[t]()}
+function stTab(t){activeStatTab=t;const p=document.getElementById('stp');p.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));p.querySelector('.stb').innerHTML=ST_VIEWS[t]()}
 let stCloseTimer=0;
 /* Panel de estadisticas: lo cierra. */
-function stClose(){clearTimeout(stCloseTimer);stCloseTimer=0;document.getElementById('stp').hidden=true}
+function stClose(){clearTimeout(stCloseTimer);stCloseTimer=0;activeStatTab=null;document.getElementById('stp').hidden=true}
 /* Panel de estadisticas: lo abre (contiene nombres de usuarios, cerrar antes de mostrar pantalla). */
 function stOpen(t){const p=document.getElementById('stp');clearTimeout(stCloseTimer);p.hidden=false;stTab(t||'torneos');stCloseTimer=setTimeout(stClose,3000)}
 function stLogHtml(L){ /* log completo: cada regalo con su contexto + todo el chat con hora */
@@ -842,6 +884,12 @@ document.addEventListener('click',e=>{ /* eventos del panel (delegados) */
  else if('reset' in b.dataset){ /* doble toque para evitar reinicios por error */
   if(!b.dataset.sure){b.dataset.sure=1;b.textContent='¿Seguro? Toca de nuevo';setTimeout(()=>{delete b.dataset.sure;b.textContent='↺ Reiniciar copas'},4000)}
   else{delete b.dataset.sure;b.textContent='↺ Reiniciar copas';window.tortugas.resetCopas();stClose()}
+ }
+ else if('resetArchive' in b.dataset){
+  if(!confirm('¿Borrar todos los comentarios guardados?'))return;
+  fetch('/api/comment-archive/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:true})})
+   .then(async response=>{const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.message||'No se pudo borrar el archivo de comentarios.');commentArchiveSummary=result;stTab('comentarios')})
+   .catch(error=>{console.error(error);toast('No se pudo borrar el archivo de comentarios.','⚠️')});
  }
  else if(b.dataset.dl)stDownload(b.dataset.dl);
  else if(b.dataset.log){const c=document.getElementById('L'+b.dataset.log),r=c.parentNode;r.hidden=!r.hidden;if(!r.hidden){const L=LS.get(ST_LOG+b.dataset.log);c.innerHTML=L?stLogHtml(L):'Log no disponible'}}
@@ -1018,6 +1066,7 @@ function handleLiveEntry(entry){
  if(entry.type==='gift')team=recentChatTeam(key);
  /* Todo evento real carga un equipo: se conserva el equipo elegido y, si aun no hay uno, se usa el carril seleccionado. */
  if(team<0&&entry.type==='gift')return;
+ if(tournamentMode==='free'&&entry.type==='chat'&&team<0)return;
  if(team<0)team=picks.has(key)?picks.get(key):sel;
  if(entry.type==='chat'){
   const now=Date.now();
@@ -1046,6 +1095,16 @@ function setConnection(status){
 const source=new EventSource('/api/events');
 source.addEventListener('status',event=>setConnection(JSON.parse(event.data)));
 source.addEventListener('update',event=>handleLiveEntry(JSON.parse(event.data).entry));
+source.addEventListener('free-tournament-stats',event=>{
+ applyFreeTournamentStats(JSON.parse(event.data));
+ const tournament=window.clussTorneo;
+ if(tournament&&typeof tournament.refreshFree==='function')tournament.refreshFree();
+ if(activeStatTab==='libre'&&!document.getElementById('stp').hidden)stTab('libre');
+});
+source.addEventListener('comment-archive-stats',event=>{
+ commentArchiveSummary=JSON.parse(event.data);
+ if(activeStatTab==='comentarios'&&!document.getElementById('stp').hidden)stTab('comentarios');
+});
 source.onerror=()=>setConnection({connected:false,status:'reconnecting'});
 fetch('/api/reconnect',{method:'POST'}).then(async response=>{
  if(!response.ok&&response.status!==409){
@@ -1059,7 +1118,7 @@ fetch('/api/reconnect',{method:'POST'}).then(async response=>{
 $('#connection').textContent=USER;
 setInterval(()=>{
  const now=performance.now(),dt=Math.min(2,(now-lastTick)/1000);lastTick=now;
- if(over)return;
+ if(over||(tournamentMode==='free'&&DUELO.some(id=>FREE_WAIT_IDS.includes(id))))return;
  S.forEach((s,i)=>{if(s.p<PASSIVE_CAP){s.p=Math.min(PASSIVE_CAP,s.p+100/RACE_SECONDS*sp[i]*dt);walk(i)}}); /* avance pasivo con tope */
  lead=update();
  let w=-1;S.forEach((s,i)=>{if(w<0&&s.p>=100)w=i}); /* gana en cuanto la cabeza toca la meta, sin esperar a que termine el turbo */
@@ -1091,22 +1150,39 @@ P.duel=DUELO.slice();P.nextRival=nextRival;P.br=BR;save();
 const tournamentButton=document.createElement('button');
 tournamentButton.className='sm';tournamentButton.id='bTournament';tournamentButton.type='button';
 document.querySelector('.version').before(tournamentButton);
-document.querySelector('.version').setAttribute('aria-label','Límite de taps del turbo y versión 1.2.1');
-document.querySelector('.version').lastChild.textContent=' · v1.2.1';
+document.querySelector('.version').setAttribute('aria-label','Límite de taps del turbo y versión 1.2.2');
+document.querySelector('.version').lastChild.textContent=' · v1.2.2';
 function refreshTournamentButton(){tournamentButton.textContent='🏆';tournamentButton.title='Torneo actual: '+TOURNAMENT_LABELS[tournamentMode]+' · cambiar';tournamentButton.setAttribute('aria-label','Cambiar torneo; actual: '+TOURNAMENT_LABELS[tournamentMode])}
+function setFreeTournamentEnabled(enabled){
+ fetch('/api/free-tournament/mode',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled})})
+  .then(async response=>{const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.message||'No se pudo actualizar el torneo libre.');applyFreeTournamentStats(result.stats);refreshFreePairIfWaiting()})
+  .catch(error=>{console.error(error);toast('No se pudo actualizar el torneo libre.','⚠️')});
+}
+function refreshFreePairIfWaiting(){
+ if(tournamentMode!=='free'||!DUELO.every(id=>FREE_WAIT_IDS.includes(id)))return;
+ const pair=tournamentIds('free');if(pair.some(id=>FREE_WAIT_IDS.includes(id)))return;
+ BR=brNew('free');const c=brCur();if(!c)return;
+ P.br=BR;P.duel=c.duel.slice();P.wins=[0,0];save();
+ clearTimeout(rs);aplicarDuelo(c.duel);reset();renderTop3();refreshTournamentButton();
+ toast('Torneo libre: '+T[0].n+' vs '+T[1].n,'🆓');
+}
 function startTournament(mode){
  if(!TOURNAMENT_MODES.includes(mode))throw new Error('Tipo de torneo desconocido: '+mode);
  tournamentMode=mode;if(mode==='countries')countryEntrants=[];
  BR=brNew(mode);const c=brCur();
  P.tournamentMode=mode;P.countryEntrants=countryEntrants;P.countryPopularity=countryPopularity;
  P.tournamentInteractions=tournamentInteractions;P.br=BR;P.duel=c.duel.slice();P.wins=[0,0];save();
+ setFreeTournamentEnabled(mode==='free');
  clearTimeout(rs);aplicarDuelo(c.duel);reset();renderTop3();refreshTournamentButton();
- toast('Torneo: '+TOURNAMENT_LABELS[mode],'🏆');
- hype('🏆',TOURNAMENT_LABELS[mode],' · '+T[0].n+' vs '+T[1].n,'#ffd566');
+ if(mode==='free'&&DUELO.every(id=>FREE_WAIT_IDS.includes(id)))toast('Torneo libre: comenta nombres de equipos para registrarlos','🆓');
+ else{toast('Torneo: '+TOURNAMENT_LABELS[mode],'🏆');hype('🏆',TOURNAMENT_LABELS[mode],' · '+T[0].n+' vs '+T[1].n,'#ffd566')}
 }
 refreshTournamentButton();
 tournamentButton.onclick=()=>startTournament(TOURNAMENT_MODES[(TOURNAMENT_MODES.indexOf(tournamentMode)+1)%TOURNAMENT_MODES.length]);
-window.clussTorneo={start:startTournament,toast:(m,ic)=>toast(m,ic),modo:()=>tournamentMode}; /* lo usa el boton TORNEO (🔄/🔒) de herramientas */
+window.clussTorneo={start:startTournament,toast:(m,ic)=>toast(m,ic),modo:()=>tournamentMode,refreshFree:refreshFreePairIfWaiting}; /* lo usa el boton TORNEO (🔄/🔒) de herramientas */
+fetch('/api/free-tournament/stats').then(async response=>{if(!response.ok)throw new Error('No se pudieron cargar los votos del torneo libre.');applyFreeTournamentStats(await response.json());refreshFreePairIfWaiting()}).catch(error=>console.error(error));
+fetch('/api/comment-archive/stats').then(async response=>{if(!response.ok)throw new Error('No se pudo cargar el archivo de comentarios.');commentArchiveSummary=await response.json()}).catch(error=>console.error(error));
+setFreeTournamentEnabled(tournamentMode==='free');
 
 /* ===== AUDIO (WebAudio sintetizado, sin archivos externos) ===== */
 const A=(()=>{
@@ -1343,7 +1419,7 @@ T.forEach((_,i)=>renderNest(i));
 const EI={chat:['💬','#8b8f99'],like:['❤️','#ff5a7a'],follow:['➕','#2f9bd6'],share:['↗️','#2f9bd6'],gift:['🎁','#e11d48'],member:['👋','#16a34a']},evT=[],evL=[];
 $('.board').insertAdjacentHTML('beforeend','<div class="ev" id="evg" hidden></div>'); /* alerta de quien se une sin equipo: avatar grande al centro */
 /* PUNTAJE POR USUARIO: cada evento real lo aumenta. */
-const userScore=new Map(),SCORE={member:1,chat:5,like:1,follow:3,share:3,gift:0};
+const userScore=new Map(),SCORE={member:1,chat:5,like:1,follow:3,share:3,gift:0};window.__userScore=userScore;
 /* Devuelve la clave del usuario con mas puntos del equipo t (aro dorado en el nido). */
 function topOf(t){let b=null,m=0;(recent[t]||[]).forEach(x=>{const s=userScore.get(x.key)||0;if(s>m){m=s;b=x.key}});return b}
 /* Alerta: el avatar GRANDE del usuario que genero el evento (t = indice de equipo, o 'g' para quien se une sin equipo). Despues de ~1.7 s baja al nido */
@@ -1405,7 +1481,7 @@ function avatar(e){
  renderPod(t);if(from>=0&&from!==t)renderPod(from);
 }
 /* PODIO POR CLUB (bajo la bandera): los 3 usuarios REALES con mas puntos de cada equipo; el 1ro con corona, el 2do y 3ro con su numero */
-const known=new Map();
+const known=new Map();window.__known=known;
 /* Redibuja el podio bajo la bandera: los 3 usuarios con mas puntos del equipo t (rey con corona, 2do y 3ro) y su puntaje. */
 function renderPod(t){
  const box=document.querySelector('#ln'+t+' .pod');if(!box)return;box.textContent='';
@@ -1439,7 +1515,8 @@ fetch('/api/recent-users').then(async response=>{
 const _sc=showCombo;
 showCombo=function(){if(streak===0){if(lastStreak>=3)A.sfx('break');pm=1}lastStreak=streak;_sc()};
 const _win=win;
-win=function(i){
+win=function(i,options){
+ const timedOut=!!(options&&options.timedOut);
  const first=!over,cur0=brCur(),isFinal=!!cur0&&cur0.k===BR.r.length-2;_win(i);if(!first)return;
  P.wins[i]++;P.races++;addXp(20);
  if(sel===i){addXp(50);ach('pick')}
@@ -1451,30 +1528,31 @@ win=function(i){
  if(h){const d=document.createElement('div');d.className='plate';d.style.cssText='padding:6px 12px;font-size:11px;text-align:center;white-space:pre-line';
   d.textContent=(m?'MVP: '+who(m[0])+' · '+m[1]+' pts\n':'')+P.wins.slice(0,T.length).map((w,k)=>T[k].n+' '+w).join(' · ')+(sel===i?'\n¡Tu equipo ganó! +50 XP':'');
   h.after(d)}
- logStat({type:'round-end',winner:T[i].id,duel:DUELO,champion:isFinal}); /* guarda la ronda (y cierra el torneo si hay campeon) */
- if(P.wins[i]>=CUPS)champion(i);
+ logStat({type:'round-end',winner:T[i].id,duel:DUELO,champion:isFinal,cupAwarded:TAP_POLICY.shouldAwardCup(isFinal,timedOut)}); /* guarda la ronda (y cierra el torneo si hay campeon) */
+ if(P.wins[i]>=CUPS)champion(i,{timedOut});
  hud();
 };
 const CUPS=1; /* un solo partido por club y ronda */
 /* Termina un partido: el ganador avanza en el cuadro. En la final, campeon del torneo y sorteo nuevo. */
-function champion(i){
+function champion(i,{timedOut=false}={}){
  clearTimeout(rs);
  const id=T[i].id,c=brCur(),finalRound=BR.r.length-2,fin=!!c&&c.k===finalRound;
+ const cupAwarded=TAP_POLICY.shouldAwardCup(fin,timedOut);
  brWin(id);
  if(c&&c.k===finalRound-1&&BR.r[finalRound].every(Boolean)){
   BR.r[finalRound]=interactionFinalists();
  }
  P.br=BR;P.tournamentInteractions=tournamentInteractions;
- if(fin)P.cp[id]=(P.cp[id]||0)+1;save();
+ if(cupAwarded)P.cp[id]=(P.cp[id]||0)+1;save();
  const w=$('#win'),h=w.querySelector('h2');
- if(h)h.innerHTML=fin?'¡CAMPEÓN<br>'+T[i].n+'!':'¡'+T[i].n+'<br>AVANZA!';
+ if(h)h.innerHTML=fin?(cupAwarded?'¡CAMPEÓN<br>'+T[i].n+'!':'¡VICTORIA<br>'+T[i].n+'!'):'¡'+T[i].n+'<br>AVANZA!';
  const t=document.createElement('div');t.className='plate';t.style.cssText='padding:6px 12px;font-size:'+(fin?16:13)+'px;text-align:center';
- t.textContent=fin?'🏆 ¡GANÓ EL TORNEO!':'➡️ Pasa a '+roundName(c.k+1);
+ t.textContent=fin?(cupAwarded?'🏆 ¡GANÓ EL TORNEO!':'⏱️ Victoria por tiempo · no suma copa'):'➡️ Pasa a '+roundName(c.k+1);
  if(h)h.after(t);
  const bt=$('#again');if(bt){bt.textContent=fin?'NUEVO TORNEO':'SIGUIENTE PARTIDO';bt.onclick=()=>nextMatch()}
- if(fin){const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
+ if(cupAwarded){const cols=['#ffd34d','#e11d48','#3ddc5a','#5ec3f2','#fff'];
   w.insertAdjacentHTML('beforeend',Array.from({length:40},()=>'<span class="cf" style="left:'+(Math.random()*100)+'%;background:'+cols[Math.floor(Math.random()*5)]+';animation-delay:'+(Math.random()*2)+'s"></span>').join(''))}
- toast(fin?'¡'+T[i].n+' es el campeón del torneo!':T[i].n+' avanza',fin?'🏆':'➡️');
+ toast(cupAwarded?'¡'+T[i].n+' es el campeón del torneo!':timedOut?'Victoria por tiempo; no suma copa':T[i].n+' avanza',cupAwarded?'🏆':timedOut?'⏱️':'➡️');
  renderTop3();
  rs=setTimeout(nextMatch,fin?7000:5000);
 }
@@ -1482,9 +1560,12 @@ function champion(i){
 function nextMatch(){
  clearTimeout(rs);
  if(!brCur()){
-  tournamentMode=TOURNAMENT_MODES[(TOURNAMENT_MODES.indexOf(tournamentMode)+1)%TOURNAMENT_MODES.length];
-  if(tournamentMode==='countries')countryEntrants=[];
-  BR=brNew(tournamentMode);P.tournamentMode=tournamentMode;
+  if(tournamentMode==='free')BR=brNew('free');
+  else{
+   tournamentMode=TOURNAMENT_MODES[(TOURNAMENT_MODES.indexOf(tournamentMode)+1)%TOURNAMENT_MODES.length];
+   if(tournamentMode==='countries')countryEntrants=[];
+   BR=brNew(tournamentMode);P.tournamentMode=tournamentMode;
+  }
  }
  const c=brCur(),duel=c.duel;
  P.wins=[0,0];P.best=0;P.br=BR;P.duel=duel.slice();P.tournamentMode=tournamentMode;
@@ -1496,7 +1577,7 @@ function nextMatch(){
 /* ===== RESET DE COPAS (boton "Reiniciar copas" del panel de estadisticas): top 3, copas y torneo vuelven a cero, y arranca una carrera nueva.
  NO borra el historial guardado en las estadisticas; solo cierra el torneo en curso sin campeon. ===== */
 function resetCopas(){
- P.wins=[0,0];Object.keys(Object.assign({},POOL,COUNTRY_POOL,CHAMPIONS_POOL,LIBERTADORES_POOL,AMERICA_POOL,ELITE_POOL)).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;BR=brNew();P.br=BR;P.tournamentMode=tournamentMode;P.countryEntrants=countryEntrants;P.countryPopularity=countryPopularity;P.tournamentInteractions=tournamentInteractions;{const d=brCur().duel;P.duel=d.slice();save();aplicarDuelo(d)}
+ P.wins=[0,0];Object.keys(Object.assign({},POOL,COUNTRY_POOL,CHAMPIONS_POOL,LIBERTADORES_POOL,AMERICA_POOL,ELITE_POOL,FREE_POOL)).forEach(k=>P.cp[k]=0);P.races=0;P.best=0;FX=0;P.fx=0;BR=brNew();P.br=BR;P.tournamentMode=tournamentMode;P.countryEntrants=countryEntrants;P.countryPopularity=countryPopularity;P.tournamentInteractions=tournamentInteractions;{const d=brCur().duel;P.duel=d.slice();save();aplicarDuelo(d)}
  clearTimeout(rs);reset();renderTop3();stCloseTour();
  toast('Copas reiniciadas: todo empieza de cero','🔄');
 }
@@ -1586,14 +1667,19 @@ const idleStat=document.createElement('div');
 idleStat.className='st';idleStat.dataset.k='idle';idleStat.title='Tiempo restante sin interacción';
 idleStat.innerHTML='<b>⏳</b><span id="idleCountdown" aria-live="off">60s</span>';
 document.getElementById('evs').appendChild(idleStat);
+/* Límite de taps actual; al completarlo se activa el turbo. */
+const limStat=document.createElement('div');
+limStat.className='st';limStat.dataset.k='lim';limStat.title='Límite de taps actual (al completarlo se activa el turbo)';
+limStat.innerHTML='<b>🎯</b><span id="tapLimit">50</span>';
+document.getElementById('evs').insertBefore(limStat,idleStat);
 /* Formato compacto de numeros (1.2K) */
-const stFmt=n=>n<1000?String(n):n<10000?(n/1000).toFixed(1)+'K':Math.round(n/1000)+'K';
+const stFmt=TAP_POLICY.formatStatCount;
 const _hleSt=handleLiveEntry;
 handleLiveEntry=function(e){
  try{if(e&&!e.bot&&['member','chat','gift','like','follow','share'].includes(e.type))stUser(e)}catch(x){console.error(x)}
  try{if(e&&!e.bot&&TAP_POLICY.isInteractionEvent(e.type)){const eventAt=Date.now();realEv.push(eventAt);lastInteractionAt=eventAt;matchInteractionCount++} /* solo interacciones, no ingresos al LIVE */
   if(e&&!e.bot&&e.type in ST){
-  const n=(e.type==='like'||e.type==='gift')?Math.max(1,+e.activityCount||1):1;
+  const n=TAP_POLICY.statEventDelta(e.type,e.activityCount);
   ST[e.type]+=n;const el=document.querySelector('.st[data-k="'+e.type+'"]');
   if(el){el.querySelector('span').textContent=stFmt(ST[e.type]);el.classList.remove('up');void el.offsetWidth;el.classList.add('up')}
  }}catch(x){console.error(x)}
@@ -1613,12 +1699,13 @@ function realEventRatePerSecond(now=Date.now()){
  const elapsed=Math.max(1000,Math.min(60000,now-raceStartedAt));
  return realEpm(now)/(elapsed/1000);
 }
+/* Cuenta regresiva fija de 60 s; solo las interacciones reales la reinician. */
+const IDLE_LIMIT_MS=60000;
 function renderInactivityCountdown(now=Date.now()){
- const progress=Math.max(0,...S.map(s=>s.p));
- const timeoutMs=TAP_POLICY.inactivityTimeoutMs(progress,matchInteractionCount);
- const seconds=TAP_POLICY.inactivityRemainingSeconds(now-lastInteractionAt,timeoutMs);
+ {const tl=document.getElementById('tapLimit');if(tl){const t=stFmt(HEART_N);if(tl.textContent!==t)tl.textContent=t}}
+ const seconds=TAP_POLICY.inactivityRemainingSeconds(now-lastInteractionAt,IDLE_LIMIT_MS);
  const counter=$('#idleCountdown'),text=seconds+'s';
- if(counter&&counter.textContent!==text)counter.textContent=text;
+ if(counter){if(counter.textContent!==text)counter.textContent=text;if(counter.parentNode)counter.parentNode.classList.toggle('low',seconds<=10&&!over)}
 }
 /* BOT ELIMINADO: sin ritmo automatico, sin eventos tortubot, sin apoyo al lado vacio y sin regalos gratis. Solo cuentan los eventos REALES del live. */
 $('#bStat').onclick=()=>stOpen('torneos');  /* abre el panel de torneos */
@@ -1640,19 +1727,16 @@ T.forEach((_,i)=>$('#in'+i).insertAdjacentHTML('afterbegin','<g class="tf"><path
 const tz=(m,ic)=>{if(tq.length<3)toast(m,ic)};
 const turboOn=(t,ms,power=TURBO_PPS)=>{const n=performance.now(),active=turbo[t]>n;turbo[t]=Math.min(n+60000,Math.max(n,turbo[t])+ms);turboPower[t]=active?Math.max(turboPower[t],power):power};
 function finishForLowActivity(now=Date.now()){
- const idleMs=now-lastInteractionAt;
- const progress=Math.max(0,...S.map(s=>s.p));
- const timeoutMs=TAP_POLICY.inactivityTimeoutMs(progress,matchInteractionCount);
- if(over||lowActivityFinished||!TAP_POLICY.shouldFinishForInactivity(idleMs,timeoutMs))return;
+ if(over||lowActivityFinished||now-lastInteractionAt<IDLE_LIMIT_MS)return;
  lowActivityFinished=true;
  const winner=lead>=0?lead:Math.max(0,update());
  turboOn(winner,HEART_TURBO_MS,TURBO_PPS);
  $('#ln'+winner).classList.add('turbo');
- S[winner].p=100;lead=update();win(winner);
+ S[winner].p=100;lead=update();win(winner,{timedOut:true});
 }
 function giftTurboOn(t,count){giftTurboUntil[t]=Math.max(performance.now(),giftTurboUntil[t])+GIFT_TURBO_MS*count}
 setInterval(()=>{
- if(over)return;const n=performance.now();
+ if(over||(tournamentMode==='free'&&DUELO.some(id=>FREE_WAIT_IDS.includes(id))))return;const n=performance.now();
  T.forEach((_,i)=>{
   const on=turbo[i]>n,giftOn=giftTurboUntil[i]>n,pts=(on?turboGain(turboPower[i],250,1):0)+(giftOn?GIFT_TURBO_PPS*250/1000:0);
   $('#ln'+i).classList.toggle('turbo',on||giftOn);
@@ -2266,7 +2350,7 @@ push=function(i,type,n,m){
 
 const _win=win;
 win=function(i){
- const first=!over,ps=S.map(s=>s.p);_win(i);
+ const first=!over,ps=S.map(s=>s.p);_win.apply(this,arguments);
  if(!first)return;
  clearTimeout(bt);bs.forEach(x=>x.classList.remove('on')); /* el banner de hito no tapa la pantalla de ganador */
  const rest=Math.max(...ps.filter((_,j)=>j!==i)),photo=Math.min(100,ps[i])-rest<=3;
@@ -2651,15 +2735,15 @@ pinta();setInterval(pinta,1500);
 </style>
 <script>
 (function(){
-const M=TOURNAMENT_MODES.slice(),L=TOURNAMENT_LABELS,SHORT={libertadores:'LIBERTADORES',champions:'CHAMPIONS',countries:'MUNDIAL',america:'AMÉRICA',elite:'ELITE'};
-let lock=null;try{const v=localStorage.getItem('cluss.torneoLock');if(M.includes(v))lock=v}catch(e){}
+const M=TOURNAMENT_MODES.slice(),L=TOURNAMENT_LABELS,SHORT={libertadores:'LIBERTADORES',champions:'CHAMPIONS',countries:'MUNDIAL',america:'AMÉRICA',elite:'ELITE',free:'LIBRE'};
+let lock='free';try{const v=localStorage.getItem('cluss.torneoLock');if(v==='auto')lock=null;else if(M.includes(v))lock=v;else localStorage.setItem('cluss.torneoLock','free')}catch(e){}
 const foot=document.querySelector('#topbar .foot')||document.querySelector('.foot');if(!foot)return;
 const b=document.createElement('button');b.id='bTorneoSel';b.type='button';
 const fila=document.createElement('div');fila.id='filaVT';const ver=document.querySelector('.version');
 fila.appendChild(b);if(ver)fila.appendChild(ver);foot.appendChild(fila); /* torneo + version/limite de taps en la misma fila */
 function pinta(){b.textContent=lock?'🔒 '+SHORT[lock]:'🔄 TORNEO: AUTO';b.classList.toggle('lock',!!lock);
  const d=lock?'Torneo fijo: '+L[lock]:'Torneo automático (rota solo al terminar cada copa)';b.title=d+' · tocar para cambiar';b.setAttribute('aria-label',d+'. Tocar para cambiar')}
-function guarda(){try{lock?localStorage.setItem('cluss.torneoLock',lock):localStorage.removeItem('cluss.torneoLock')}catch(e){}}
+function guarda(){try{localStorage.setItem('cluss.torneoLock',lock||'auto')}catch(e){}}
 /* fijo = la lista de torneos queda con uno solo, asi la rotacion del juego siempre vuelve a el; AUTO = lista completa */
 function lista(){TOURNAMENT_MODES.splice(0,TOURNAMENT_MODES.length,...(lock?[lock]:M))}
 b.onclick=()=>{const seq=[null,...M];lock=seq[(seq.indexOf(lock)+1)%seq.length];guarda();pinta();
@@ -3128,7 +3212,7 @@ function pinta(){try{
  let bra=[];try{bra=(BR.r[0]||[]).filter(Boolean)}catch(e){}
  const con=Object.keys(cp).filter(k=>(cp[k]||0)>0),ord=id=>{const q=bra.indexOf(id);return q<0?99:q};
  const ids=[...new Set([...con,...act,...bra])];
- const a=ids.sort((x,y)=>(cp[y]||0)-(cp[x]||0)||(act.includes(y)-act.includes(x))||ord(x)-ord(y)).slice(0,5);
+ const a=ids.sort((x,y)=>(cp[y]||0)-(cp[x]||0)||(act.includes(y)-act.includes(x))||ord(x)-ord(y)).slice(0,3);
  const h='<div class="hh">🏆 COPAS</div>'+a.map((id,i)=>`<div class="rw${i?'':' f1'}${act.includes(id)?' on':''}${cp[id]?'':' z'}"${act.includes(id)?' title="●"':''}>${ban(id)}<span class="nm">${esc(nom(id))}</span><span class="ct">${cp[id]||0}<small>🏆</small></span></div>`).join('');
  if(h!==ult){ult=h;box.innerHTML=h}}catch(e){}}
 setInterval(pinta,1500);pinta();
@@ -3386,12 +3470,12 @@ pinta();setInterval(pinta,500);
 .lane .sv{border-radius:9px;overflow:hidden;box-shadow:inset 0 0 0 1px #3f2713}
 .lane .cnTop{border-color:var(--tc)!important}
 /* viga de madera central con filo del color de cada club */
-#lanes:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:10px;margin-left:-5px;z-index:6;pointer-events:none;border-radius:4px;
+#lanes:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:10px;margin-left:-5px;z-index:4;pointer-events:none;border-radius:4px;
  background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 7px),linear-gradient(90deg,#3f2713,#8a5a30 50%,#3f2713);
  border:1px solid #2a190b;
  box-shadow:-3px 0 0 var(--tcA),3px 0 0 var(--tcB),0 0 6px rgba(0,0,0,.6)}
 /* cartel VS, mismo estilo que las placas crema de la interfaz */
-#lanes:before{content:"VS";position:absolute;left:50%;top:44%;width:30px;height:30px;margin:-15px 0 0 -15px;z-index:7;pointer-events:none;
+#lanes:before{content:"VS";position:absolute;left:50%;top:44%;width:30px;height:30px;margin:-15px 0 0 -15px;z-index:4;pointer-events:none;
  display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid #6b6f78;
  background:linear-gradient(#faf3e2,#e2d6bb);color:#2a2018;font:900 12px/1 Inter,sans-serif;box-shadow:0 2px 5px rgba(0,0,0,.6)}
 </style>
@@ -3577,6 +3661,81 @@ if(btn)btn.addEventListener('click',abrir);
 function mode(){try{return JSON.parse(localStorage.getItem('cluss.v1')||'{}').tournamentMode||'libertadores'}catch(e){return 'libertadores'}}
 function poll(){const m=mode();if(m!==last){last=m;set(DEF(m))}}
 poll();setInterval(poll,500);paint();
+})();
+</script>
+
+<!-- Cuadro con los 10 usuarios reales que más actividad acumulan. -->
+<style id="ranking-css">
+#copas .rw.f1:after{content:none!important;display:none!important}
+#copas{flex:0 0 auto!important;margin:auto 0 0!important;padding:5px 3px 4px!important}
+#honor .av{width:34px!important;height:34px!important;font-size:18px!important}#honor .s1 .av{width:40px!important;height:40px!important;font-size:21px!important}#honor .pd{gap:3px!important}#honor .hh{margin-bottom:3px!important}
+#copas .hh{font-size:8px!important;margin-bottom:3px!important}
+#copas .rw{flex:0 0 auto!important;max-height:none!important;margin-top:3px!important;padding:4px 3px!important;gap:0 3px!important;flex-wrap:nowrap!important;justify-content:flex-start!important}
+#copas .rw svg{width:20px!important;height:20px!important}
+#copas .nm{order:0!important;flex:1 1 0!important;min-width:0;text-align:left!important;font-size:9px!important;letter-spacing:0!important}
+#copas .ct{font-size:13px!important}#copas .ct small{display:none!important}
+#copas .rw:before{min-width:12px!important;height:12px!important;font-size:8px!important;left:-3px!important;top:-4px!important}
+.sv>svg{height:calc(496px + var(--ex) - var(--pnl,0px))!important}
+#rank{order:-2;flex:none;display:grid;grid-template-columns:repeat(var(--rc,5),minmax(0,1fr));gap:2px 2px;padding:3px 4px 2px;background:linear-gradient(#7a4e2a,#5a3a1e);border:2px solid #3f2713;border-radius:10px;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+#rank .u{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+#rank .av{width:24px;height:24px;border-radius:50%;border:2px solid var(--c,#c9ccd1);background:#3f2713;display:flex;align-items:center;justify-content:center;overflow:hidden;font:800 11px Inter,sans-serif;color:#fff}
+#rank .av img{width:100%;height:100%;object-fit:cover;display:block}
+#rank .n{position:absolute;left:1px;top:-3px;min-width:13px;height:13px;padding:0 2px;border-radius:7px;background:#3f2713;border:1px solid #ffe14d;color:#ffe14d;font:900 8px/11px Inter,sans-serif;text-align:center;z-index:1}
+#rank .u.f1 .av{border-color:#ffe14d;box-shadow:0 0 6px 1px rgba(255,225,77,.7)}
+#rank .u.f1:after{content:"👑";position:absolute;right:-1px;top:-8px;font-size:11px;transform:rotate(18deg)}
+#rank .s{margin-top:1px;max-width:100%;overflow:hidden;font:900 10px/1.1 Inter,sans-serif;color:#ffe14d;text-shadow:0 1px 2px #000;white-space:nowrap}
+#rank .u.e{opacity:.3}
+#evs .st[data-k="idle"].low span{color:#ff6b6b;animation:idle-pulse .5s ease-in-out infinite alternate}
+@keyframes idle-pulse{to{transform:scale(1.25)}}
+</style>
+<script>
+(function(){
+const RANK_N=10;
+const rows=RANK_N>5?2:1,cols=Math.ceil(RANK_N/rows);
+const fmt=n=>{n=Math.floor(n||0);if(n<1000)return String(n);
+ let v=n/1000,u='K';if(Math.round(v*10)/10>=1000){v=n/1e6;u='M'}else if(n>=1e6){v=n/1e6;u='M'}
+ return(v<10?v.toFixed(1).replace(/\.0$/,''):String(Math.round(v)))+u};
+const info=new Map();
+const _h=handleLiveEntry;
+handleLiveEntry=function(e){
+ try{if(e&&!e.bot&&e.username){const k=String(e.username).trim().toLowerCase();
+  const url=String(e.profilePictureUrl||e.profilePicture||e.avatarUrl||e.avatar||e.userImage||e.imageUrl||'');
+  const o=info.get(k)||{name:String(e.username).trim(),url:''};if(url)o.url=url;info.set(k,o)}}catch(x){}
+ return _h.apply(this,arguments);
+};
+const box=document.createElement('div');box.id='rank';box.setAttribute('aria-label','Top usuarios');
+box.style.setProperty('--rc',cols);
+const bar=document.getElementById('topbar'),app=document.getElementById('app');
+(bar||app).prepend(box);
+let last=null;
+function paint(){try{
+ const userScore=window.__userScore,known=window.__known;if(!userScore)return;
+ const arr=[...userScore.entries()].filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,RANK_N);
+ const key=arr.map(x=>x.join(':')+':'+((info.get(x[0])||{}).url||'')).join('|');
+ if(key===last)return;last=key;
+ box.textContent='';
+ for(let i=0;i<RANK_N;i++){
+  const d=document.createElement('div'),x=arr[i];d.className='u'+(i?'':' f1')+(x?'':' e');
+  const av=document.createElement('div');av.className='av';
+  const n=document.createElement('span');n.className='n';n.textContent=i+1;
+  const s=document.createElement('span');s.className='s';
+  if(x){
+   const k=x[0],o=info.get(k)||(known&&known.get(k)?{name:known.get(k).name,url:known.get(k).url}:{name:k,url:''});
+   const kn=known&&known.get(k);if(kn&&T[kn.t])av.style.setProperty('--c',T[kn.t].c==='#f1f1f1'?'#e5e5e5':T[kn.t].c);
+   const ini=()=>{av.textContent=(o.name||k).replace(/^@/,'').charAt(0).toUpperCase()};
+   const url=o.url||(kn&&kn.url)||'';
+   if(/^https:/.test(url)){const im=new Image();im.referrerPolicy='no-referrer';im.alt='';im.onerror=()=>{im.remove();ini()};im.src=url;av.append(im)}else ini();
+   d.title='@'+(o.name||k)+' · '+x[1]+' pts';s.textContent=fmt(x[1]);
+  }else{s.textContent='0'}
+  d.append(n,av,s);box.append(d);
+ }
+ sizeUp();
+}catch(e){}}
+let lastH=0;
+function sizeUp(){const h=box.offsetHeight;if(!h||h===lastH)return;lastH=h;
+ document.documentElement.style.setProperty('--pnl',(h+4)+'px');dispatchEvent(new Event('resize'))}
+paint();setInterval(paint,700);
+addEventListener('load',()=>setTimeout(()=>{lastH=0;sizeUp()},700));
 })();
 </script>
 </body>

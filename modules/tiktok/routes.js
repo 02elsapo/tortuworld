@@ -4,6 +4,12 @@ function registerTikTokRoutes(app, {
   getCommentStats,
   getCupStats,
   getRecentUsers,
+  getFreeTournamentStats,
+  setFreeTournamentMode,
+  getCommentArchive,
+  getCommentArchiveSummary,
+  getCommentArchiveText,
+  resetCommentArchive,
   recordCup,
   saveConfiguration,
   reconnect,
@@ -27,6 +33,39 @@ function registerTikTokRoutes(app, {
 
   app.get('/api/recent-users', (request, response) => {
     response.json(getRecentUsers());
+  });
+
+  app.get('/api/free-tournament/stats', (request, response) => {
+    response.json(getFreeTournamentStats());
+  });
+
+  app.get('/api/comment-archive/stats', (request, response) => {
+    response.json(getCommentArchiveSummary());
+  });
+
+  app.get('/api/comment-archive', (request, response) => {
+    response.attachment('comentarios.json').json(getCommentArchive());
+  });
+
+  app.get('/api/comment-archive.txt', (request, response) => {
+    response.attachment('comentarios.txt').type('text/plain').send(getCommentArchiveText());
+  });
+
+  app.post('/api/comment-archive/reset', (request, response) => {
+    if (request.body?.confirm !== true) {
+      response.status(400).json({ ok: false, message: 'Confirma que quieres borrar el archivo.' });
+      return;
+    }
+    response.json({ ok: true, ...resetCommentArchive() });
+  });
+
+  app.put('/api/free-tournament/mode', (request, response) => {
+    const result = setFreeTournamentMode(request.body?.enabled);
+    if (!result.ok) {
+      response.status(400).json(result);
+      return;
+    }
+    response.json(result);
   });
 
   app.post('/api/cup-stats', (request, response) => {
